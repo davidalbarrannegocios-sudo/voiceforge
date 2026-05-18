@@ -1,0 +1,7 @@
+chatterbox-tts
+runpod
+boto3
+soundfile
+numpy
+torch
+torchaudio

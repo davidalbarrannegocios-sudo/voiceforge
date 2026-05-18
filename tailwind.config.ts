@@ -11,6 +11,20 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        purple: {
+          400: "#a78bfa",
+          500: "#8b5cf6",
+          600: "#7C3AED",
+          700: "#6D28D9",
+          800: "#5B21B6",
+        },
+        blue: {
+          400: "#60a5fa",
+          500: "#3B82F6",
+        },
+      },
+      fontFamily: {
+        inter: ["Inter", "system-ui", "sans-serif"],
       },
     },
   },

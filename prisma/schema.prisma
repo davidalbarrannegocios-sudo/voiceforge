@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  clerkId      String        @unique
+  email        String
+  credits      Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  generations  Generation[]
+  clonedVoices ClonedVoice[]
+  purchases    Purchase[]
+}
+
+model Generation {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  text            String
+  voiceId         String
+  audioUrl        String
+  durationSeconds Float
+  creditsUsed     Int
+  createdAt       DateTime @default(now())
+}
+
+model ClonedVoice {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+  name              String
+  referenceAudioUrl String
+  createdAt         DateTime @default(now())
+}
+
+model Purchase {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  stripeSessionId  String   @unique
+  creditsPurchased Int
+  amountCents      Int
+  createdAt        DateTime @default(now())
+}
