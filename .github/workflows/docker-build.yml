@@ -30,6 +30,8 @@ jobs:
         with:
           context: ./runpod-handler
           push: true
-          tags: elitevoice/voiceforge-handler:latest
+          tags: |
+            elitevoice/voiceforge-handler:latest
+            elitevoice/voiceforge-handler:v3
           cache-from: type=gha
           cache-to: type=gha,mode=max
