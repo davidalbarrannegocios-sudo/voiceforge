@@ -4,8 +4,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { voiceId: string } }
+  { params }: { params: Promise<{ voiceId: string }> }
 ) {
+  const { voiceId } = await params;
   const clerkUser = await currentUser();
   if (!clerkUser) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -20,7 +21,7 @@ export async function DELETE(
   }
 
   const voice = await prisma.clonedVoice.findFirst({
-    where: { id: params.voiceId, userId: user.id },
+    where: { id: voiceId, userId: user.id },
   });
 
   if (!voice) {
