@@ -1,7 +1,3 @@
-const RUNPOD_API_KEY = process.env.RUNPOD_API_KEY!;
-const RUNPOD_ENDPOINT_ID = process.env.RUNPOD_ENDPOINT_ID!;
-const BASE_URL = `https://api.runpod.io/v2/${RUNPOD_ENDPOINT_ID}`;
-
 type RunPodInput =
   | {
       type: "generate";
@@ -28,18 +24,23 @@ interface RunPodCloneOutput {
   voice_name: string;
 }
 
-const authHeaders = {
-  Authorization: `Bearer ${RUNPOD_API_KEY}`,
-  "Content-Type": "application/json",
-};
-
 const POLL_INTERVAL_MS = 5000;
 const MAX_WAIT_MS = 300000;
 
 async function submitJob(input: RunPodInput): Promise<string> {
-  const res = await fetch(`${BASE_URL}/run`, {
+  const apiKey = process.env.RUNPOD_API_KEY;
+  const endpointId = process.env.RUNPOD_ENDPOINT_ID;
+
+  if (!apiKey || !endpointId) {
+    throw new Error("RUNPOD_API_KEY or RUNPOD_ENDPOINT_ID is not set");
+  }
+
+  const res = await fetch(`https://api.runpod.io/v2/${endpointId}/run`, {
     method: "POST",
-    headers: authHeaders,
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ input }),
   });
 
@@ -58,22 +59,35 @@ async function submitJob(input: RunPodInput): Promise<string> {
 }
 
 async function pollUntilDone(jobId: string): Promise<unknown> {
+  const apiKey = process.env.RUNPOD_API_KEY;
+  const endpointId = process.env.RUNPOD_ENDPOINT_ID;
+
+  if (!apiKey || !endpointId) {
+    throw new Error("RUNPOD_API_KEY or RUNPOD_ENDPOINT_ID is not set");
+  }
+
   const deadline = Date.now() + MAX_WAIT_MS;
 
   while (Date.now() < deadline) {
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
 
-    const res = await fetch(`${BASE_URL}/status/${jobId}`, {
-      headers: authHeaders,
-    });
+    const res = await fetch(
+      `https://api.runpod.io/v2/${endpointId}/status/${jobId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     if (!res.ok) {
       throw new Error(`RunPod status check failed (${res.status})`);
     }
 
     const data = await res.json();
-
-    console.log(`[RunPod] job=${jobId} status=${data.status} elapsed=${Math.round((Date.now() - (deadline - MAX_WAIT_MS)) / 1000)}s`);
+    const elapsed = Math.round((Date.now() - (deadline - MAX_WAIT_MS)) / 1000);
+    console.log(`[RunPod] job=${jobId} status=${data.status} elapsed=${elapsed}s`);
 
     if (data.status === "COMPLETED") return data.output;
     if (data.status === "FAILED") {
