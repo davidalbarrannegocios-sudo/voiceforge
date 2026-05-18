@@ -4,11 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getStripe, PLANS, type PlanKey } from "@/lib/stripe";
 
 function getBaseUrl(req: Request): string {
-  // 1. Variable de entorno explícita (Railway, Vercel, etc.)
-  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
-  // 2. Detectar desde el request (siempre funciona en cualquier hosting)
-  const { origin } = new URL(req.url);
-  return origin;
+  return process.env.NEXT_PUBLIC_APP_URL || `https://${new Headers(req.headers).get("host")}`;
 }
 
 export async function POST(req: Request) {
