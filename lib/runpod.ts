@@ -28,67 +28,75 @@ interface RunPodCloneOutput {
   voice_name: string;
 }
 
-const headers = {
+const authHeaders = {
   Authorization: `Bearer ${RUNPOD_API_KEY}`,
   "Content-Type": "application/json",
 };
 
-async function pollStatus(jobId: string, maxWaitMs = 120000): Promise<unknown> {
-  const start = Date.now();
-  while (Date.now() - start < maxWaitMs) {
-    await new Promise((r) => setTimeout(r, 2000));
-    const res = await fetch(`${BASE_URL}/status/${jobId}`, { headers });
-    const data = await res.json();
-    if (data.status === "COMPLETED") return data.output;
-    if (data.status === "FAILED") throw new Error(data.error || "RunPod job failed");
+const POLL_INTERVAL_MS = 3000;
+const MAX_WAIT_MS = 120000;
+
+async function submitJob(input: RunPodInput): Promise<string> {
+  const res = await fetch(`${BASE_URL}/run`, {
+    method: "POST",
+    headers: authHeaders,
+    body: JSON.stringify({ input }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`RunPod submit failed (${res.status}): ${text}`);
   }
-  throw new Error("RunPod job timed out");
+
+  const data = await res.json();
+
+  if (!data.id) {
+    throw new Error(`RunPod did not return a job id: ${JSON.stringify(data)}`);
+  }
+
+  return data.id as string;
+}
+
+async function pollUntilDone(jobId: string): Promise<unknown> {
+  const deadline = Date.now() + MAX_WAIT_MS;
+
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+
+    const res = await fetch(`${BASE_URL}/status/${jobId}`, {
+      headers: authHeaders,
+    });
+
+    if (!res.ok) {
+      throw new Error(`RunPod status check failed (${res.status})`);
+    }
+
+    const data = await res.json();
+
+    if (data.status === "COMPLETED") return data.output;
+    if (data.status === "FAILED") {
+      throw new Error(data.error || `RunPod job ${jobId} failed`);
+    }
+    // IN_QUEUE / IN_PROGRESS → keep polling
+  }
+
+  throw new Error(`RunPod job ${jobId} timed out after ${MAX_WAIT_MS / 1000}s`);
+}
+
+async function runJob<T>(input: RunPodInput): Promise<T> {
+  const jobId = await submitJob(input);
+  const output = await pollUntilDone(jobId);
+  return output as T;
 }
 
 export async function runPodGenerate(
   input: Extract<RunPodInput, { type: "generate" }>
 ): Promise<RunPodGenerateOutput> {
-  const res = await fetch(`${BASE_URL}/runsync`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ input }),
-  });
-
-  const data = await res.json();
-
-  // runsync returned immediately with COMPLETED
-  if (data.status === "COMPLETED") {
-    return data.output as RunPodGenerateOutput;
-  }
-
-  // Job is still running — poll for result
-  if (data.id) {
-    const output = await pollStatus(data.id);
-    return output as RunPodGenerateOutput;
-  }
-
-  throw new Error(data.error || "RunPod request failed");
+  return runJob<RunPodGenerateOutput>(input);
 }
 
 export async function runPodClone(
   input: Extract<RunPodInput, { type: "clone" }>
 ): Promise<RunPodCloneOutput> {
-  const res = await fetch(`${BASE_URL}/runsync`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ input }),
-  });
-
-  const data = await res.json();
-
-  if (data.status === "COMPLETED") {
-    return data.output as RunPodCloneOutput;
-  }
-
-  if (data.id) {
-    const output = await pollStatus(data.id);
-    return output as RunPodCloneOutput;
-  }
-
-  throw new Error(data.error || "RunPod clone failed");
+  return runJob<RunPodCloneOutput>(input);
 }
