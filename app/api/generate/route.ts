@@ -37,13 +37,20 @@ export async function POST(req: Request) {
     );
   }
 
-  const result = await runPodGenerate({
-    type: "generate",
-    text: text.trim(),
-    voice_id,
-    exaggeration,
-    user_id: user.id,
-  });
+  let result;
+  try {
+    result = await runPodGenerate({
+      type: "generate",
+      text: text.trim(),
+      voice_id,
+      exaggeration,
+      user_id: user.id,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[/api/generate] RunPod error:", message);
+    return NextResponse.json({ error: message }, { status: 502 });
+  }
 
   const [updatedUser, generation] = await prisma.$transaction([
     prisma.user.update({

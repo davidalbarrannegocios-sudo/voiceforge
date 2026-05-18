@@ -40,12 +40,19 @@ export async function POST(req: Request) {
   const arrayBuffer = await file.arrayBuffer();
   const audioBase64 = Buffer.from(arrayBuffer).toString("base64");
 
-  const result = await runPodClone({
-    type: "clone",
-    audio_base64: audioBase64,
-    voice_name: voiceName.trim(),
-    user_id: user.id,
-  });
+  let result;
+  try {
+    result = await runPodClone({
+      type: "clone",
+      audio_base64: audioBase64,
+      voice_name: voiceName.trim(),
+      user_id: user.id,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[/api/clone] RunPod error:", message);
+    return NextResponse.json({ error: message }, { status: 502 });
+  }
 
   const referenceAudioUrl = `${process.env.R2_PUBLIC_URL}/reference-voices/${user.id}/${result.voice_id}.wav`;
 

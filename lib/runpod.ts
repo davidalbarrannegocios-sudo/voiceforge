@@ -33,8 +33,8 @@ const authHeaders = {
   "Content-Type": "application/json",
 };
 
-const POLL_INTERVAL_MS = 3000;
-const MAX_WAIT_MS = 120000;
+const POLL_INTERVAL_MS = 5000;
+const MAX_WAIT_MS = 300000;
 
 async function submitJob(input: RunPodInput): Promise<string> {
   const res = await fetch(`${BASE_URL}/run`, {
@@ -72,6 +72,8 @@ async function pollUntilDone(jobId: string): Promise<unknown> {
     }
 
     const data = await res.json();
+
+    console.log(`[RunPod] job=${jobId} status=${data.status} elapsed=${Math.round((Date.now() - (deadline - MAX_WAIT_MS)) / 1000)}s`);
 
     if (data.status === "COMPLETED") return data.output;
     if (data.status === "FAILED") {
