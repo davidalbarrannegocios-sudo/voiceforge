@@ -37,12 +37,26 @@ export async function POST(req: Request) {
     );
   }
 
+  let r2Key: string | undefined;
+  if (voice_id !== "default") {
+    const clonedVoice = await prisma.clonedVoice.findFirst({
+      where: { id: voice_id, userId: user.id },
+    });
+    if (!clonedVoice) {
+      return NextResponse.json({ error: "Voz clonada no encontrada" }, { status: 404 });
+    }
+    const publicUrl = process.env.R2_PUBLIC_URL ?? "";
+    r2Key = clonedVoice.referenceAudioUrl.replace(`${publicUrl}/`, "");
+    console.log(`[/api/generate] using cloned voice r2_key: ${r2Key}`);
+  }
+
   let result;
   try {
     result = await runPodGenerate({
       type: "generate",
       text: text.trim(),
       voice_id,
+      r2_key: r2Key,
       exaggeration,
       user_id: user.id,
     });

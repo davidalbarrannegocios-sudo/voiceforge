@@ -3,6 +3,7 @@ type RunPodInput =
       type: "generate";
       text: string;
       voice_id: string;
+      r2_key?: string;
       exaggeration: number;
       user_id: string;
     }

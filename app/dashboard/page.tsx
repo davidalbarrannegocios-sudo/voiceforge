@@ -127,12 +127,14 @@ function Sidebar({
 function GenerateTab({
   voices,
   onGenerated,
+  initialVoiceId = "default",
 }: {
   voices: Voice[];
   onGenerated: () => void;
+  initialVoiceId?: string;
 }) {
   const [text, setText] = useState("");
-  const [voiceId, setVoiceId] = useState("default");
+  const [voiceId, setVoiceId] = useState(initialVoiceId);
   const [exaggeration, setExaggeration] = useState(0.5);
   const [loading, setLoading] = useState(false);
   const [loadingStage, setLoadingStage] = useState<"starting" | "generating">("starting");
@@ -745,6 +747,7 @@ export default function DashboardPage() {
           <GenerateTab
             voices={voices}
             onGenerated={fetchCredits}
+            initialVoiceId={selectedVoiceId}
           />
         )}
         {activeTab === "voices" && (

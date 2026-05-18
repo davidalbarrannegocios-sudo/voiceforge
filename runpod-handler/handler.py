@@ -83,17 +83,19 @@ def handler(job):
 
         audio_prompt_path = None
 
-        # If a cloned voice was requested, download the reference from R2
-        if voice_id != "default":
-            ref_key = f"reference-voices/{user_id}/{voice_id}.wav"
+        r2_key = job_input.get("r2_key")
+        print(f"[generate] voice_id={voice_id} r2_key={r2_key}")
+
+        if r2_key:
             try:
-                ref_bytes = download_from_r2(ref_key)
+                ref_bytes = download_from_r2(r2_key)
                 tmp_path = f"/tmp/ref_{voice_id}.wav"
                 with open(tmp_path, "wb") as f:
                     f.write(ref_bytes)
                 audio_prompt_path = tmp_path
+                print(f"[generate] loaded reference audio from {r2_key}")
             except Exception as e:
-                print(f"Warning: could not load reference voice ({e}), using default.")
+                print(f"Warning: could not load reference voice from {r2_key} ({e}), using default.")
 
         # Generate audio with Chatterbox
         wav = MODEL.generate(
