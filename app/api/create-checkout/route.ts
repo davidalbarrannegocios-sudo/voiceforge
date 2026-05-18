@@ -3,6 +3,14 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getStripe, PLANS, type PlanKey } from "@/lib/stripe";
 
+function getBaseUrl(req: Request): string {
+  // 1. Variable de entorno explícita (Railway, Vercel, etc.)
+  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
+  // 2. Detectar desde el request (siempre funciona en cualquier hosting)
+  const { origin } = new URL(req.url);
+  return origin;
+}
+
 export async function POST(req: Request) {
   const clerkUser = await currentUser();
   if (!clerkUser) {
@@ -28,17 +36,12 @@ export async function POST(req: Request) {
     });
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const baseUrl = getBaseUrl(req);
 
   const session = await getStripe().checkout.sessions.create({
     mode: "payment",
     payment_method_types: ["card"],
-    line_items: [
-      {
-        price: selectedPlan.priceId,
-        quantity: 1,
-      },
-    ],
+    line_items: [{ price: selectedPlan.priceId, quantity: 1 }],
     metadata: {
       userId: user.id,
       credits: String(selectedPlan.credits),

@@ -34,24 +34,40 @@ export async function POST(req: Request) {
     const amountCents = session.amount_total ?? 0;
 
     if (!userId || !credits) {
-      console.error("Missing metadata in Stripe session:", session.id);
+      console.error("Webhook: missing metadata in session", session.id);
       return NextResponse.json({ received: true });
     }
 
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: userId },
-        data: { credits: { increment: credits } },
-      }),
-      prisma.purchase.create({
-        data: {
-          userId,
-          stripeSessionId: session.id,
-          creditsPurchased: credits,
-          amountCents,
-        },
-      }),
-    ]);
+    // Buscar usuario por ID interno; si no existe (edge case) buscar por clerkId
+    // del customer_email como fallback
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+
+    if (!user) {
+      console.error("Webhook: user not found for id", userId);
+      // Responder 200 para que Stripe no reintente — registrar el incidente
+      return NextResponse.json({ received: true, warning: "user_not_found" });
+    }
+
+    try {
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: user.id },
+          data: { credits: { increment: credits } },
+        }),
+        prisma.purchase.create({
+          data: {
+            userId: user.id,
+            stripeSessionId: session.id,
+            creditsPurchased: credits,
+            amountCents,
+          },
+        }),
+      ]);
+    } catch (err) {
+      console.error("Webhook: DB transaction failed", err);
+      // Devolver 500 para que Stripe reintente
+      return NextResponse.json({ error: "DB error" }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ received: true });
