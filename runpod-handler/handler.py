@@ -69,15 +69,17 @@ def get_audio_duration(wav_bytes: bytes) -> float:
 # ---------------------------------------------------------------------------
 
 def handler(job):
-    inp = job["input"]
-    job_type = inp.get("type")
+    print(f"Job received: {job}")
+
+    job_input = job.get("input", {})
+    job_type = job_input.get("type")
 
     # ── GENERATE ──────────────────────────────────────────────────────────
     if job_type == "generate":
-        text        = inp["text"]
-        voice_id    = inp.get("voice_id", "default")
-        exaggeration = float(inp.get("exaggeration", 0.5))
-        user_id     = inp["user_id"]
+        text        = job_input["text"]
+        voice_id    = job_input.get("voice_id", "default")
+        exaggeration = float(job_input.get("exaggeration", 0.5))
+        user_id     = job_input["user_id"]
 
         audio_prompt_path = None
 
@@ -116,9 +118,9 @@ def handler(job):
 
     # ── CLONE ─────────────────────────────────────────────────────────────
     elif job_type == "clone":
-        audio_b64  = inp["audio_base64"]
-        voice_name = inp["voice_name"]
-        user_id    = inp["user_id"]
+        audio_b64  = job_input["audio_base64"]
+        voice_name = job_input["voice_name"]
+        user_id    = job_input["user_id"]
 
         audio_bytes = base64.b64decode(audio_b64)
         voice_id    = str(uuid.uuid4())
