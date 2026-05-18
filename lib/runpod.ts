@@ -26,7 +26,8 @@ interface RunPodCloneOutput {
 }
 
 const POLL_INTERVAL_MS = 5000;
-const MAX_WAIT_MS = 300000;
+const GENERATE_TIMEOUT_MS = 300000; // 5 min
+const CLONE_TIMEOUT_MS    = 600000; // 10 min
 
 async function submitJob(input: RunPodInput): Promise<string> {
   const apiKey = process.env.RUNPOD_API_KEY;
@@ -62,7 +63,7 @@ async function submitJob(input: RunPodInput): Promise<string> {
   return data.id as string;
 }
 
-async function pollUntilDone(jobId: string): Promise<unknown> {
+async function pollUntilDone(jobId: string, maxWaitMs: number): Promise<unknown> {
   const apiKey = process.env.RUNPOD_API_KEY;
   const endpointId = process.env.RUNPOD_ENDPOINT_ID;
 
@@ -70,7 +71,7 @@ async function pollUntilDone(jobId: string): Promise<unknown> {
     throw new Error("RUNPOD_API_KEY or RUNPOD_ENDPOINT_ID is not set");
   }
 
-  const deadline = Date.now() + MAX_WAIT_MS;
+  const deadline = Date.now() + maxWaitMs;
 
   while (Date.now() < deadline) {
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
@@ -90,7 +91,7 @@ async function pollUntilDone(jobId: string): Promise<unknown> {
     }
 
     const data = await res.json();
-    const elapsed = Math.round((Date.now() - (deadline - MAX_WAIT_MS)) / 1000);
+    const elapsed = Math.round((Date.now() - (deadline - maxWaitMs)) / 1000);
     console.log(`[RunPod] job=${jobId} status=${data.status} elapsed=${elapsed}s`);
 
     if (data.status === "COMPLETED") return data.output;
@@ -100,23 +101,23 @@ async function pollUntilDone(jobId: string): Promise<unknown> {
     // IN_QUEUE / IN_PROGRESS → keep polling
   }
 
-  throw new Error(`RunPod job ${jobId} timed out after ${MAX_WAIT_MS / 1000}s`);
+  throw new Error(`RunPod job ${jobId} timed out after ${maxWaitMs / 1000}s`);
 }
 
-async function runJob<T>(input: RunPodInput): Promise<T> {
+async function runJob<T>(input: RunPodInput, maxWaitMs: number): Promise<T> {
   const jobId = await submitJob(input);
-  const output = await pollUntilDone(jobId);
+  const output = await pollUntilDone(jobId, maxWaitMs);
   return output as T;
 }
 
 export async function runPodGenerate(
   input: Extract<RunPodInput, { type: "generate" }>
 ): Promise<RunPodGenerateOutput> {
-  return runJob<RunPodGenerateOutput>(input);
+  return runJob<RunPodGenerateOutput>(input, GENERATE_TIMEOUT_MS);
 }
 
 export async function runPodClone(
   input: Extract<RunPodInput, { type: "clone" }>
 ): Promise<RunPodCloneOutput> {
-  return runJob<RunPodCloneOutput>(input);
+  return runJob<RunPodCloneOutput>(input, CLONE_TIMEOUT_MS);
 }
