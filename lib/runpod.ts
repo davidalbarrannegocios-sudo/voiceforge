@@ -35,7 +35,10 @@ async function submitJob(input: RunPodInput): Promise<string> {
     throw new Error("RUNPOD_API_KEY or RUNPOD_ENDPOINT_ID is not set");
   }
 
-  const res = await fetch(`https://api.runpod.io/v2/${endpointId}/run`, {
+  const url = `https://api.runpod.ai/v2/${endpointId}/run`;
+  console.log(`[RunPod] submitting job to: ${url}`);
+
+  const res = await fetch(url, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -72,7 +75,7 @@ async function pollUntilDone(jobId: string): Promise<unknown> {
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
 
     const res = await fetch(
-      `https://api.runpod.io/v2/${endpointId}/status/${jobId}`,
+      `https://api.runpod.ai/v2/${endpointId}/status/${jobId}`,
       {
         headers: {
           Authorization: `Bearer ${apiKey}`,
