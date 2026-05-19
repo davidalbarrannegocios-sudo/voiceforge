@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 export interface SelectedVoice {
   referenceId: string;
   name: string;
+  isCloned: boolean;
 }
 
 interface FishVoice {
@@ -320,7 +321,7 @@ export function VoiceBrowser({
                         <div className="flex gap-1.5 mt-auto">
                           <PreviewBtn id={voice._id} previewingId={previewingId} loadingId={previewLoadingId} onPreview={handlePreview} />
                           <button
-                            onClick={() => handleSelect({ referenceId: voice._id, name: voice.title })}
+                            onClick={() => handleSelect({ referenceId: voice._id, name: voice.title, isCloned: false })}
                             className="flex-1 py-1.5 rounded-lg text-xs font-semibold text-white"
                             style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
                           >
@@ -411,7 +412,7 @@ export function VoiceBrowser({
                             </button>
                           )}
                           <button
-                            onClick={() => modelId && handleSelect({ referenceId: modelId, name: voice.name })}
+                            onClick={() => modelId && handleSelect({ referenceId: modelId, name: voice.name, isCloned: true })}
                             disabled={!modelId}
                             className="flex-1 py-1.5 rounded-lg text-xs font-semibold text-white disabled:opacity-50"
                             style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}

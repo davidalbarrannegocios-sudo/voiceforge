@@ -192,7 +192,7 @@ function GenerateTab({
     charsRemaining: number;
   } | null>(null);
 
-  const charCost = calculateCharCost(text.length);
+  const charCost = calculateCharCost(text.length, selectedVoice?.isCloned ? 1.15 : 1.10);
   const clonedVoices = voices.filter((v) => !v.isSystem);
 
   async function handleGenerate() {
@@ -245,7 +245,7 @@ function GenerateTab({
             <span className="text-purple-400 font-semibold">
               {charCost.toLocaleString("es-ES")} caracteres
             </span>
-            {" "}(incluye 10% por procesamiento y mejora de calidad de audio)
+            {" "}(incluye {selectedVoice?.isCloned ? "15%" : "10%"} por procesamiento y mejora de calidad de audio)
           </p>
         )}
       </div>
@@ -515,7 +515,7 @@ function VoicesTab({
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => onUseVoice({ referenceId: voice.fishAudioModelId ?? "", name: voice.name })}
+                    onClick={() => onUseVoice({ referenceId: voice.fishAudioModelId ?? "", name: voice.name, isCloned: true })}
                     disabled={!voice.fishAudioModelId}
                     className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
                     style={{ background: "rgba(124,58,237,0.15)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)" }}
