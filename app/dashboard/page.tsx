@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
+import { Home, Mic, Users, Clock, Check, Play } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
@@ -28,7 +29,7 @@ interface Generation {
   createdAt: string;
 }
 
-type Tab = "generate" | "voices" | "history";
+type Tab = "home" | "generate" | "voices" | "history";
 
 /* ─── Sidebar ─────────────────────────────────────────────── */
 function Sidebar({
@@ -40,10 +41,11 @@ function Sidebar({
   activeTab: Tab;
   setActiveTab: (t: Tab) => void;
 }) {
-  const navItems: { key: Tab; label: string; icon: string }[] = [
-    { key: "generate", label: "Generar", icon: "🎙️" },
-    { key: "voices", label: "Mis voces", icon: "🔁" },
-    { key: "history", label: "Historial", icon: "📋" },
+  const navItems: { key: Tab; label: string; Icon: React.ElementType }[] = [
+    { key: "home", label: "Inicio", Icon: Home },
+    { key: "generate", label: "Generar", Icon: Mic },
+    { key: "voices", label: "Mis voces", Icon: Users },
+    { key: "history", label: "Historial", Icon: Clock },
   ];
 
   return (
@@ -64,24 +66,24 @@ function Sidebar({
       </div>
 
       <nav className="flex-1 p-3 space-y-1">
-        {navItems.map((item) => (
+        {navItems.map(({ key, label, Icon }) => (
           <button
-            key={item.key}
-            onClick={() => setActiveTab(item.key)}
+            key={key}
+            onClick={() => setActiveTab(key)}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left"
             style={
-              activeTab === item.key
+              activeTab === key
                 ? { background: "rgba(124,58,237,0.15)", color: "#a78bfa", borderLeft: "2px solid #7C3AED" }
                 : { color: "#8888a8" }
             }
           >
-            <span>{item.icon}</span>
-            {item.label}
+            <Icon size={16} />
+            {label}
           </button>
         ))}
       </nav>
 
-      {/* Credits */}
+      {/* Characters */}
       <div className="p-4 border-t" style={{ borderColor: "#2a2a3e" }}>
         <div className="mb-2 flex items-center justify-between">
           <span className="text-xs text-gray-500">Caracteres disponibles</span>
@@ -112,6 +114,60 @@ function Sidebar({
   );
 }
 
+/* ─── Home Tab ────────────────────────────────────────────── */
+function HomeTab({
+  user,
+  credits,
+  setActiveTab,
+}: {
+  user: { firstName?: string | null } | null | undefined;
+  credits: number | null;
+  setActiveTab: (t: Tab) => void;
+}) {
+  const cards: { key: Tab; Icon: React.ElementType; title: string; desc: string }[] = [
+    { key: "generate", Icon: Mic, title: "Texto a Voz", desc: "Convierte texto en voz natural al instante" },
+    { key: "voices", Icon: Users, title: "Mis Voces", desc: "Gestiona y clona tus voces personalizadas" },
+    { key: "history", Icon: Clock, title: "Historial", desc: "Revisa todas tus generaciones anteriores" },
+  ];
+
+  return (
+    <div>
+      <div className="mb-10">
+        <h1 className="text-3xl font-bold text-white mb-2">
+          Hola, {user?.firstName ?? "de nuevo"}
+        </h1>
+        <p style={{ color: "#8888a8" }}>
+          Tienes{" "}
+          <span className="font-semibold" style={{ color: "#a78bfa" }}>
+            {credits !== null ? credits.toLocaleString("es-ES") : "—"}
+          </span>{" "}
+          caracteres disponibles
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {cards.map(({ key, Icon, title, desc }) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className="group p-6 rounded-2xl border border-[#2a2a3e] hover:border-purple-700 text-left transition-all hover:-translate-y-0.5"
+            style={{ background: "#12121a" }}
+          >
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
+              style={{ background: "rgba(124,58,237,0.15)" }}
+            >
+              <Icon size={20} style={{ color: "#a78bfa" }} />
+            </div>
+            <h3 className="font-semibold text-white mb-1">{title}</h3>
+            <p className="text-sm" style={{ color: "#8888a8" }}>{desc}</p>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Generate Tab ────────────────────────────────────────── */
 function GenerateTab({
   voices,
@@ -126,7 +182,6 @@ function GenerateTab({
   const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(initialVoice ?? null);
   const [showBrowser, setShowBrowser] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [loadingStage, setLoadingStage] = useState<"starting" | "generating">("starting");
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<{
@@ -143,9 +198,6 @@ function GenerateTab({
     setAudioUrl(null);
     setLastResult(null);
     setLoading(true);
-    setLoadingStage("starting");
-
-    const timer = setTimeout(() => setLoadingStage("generating"), 4000);
 
     try {
       const res = await fetch("/api/generate", {
@@ -168,7 +220,6 @@ function GenerateTab({
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
-      clearTimeout(timer);
       setLoading(false);
     }
   }
@@ -206,7 +257,7 @@ function GenerateTab({
           style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
         >
           <div className="flex items-center gap-2.5">
-            <span className="text-base">🎙️</span>
+            <Mic size={16} style={{ color: "#a78bfa" }} />
             <span className="text-gray-200 font-medium">
               {selectedVoice?.name ?? "Voz por defecto"}
             </span>
@@ -241,7 +292,7 @@ function GenerateTab({
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            {loadingStage === "starting" ? "⏳ Generando audio..." : "🎙️ Generando audio..."}
+            Generando audio...
           </>
         ) : (
           "Generar audio"
@@ -338,7 +389,9 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
             </div>
           ) : (
             <div>
-              <div className="text-3xl mb-2">🎤</div>
+              <div className="flex justify-center mb-3">
+                <Mic size={32} style={{ color: "#8888a8" }} />
+              </div>
               <p className="text-sm text-gray-400 mb-1">Arrastra tu audio aquí o haz clic</p>
               <p className="text-xs text-gray-600">WAV, MP3, M4A · Ideal: 10-30 segundos</p>
             </div>
@@ -357,9 +410,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
           />
         </div>
 
-        <p className="text-xs text-gray-500 mb-4">
-          La clonación es gratuita
-        </p>
+        <p className="text-xs text-gray-500 mb-4">La clonación es gratuita</p>
 
         {error && (
           <div className="mb-4 p-3 rounded-lg text-xs" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
@@ -377,7 +428,12 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
             className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
           >
-            {loading && <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>}
+            {loading && (
+              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            )}
             {loading ? "Clonando..." : "Clonar voz"}
           </button>
         </div>
@@ -434,7 +490,9 @@ function VoicesTab({
 
         {cloned.length === 0 ? (
           <div className="text-center py-16" style={{ color: "#8888a8" }}>
-            <div className="text-4xl mb-3">🎤</div>
+            <div className="flex justify-center mb-3">
+              <Mic size={40} style={{ color: "#8888a8" }} />
+            </div>
             <p className="font-medium mb-1">No tienes voces clonadas</p>
             <p className="text-sm">Clona una voz con 10 segundos de audio</p>
           </div>
@@ -450,7 +508,7 @@ function VoicesTab({
                     )}
                   </div>
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(124,58,237,0.15)" }}>
-                    <span className="text-sm">🎙️</span>
+                    <Mic size={14} style={{ color: "#a78bfa" }} />
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -514,7 +572,9 @@ function HistoryTab() {
         </div>
       ) : generations.length === 0 ? (
         <div className="text-center py-16" style={{ color: "#8888a8" }}>
-          <div className="text-4xl mb-3">📋</div>
+          <div className="flex justify-center mb-3">
+            <Clock size={40} style={{ color: "#8888a8" }} />
+          </div>
           <p className="font-medium">No hay generaciones aún</p>
         </div>
       ) : (
@@ -536,14 +596,15 @@ function HistoryTab() {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button
                       onClick={() => setPlayingId(playingId === gen.id ? null : gen.id)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                       style={{
                         background: playingId === gen.id ? "rgba(124,58,237,0.2)" : "#1a1a2e",
                         color: playingId === gen.id ? "#a78bfa" : "#8888a8",
                         border: `1px solid ${playingId === gen.id ? "rgba(124,58,237,0.3)" : "#2a2a3e"}`,
                       }}
                     >
-                      {playingId === gen.id ? "▶ Reproduciendo" : "▶ Reproducir"}
+                      <Play size={11} />
+                      {playingId === gen.id ? "Reproduciendo" : "Reproducir"}
                     </button>
                   </div>
                 </div>
@@ -587,7 +648,7 @@ function HistoryTab() {
 export default function DashboardPage() {
   const { user } = useUser();
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<Tab>("generate");
+  const [activeTab, setActiveTab] = useState<Tab>("home");
   const [credits, setCredits] = useState<number | null>(null);
   const [voices, setVoices] = useState<Voice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(null);
@@ -623,22 +684,16 @@ export default function DashboardPage() {
       <main className="flex-1 p-8 overflow-auto">
         {successChars && (
           <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
-            <span className="text-green-400 text-xl">✓</span>
+            <Check size={18} className="text-green-400 flex-shrink-0" />
             <p className="text-green-400 font-medium text-sm">
               ¡Compra completada! Se han añadido <strong>{parseInt(successChars).toLocaleString("es-ES")} caracteres</strong> a tu cuenta.
             </p>
           </div>
         )}
 
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white">
-            Hola, {user?.firstName ?? "de nuevo"} 👋
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">
-            {credits !== null ? `Tienes ${credits.toLocaleString("es-ES")} caracteres disponibles` : "Cargando caracteres..."}
-          </p>
-        </div>
-
+        {activeTab === "home" && (
+          <HomeTab user={user} credits={credits} setActiveTab={setActiveTab} />
+        )}
         {activeTab === "generate" && (
           <GenerateTab
             voices={voices}
