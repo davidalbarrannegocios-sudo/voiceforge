@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useUser, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { ChevronDown, Check } from "lucide-react";
+import { AudioPlayer } from "./dashboard/AudioPlayer";
 
 /* ─── Types ─────────────────────────────────────────────────── */
 
@@ -122,7 +123,6 @@ export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [demoAudioUrl, setDemoAudioUrl] = useState<string | null>(null);
   const [demoLoading, setDemoLoading] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     fetch("/api/public-voices?language=es&page_size=5")
@@ -147,7 +147,6 @@ export default function LandingPage() {
       const data = await res.json();
       if (data.audioUrl) {
         setDemoAudioUrl(data.audioUrl);
-        setTimeout(() => { audioRef.current?.play(); }, 100);
       }
     } finally {
       setDemoLoading(false);
@@ -307,13 +306,7 @@ export default function LandingPage() {
 
                   {demoAudioUrl && (
                     <div className="mb-3">
-                      <audio
-                        ref={audioRef}
-                        src={demoAudioUrl}
-                        controls
-                        className="w-full rounded-lg"
-                        style={{ height: "36px", accentColor: "#3b82f6" }}
-                      />
+                      <AudioPlayer src={demoAudioUrl} filename="elitelabs-demo.mp3" />
                     </div>
                   )}
 
