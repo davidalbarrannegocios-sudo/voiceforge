@@ -6,6 +6,7 @@ import { useUser, UserButton } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 import { calculateCredits, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice } from "./VoiceBrowser";
+import { AudioPlayer } from "./AudioPlayer";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface Voice {
@@ -251,26 +252,16 @@ function GenerateTab({
 
       {/* Audio player */}
       {audioUrl && lastResult && (
-        <div className="mt-6 p-4 rounded-xl border" style={{ background: "#12121a", borderColor: "#2a2a3e" }}>
-          <div className="flex items-center justify-between mb-3">
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-300">Audio generado</span>
-            <div className="flex items-center gap-3 text-xs text-gray-500">
-              <span>{lastResult.durationSeconds.toFixed(1)}s</span>
-              <span>·</span>
+            <div className="flex items-center gap-2 text-xs" style={{ color: "#8888a8" }}>
               <span>{lastResult.creditsUsed} crédito{lastResult.creditsUsed !== 1 ? "s" : ""} usados</span>
               <span>·</span>
               <span style={{ color: "#a78bfa" }}>{lastResult.creditsRemaining} restantes</span>
             </div>
           </div>
-          <audio controls src={audioUrl} className="w-full mb-3" />
-          <a
-            href={audioUrl}
-            download="voiceforge-audio.mp3"
-            className="flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80"
-            style={{ background: "#1a1a2e", color: "#a78bfa", border: "1px solid #2a2a3e" }}
-          >
-            Descargar audio
-          </a>
+          <AudioPlayer src={audioUrl} filename="voiceforge-audio.mp3" />
         </div>
       )}
 
