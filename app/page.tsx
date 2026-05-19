@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useUser, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
@@ -121,6 +121,28 @@ export default function LandingPage() {
   const { isSignedIn } = useUser();
   const [selectedVoice, setSelectedVoice] = useState(DEMO_VOICES[0].id);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [demoAudioUrl, setDemoAudioUrl] = useState<string | null>(null);
+  const [demoLoading, setDemoLoading] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  async function handleGenerateDemo() {
+    setDemoLoading(true);
+    setDemoAudioUrl(null);
+    try {
+      const res = await fetch("/api/demo-voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voiceId: selectedVoice }),
+      });
+      const data = await res.json();
+      if (data.audioUrl) {
+        setDemoAudioUrl(data.audioUrl);
+        setTimeout(() => { audioRef.current?.play(); }, 100);
+      }
+    } finally {
+      setDemoLoading(false);
+    }
+  }
 
   return (
     <div className="min-h-screen" style={{ background: "#0a0a0f", color: "white" }}>
@@ -259,26 +281,57 @@ export default function LandingPage() {
                     Hola, soy una voz generada con inteligencia artificial por Elite Labs. La calidad es excepcional y el resultado suena completamente natural.
                   </div>
 
-                  {!isSignedIn ? (
-                    <SignUpButton mode="modal">
-                      <button
-                        className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
+                  {demoAudioUrl && (
+                    <div className="mb-3">
+                      <audio
+                        ref={audioRef}
+                        src={demoAudioUrl}
+                        controls
+                        className="w-full rounded-lg"
+                        style={{ height: "36px", accentColor: "#3b82f6" }}
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleGenerateDemo}
+                      disabled={demoLoading}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+                      style={{ background: "#0d0d17", border: "1px solid #3b82f6", color: "#93c5fd" }}
+                    >
+                      {demoLoading ? (
+                        <>
+                          <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          Generando...
+                        </>
+                      ) : (
+                        <><PlayIcon /> Generar muestra</>
+                      )}
+                    </button>
+
+                    {!isSignedIn ? (
+                      <SignUpButton mode="modal">
+                        <button
+                          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
+                          style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 20px rgba(59,130,246,0.35)" }}
+                        >
+                          Ir al Dashboard →
+                        </button>
+                      </SignUpButton>
+                    ) : (
+                      <Link
+                        href="/dashboard"
+                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
                         style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 20px rgba(59,130,246,0.35)" }}
                       >
-                        <PlayIcon />
-                        Generar y reproducir
-                      </button>
-                    </SignUpButton>
-                  ) : (
-                    <Link
-                      href="/dashboard"
-                      className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
-                      style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 20px rgba(59,130,246,0.35)" }}
-                    >
-                      <PlayIcon />
-                      Ir al Dashboard
-                    </Link>
-                  )}
+                        Ir al Dashboard →
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
