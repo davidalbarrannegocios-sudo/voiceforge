@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
@@ -53,7 +54,7 @@ const plans = [
 function CheckIcon() {
   return (
     <svg
-      className="w-4 h-4 text-purple-400 flex-shrink-0"
+      className="w-4 h-4 text-blue-400 flex-shrink-0"
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
@@ -106,13 +107,8 @@ export default function PricingPage() {
       >
         <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
-              style={{ background: "linear-gradient(135deg, #7C3AED, #3B82F6)" }}
-            >
-              V
-            </div>
-            <span className="font-bold text-lg text-white">VoiceForge</span>
+            <Image src="/elitelabs.png" alt="Elite Labs" width={32} height={32} className="rounded-lg" />
+            <span className="font-bold text-lg text-white">Elite Labs</span>
           </Link>
           <Link
             href={isSignedIn ? "/dashboard" : "/"}
@@ -143,15 +139,15 @@ export default function PricingPage() {
               key={plan.key}
               className="relative p-6 rounded-2xl border flex flex-col"
               style={{
-                background: plan.popular ? "rgba(124,58,237,0.08)" : "#12121a",
-                borderColor: plan.popular ? "#7C3AED" : "#2a2a3e",
+                background: plan.popular ? "rgba(59,130,246,0.08)" : "#12121a",
+                borderColor: plan.popular ? "#3b82f6" : "#2a2a3e",
               }}
             >
               {plan.popular && (
                 <div
                   className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-bold text-white px-4 py-1 rounded-full whitespace-nowrap"
                   style={{
-                    background: "linear-gradient(135deg, #7C3AED, #3B82F6)",
+                    background: "linear-gradient(135deg, #3b82f6, #2563eb)",
                   }}
                 >
                   MÁS POPULAR
@@ -188,9 +184,9 @@ export default function PricingPage() {
                 style={
                   plan.popular
                     ? {
-                        background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
+                        background: "linear-gradient(135deg, #3b82f6, #2563eb)",
                         color: "white",
-                        boxShadow: "0 4px 15px rgba(124,58,237,0.3)",
+                        boxShadow: "0 4px 15px rgba(59,130,246,0.3)",
                       }
                     : {
                         background: "#1a1a2e",

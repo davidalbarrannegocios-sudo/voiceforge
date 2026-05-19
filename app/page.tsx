@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useUser, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { ChevronDown, Check } from "lucide-react";
@@ -8,8 +9,8 @@ import { ChevronDown, Check } from "lucide-react";
 /* ─── Data ──────────────────────────────────────────────────── */
 
 const DEMO_VOICES = [
-  { id: "1", name: "Ana García",       initials: "AG", color: "linear-gradient(135deg,#7C3AED,#4F46E5)" },
-  { id: "2", name: "Carlos López",     initials: "CL", color: "linear-gradient(135deg,#3B82F6,#1D4ED8)" },
+  { id: "1", name: "Ana García",       initials: "AG", color: "linear-gradient(135deg,#3b82f6,#3b82f6)" },
+  { id: "2", name: "Carlos López",     initials: "CL", color: "linear-gradient(135deg,#3b82f6,#1D4ED8)" },
   { id: "3", name: "María Rodríguez",  initials: "MR", color: "linear-gradient(135deg,#EC4899,#BE185D)" },
   { id: "4", name: "David Martín",     initials: "DM", color: "linear-gradient(135deg,#14B8A6,#0D9488)" },
   { id: "5", name: "Sofía Fernández",  initials: "SF", color: "linear-gradient(135deg,#F97316,#C2410C)" },
@@ -20,7 +21,7 @@ const USE_CASES = [
     title: "Narración de vídeo",
     tags: ["Expresivo", "Dinámico", "Profesional"],
     bg: "linear-gradient(135deg,#1a0535 0%,#2d1b69 60%,#1e0a3c 100%)",
-    accent: "#a78bfa",
+    accent: "#93c5fd",
   },
   {
     title: "Audiolibros",
@@ -43,8 +44,8 @@ const FEATURES = [
 ];
 
 const STAT_AVATARS = [
-  { color: "#7C3AED", initials: "AL" },
-  { color: "#3B82F6", initials: "MR" },
+  { color: "#3b82f6", initials: "AL" },
+  { color: "#3b82f6", initials: "MR" },
   { color: "#EC4899", initials: "JG" },
   { color: "#14B8A6", initials: "PC" },
   { color: "#F97316", initials: "SL" },
@@ -52,8 +53,8 @@ const STAT_AVATARS = [
 
 const FAQ_ITEMS = [
   {
-    q: "¿Qué es VoiceForge y cómo funciona?",
-    a: "VoiceForge es una plataforma de síntesis de voz con IA que convierte texto en audio de calidad profesional. Usamos modelos de inteligencia artificial avanzados para generar voces naturales en más de 80 idiomas.",
+    q: "¿Qué es Elite Labs y cómo funciona?",
+    a: "Elite Labs es una plataforma de síntesis de voz con IA que convierte texto en audio de calidad profesional. Usamos modelos de inteligencia artificial avanzados para generar voces naturales en más de 80 idiomas.",
   },
   {
     q: "¿Cómo funciona la clonación de voz?",
@@ -65,7 +66,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "¿En cuántos idiomas puedo generar audio?",
-    a: "VoiceForge soporta más de 80 idiomas y dialectos a través de su biblioteca de voces públicas: español, inglés, francés, alemán, portugués, chino, japonés y muchos más.",
+    a: "Elite Labs soporta más de 80 idiomas y dialectos a través de su biblioteca de voces públicas: español, inglés, francés, alemán, portugués, chino, japonés y muchos más.",
   },
   {
     q: "¿Qué calidad tiene el audio generado?",
@@ -96,7 +97,7 @@ function FaqItem({ item, open, onToggle }: { item: typeof FAQ_ITEMS[0]; open: bo
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between px-5 py-4 text-left transition-colors"
-        style={{ color: open ? "#a78bfa" : "white" }}
+        style={{ color: open ? "#93c5fd" : "white" }}
       >
         <span className="font-medium pr-4 text-sm md:text-base">{item.q}</span>
         <ChevronDown
@@ -131,13 +132,8 @@ export default function LandingPage() {
       >
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
-              style={{ background: "linear-gradient(135deg,#7C3AED,#3B82F6)" }}
-            >
-              V
-            </div>
-            <span className="font-bold text-lg">VoiceForge</span>
+            <Image src="/elitelabs.png" alt="Elite Labs" width={32} height={32} className="rounded-lg" />
+            <span className="font-bold text-lg">Elite Labs</span>
           </Link>
 
           <nav className="flex items-center gap-3">
@@ -154,7 +150,7 @@ export default function LandingPage() {
                 <SignUpButton mode="modal">
                   <button
                     className="text-sm font-semibold text-white px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5"
-                    style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9)" }}
+                    style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
                   >
                     Empezar gratis
                   </button>
@@ -165,7 +161,7 @@ export default function LandingPage() {
                 <Link
                   href="/dashboard"
                   className="text-sm font-semibold text-white px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5"
-                  style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9)" }}
+                  style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
                 >
                   Dashboard
                 </Link>
@@ -185,16 +181,16 @@ export default function LandingPage() {
             <div className="text-center mb-12">
               <div
                 className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full mb-8 border"
-                style={{ background: "rgba(124,58,237,0.1)", borderColor: "rgba(124,58,237,0.3)", color: "#a78bfa" }}
+                style={{ background: "rgba(59,130,246,0.1)", borderColor: "rgba(59,130,246,0.3)", color: "#93c5fd" }}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
                 Síntesis de voz con IA avanzada
               </div>
 
               <h1 className="text-5xl md:text-7xl font-bold mb-5 leading-tight tracking-tight">
                 La IA más realista{" "}
                 <span style={{
-                  background: "linear-gradient(135deg,#7C3AED,#3B82F6,#a78bfa)",
+                  background: "linear-gradient(135deg,#3b82f6,#2563eb,#93c5fd)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
@@ -230,7 +226,7 @@ export default function LandingPage() {
                           onClick={() => setSelectedVoice(voice.id)}
                           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-left"
                           style={active
-                            ? { background: "rgba(124,58,237,0.15)", color: "#a78bfa" }
+                            ? { background: "rgba(59,130,246,0.15)", color: "#93c5fd" }
                             : { color: "#9ca3af" }
                           }
                         >
@@ -244,7 +240,7 @@ export default function LandingPage() {
                           {active && (
                             <span
                               className="ml-auto w-1.5 h-1.5 rounded-full flex-shrink-0"
-                              style={{ background: "#7C3AED" }}
+                              style={{ background: "#3b82f6" }}
                             />
                           )}
                         </button>
@@ -260,14 +256,14 @@ export default function LandingPage() {
                     className="flex-1 rounded-xl p-4 text-sm text-gray-300 leading-relaxed mb-5"
                     style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }}
                   >
-                    Hola, soy una voz generada con inteligencia artificial por VoiceForge. La calidad es excepcional y el resultado suena completamente natural.
+                    Hola, soy una voz generada con inteligencia artificial por Elite Labs. La calidad es excepcional y el resultado suena completamente natural.
                   </div>
 
                   {!isSignedIn ? (
                     <SignUpButton mode="modal">
                       <button
                         className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
-                        style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9)", boxShadow: "0 4px 20px rgba(124,58,237,0.35)" }}
+                        style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 20px rgba(59,130,246,0.35)" }}
                       >
                         <PlayIcon />
                         Generar y reproducir
@@ -277,7 +273,7 @@ export default function LandingPage() {
                     <Link
                       href="/dashboard"
                       className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
-                      style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9)", boxShadow: "0 4px 20px rgba(124,58,237,0.35)" }}
+                      style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 20px rgba(59,130,246,0.35)" }}
                     >
                       <PlayIcon />
                       Ir al Dashboard
@@ -348,9 +344,9 @@ export default function LandingPage() {
                     <li key={f} className="flex items-start gap-3">
                       <div
                         className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                        style={{ background: "rgba(124,58,237,0.2)" }}
+                        style={{ background: "rgba(59,130,246,0.2)" }}
                       >
-                        <Check size={11} style={{ color: "#a78bfa" }} />
+                        <Check size={11} style={{ color: "#93c5fd" }} />
                       </div>
                       <span className="text-gray-300">{f}</span>
                     </li>
@@ -361,7 +357,7 @@ export default function LandingPage() {
                   <SignUpButton mode="modal">
                     <button
                       className="px-6 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
-                      style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9)", boxShadow: "0 4px 15px rgba(124,58,237,0.3)" }}
+                      style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 15px rgba(59,130,246,0.3)" }}
                     >
                       Empezar gratis →
                     </button>
@@ -370,7 +366,7 @@ export default function LandingPage() {
                   <Link
                     href="/dashboard"
                     className="inline-block px-6 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
-                    style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9)", boxShadow: "0 4px 15px rgba(124,58,237,0.3)" }}
+                    style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 15px rgba(59,130,246,0.3)" }}
                   >
                     Ir al Dashboard →
                   </Link>
@@ -384,7 +380,7 @@ export default function LandingPage() {
                   <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
                   <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
                   <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
-                  <span className="ml-2 text-xs text-gray-600">voiceforge-studio</span>
+                  <span className="ml-2 text-xs text-gray-600">elitelabs-studio</span>
                 </div>
 
                 {/* Script text */}
@@ -411,7 +407,7 @@ export default function LandingPage() {
                           width="3"
                           height={h}
                           rx="1.5"
-                          fill={i < 22 ? "#7C3AED" : "#2a2a3e"}
+                          fill={i < 22 ? "#3b82f6" : "#2a2a3e"}
                         />
                       );
                     })}
@@ -426,7 +422,7 @@ export default function LandingPage() {
                 <div className="flex items-center gap-3">
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                    style={{ background: "linear-gradient(135deg,#7C3AED,#4F46E5)" }}
+                    style={{ background: "linear-gradient(135deg,#3b82f6,#3b82f6)" }}
                   >
                     A
                   </div>
@@ -436,7 +432,7 @@ export default function LandingPage() {
                   </div>
                   <div
                     className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
-                    style={{ background: "rgba(124,58,237,0.15)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)" }}
+                    style={{ background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}
                   >
                     <PlayIcon />
                     Generado
@@ -456,7 +452,7 @@ export default function LandingPage() {
           >
             <div
               className="w-[600px] h-[600px] rounded-full opacity-[0.07]"
-              style={{ background: "radial-gradient(circle,#7C3AED,transparent 70%)" }}
+              style={{ background: "radial-gradient(circle,#3b82f6,transparent 70%)" }}
             />
           </div>
 
@@ -480,7 +476,7 @@ export default function LandingPage() {
             </div>
 
             <h2 className="text-6xl md:text-8xl font-bold mb-4">
-              2.000.000<span style={{ color: "#7C3AED" }}>+</span>
+              2.000.000<span style={{ color: "#3b82f6" }}>+</span>
             </h2>
             <p className="text-2xl font-semibold text-gray-200 mb-4">Voces disponibles</p>
             <p className="text-gray-500 max-w-md mx-auto">
@@ -512,13 +508,13 @@ export default function LandingPage() {
             <div
               className="rounded-2xl p-12 border relative overflow-hidden text-center"
               style={{
-                background: "linear-gradient(135deg,rgba(124,58,237,0.12),rgba(59,130,246,0.06))",
-                borderColor: "rgba(124,58,237,0.25)",
+                background: "linear-gradient(135deg,rgba(59,130,246,0.12),rgba(59,130,246,0.06))",
+                borderColor: "rgba(59,130,246,0.25)",
               }}
             >
               <div
                 className="absolute -top-24 -right-24 w-64 h-64 rounded-full pointer-events-none"
-                style={{ background: "radial-gradient(circle,rgba(124,58,237,0.2),transparent 70%)" }}
+                style={{ background: "radial-gradient(circle,rgba(59,130,246,0.2),transparent 70%)" }}
                 aria-hidden
               />
 
@@ -531,7 +527,7 @@ export default function LandingPage() {
                 <SignUpButton mode="modal">
                   <button
                     className="px-8 py-4 rounded-xl font-semibold text-white text-base transition-all hover:-translate-y-1 relative"
-                    style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9)", boxShadow: "0 8px 30px rgba(124,58,237,0.4)" }}
+                    style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 8px 30px rgba(59,130,246,0.4)" }}
                   >
                     Empezar gratis →
                   </button>
@@ -540,7 +536,7 @@ export default function LandingPage() {
                 <Link
                   href="/dashboard"
                   className="inline-block px-8 py-4 rounded-xl font-semibold text-white text-base transition-all hover:-translate-y-1 relative"
-                  style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9)", boxShadow: "0 8px 30px rgba(124,58,237,0.4)" }}
+                  style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 8px 30px rgba(59,130,246,0.4)" }}
                 >
                   Ir al Dashboard →
                 </Link>
@@ -554,7 +550,7 @@ export default function LandingPage() {
       {/* ── Footer ─────────────────────────────────────────────── */}
       <footer className="border-t py-8 px-4" style={{ borderColor: "#2a2a3e" }}>
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-gray-500 text-sm">© 2025 VoiceForge. Todos los derechos reservados.</p>
+          <p className="text-gray-500 text-sm">© 2025 Elite Labs. Todos los derechos reservados.</p>
           <div className="flex gap-6">
             <Link href="/pricing" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">
               Precios

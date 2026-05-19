@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
@@ -57,13 +58,8 @@ function Sidebar({
     >
       <div className="p-5 border-b" style={{ borderColor: "#2a2a3e" }}>
         <Link href="/" className="flex items-center gap-2 mb-1">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-            style={{ background: "linear-gradient(135deg, #7C3AED, #3B82F6)" }}
-          >
-            V
-          </div>
-          <span className="font-bold text-white">VoiceForge</span>
+          <Image src="/elitelabs.png" alt="Elite Labs" width={28} height={28} className="rounded-lg" />
+          <span className="font-bold text-white">Elite Labs</span>
         </Link>
       </div>
 
@@ -75,7 +71,7 @@ function Sidebar({
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left"
             style={
               activeTab === key
-                ? { background: "rgba(124,58,237,0.15)", color: "#a78bfa", borderLeft: "2px solid #7C3AED" }
+                ? { background: "rgba(59,130,246,0.15)", color: "#93c5fd", borderLeft: "2px solid #3b82f6" }
                 : { color: "#8888a8" }
             }
           >
@@ -89,7 +85,7 @@ function Sidebar({
       <div className="p-4 border-t" style={{ borderColor: "#2a2a3e" }}>
         <div className="mb-2 flex items-center justify-between">
           <span className="text-xs text-gray-500">Caracteres disponibles</span>
-          <Link href="/pricing" className="text-xs font-medium" style={{ color: "#7C3AED" }}>
+          <Link href="/pricing" className="text-xs font-medium" style={{ color: "#3b82f6" }}>
             + Comprar
           </Link>
         </div>
@@ -101,7 +97,7 @@ function Sidebar({
             className="h-full rounded-full transition-all"
             style={{
               width: `${Math.min(100, ((credits ?? 0) / 1400000) * 100)}%`,
-              background: "linear-gradient(90deg, #7C3AED, #3B82F6)",
+              background: "linear-gradient(90deg, #3b82f6, #2563eb)",
             }}
           />
         </div>
@@ -140,7 +136,7 @@ function HomeTab({
         </h1>
         <p style={{ color: "#8888a8" }}>
           Tienes{" "}
-          <span className="font-semibold" style={{ color: "#a78bfa" }}>
+          <span className="font-semibold" style={{ color: "#93c5fd" }}>
             {credits !== null ? credits.toLocaleString("es-ES") : "—"}
           </span>{" "}
           caracteres disponibles
@@ -152,14 +148,14 @@ function HomeTab({
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className="group p-6 rounded-2xl border border-[#2a2a3e] hover:border-purple-700 text-left transition-all hover:-translate-y-0.5"
+            className="group p-6 rounded-2xl border border-[#2a2a3e] hover:border-blue-700 text-left transition-all hover:-translate-y-0.5"
             style={{ background: "#12121a" }}
           >
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-              style={{ background: "rgba(124,58,237,0.15)" }}
+              style={{ background: "rgba(59,130,246,0.15)" }}
             >
-              <Icon size={20} style={{ color: "#a78bfa" }} />
+              <Icon size={20} style={{ color: "#93c5fd" }} />
             </div>
             <h3 className="font-semibold text-white mb-1">{title}</h3>
             <p className="text-sm" style={{ color: "#8888a8" }}>{desc}</p>
@@ -236,13 +232,13 @@ function GenerateTab({
           onChange={(e) => setText(e.target.value)}
           placeholder="Escribe el texto a narrar..."
           rows={6}
-          className="w-full rounded-xl p-4 text-sm text-gray-200 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+          className="w-full rounded-xl p-4 text-sm text-gray-200 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
           style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
         />
         {text.length > 0 && (
           <p className="mt-1.5 text-xs" style={{ color: "#8888a8" }}>
             Esta generación costará{" "}
-            <span className="text-purple-400 font-semibold">
+            <span className="text-blue-400 font-semibold">
               {charCost.toLocaleString("es-ES")} caracteres
             </span>
             {" "}(incluye {selectedVoice?.isCloned ? "15%" : "10%"} por procesamiento y mejora de calidad de audio)
@@ -255,11 +251,11 @@ function GenerateTab({
         <label className="text-sm font-medium text-gray-300 mb-2 block">Voz</label>
         <button
           onClick={() => setShowBrowser(true)}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all hover:border-purple-500/60"
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all hover:border-blue-500/60"
           style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
         >
           <div className="flex items-center gap-2.5">
-            <Mic size={16} style={{ color: "#a78bfa" }} />
+            <Mic size={16} style={{ color: "#93c5fd" }} />
             <span className="text-gray-200 font-medium">
               {selectedVoice?.name ?? "Voz por defecto"}
             </span>
@@ -284,8 +280,8 @@ function GenerateTab({
         disabled={loading || text.trim().length === 0}
         className="w-full py-3 rounded-xl font-semibold text-white transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
         style={{
-          background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
-          boxShadow: loading ? "none" : "0 4px 15px rgba(124,58,237,0.3)",
+          background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+          boxShadow: loading ? "none" : "0 4px 15px rgba(59,130,246,0.3)",
         }}
       >
         {loading ? (
@@ -309,10 +305,10 @@ function GenerateTab({
             <div className="flex items-center gap-2 text-xs" style={{ color: "#8888a8" }}>
               <span>{lastResult.charsUsed.toLocaleString("es-ES")} caracteres usados</span>
               <span>·</span>
-              <span style={{ color: "#a78bfa" }}>{lastResult.charsRemaining.toLocaleString("es-ES")} restantes</span>
+              <span style={{ color: "#93c5fd" }}>{lastResult.charsRemaining.toLocaleString("es-ES")} restantes</span>
             </div>
           </div>
-          <AudioPlayer src={audioUrl} filename="voiceforge-audio.mp3" />
+          <AudioPlayer src={audioUrl} filename="elitelabs-audio.mp3" />
         </div>
       )}
 
@@ -381,7 +377,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
           onDragLeave={() => setDragging(false)}
           onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
           className="rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-all mb-4"
-          style={{ borderColor: dragging ? "#7C3AED" : "#2a2a3e", background: dragging ? "rgba(124,58,237,0.05)" : "transparent" }}
+          style={{ borderColor: dragging ? "#3b82f6" : "#2a2a3e", background: dragging ? "rgba(59,130,246,0.05)" : "transparent" }}
         >
           <input ref={inputRef} type="file" className="hidden" accept=".wav,.mp3,.m4a,audio/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
           {file ? (
@@ -407,7 +403,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
             value={voiceName}
             onChange={(e) => setVoiceName(e.target.value)}
             placeholder="Ej: Mi voz, Narrador masculino..."
-            className="w-full rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+            className="w-full rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
             style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }}
           />
         </div>
@@ -428,7 +424,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
             onClick={handleClone}
             disabled={!file || !voiceName.trim() || loading}
             className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
+            style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
           >
             {loading && (
               <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -484,7 +480,7 @@ function VoicesTab({
           <button
             onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:-translate-y-0.5"
-            style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
+            style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
           >
             + Clonar nueva voz
           </button>
@@ -509,8 +505,8 @@ function VoicesTab({
                       <p className="text-xs text-gray-500 mt-0.5">{formatDate(voice.createdAt)}</p>
                     )}
                   </div>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(124,58,237,0.15)" }}>
-                    <Mic size={14} style={{ color: "#a78bfa" }} />
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(59,130,246,0.15)" }}>
+                    <Mic size={14} style={{ color: "#93c5fd" }} />
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -518,7 +514,7 @@ function VoicesTab({
                     onClick={() => onUseVoice({ referenceId: voice.fishAudioModelId ?? "", name: voice.name, isCloned: true })}
                     disabled={!voice.fishAudioModelId}
                     className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
-                    style={{ background: "rgba(124,58,237,0.15)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)" }}
+                    style={{ background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}
                   >
                     Usar
                   </button>
@@ -600,9 +596,9 @@ function HistoryTab() {
                       onClick={() => setPlayingId(playingId === gen.id ? null : gen.id)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                       style={{
-                        background: playingId === gen.id ? "rgba(124,58,237,0.2)" : "#1a1a2e",
-                        color: playingId === gen.id ? "#a78bfa" : "#8888a8",
-                        border: `1px solid ${playingId === gen.id ? "rgba(124,58,237,0.3)" : "#2a2a3e"}`,
+                        background: playingId === gen.id ? "rgba(59,130,246,0.2)" : "#1a1a2e",
+                        color: playingId === gen.id ? "#93c5fd" : "#8888a8",
+                        border: `1px solid ${playingId === gen.id ? "rgba(59,130,246,0.3)" : "#2a2a3e"}`,
                       }}
                     >
                       <Play size={11} />
@@ -612,7 +608,7 @@ function HistoryTab() {
                 </div>
                 {playingId === gen.id && (
                   <div className="mt-3">
-                    <AudioPlayer src={gen.audioUrl} filename={`voiceforge-${gen.id}.mp3`} />
+                    <AudioPlayer src={gen.audioUrl} filename={`elitelabs-${gen.id}.mp3`} />
                   </div>
                 )}
               </div>
@@ -703,9 +699,9 @@ function BillingTab({
         </div>
         <div
           className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ background: "rgba(124,58,237,0.15)" }}
+          style={{ background: "rgba(59,130,246,0.15)" }}
         >
-          <CreditCard size={18} style={{ color: "#a78bfa" }} />
+          <CreditCard size={18} style={{ color: "#93c5fd" }} />
         </div>
       </div>
 
@@ -718,14 +714,14 @@ function BillingTab({
             key={plan.key}
             className="relative rounded-xl border flex flex-col p-5"
             style={{
-              background: plan.popular ? "rgba(124,58,237,0.08)" : "#12121a",
-              borderColor: plan.popular ? "#7C3AED" : "#2a2a3e",
+              background: plan.popular ? "rgba(59,130,246,0.08)" : "#12121a",
+              borderColor: plan.popular ? "#3b82f6" : "#2a2a3e",
             }}
           >
             {plan.popular && (
               <div
                 className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-xs font-bold text-white px-3 py-0.5 rounded-full whitespace-nowrap"
-                style={{ background: "linear-gradient(135deg,#7C3AED,#3B82F6)" }}
+                style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
               >
                 POPULAR
               </div>
@@ -745,7 +741,7 @@ function BillingTab({
             <ul className="space-y-1.5 flex-1 mb-5">
               {plan.features.map((f) => (
                 <li key={f} className="flex items-center gap-2 text-xs text-gray-400">
-                  <Check size={11} style={{ color: "#a78bfa", flexShrink: 0 }} />
+                  <Check size={11} style={{ color: "#93c5fd", flexShrink: 0 }} />
                   {f}
                 </li>
               ))}
@@ -756,7 +752,7 @@ function BillingTab({
               className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5 flex items-center justify-center"
               style={
                 plan.popular
-                  ? { background: "linear-gradient(135deg,#7C3AED,#6D28D9)", color: "white", boxShadow: "0 4px 12px rgba(124,58,237,0.3)" }
+                  ? { background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "white", boxShadow: "0 4px 12px rgba(59,130,246,0.3)" }
                   : { background: "#1a1a2e", color: "#d1d5db", border: "1px solid #2a2a3e" }
               }
             >

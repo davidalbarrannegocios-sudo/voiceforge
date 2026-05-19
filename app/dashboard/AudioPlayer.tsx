@@ -10,7 +10,7 @@ function fmt(seconds: number) {
 
 export function AudioPlayer({
   src,
-  filename = "voiceforge-audio.mp3",
+  filename = "elitelabs-audio.mp3",
 }: {
   src: string;
   filename?: string;
@@ -57,7 +57,7 @@ export function AudioPlayer({
         <button
           onClick={togglePlay}
           className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95"
-          style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)", boxShadow: "0 0 12px rgba(124,58,237,0.4)" }}
+          style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", boxShadow: "0 0 12px rgba(59,130,246,0.4)" }}
           aria-label={playing ? "Pausar" : "Reproducir"}
         >
           {playing ? (
@@ -81,12 +81,12 @@ export function AudioPlayer({
           <div className="relative h-1.5 rounded-full" style={{ background: "#2a2a3e" }}>
             <div
               className="absolute inset-y-0 left-0 rounded-full transition-all"
-              style={{ width: `${progress * 100}%`, background: "linear-gradient(90deg, #7C3AED, #a78bfa)" }}
+              style={{ width: `${progress * 100}%`, background: "linear-gradient(90deg, #3b82f6, #93c5fd)" }}
             />
             {/* Thumb */}
             <div
               className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ left: `calc(${progress * 100}% - 6px)`, background: "#a78bfa", boxShadow: "0 0 6px rgba(167,139,250,0.8)" }}
+              style={{ left: `calc(${progress * 100}% - 6px)`, background: "#93c5fd", boxShadow: "0 0 6px rgba(147,197,253,0.8)" }}
             />
           </div>
         </div>
@@ -101,7 +101,7 @@ export function AudioPlayer({
           href={src}
           download={filename}
           className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-105"
-          style={{ background: "#1a1a2e", border: "1px solid #2a2a3e", color: "#a78bfa" }}
+          style={{ background: "#1a1a2e", border: "1px solid #2a2a3e", color: "#93c5fd" }}
           aria-label="Descargar audio"
           title="Descargar"
         >

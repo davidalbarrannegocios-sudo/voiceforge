@@ -6,7 +6,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "VoiceForge — Narración con IA de calidad profesional",
+  title: "Elite Labs — Narración con IA de calidad profesional",
   description:
     "Genera voces realistas con IA y clona cualquier voz con solo 10 segundos de audio. Powered by Chatterbox TTS.",
 };

@@ -20,7 +20,7 @@ const CARD_STYLE = {
       fontSize: "14px",
       fontSmoothing: "antialiased",
       "::placeholder": { color: "#6b7280" },
-      iconColor: "#a78bfa",
+      iconColor: "#93c5fd",
     },
     invalid: { color: "#f87171", iconColor: "#f87171" },
   },
@@ -96,7 +96,7 @@ function PaymentForm({
           onChange={(e) => setName(e.target.value)}
           placeholder="Tu nombre"
           required
-          className="w-full rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+          className="w-full rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
           style={inputStyle}
         />
       </div>
@@ -111,7 +111,7 @@ function PaymentForm({
           onChange={(e) => setEmail(e.target.value)}
           placeholder="tu@email.com"
           required
-          className="w-full rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+          className="w-full rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
           style={inputStyle}
         />
       </div>
@@ -143,8 +143,8 @@ function PaymentForm({
         disabled={loading || !stripe}
         className="w-full py-3 rounded-xl font-semibold text-white transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
         style={{
-          background: "linear-gradient(135deg,#7C3AED,#6D28D9)",
-          boxShadow: loading ? "none" : "0 4px 15px rgba(124,58,237,0.3)",
+          background: "linear-gradient(135deg,#3b82f6,#2563eb)",
+          boxShadow: loading ? "none" : "0 4px 15px rgba(59,130,246,0.3)",
         }}
       >
         {loading ? (
@@ -240,7 +240,7 @@ export function PaymentModal({
             <p className="font-semibold text-white mb-1">¡Pago completado!</p>
             <p className="text-sm text-gray-400">
               Se añadirán{" "}
-              <span className="text-purple-400 font-medium">
+              <span className="text-blue-400 font-medium">
                 {plan.characters.toLocaleString("es-ES")} caracteres
               </span>{" "}
               a tu cuenta en breve.
@@ -259,7 +259,7 @@ export function PaymentModal({
           </div>
         ) : !clientSecret ? (
           <div className="flex items-center justify-center py-14">
-            <svg className="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24" style={{ color: "#a78bfa" }}>
+            <svg className="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24" style={{ color: "#93c5fd" }}>
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>

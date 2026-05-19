@@ -40,7 +40,7 @@ const LANGS = [
 ];
 
 const cardStyle = { background: "#12121a", borderColor: "#2a2a3e" };
-const avatarGradient = { background: "linear-gradient(135deg, #7C3AED, #3B82F6)" };
+const avatarGradient = { background: "linear-gradient(135deg, #3b82f6, #2563eb)" };
 
 function VoiceAvatar({ name, coverImage }: { name: string; coverImage?: string }) {
   const [imgFailed, setImgFailed] = useState(false);
@@ -82,7 +82,7 @@ function FilterBtn({
   const styles =
     color === "purple"
       ? active
-        ? { background: "rgba(124,58,237,0.25)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.5)" }
+        ? { background: "rgba(59,130,246,0.25)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.5)" }
         : { background: "#12121a", color: "#8888a8", border: "1px solid #2a2a3e" }
       : active
       ? { background: "rgba(59,130,246,0.2)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.35)" }
@@ -118,9 +118,9 @@ function PreviewBtn({
       disabled={isLoading}
       className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60"
       style={{
-        background: isPreviewing ? "rgba(124,58,237,0.3)" : "rgba(124,58,237,0.1)",
-        color: "#a78bfa",
-        border: "1px solid rgba(124,58,237,0.2)",
+        background: isPreviewing ? "rgba(59,130,246,0.3)" : "rgba(59,130,246,0.1)",
+        color: "#93c5fd",
+        border: "1px solid rgba(59,130,246,0.2)",
       }}
     >
       {isLoading ? "···" : isPreviewing ? "⏹ Stop" : "▶ Vista previa"}
@@ -234,7 +234,7 @@ export function VoiceBrowser({
               key={t}
               onClick={() => setTab(t)}
               className="py-3 px-4 text-sm font-medium transition-colors border-b-2 -mb-px mr-1"
-              style={tab === t ? { color: "#a78bfa", borderColor: "#7C3AED" } : { color: "#8888a8", borderColor: "transparent" }}
+              style={tab === t ? { color: "#93c5fd", borderColor: "#3b82f6" } : { color: "#8888a8", borderColor: "transparent" }}
             >
               {label}
             </button>
@@ -264,14 +264,14 @@ export function VoiceBrowser({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por nombre..."
-                className="w-full rounded-lg px-3 py-2 text-sm text-gray-200 mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                className="w-full rounded-lg px-3 py-2 text-sm text-gray-200 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
               />
 
               {/* Default voice card */}
               <button
                 onClick={() => handleSelect(null)}
-                className="w-full mb-4 p-3 rounded-xl border text-left flex items-center gap-3 hover:border-purple-500/60 transition-all"
+                className="w-full mb-4 p-3 rounded-xl border text-left flex items-center gap-3 hover:border-blue-500/60 transition-all"
                 style={cardStyle}
               >
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0" style={{ background: "#1a1a2e" }}>🎙️</div>
@@ -279,7 +279,7 @@ export function VoiceBrowser({
                   <p className="text-sm font-medium text-white">Voz por defecto</p>
                   <p className="text-xs" style={{ color: "#8888a8" }}>Se generará una voz estándar</p>
                 </div>
-                <span className="ml-auto text-xs" style={{ color: "#a78bfa" }}>Seleccionar →</span>
+                <span className="ml-auto text-xs" style={{ color: "#93c5fd" }}>Seleccionar →</span>
               </button>
 
               {/* Grid */}
@@ -307,7 +307,7 @@ export function VoiceBrowser({
 
                         <div className="flex flex-wrap gap-1 mb-3">
                           {voice.languages.slice(0, 2).map((l) => (
-                            <span key={l} className="px-1.5 py-0.5 rounded text-xs" style={{ background: "rgba(124,58,237,0.15)", color: "#a78bfa" }}>
+                            <span key={l} className="px-1.5 py-0.5 rounded text-xs" style={{ background: "rgba(59,130,246,0.15)", color: "#93c5fd" }}>
                               {l.toUpperCase()}
                             </span>
                           ))}
@@ -323,7 +323,7 @@ export function VoiceBrowser({
                           <button
                             onClick={() => handleSelect({ referenceId: voice._id, name: voice.title, isCloned: false })}
                             className="flex-1 py-1.5 rounded-lg text-xs font-semibold text-white"
-                            style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
+                            style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
                           >
                             Usar
                           </button>
@@ -362,7 +362,7 @@ export function VoiceBrowser({
               {/* Default option */}
               <button
                 onClick={() => handleSelect(null)}
-                className="w-full mb-4 p-3 rounded-xl border text-left flex items-center gap-3 hover:border-purple-500/60 transition-all"
+                className="w-full mb-4 p-3 rounded-xl border text-left flex items-center gap-3 hover:border-blue-500/60 transition-all"
                 style={cardStyle}
               >
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0" style={{ background: "#1a1a2e" }}>🎙️</div>
@@ -370,7 +370,7 @@ export function VoiceBrowser({
                   <p className="text-sm font-medium text-white">Voz por defecto</p>
                   <p className="text-xs" style={{ color: "#8888a8" }}>Se generará una voz estándar</p>
                 </div>
-                <span className="ml-auto text-xs" style={{ color: "#a78bfa" }}>Seleccionar →</span>
+                <span className="ml-auto text-xs" style={{ color: "#93c5fd" }}>Seleccionar →</span>
               </button>
 
               {clonedVoices.length === 0 ? (
@@ -388,7 +388,7 @@ export function VoiceBrowser({
                     return (
                       <div key={voice.id} className="p-3 rounded-xl border flex flex-col" style={cardStyle}>
                         <div className="flex items-center gap-2 mb-3">
-                          <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ background: "linear-gradient(135deg, #7C3AED, #3B82F6)" }}>
+                          <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}>
                             {voice.name[0]?.toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -403,9 +403,9 @@ export function VoiceBrowser({
                               disabled={isPreviewLoading}
                               className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60"
                               style={{
-                                background: isPreviewing ? "rgba(124,58,237,0.3)" : "rgba(124,58,237,0.1)",
-                                color: "#a78bfa",
-                                border: "1px solid rgba(124,58,237,0.2)",
+                                background: isPreviewing ? "rgba(59,130,246,0.3)" : "rgba(59,130,246,0.1)",
+                                color: "#93c5fd",
+                                border: "1px solid rgba(59,130,246,0.2)",
                               }}
                             >
                               {isPreviewLoading ? "···" : isPreviewing ? "⏹ Stop" : "▶ Vista previa"}
@@ -415,7 +415,7 @@ export function VoiceBrowser({
                             onClick={() => modelId && handleSelect({ referenceId: modelId, name: voice.name, isCloned: true })}
                             disabled={!modelId}
                             className="flex-1 py-1.5 rounded-lg text-xs font-semibold text-white disabled:opacity-50"
-                            style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
+                            style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
                           >
                             Usar
                           </button>
