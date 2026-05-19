@@ -5,7 +5,7 @@ export const PLANS = {
     name: "Básico",
     price: 6,
     characters: 250000,
-    priceId: process.env.STRIPE_PRICE_BASICO!,
+    priceId: process.env.STRIPE_PRICE_BASICO ?? "price_1TYpHz0yvXwXx2fj4kkUw8IT",
   },
   pro: {
     name: "Pro",
