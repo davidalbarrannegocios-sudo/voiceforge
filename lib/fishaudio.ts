@@ -77,10 +77,11 @@ export async function fishAudioClone({
   const apiKey = getApiKey();
 
   const form = new FormData();
+  form.append("type", "tts");
   form.append("title", voiceName);
-  form.append("visibility", "private");
   form.append("train_mode", "fast");
-  form.append("voices[0].audio", new Blob([new Uint8Array(audioBuffer)]), "reference.wav");
+  form.append("visibility", "private");
+  form.append("voices", new Blob([new Uint8Array(audioBuffer)], { type: "audio/wav" }), "reference.wav");
 
   console.log(`[FishAudio] creating voice model "${voiceName}" (${audioBuffer.length} bytes)`);
 
