@@ -132,7 +132,7 @@ export default function LandingPage() {
       >
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/elitelabs.png" alt="Elite Labs" width={80} height={80} style={{ height: "80px", width: "auto" }} className="rounded-lg" />
+            <Image src="/elitelabs.png" alt="Elite Labs" width={36} height={36} style={{ height: "36px", width: "auto" }} className="rounded-lg" />
           </Link>
 
           <nav className="flex items-center gap-3">
