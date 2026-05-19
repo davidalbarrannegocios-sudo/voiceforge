@@ -177,10 +177,7 @@ function GenerateTab({
     <div className="max-w-2xl">
       {/* Text area */}
       <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium text-gray-300">Texto</label>
-          <span className="text-xs text-gray-500">{text.length} chars</span>
-        </div>
+        <label className="text-sm font-medium text-gray-300 mb-2 block">Texto</label>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -195,6 +192,7 @@ function GenerateTab({
             <span className="text-purple-400 font-semibold">
               {charCost.toLocaleString("es-ES")} caracteres
             </span>
+            {" "}(incluye 10% por procesamiento y mejora de calidad de audio)
           </p>
         )}
       </div>
