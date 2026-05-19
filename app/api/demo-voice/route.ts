@@ -3,12 +3,16 @@ import { uploadToR2, getPublicUrl, r2KeyExists } from "@/lib/r2";
 
 export const runtime = "nodejs";
 
-const DEMO_TEXT =
-  "Hola, soy una voz generada con inteligencia artificial. La calidad es excepcional y el resultado suena completamente natural.";
+const TEXTS: Record<string, string> = {
+  hero: "Hola, soy una voz generada con inteligencia artificial. La calidad es excepcional y el resultado suena completamente natural.",
+  features: "Bienvenidos a este episodio del podcast. Hoy vamos a hablar sobre el futuro de la inteligencia artificial y cómo está cambiando el mundo.",
+};
 
 export async function POST(req: Request) {
-  const { voiceId } = await req.json();
-  const key = `demo/sample-${voiceId ?? "default"}.mp3`;
+  const { voiceId, section = "hero" } = await req.json();
+  const prefix = section === "features" ? "features" : "sample";
+  const key = `demo/${prefix}-${voiceId ?? "default"}.mp3`;
+  const text = TEXTS[section] ?? TEXTS.hero;
 
   if (await r2KeyExists(key)) {
     return NextResponse.json({ audioUrl: getPublicUrl(key) });
@@ -26,7 +30,7 @@ export async function POST(req: Request) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      text: DEMO_TEXT,
+      text,
       format: "mp3",
       mp3_bitrate: 128,
       normalize: true,

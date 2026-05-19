@@ -84,6 +84,11 @@ input[type="range"]::-moz-range-thumb {
   border: 2px solid #0a0a0f;
 }
 
+@keyframes waveBar {
+  0%, 100% { transform: scaleY(0.25); }
+  50%       { transform: scaleY(1); }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

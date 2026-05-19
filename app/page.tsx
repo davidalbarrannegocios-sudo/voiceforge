@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useUser, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
@@ -124,6 +124,12 @@ export default function LandingPage() {
   const [demoAudioUrl, setDemoAudioUrl] = useState<string | null>(null);
   const [demoLoading, setDemoLoading] = useState(false);
 
+  // Features card state
+  const [featuresAudioUrl, setFeaturesAudioUrl] = useState<string | null>(null);
+  const [featuresLoading, setFeaturesLoading] = useState(false);
+  const [featuresPlaying, setFeaturesPlaying] = useState(false);
+  const featuresAudioRef = useRef<HTMLAudioElement | null>(null);
+
   useEffect(() => {
     fetch("/api/public-voices?language=es&page_size=5")
       .then((r) => r.json())
@@ -142,14 +148,48 @@ export default function LandingPage() {
       const res = await fetch("/api/demo-voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ voiceId: selectedVoice }),
+        body: JSON.stringify({ voiceId: selectedVoice, section: "hero" }),
+      });
+      const data = await res.json();
+      if (data.audioUrl) setDemoAudioUrl(data.audioUrl);
+    } finally {
+      setDemoLoading(false);
+    }
+  }
+
+  async function handleFeaturesPlay() {
+    const voiceId = demoVoices[0]?._id;
+    if (!voiceId) return;
+
+    // Toggle pause/play if audio already loaded
+    if (featuresAudioRef.current && featuresAudioUrl) {
+      if (featuresPlaying) {
+        featuresAudioRef.current.pause();
+      } else {
+        featuresAudioRef.current.play();
+      }
+      return;
+    }
+
+    setFeaturesLoading(true);
+    try {
+      const res = await fetch("/api/demo-voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voiceId, section: "features" }),
       });
       const data = await res.json();
       if (data.audioUrl) {
-        setDemoAudioUrl(data.audioUrl);
+        setFeaturesAudioUrl(data.audioUrl);
+        const audio = new Audio(data.audioUrl);
+        audio.onplay  = () => setFeaturesPlaying(true);
+        audio.onpause = () => setFeaturesPlaying(false);
+        audio.onended = () => setFeaturesPlaying(false);
+        featuresAudioRef.current = audio;
+        audio.play();
       }
     } finally {
-      setDemoLoading(false);
+      setFeaturesLoading(false);
     }
   }
 
@@ -443,72 +483,121 @@ export default function LandingPage() {
                 )}
               </div>
 
-              {/* Right: mock studio card */}
-              <div className="rounded-2xl border p-5" style={{ background: "#12121a", borderColor: "#2a2a3e" }}>
-                {/* Window chrome */}
-                <div className="flex items-center gap-1.5 mb-4">
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
-                  <span className="ml-2 text-xs text-gray-600">elitelabs-studio</span>
-                </div>
+              {/* Right: interactive studio card */}
+              {(() => {
+                const fv = demoVoices[0];
+                return (
+                  <div className="rounded-2xl border p-5" style={{ background: "#12121a", borderColor: "#2a2a3e" }}>
+                    {/* Window chrome */}
+                    <div className="flex items-center gap-1.5 mb-4">
+                      <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+                      <span className="ml-2 text-xs text-gray-600">elitelabs-studio</span>
+                    </div>
 
-                {/* Script text */}
-                <div
-                  className="rounded-lg px-4 py-3 text-xs text-gray-400 mb-3 leading-relaxed"
-                  style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }}
-                >
-                  &ldquo;Bienvenidos a este episodio del podcast. Hoy vamos a hablar sobre el futuro de la inteligencia artificial y cómo está cambiando el mundo...&rdquo;
-                </div>
+                    {/* Script text */}
+                    <div
+                      className="rounded-lg px-4 py-3 text-xs text-gray-400 mb-3 leading-relaxed"
+                      style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }}
+                    >
+                      &ldquo;Bienvenidos a este episodio del podcast. Hoy vamos a hablar sobre el futuro de la inteligencia artificial y cómo está cambiando el mundo.&rdquo;
+                    </div>
 
-                {/* Waveform */}
-                <div
-                  className="rounded-lg px-3 pt-3 pb-2 mb-3"
-                  style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }}
-                >
-                  <svg viewBox="0 0 300 36" className="w-full" fill="none">
-                    {Array.from({ length: 60 }, (_, i) => {
-                      const h = Math.abs(Math.sin(i * 0.45) * 11 + Math.sin(i * 0.9) * 7 + 10);
-                      return (
-                        <rect
-                          key={i}
-                          x={i * 5}
-                          y={(36 - h) / 2}
-                          width="3"
-                          height={h}
-                          rx="1.5"
-                          fill={i < 22 ? "#3b82f6" : "#2a2a3e"}
+                    {/* Waveform area */}
+                    <div
+                      className="rounded-lg px-3 pt-3 pb-2 mb-3 flex items-center justify-center"
+                      style={{ background: "#0a0a0f", border: "1px solid #2a2a3e", minHeight: "56px" }}
+                    >
+                      {featuresPlaying ? (
+                        /* Animated waveform bars */
+                        <div className="flex items-center gap-0.5 h-9">
+                          {Array.from({ length: 28 }, (_, i) => {
+                            const baseH = Math.abs(Math.sin(i * 0.55) * 14 + Math.sin(i * 1.1) * 8 + 10);
+                            return (
+                              <div
+                                key={i}
+                                className="rounded-full flex-shrink-0"
+                                style={{
+                                  width: "3px",
+                                  height: `${baseH}px`,
+                                  background: "#3b82f6",
+                                  transformOrigin: "center",
+                                  animation: `waveBar ${0.7 + (i % 4) * 0.15}s ease-in-out infinite`,
+                                  animationDelay: `${(i * 0.06) % 0.5}s`,
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        /* Static waveform SVG */
+                        <svg viewBox="0 0 300 36" className="w-full" fill="none">
+                          {Array.from({ length: 60 }, (_, i) => {
+                            const h = Math.abs(Math.sin(i * 0.45) * 11 + Math.sin(i * 0.9) * 7 + 10);
+                            return (
+                              <rect
+                                key={i}
+                                x={i * 5}
+                                y={(36 - h) / 2}
+                                width="3"
+                                height={h}
+                                rx="1.5"
+                                fill={featuresAudioUrl && i < 22 ? "#3b82f6" : "#2a2a3e"}
+                              />
+                            );
+                          })}
+                        </svg>
+                      )}
+                    </div>
+
+                    {/* Voice row */}
+                    <div className="flex items-center gap-3">
+                      {fv?.cover_image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={fv.cover_image}
+                          alt=""
+                          className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                         />
-                      );
-                    })}
-                  </svg>
-                  <div className="flex justify-between mt-1 text-xs" style={{ color: "#555" }}>
-                    <span>0:07</span>
-                    <span>0:28</span>
+                      ) : (
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                          style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
+                        >
+                          {fv?.title[0]?.toUpperCase() ?? "V"}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-white truncate">{fv?.title ?? "Cargando..."}</p>
+                        <p className="text-xs" style={{ color: "#6b7280" }}>Español</p>
+                      </div>
+                      <button
+                        onClick={handleFeaturesPlay}
+                        disabled={featuresLoading || !fv}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}
+                      >
+                        {featuresLoading ? (
+                          <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                        ) : featuresPlaying ? (
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                            <rect x="1" y="1" width="3" height="8" rx="1" />
+                            <rect x="6" y="1" width="3" height="8" rx="1" />
+                          </svg>
+                        ) : (
+                          <PlayIcon />
+                        )}
+                        {featuresLoading ? "Generando..." : featuresPlaying ? "Pausar" : featuresAudioUrl ? "Reproducir" : "Escuchar"}
+                      </button>
+                    </div>
                   </div>
-                </div>
-
-                {/* Voice row */}
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                    style={{ background: "linear-gradient(135deg,#3b82f6,#3b82f6)" }}
-                  >
-                    A
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-white">Ana García</p>
-                    <p className="text-xs" style={{ color: "#6b7280" }}>Español · Femenino</p>
-                  </div>
-                  <div
-                    className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
-                    style={{ background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}
-                  >
-                    <PlayIcon />
-                    Generado
-                  </div>
-                </div>
-              </div>
+                );
+              })()}
             </div>
           </div>
         </section>
