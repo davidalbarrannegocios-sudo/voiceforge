@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { calculateCredits, formatDate } from "@/lib/utils";
+import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
 
@@ -84,7 +84,7 @@ function Sidebar({
       {/* Credits */}
       <div className="p-4 border-t" style={{ borderColor: "#2a2a3e" }}>
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-xs text-gray-500">Créditos disponibles</span>
+          <span className="text-xs text-gray-500">Caracteres disponibles</span>
           <Link href="/pricing" className="text-xs font-medium" style={{ color: "#7C3AED" }}>
             + Comprar
           </Link>
@@ -96,7 +96,7 @@ function Sidebar({
           <div
             className="h-full rounded-full transition-all"
             style={{
-              width: `${Math.min(100, ((credits ?? 0) / 1200) * 100)}%`,
+              width: `${Math.min(100, ((credits ?? 0) / 1400000) * 100)}%`,
               background: "linear-gradient(90deg, #7C3AED, #3B82F6)",
             }}
           />
@@ -131,11 +131,11 @@ function GenerateTab({
   const [error, setError] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<{
     durationSeconds: number;
-    creditsUsed: number;
-    creditsRemaining: number;
+    charsUsed: number;
+    charsRemaining: number;
   } | null>(null);
 
-  const creditsNeeded = calculateCredits(text.length);
+  const charCost = calculateCharCost(text.length);
   const clonedVoices = voices.filter((v) => !v.isSystem);
 
   async function handleGenerate() {
@@ -161,8 +161,8 @@ function GenerateTab({
       setAudioUrl(data.audioUrl);
       setLastResult({
         durationSeconds: data.durationSeconds,
-        creditsUsed: data.creditsUsed,
-        creditsRemaining: data.creditsRemaining,
+        charsUsed: data.charsUsed,
+        charsRemaining: data.charsRemaining,
       });
       onGenerated();
     } catch (e: unknown) {
@@ -193,7 +193,7 @@ function GenerateTab({
           <p className="mt-1.5 text-xs" style={{ color: "#8888a8" }}>
             Esta generación costará{" "}
             <span className="text-purple-400 font-semibold">
-              {creditsNeeded} crédito{creditsNeeded !== 1 ? "s" : ""}
+              {charCost.toLocaleString("es-ES")} caracteres
             </span>
           </p>
         )}
@@ -256,9 +256,9 @@ function GenerateTab({
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-300">Audio generado</span>
             <div className="flex items-center gap-2 text-xs" style={{ color: "#8888a8" }}>
-              <span>{lastResult.creditsUsed} crédito{lastResult.creditsUsed !== 1 ? "s" : ""} usados</span>
+              <span>{lastResult.charsUsed.toLocaleString("es-ES")} caracteres usados</span>
               <span>·</span>
-              <span style={{ color: "#a78bfa" }}>{lastResult.creditsRemaining} restantes</span>
+              <span style={{ color: "#a78bfa" }}>{lastResult.charsRemaining.toLocaleString("es-ES")} restantes</span>
             </div>
           </div>
           <AudioPlayer src={audioUrl} filename="voiceforge-audio.mp3" />
@@ -360,7 +360,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
         </div>
 
         <p className="text-xs text-gray-500 mb-4">
-          Clonar cuesta <span className="text-purple-400">10 créditos</span>
+          La clonación es gratuita
         </p>
 
         {error && (
@@ -530,7 +530,7 @@ function HistoryTab() {
                     <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                       <span>{formatDate(gen.createdAt)}</span>
                       <span>·</span>
-                      <span>{gen.creditsUsed} crédito{gen.creditsUsed !== 1 ? "s" : ""}</span>
+                      <span>{gen.creditsUsed.toLocaleString("es-ES")} chars</span>
                       <span>·</span>
                       <span>{gen.durationSeconds.toFixed(1)}s</span>
                     </div>
@@ -597,7 +597,7 @@ export default function DashboardPage() {
   const fetchCredits = useCallback(async () => {
     const res = await fetch("/api/credits");
     const data = await res.json();
-    setCredits(data.credits);
+    setCredits(data.characters);
   }, []);
 
   const fetchVoices = useCallback(async () => {
@@ -611,7 +611,7 @@ export default function DashboardPage() {
     fetchVoices();
   }, [fetchCredits, fetchVoices]);
 
-  const successCredits = searchParams.get("credits");
+  const successChars = searchParams.get("characters");
 
   function handleUseVoice(voice: SelectedVoice) {
     setSelectedVoice(voice);
@@ -623,11 +623,11 @@ export default function DashboardPage() {
       <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <main className="flex-1 p-8 overflow-auto">
-        {successCredits && (
+        {successChars && (
           <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
             <span className="text-green-400 text-xl">✓</span>
             <p className="text-green-400 font-medium text-sm">
-              ¡Compra completada! Se han añadido <strong>{successCredits} créditos</strong> a tu cuenta.
+              ¡Compra completada! Se han añadido <strong>{parseInt(successChars).toLocaleString("es-ES")} caracteres</strong> a tu cuenta.
             </p>
           </div>
         )}
@@ -637,7 +637,7 @@ export default function DashboardPage() {
             Hola, {user?.firstName ?? "de nuevo"} 👋
           </h1>
           <p className="text-gray-400 text-sm mt-1">
-            {credits !== null ? `Tienes ${credits.toLocaleString("es-ES")} créditos disponibles` : "Cargando créditos..."}
+            {credits !== null ? `Tienes ${credits.toLocaleString("es-ES")} caracteres disponibles` : "Cargando caracteres..."}
           </p>
         </div>
 

@@ -30,10 +30,10 @@ export async function POST(req: Request) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const userId = session.metadata?.userId;
-    const credits = parseInt(session.metadata?.credits ?? "0");
+    const characters = parseInt(session.metadata?.characters ?? "0");
     const amountCents = session.amount_total ?? 0;
 
-    if (!userId || !credits) {
+    if (!userId || !characters) {
       console.error("Webhook: missing metadata in session", session.id);
       return NextResponse.json({ received: true });
     }
@@ -52,13 +52,13 @@ export async function POST(req: Request) {
       await prisma.$transaction([
         prisma.user.update({
           where: { id: user.id },
-          data: { credits: { increment: credits } },
+          data: { credits: { increment: characters } },
         }),
         prisma.purchase.create({
           data: {
             userId: user.id,
             stripeSessionId: session.id,
-            creditsPurchased: credits,
+            creditsPurchased: characters,
             amountCents,
           },
         }),

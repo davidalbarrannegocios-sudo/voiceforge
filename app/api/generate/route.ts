@@ -2,7 +2,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { fishAudioGenerate } from "@/lib/fishaudio";
-import { calculateCredits } from "@/lib/utils";
+import { calculateCharCost } from "@/lib/utils";
 
 export async function POST(req: Request) {
   const clerkUser = await currentUser();
@@ -24,11 +24,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
   }
 
-  const creditsNeeded = calculateCredits(text.length);
+  const charCost = calculateCharCost(text.trim().length);
 
-  if (user.credits < creditsNeeded) {
+  if (user.credits < charCost) {
     return NextResponse.json(
-      { error: "Créditos insuficientes", creditsNeeded, creditsAvailable: user.credits },
+      { error: "Caracteres insuficientes", charCost, charsAvailable: user.credits },
       { status: 402 }
     );
   }
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   const [updatedUser] = await prisma.$transaction([
     prisma.user.update({
       where: { id: user.id },
-      data: { credits: { decrement: creditsNeeded } },
+      data: { credits: { decrement: charCost } },
     }),
     prisma.generation.create({
       data: {
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
         voiceId: reference_id ?? "default",
         audioUrl: result.audio_url,
         durationSeconds: result.duration_seconds,
-        creditsUsed: creditsNeeded,
+        creditsUsed: charCost,
       },
     }),
   ]);
@@ -68,7 +68,7 @@ export async function POST(req: Request) {
   return NextResponse.json({
     audioUrl: result.audio_url,
     durationSeconds: result.duration_seconds,
-    creditsUsed: creditsNeeded,
-    creditsRemaining: updatedUser.credits,
+    charsUsed: charCost,
+    charsRemaining: updatedUser.credits,
   });
 }

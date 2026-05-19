@@ -40,10 +40,10 @@ export async function POST(req: Request) {
     line_items: [{ price: selectedPlan.priceId, quantity: 1 }],
     metadata: {
       userId: user.id,
-      credits: String(selectedPlan.credits),
+      characters: String(selectedPlan.characters),
       plan,
     },
-    success_url: `${baseUrl}/dashboard?success=1&credits=${selectedPlan.credits}`,
+    success_url: `${baseUrl}/dashboard?success=1&characters=${selectedPlan.characters}`,
     cancel_url: `${baseUrl}/pricing?cancelled=1`,
   });
 

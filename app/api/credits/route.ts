@@ -23,5 +23,5 @@ export async function GET() {
     });
   }
 
-  return NextResponse.json({ credits: user.credits });
+  return NextResponse.json({ characters: user.credits });
 }

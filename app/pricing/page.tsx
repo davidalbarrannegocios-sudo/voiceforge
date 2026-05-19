@@ -7,16 +7,14 @@ import { useUser } from "@clerk/nextjs";
 
 const plans = [
   {
-    key: "starter",
-    name: "Starter",
-    price: 9,
-    credits: 100,
-    minutes: "~50",
+    key: "basico",
+    name: "Básico",
+    price: 6,
+    characters: 250000,
     popular: false,
     features: [
-      "100 créditos",
-      "~50 min de audio",
-      "Voces del sistema (2 voces)",
+      "250.000 caracteres",
+      "Explorar voces públicas",
       "Clonación de voz",
       "Historial 30 días",
     ],
@@ -24,33 +22,29 @@ const plans = [
   {
     key: "pro",
     name: "Pro",
-    price: 29,
-    credits: 400,
-    minutes: "~200",
+    price: 12,
+    characters: 600000,
     popular: true,
     features: [
-      "400 créditos",
-      "~200 min de audio",
-      "Voces del sistema (2 voces)",
+      "600.000 caracteres",
+      "Explorar voces públicas",
       "Clonación de voz ilimitada",
       "Historial completo",
       "Generación prioritaria",
     ],
   },
   {
-    key: "studio",
-    name: "Studio",
-    price: 79,
-    credits: 1200,
-    minutes: "~600",
+    key: "premium",
+    name: "Premium",
+    price: 24,
+    characters: 1400000,
     popular: false,
     features: [
-      "1200 créditos",
-      "~600 min de audio",
-      "Voces del sistema (2 voces)",
+      "1.400.000 caracteres",
+      "Explorar voces públicas",
       "Clonación de voz ilimitada",
       "Historial completo",
-      "Prioridad máxima de GPU",
+      "Prioridad máxima",
       "Soporte preferente",
     ],
   },
@@ -135,10 +129,10 @@ export default function PricingPage() {
             Elige tu plan
           </h1>
           <p className="text-gray-400 text-lg max-w-xl mx-auto">
-            Pago único, sin suscripciones. Los créditos nunca caducan.
+            Pago único, sin suscripciones. Los caracteres nunca caducan.
             <br />
             <span className="text-sm text-gray-500">
-              1 crédito ≈ 500 caracteres · ~30 segundos de audio
+              Se descuenta un 10% extra por overhead de procesamiento
             </span>
           </p>
         </div>
@@ -171,7 +165,7 @@ export default function PricingPage() {
                   <span className="text-gray-400 text-sm">pago único</span>
                 </div>
                 <p className="text-sm text-gray-500">
-                  {plan.credits} créditos · {plan.minutes} min de audio
+                  {plan.characters.toLocaleString("es-ES")} caracteres
                 </p>
               </div>
 
@@ -239,16 +233,16 @@ export default function PricingPage() {
           </h2>
           {[
             {
-              q: "¿Los créditos caducan?",
-              a: "No. Una vez comprados, los créditos son tuyos para siempre.",
+              q: "¿Los caracteres caducan?",
+              a: "No. Una vez comprados, los caracteres son tuyos para siempre.",
             },
             {
-              q: "¿Puedo comprar más créditos después?",
-              a: "Sí, puedes comprar cualquier plan en cualquier momento y los créditos se acumulan.",
+              q: "¿Puedo comprar más caracteres después?",
+              a: "Sí, puedes comprar cualquier plan en cualquier momento y los caracteres se acumulan.",
             },
             {
               q: "¿Cuánto tarda en generarse el audio?",
-              a: "La primera generación puede tardar 20-30 segundos mientras arranca la GPU. Las siguientes son casi instantáneas.",
+              a: "Normalmente entre 2 y 10 segundos dependiendo de la longitud del texto.",
             },
             {
               q: "¿Qué formatos de audio acepta la clonación?",
