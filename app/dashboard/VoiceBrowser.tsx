@@ -39,6 +39,33 @@ const LANGS = [
 ];
 
 const cardStyle = { background: "#12121a", borderColor: "#2a2a3e" };
+const avatarGradient = { background: "linear-gradient(135deg, #7C3AED, #3B82F6)" };
+
+function VoiceAvatar({ name, coverImage }: { name: string; coverImage?: string }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const initial = name[0]?.toUpperCase() ?? "?";
+
+  if (coverImage && !imgFailed) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={coverImage}
+        alt=""
+        className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
+        onError={() => setImgFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <div
+      className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+      style={avatarGradient}
+    >
+      {initial}
+    </div>
+  );
+}
 
 function FilterBtn({
   active,
@@ -201,7 +228,7 @@ export function VoiceBrowser({
 
         {/* Tabs */}
         <div className="flex border-b px-6 flex-shrink-0" style={{ borderColor: "#2a2a3e" }}>
-          {([["public", "Voces de Fish Audio"], ["cloned", `Mis voces clonadas (${clonedVoices.length})`]] as const).map(([t, label]) => (
+          {([["public", "Voces del sistema"], ["cloned", `Mis voces clonadas (${clonedVoices.length})`]] as const).map(([t, label]) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -249,7 +276,7 @@ export function VoiceBrowser({
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0" style={{ background: "#1a1a2e" }}>🎙️</div>
                 <div>
                   <p className="text-sm font-medium text-white">Voz por defecto</p>
-                  <p className="text-xs" style={{ color: "#8888a8" }}>Fish Audio generará una voz estándar</p>
+                  <p className="text-xs" style={{ color: "#8888a8" }}>Se generará una voz estándar</p>
                 </div>
                 <span className="ml-auto text-xs" style={{ color: "#a78bfa" }}>Seleccionar →</span>
               </button>
@@ -270,14 +297,7 @@ export function VoiceBrowser({
                     return (
                       <div key={voice._id} className="p-3 rounded-xl border flex flex-col" style={cardStyle}>
                         <div className="flex items-center gap-2 mb-2">
-                          {voice.cover_image ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={voice.cover_image} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
-                          ) : (
-                            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ background: "linear-gradient(135deg, #7C3AED, #3B82F6)" }}>
-                              {voice.title[0]?.toUpperCase()}
-                            </div>
-                          )}
+                          <VoiceAvatar name={voice.title} coverImage={voice.cover_image} />
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-semibold text-white truncate">{voice.title}</p>
                             <p className="text-xs" style={{ color: "#8888a8" }}>{voice.task_count.toLocaleString()} usos</p>
@@ -347,7 +367,7 @@ export function VoiceBrowser({
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0" style={{ background: "#1a1a2e" }}>🎙️</div>
                 <div>
                   <p className="text-sm font-medium text-white">Voz por defecto</p>
-                  <p className="text-xs" style={{ color: "#8888a8" }}>Fish Audio generará una voz estándar</p>
+                  <p className="text-xs" style={{ color: "#8888a8" }}>Se generará una voz estándar</p>
                 </div>
                 <span className="ml-auto text-xs" style={{ color: "#a78bfa" }}>Seleccionar →</span>
               </button>
