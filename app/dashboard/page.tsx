@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { Home, Mic, Users, Clock, Check, Play, CreditCard } from "lucide-react";
+import { Home, Mic, Users, Clock, Check, Play, CreditCard, Gift, Copy } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
@@ -31,7 +31,7 @@ interface Generation {
   createdAt: string;
 }
 
-type Tab = "home" | "generate" | "voices" | "history" | "billing";
+type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral";
 
 /* ─── Sidebar ─────────────────────────────────────────────── */
 function Sidebar({
@@ -49,6 +49,7 @@ function Sidebar({
     { key: "voices", label: "Mis voces", Icon: Users },
     { key: "history", label: "Historial", Icon: Clock },
     { key: "billing", label: "Facturación", Icon: CreditCard },
+    { key: "referral", label: "Referidos", Icon: Gift },
   ];
 
   return (
@@ -777,6 +778,223 @@ function BillingTab({
   );
 }
 
+/* ─── Referral Tab ───────────────────────────────────────── */
+interface ReferralEntry {
+  id: string;
+  status: string;
+  rewardChars: number;
+  createdAt: string;
+  rewardedAt: string | null;
+}
+
+function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referrals, setReferrals] = useState<ReferralEntry[]>([]);
+  const [pendingReward, setPendingReward] = useState(0);
+  const [totalEarned, setTotalEarned] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [claiming, setClaiming] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [claimedMsg, setClaimedMsg] = useState<number | null>(null);
+
+  const fetchReferral = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/referral");
+      const data = await res.json();
+      setReferralCode(data.referralCode ?? null);
+      setReferrals(data.referrals ?? []);
+      setPendingReward(data.pendingReward ?? 0);
+      setTotalEarned(data.totalEarned ?? 0);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchReferral(); }, [fetchReferral]);
+
+  const referralLink = referralCode
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/r/${referralCode}`
+    : "";
+
+  async function handleCopy() {
+    if (!referralLink) return;
+    await navigator.clipboard.writeText(referralLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleClaim() {
+    setClaiming(true);
+    try {
+      const res = await fetch("/api/referral/claim", { method: "POST" });
+      const data = await res.json();
+      if (data.claimed > 0) {
+        setClaimedMsg(data.claimed);
+        setTimeout(() => setClaimedMsg(null), 4000);
+        onClaimed();
+        await fetchReferral();
+      }
+    } finally {
+      setClaiming(false);
+    }
+  }
+
+  const cardStyle = { background: "#12121a", borderColor: "#2a2a3e" };
+
+  return (
+    <div className="max-w-2xl">
+      <h2 className="text-lg font-bold text-white mb-6">Programa de referidos</h2>
+
+      {/* Referral link */}
+      <div className="rounded-xl border p-5 mb-6" style={cardStyle}>
+        <p className="text-xs text-gray-500 mb-1">Tu enlace de referido</p>
+        <p className="text-xs text-gray-400 mb-3">
+          Comparte este enlace. Cuando alguien compre caracteres, recibirás el <span className="text-blue-400 font-semibold">5%</span> en caracteres.
+        </p>
+        {loading ? (
+          <div className="h-10 rounded-lg animate-pulse" style={{ background: "#1a1a2e" }} />
+        ) : (
+          <div className="flex items-center gap-2">
+            <div
+              className="flex-1 px-3 py-2.5 rounded-lg text-sm font-mono truncate"
+              style={{ background: "#0a0a0f", border: "1px solid #2a2a3e", color: "#93c5fd" }}
+            >
+              {referralLink || "—"}
+            </div>
+            <button
+              onClick={handleCopy}
+              disabled={!referralLink}
+              className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
+              style={copied
+                ? { background: "rgba(34,197,94,0.15)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.3)" }
+                : { background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }
+              }
+            >
+              <Copy size={12} />
+              {copied ? "¡Copiado!" : "Copiar"}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        {[
+          { label: "Referidos", value: loading ? "—" : referrals.length.toString() },
+          { label: "Completados", value: loading ? "—" : referrals.filter(r => r.status !== "pending").length.toString() },
+          { label: "Total ganado", value: loading ? "—" : `${totalEarned.toLocaleString("es-ES")} chars` },
+        ].map(({ label, value }) => (
+          <div key={label} className="rounded-xl border p-4 text-center" style={cardStyle}>
+            <p className="text-xl font-bold text-white mb-0.5">{value}</p>
+            <p className="text-xs text-gray-500">{label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Claim */}
+      {(pendingReward > 0 || claimedMsg !== null) && (
+        <div
+          className="rounded-xl border p-5 mb-6 flex items-center justify-between gap-4"
+          style={claimedMsg !== null
+            ? { background: "rgba(34,197,94,0.08)", borderColor: "rgba(34,197,94,0.3)" }
+            : { background: "rgba(59,130,246,0.06)", borderColor: "rgba(59,130,246,0.25)" }
+          }
+        >
+          <div>
+            {claimedMsg !== null ? (
+              <>
+                <p className="text-sm font-semibold text-green-400">¡Recompensa canjeada!</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  +{claimedMsg.toLocaleString("es-ES")} caracteres añadidos a tu saldo
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-semibold text-white">Recompensa disponible</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  <span className="text-blue-400 font-semibold">{pendingReward.toLocaleString("es-ES")} caracteres</span> listos para canjear
+                </p>
+              </>
+            )}
+          </div>
+          {claimedMsg === null && (
+            <button
+              onClick={handleClaim}
+              disabled={claiming}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+              style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 12px rgba(59,130,246,0.3)" }}
+            >
+              {claiming && (
+                <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              )}
+              Canjear caracteres
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Referral list */}
+      <div>
+        <p className="text-sm font-semibold text-gray-300 mb-3">Historial de referidos</p>
+        {loading ? (
+          <div className="space-y-2">
+            {[1, 2].map(i => <div key={i} className="h-14 rounded-xl animate-pulse" style={{ background: "#12121a" }} />)}
+          </div>
+        ) : referrals.length === 0 ? (
+          <div className="text-center py-12 rounded-xl border" style={cardStyle}>
+            <Gift size={36} style={{ color: "#8888a8" }} className="mx-auto mb-3" />
+            <p className="text-sm font-medium text-gray-400">Aún no tienes referidos</p>
+            <p className="text-xs text-gray-600 mt-1">Comparte tu enlace y empieza a ganar</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {referrals.map((r, i) => (
+              <div key={r.id} className="flex items-center justify-between p-4 rounded-xl border" style={cardStyle}>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                    style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
+                  >
+                    {i + 1}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">Referido #{i + 1}</p>
+                    <p className="text-xs text-gray-500">{formatDate(r.createdAt)}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
+                    style={
+                      r.status === "claimed"
+                        ? { background: "rgba(34,197,94,0.12)", color: "#4ade80" }
+                        : r.status === "rewarded"
+                        ? { background: "rgba(59,130,246,0.15)", color: "#93c5fd" }
+                        : { background: "rgba(255,255,255,0.06)", color: "#8888a8" }
+                    }
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full inline-block"
+                      style={{ background: r.status === "claimed" ? "#4ade80" : r.status === "rewarded" ? "#93c5fd" : "#8888a8" }}
+                    />
+                    {r.status === "claimed" ? "Canjeado" : r.status === "rewarded" ? "Listo" : "Pendiente"}
+                  </span>
+                  {r.rewardChars > 0 && (
+                    <p className="text-xs text-gray-500 mt-0.5">+{r.rewardChars.toLocaleString("es-ES")} chars</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Dashboard ──────────────────────────────────────── */
 export default function DashboardPage() {
   const { user } = useUser();
@@ -848,6 +1066,9 @@ export default function DashboardPage() {
             userEmail={user?.emailAddresses[0]?.emailAddress}
             onPaymentSuccess={fetchCredits}
           />
+        )}
+        {activeTab === "referral" && (
+          <ReferralTab onClaimed={fetchCredits} />
         )}
       </main>
     </div>

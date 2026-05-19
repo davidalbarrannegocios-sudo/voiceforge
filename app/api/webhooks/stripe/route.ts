@@ -6,6 +6,24 @@ import Stripe from "stripe";
 
 export const runtime = "nodejs";
 
+async function getReferralRewardOps(userId: string, characters: number) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user?.referredBy) return [];
+
+  const referral = await prisma.referral.findFirst({
+    where: { referredId: userId, status: "pending" },
+  });
+  if (!referral) return [];
+
+  const rewardChars = Math.floor(characters * 0.05);
+  return [
+    prisma.referral.update({
+      where: { id: referral.id },
+      data: { status: "rewarded", rewardChars, rewardedAt: new Date() },
+    }),
+  ];
+}
+
 export async function POST(req: Request) {
   const body = await req.text();
   const headersList = await headers();
@@ -30,8 +48,6 @@ export async function POST(req: Request) {
   if (event.type === "payment_intent.succeeded") {
     const pi = event.data.object as Stripe.PaymentIntent;
 
-    // Only handle payment intents created by embedded Elements, not by Checkout Sessions
-    // (Checkout Sessions fire their own payment_intent.succeeded which we must ignore)
     if (pi.metadata?.source !== "elements") {
       return NextResponse.json({ received: true });
     }
@@ -52,6 +68,7 @@ export async function POST(req: Request) {
     }
 
     try {
+      const referralOps = await getReferralRewardOps(userId, characters);
       await prisma.$transaction([
         prisma.user.update({
           where: { id: user.id },
@@ -65,6 +82,7 @@ export async function POST(req: Request) {
             amountCents,
           },
         }),
+        ...referralOps,
       ]);
     } catch (err) {
       console.error("Webhook: DB transaction failed", err);
@@ -83,17 +101,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ received: true });
     }
 
-    // Buscar usuario por ID interno; si no existe (edge case) buscar por clerkId
-    // del customer_email como fallback
     const user = await prisma.user.findUnique({ where: { id: userId } });
-
     if (!user) {
       console.error("Webhook: user not found for id", userId);
-      // Responder 200 para que Stripe no reintente — registrar el incidente
       return NextResponse.json({ received: true, warning: "user_not_found" });
     }
 
     try {
+      const referralOps = await getReferralRewardOps(userId, characters);
       await prisma.$transaction([
         prisma.user.update({
           where: { id: user.id },
@@ -107,10 +122,10 @@ export async function POST(req: Request) {
             amountCents,
           },
         }),
+        ...referralOps,
       ]);
     } catch (err) {
       console.error("Webhook: DB transaction failed", err);
-      // Devolver 500 para que Stripe reintente
       return NextResponse.json({ error: "DB error" }, { status: 500 });
     }
   }

@@ -12,11 +12,15 @@ model User {
   clerkId      String        @unique
   email        String
   credits      Int           @default(0)
+  referralCode String?       @unique
+  referredBy   String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   generations  Generation[]
   clonedVoices ClonedVoice[]
   purchases    Purchase[]
+  referralsGiven   Referral[] @relation("referrer")
+  referralReceived Referral?  @relation("referred")
 }
 
 model Generation {
@@ -48,4 +52,16 @@ model Purchase {
   creditsPurchased Int
   amountCents      Int
   createdAt        DateTime @default(now())
+}
+
+model Referral {
+  id          String    @id @default(cuid())
+  referrerId  String
+  referrer    User      @relation("referrer", fields: [referrerId], references: [id])
+  referredId  String    @unique
+  referred    User      @relation("referred", fields: [referredId], references: [id])
+  status      String    @default("pending") // pending | rewarded | claimed
+  rewardChars Int       @default(0)
+  createdAt   DateTime  @default(now())
+  rewardedAt  DateTime?
 }
