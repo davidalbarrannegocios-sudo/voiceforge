@@ -97,11 +97,22 @@ def handler(job):
             except Exception as e:
                 print(f"Warning: could not load reference voice from {r2_key} ({e}), using default.")
 
-        # Generate audio with Chatterbox
+        # When using a cloned voice, fix exaggeration and cfg_weight for
+        # better accent/voice fidelity regardless of what the user sent.
+        if audio_prompt_path:
+            gen_exaggeration = 0.5
+            gen_cfg_weight   = 3.0
+        else:
+            gen_exaggeration = exaggeration
+            gen_cfg_weight   = 0.5  # Chatterbox default
+
+        print(f"[generate] exaggeration={gen_exaggeration} cfg_weight={gen_cfg_weight} cloned={'yes' if audio_prompt_path else 'no'}")
+
         wav = MODEL.generate(
             text,
             audio_prompt_path=audio_prompt_path,
-            exaggeration=exaggeration,
+            exaggeration=gen_exaggeration,
+            cfg_weight=gen_cfg_weight,
         )
 
         wav_data = wav_bytes_from_tensor(wav, MODEL.sr)
@@ -129,9 +140,14 @@ def handler(job):
 
         ref_key = f"reference-voices/{user_id}/{voice_id}.wav"
 
-        # Convert to WAV if needed and upload
+        # Decode, trim to first 15 s, and upload as WAV
         buf = io.BytesIO(audio_bytes)
         data, sr = sf.read(buf)
+        max_samples = int(15 * sr)
+        data = data[:max_samples]
+        duration_s = len(data) / sr
+        print(f"[clone] reference audio trimmed to {duration_s:.1f}s at {sr}Hz")
+
         wav_buf = io.BytesIO()
         sf.write(wav_buf, data, sr, format="WAV")
         wav_buf.seek(0)
