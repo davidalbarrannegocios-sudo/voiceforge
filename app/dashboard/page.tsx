@@ -8,6 +8,7 @@ import { Home, Mic, Users, Clock, Check, Play, CreditCard } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
+import { PaymentModal, type BillingPlan } from "./PaymentModal";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface Voice {
@@ -673,28 +674,16 @@ const BILLING_PLANS = [
   },
 ] as const;
 
-function BillingTab({ credits }: { credits: number | null }) {
-  const [loading, setLoading] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handlePurchase(planKey: string) {
-    setError(null);
-    setLoading(planKey);
-    try {
-      const res = await fetch("/api/create-checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planKey }),
-      });
-      const data = await res.json();
-      if (data.checkoutUrl) window.location.href = data.checkoutUrl;
-      else throw new Error(data.error || "Error al crear sesión de pago");
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Error desconocido");
-    } finally {
-      setLoading(null);
-    }
-  }
+function BillingTab({
+  credits,
+  userEmail,
+  onPaymentSuccess,
+}: {
+  credits: number | null;
+  userEmail?: string;
+  onPaymentSuccess: () => void;
+}) {
+  const [activePlan, setActivePlan] = useState<BillingPlan | null>(null);
 
   return (
     <div className="max-w-3xl">
@@ -722,15 +711,6 @@ function BillingTab({ credits }: { credits: number | null }) {
 
       {/* Recharge section */}
       <p className="text-sm font-semibold text-gray-300 mb-4">Recargar caracteres</p>
-
-      {error && (
-        <div
-          className="mb-4 p-3 rounded-lg text-sm"
-          style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}
-        >
-          {error}
-        </div>
-      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {BILLING_PLANS.map((plan) => (
@@ -772,26 +752,31 @@ function BillingTab({ credits }: { credits: number | null }) {
             </ul>
 
             <button
-              onClick={() => handlePurchase(plan.key)}
-              disabled={loading === plan.key}
-              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              onClick={() => setActivePlan(plan)}
+              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5 flex items-center justify-center"
               style={
                 plan.popular
                   ? { background: "linear-gradient(135deg,#7C3AED,#6D28D9)", color: "white", boxShadow: "0 4px 12px rgba(124,58,237,0.3)" }
                   : { background: "#1a1a2e", color: "#d1d5db", border: "1px solid #2a2a3e" }
               }
             >
-              {loading === plan.key && (
-                <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-              )}
-              {loading === plan.key ? "Redirigiendo..." : "Comprar"}
+              Comprar
             </button>
           </div>
         ))}
       </div>
+
+      {activePlan && (
+        <PaymentModal
+          plan={activePlan}
+          userEmail={userEmail}
+          onClose={() => setActivePlan(null)}
+          onSuccess={() => {
+            setActivePlan(null);
+            onPaymentSuccess();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -861,7 +846,13 @@ export default function DashboardPage() {
           />
         )}
         {activeTab === "history" && <HistoryTab />}
-        {activeTab === "billing" && <BillingTab credits={credits} />}
+        {activeTab === "billing" && (
+          <BillingTab
+            credits={credits}
+            userEmail={user?.emailAddresses[0]?.emailAddress}
+            onPaymentSuccess={fetchCredits}
+          />
+        )}
       </main>
     </div>
   );

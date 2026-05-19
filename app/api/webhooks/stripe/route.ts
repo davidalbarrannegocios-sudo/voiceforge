@@ -27,6 +27,51 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
+  if (event.type === "payment_intent.succeeded") {
+    const pi = event.data.object as Stripe.PaymentIntent;
+
+    // Only handle payment intents created by embedded Elements, not by Checkout Sessions
+    // (Checkout Sessions fire their own payment_intent.succeeded which we must ignore)
+    if (pi.metadata?.source !== "elements") {
+      return NextResponse.json({ received: true });
+    }
+
+    const userId = pi.metadata?.userId;
+    const characters = parseInt(pi.metadata?.characters ?? "0");
+    const amountCents = pi.amount_received ?? 0;
+
+    if (!userId || !characters) {
+      console.error("Webhook: missing metadata in payment_intent", pi.id);
+      return NextResponse.json({ received: true });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      console.error("Webhook: user not found for id", userId);
+      return NextResponse.json({ received: true, warning: "user_not_found" });
+    }
+
+    try {
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: user.id },
+          data: { credits: { increment: characters } },
+        }),
+        prisma.purchase.create({
+          data: {
+            userId: user.id,
+            stripeSessionId: pi.id,
+            creditsPurchased: characters,
+            amountCents,
+          },
+        }),
+      ]);
+    } catch (err) {
+      console.error("Webhook: DB transaction failed", err);
+      return NextResponse.json({ error: "DB error" }, { status: 500 });
+    }
+  }
+
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const userId = session.metadata?.userId;
