@@ -26,11 +26,11 @@ const features = [
     ],
   },
   {
-    icon: "⚡",
-    title: "GPU bajo demanda",
+    icon: "🌍",
+    title: "Múltiples idiomas",
     items: [
-      "Sin esperas de servidor",
-      "Escala automáticamente",
+      "Más de 80 idiomas y acentos disponibles",
+      "Voces nativas por región",
       "Descarga directa en MP3",
     ],
   },
@@ -38,48 +38,45 @@ const features = [
 
 const plans = [
   {
-    key: "starter",
-    name: "Starter",
-    price: 9,
-    credits: 100,
-    minutes: "~50",
+    key: "basico",
+    name: "Básico",
+    price: 6,
+    characters: "250.000",
     popular: false,
     features: [
-      "100 créditos",
-      "~50 min de audio",
-      "Voces del sistema",
+      "250.000 caracteres",
+      "Explorar voces públicas",
       "Clonación de voz",
+      "Historial 30 días",
     ],
   },
   {
     key: "pro",
     name: "Pro",
-    price: 29,
-    credits: 400,
-    minutes: "~200",
+    price: 12,
+    characters: "600.000",
     popular: true,
     features: [
-      "400 créditos",
-      "~200 min de audio",
-      "Voces del sistema",
-      "Clonación de voz",
+      "600.000 caracteres",
+      "Explorar voces públicas",
+      "Clonación de voz ilimitada",
       "Historial completo",
+      "Generación prioritaria",
     ],
   },
   {
-    key: "studio",
-    name: "Studio",
-    price: 79,
-    credits: 1200,
-    minutes: "~600",
+    key: "premium",
+    name: "Premium",
+    price: 24,
+    characters: "1.400.000",
     popular: false,
     features: [
-      "1200 créditos",
-      "~600 min de audio",
-      "Voces del sistema",
-      "Clonación de voz",
+      "1.400.000 caracteres",
+      "Explorar voces públicas",
+      "Clonación de voz ilimitada",
       "Historial completo",
-      "Prioridad de GPU",
+      "Prioridad máxima",
+      "Soporte preferente",
     ],
   },
 ];
@@ -171,18 +168,6 @@ export default function LandingPage() {
         {/* Hero */}
         <section className="pt-32 pb-24 px-4 text-center">
           <div className="max-w-4xl mx-auto">
-            <div
-              className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full mb-6 border"
-              style={{
-                background: "rgba(124,58,237,0.1)",
-                borderColor: "rgba(124,58,237,0.3)",
-                color: "#a78bfa",
-              }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-              Powered by Chatterbox · MIT License
-            </div>
-
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
               Narración con IA de{" "}
               <span
@@ -279,8 +264,7 @@ export default function LandingPage() {
                 Precios simples y transparentes
               </h2>
               <p className="text-gray-400">
-                1 crédito ≈ 500 caracteres de texto · Sin suscripciones · Paga
-                solo lo que usas
+                Pago único · Sin suscripciones · Los caracteres nunca caducan
               </p>
             </div>
 
@@ -319,7 +303,7 @@ export default function LandingPage() {
                       <span className="text-gray-400 text-sm">pago único</span>
                     </div>
                     <p className="text-sm text-gray-500">
-                      {plan.credits} créditos · {plan.minutes} min de audio
+                      {plan.characters} caracteres
                     </p>
                   </div>
 
@@ -392,9 +376,7 @@ export default function LandingPage() {
       <footer className="border-t py-8 px-4" style={{ borderColor: "#2a2a3e" }}>
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-gray-500 text-sm">
-            © 2025 VoiceForge. Powered by{" "}
-            <span className="text-purple-400">Chatterbox TTS</span> (MIT
-            License)
+            © 2025 VoiceForge. Todos los derechos reservados.
           </p>
           <div className="flex gap-6">
             <Link
