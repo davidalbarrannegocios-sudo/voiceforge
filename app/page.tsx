@@ -1,20 +1,18 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useUser, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { ChevronDown, Check } from "lucide-react";
 
-/* ─── Data ──────────────────────────────────────────────────── */
+/* ─── Types ─────────────────────────────────────────────────── */
 
-const DEMO_VOICES = [
-  { id: "1", name: "Ana García",       initials: "AG", color: "linear-gradient(135deg,#3b82f6,#3b82f6)" },
-  { id: "2", name: "Carlos López",     initials: "CL", color: "linear-gradient(135deg,#3b82f6,#1D4ED8)" },
-  { id: "3", name: "María Rodríguez",  initials: "MR", color: "linear-gradient(135deg,#EC4899,#BE185D)" },
-  { id: "4", name: "David Martín",     initials: "DM", color: "linear-gradient(135deg,#14B8A6,#0D9488)" },
-  { id: "5", name: "Sofía Fernández",  initials: "SF", color: "linear-gradient(135deg,#F97316,#C2410C)" },
-];
+interface DemoVoice {
+  _id: string;
+  title: string;
+  cover_image?: string;
+}
 
 const USE_CASES = [
   {
@@ -119,11 +117,23 @@ function FaqItem({ item, open, onToggle }: { item: typeof FAQ_ITEMS[0]; open: bo
 
 export default function LandingPage() {
   const { isSignedIn } = useUser();
-  const [selectedVoice, setSelectedVoice] = useState(DEMO_VOICES[0].id);
+  const [demoVoices, setDemoVoices] = useState<DemoVoice[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState<string>("");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [demoAudioUrl, setDemoAudioUrl] = useState<string | null>(null);
   const [demoLoading, setDemoLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    fetch("/api/public-voices?language=es&page_size=5")
+      .then((r) => r.json())
+      .then((data) => {
+        const voices: DemoVoice[] = data.items ?? [];
+        setDemoVoices(voices);
+        if (voices.length > 0) setSelectedVoice(voices[0]._id);
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleGenerateDemo() {
     setDemoLoading(true);
@@ -240,34 +250,48 @@ export default function LandingPage() {
                 >
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-1">Voces</p>
                   <div className="space-y-0.5">
-                    {DEMO_VOICES.map((voice) => {
-                      const active = selectedVoice === voice.id;
-                      return (
-                        <button
-                          key={voice.id}
-                          onClick={() => setSelectedVoice(voice.id)}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-left"
-                          style={active
-                            ? { background: "rgba(59,130,246,0.15)", color: "#93c5fd" }
-                            : { color: "#9ca3af" }
-                          }
-                        >
-                          <div
-                            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                            style={{ background: voice.color }}
-                          >
-                            {voice.initials[0]}
-                          </div>
-                          <span className="truncate font-medium">{voice.name}</span>
-                          {active && (
-                            <span
-                              className="ml-auto w-1.5 h-1.5 rounded-full flex-shrink-0"
-                              style={{ background: "#3b82f6" }}
-                            />
-                          )}
-                        </button>
-                      );
-                    })}
+                    {demoVoices.length === 0
+                      ? Array.from({ length: 5 }).map((_, i) => (
+                          <div key={i} className="h-10 rounded-lg animate-pulse mx-1" style={{ background: "#1a1a2e" }} />
+                        ))
+                      : demoVoices.map((voice) => {
+                          const active = selectedVoice === voice._id;
+                          return (
+                            <button
+                              key={voice._id}
+                              onClick={() => { setSelectedVoice(voice._id); setDemoAudioUrl(null); }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-left"
+                              style={active
+                                ? { background: "rgba(59,130,246,0.15)", color: "#93c5fd" }
+                                : { color: "#9ca3af" }
+                              }
+                            >
+                              {voice.cover_image ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={voice.cover_image}
+                                  alt=""
+                                  className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+                                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                                />
+                              ) : (
+                                <div
+                                  className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                                  style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
+                                >
+                                  {voice.title[0]?.toUpperCase()}
+                                </div>
+                              )}
+                              <span className="truncate font-medium">{voice.title}</span>
+                              {active && (
+                                <span
+                                  className="ml-auto w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                  style={{ background: "#3b82f6" }}
+                                />
+                              )}
+                            </button>
+                          );
+                        })}
                   </div>
                 </div>
 

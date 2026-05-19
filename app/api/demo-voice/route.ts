@@ -31,6 +31,7 @@ export async function POST(req: Request) {
       mp3_bitrate: 128,
       normalize: true,
       latency: "normal",
+      ...(voiceId ? { reference_id: voiceId } : {}),
     }),
   });
 
