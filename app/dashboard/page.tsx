@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { Home, Mic, Users, Clock, Check, Play } from "lucide-react";
+import { Home, Mic, Users, Clock, Check, Play, CreditCard } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
@@ -29,7 +29,7 @@ interface Generation {
   createdAt: string;
 }
 
-type Tab = "home" | "generate" | "voices" | "history";
+type Tab = "home" | "generate" | "voices" | "history" | "billing";
 
 /* ─── Sidebar ─────────────────────────────────────────────── */
 function Sidebar({
@@ -46,6 +46,7 @@ function Sidebar({
     { key: "generate", label: "Generar", Icon: Mic },
     { key: "voices", label: "Mis voces", Icon: Users },
     { key: "history", label: "Historial", Icon: Clock },
+    { key: "billing", label: "Facturación", Icon: CreditCard },
   ];
 
   return (
@@ -644,6 +645,157 @@ function HistoryTab() {
   );
 }
 
+/* ─── Billing Tab ────────────────────────────────────────── */
+const BILLING_PLANS = [
+  {
+    key: "basico",
+    name: "Básico",
+    price: 6,
+    characters: 250_000,
+    popular: false,
+    features: ["250.000 caracteres", "Explorar voces públicas", "Clonación de voz"],
+  },
+  {
+    key: "pro",
+    name: "Pro",
+    price: 12,
+    characters: 600_000,
+    popular: true,
+    features: ["600.000 caracteres", "Explorar voces públicas", "Clonación de voz ilimitada", "Generación prioritaria"],
+  },
+  {
+    key: "premium",
+    name: "Premium",
+    price: 24,
+    characters: 1_400_000,
+    popular: false,
+    features: ["1.400.000 caracteres", "Explorar voces públicas", "Clonación de voz ilimitada", "Soporte preferente"],
+  },
+] as const;
+
+function BillingTab({ credits }: { credits: number | null }) {
+  const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handlePurchase(planKey: string) {
+    setError(null);
+    setLoading(planKey);
+    try {
+      const res = await fetch("/api/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planKey }),
+      });
+      const data = await res.json();
+      if (data.checkoutUrl) window.location.href = data.checkoutUrl;
+      else throw new Error(data.error || "Error al crear sesión de pago");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Error desconocido");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  return (
+    <div className="max-w-3xl">
+      <h2 className="text-lg font-bold text-white mb-6">Facturación</h2>
+
+      {/* Current balance card */}
+      <div
+        className="rounded-xl border p-5 mb-8 flex items-center justify-between gap-4"
+        style={{ background: "#12121a", borderColor: "#2a2a3e" }}
+      >
+        <div>
+          <p className="text-xs text-gray-500 mb-1">Saldo actual</p>
+          <p className="text-2xl font-bold text-white">
+            {credits !== null ? credits.toLocaleString("es-ES") : "—"}
+            <span className="text-base font-normal text-gray-400 ml-2">caracteres</span>
+          </p>
+        </div>
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ background: "rgba(124,58,237,0.15)" }}
+        >
+          <CreditCard size={18} style={{ color: "#a78bfa" }} />
+        </div>
+      </div>
+
+      {/* Recharge section */}
+      <p className="text-sm font-semibold text-gray-300 mb-4">Recargar caracteres</p>
+
+      {error && (
+        <div
+          className="mb-4 p-3 rounded-lg text-sm"
+          style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}
+        >
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {BILLING_PLANS.map((plan) => (
+          <div
+            key={plan.key}
+            className="relative rounded-xl border flex flex-col p-5"
+            style={{
+              background: plan.popular ? "rgba(124,58,237,0.08)" : "#12121a",
+              borderColor: plan.popular ? "#7C3AED" : "#2a2a3e",
+            }}
+          >
+            {plan.popular && (
+              <div
+                className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-xs font-bold text-white px-3 py-0.5 rounded-full whitespace-nowrap"
+                style={{ background: "linear-gradient(135deg,#7C3AED,#3B82F6)" }}
+              >
+                POPULAR
+              </div>
+            )}
+
+            <div className="mb-4">
+              <p className="font-semibold text-white mb-1">{plan.name}</p>
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-bold text-white">{plan.price}€</span>
+                <span className="text-xs text-gray-500">pago único</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {plan.characters.toLocaleString("es-ES")} caracteres
+              </p>
+            </div>
+
+            <ul className="space-y-1.5 flex-1 mb-5">
+              {plan.features.map((f) => (
+                <li key={f} className="flex items-center gap-2 text-xs text-gray-400">
+                  <Check size={11} style={{ color: "#a78bfa", flexShrink: 0 }} />
+                  {f}
+                </li>
+              ))}
+            </ul>
+
+            <button
+              onClick={() => handlePurchase(plan.key)}
+              disabled={loading === plan.key}
+              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              style={
+                plan.popular
+                  ? { background: "linear-gradient(135deg,#7C3AED,#6D28D9)", color: "white", boxShadow: "0 4px 12px rgba(124,58,237,0.3)" }
+                  : { background: "#1a1a2e", color: "#d1d5db", border: "1px solid #2a2a3e" }
+              }
+            >
+              {loading === plan.key && (
+                <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              )}
+              {loading === plan.key ? "Redirigiendo..." : "Comprar"}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Dashboard ──────────────────────────────────────── */
 export default function DashboardPage() {
   const { user } = useUser();
@@ -709,6 +861,7 @@ export default function DashboardPage() {
           />
         )}
         {activeTab === "history" && <HistoryTab />}
+        {activeTab === "billing" && <BillingTab credits={credits} />}
       </main>
     </div>
   );
