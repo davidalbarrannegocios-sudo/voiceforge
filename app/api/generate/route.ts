@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const { text, voice_id = "default" } = await req.json();
+  const { text, reference_id } = await req.json();
 
   if (!text || typeof text !== "string" || text.trim().length === 0) {
     return NextResponse.json({ error: "Texto requerido" }, { status: 400 });
@@ -28,33 +28,18 @@ export async function POST(req: Request) {
 
   if (user.credits < creditsNeeded) {
     return NextResponse.json(
-      {
-        error: "Créditos insuficientes",
-        creditsNeeded,
-        creditsAvailable: user.credits,
-      },
+      { error: "Créditos insuficientes", creditsNeeded, creditsAvailable: user.credits },
       { status: 402 }
     );
   }
 
-  // For cloned voices, referenceAudioUrl holds the Fish Audio model ID
-  let referenceId: string | undefined;
-  if (voice_id !== "default") {
-    const clonedVoice = await prisma.clonedVoice.findFirst({
-      where: { id: voice_id, userId: user.id },
-    });
-    if (!clonedVoice) {
-      return NextResponse.json({ error: "Voz clonada no encontrada" }, { status: 404 });
-    }
-    referenceId = clonedVoice.referenceAudioUrl;
-    console.log(`[/api/generate] using Fish Audio model: ${referenceId}`);
-  }
+  console.log(`[/api/generate] reference_id=${reference_id ?? "default"} chars=${text.trim().length}`);
 
   let result;
   try {
     result = await fishAudioGenerate({
       text: text.trim(),
-      referenceId,
+      referenceId: reference_id ?? undefined,
       userId: user.id,
     });
   } catch (err) {
@@ -72,7 +57,7 @@ export async function POST(req: Request) {
       data: {
         userId: user.id,
         text: text.trim(),
-        voiceId: voice_id,
+        voiceId: reference_id ?? "default",
         audioUrl: result.audio_url,
         durationSeconds: result.duration_seconds,
         creditsUsed: creditsNeeded,

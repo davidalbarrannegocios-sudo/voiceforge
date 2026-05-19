@@ -25,6 +25,7 @@ export async function GET() {
     name: v.name,
     language: "es",
     isSystem: false,
+    fishAudioModelId: v.referenceAudioUrl,
     createdAt: v.createdAt,
   }));
 

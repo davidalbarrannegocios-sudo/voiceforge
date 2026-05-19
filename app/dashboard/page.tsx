@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 import { calculateCredits, formatDate } from "@/lib/utils";
+import { VoiceBrowser, SelectedVoice } from "./VoiceBrowser";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface Voice {
@@ -12,6 +13,7 @@ interface Voice {
   name: string;
   language: string;
   isSystem: boolean;
+  fishAudioModelId?: string;
   createdAt?: string;
 }
 
@@ -68,11 +70,7 @@ function Sidebar({
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left"
             style={
               activeTab === item.key
-                ? {
-                    background: "rgba(124,58,237,0.15)",
-                    color: "#a78bfa",
-                    borderLeft: "2px solid #7C3AED",
-                  }
+                ? { background: "rgba(124,58,237,0.15)", color: "#a78bfa", borderLeft: "2px solid #7C3AED" }
                 : { color: "#8888a8" }
             }
           >
@@ -86,21 +84,14 @@ function Sidebar({
       <div className="p-4 border-t" style={{ borderColor: "#2a2a3e" }}>
         <div className="mb-2 flex items-center justify-between">
           <span className="text-xs text-gray-500">Créditos disponibles</span>
-          <Link
-            href="/pricing"
-            className="text-xs font-medium"
-            style={{ color: "#7C3AED" }}
-          >
+          <Link href="/pricing" className="text-xs font-medium" style={{ color: "#7C3AED" }}>
             + Comprar
           </Link>
         </div>
         <p className="text-2xl font-bold text-white mb-2">
           {credits !== null ? credits.toLocaleString("es-ES") : "—"}
         </p>
-        <div
-          className="h-1.5 rounded-full overflow-hidden"
-          style={{ background: "#2a2a3e" }}
-        >
+        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#2a2a3e" }}>
           <div
             className="h-full rounded-full transition-all"
             style={{
@@ -112,10 +103,7 @@ function Sidebar({
       </div>
 
       {/* User */}
-      <div
-        className="p-4 border-t flex items-center gap-3"
-        style={{ borderColor: "#2a2a3e" }}
-      >
+      <div className="p-4 border-t flex items-center gap-3" style={{ borderColor: "#2a2a3e" }}>
         <UserButton />
         <span className="text-sm text-gray-400 truncate">Mi cuenta</span>
       </div>
@@ -127,15 +115,15 @@ function Sidebar({
 function GenerateTab({
   voices,
   onGenerated,
-  initialVoiceId = "default",
+  initialVoice,
 }: {
   voices: Voice[];
   onGenerated: () => void;
-  initialVoiceId?: string;
+  initialVoice?: SelectedVoice | null;
 }) {
   const [text, setText] = useState("");
-  const [voiceId, setVoiceId] = useState(initialVoiceId);
-  const [exaggeration, setExaggeration] = useState(0.5);
+  const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(initialVoice ?? null);
+  const [showBrowser, setShowBrowser] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingStage, setLoadingStage] = useState<"starting" | "generating">("starting");
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -147,6 +135,7 @@ function GenerateTab({
   } | null>(null);
 
   const creditsNeeded = calculateCredits(text.length);
+  const clonedVoices = voices.filter((v) => !v.isSystem);
 
   async function handleGenerate() {
     setError(null);
@@ -155,13 +144,16 @@ function GenerateTab({
     setLoading(true);
     setLoadingStage("starting");
 
-    const timer = setTimeout(() => setLoadingStage("generating"), 8000);
+    const timer = setTimeout(() => setLoadingStage("generating"), 4000);
 
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voice_id: voiceId, exaggeration }),
+        body: JSON.stringify({
+          text,
+          reference_id: selectedVoice?.referenceId ?? undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al generar");
@@ -199,82 +191,36 @@ function GenerateTab({
         {text.length > 0 && (
           <p className="mt-1.5 text-xs" style={{ color: "#8888a8" }}>
             Esta generación costará{" "}
-            <span className="text-purple-400 font-semibold">{creditsNeeded} crédito{creditsNeeded !== 1 ? "s" : ""}</span>
+            <span className="text-purple-400 font-semibold">
+              {creditsNeeded} crédito{creditsNeeded !== 1 ? "s" : ""}
+            </span>
           </p>
         )}
       </div>
 
       {/* Voice selector */}
-      <div className="mb-4">
-        <label className="text-sm font-medium text-gray-300 mb-2 block">
-          Voz
-        </label>
-        <select
-          value={voiceId}
-          onChange={(e) => setVoiceId(e.target.value)}
-          className="w-full rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+      <div className="mb-6">
+        <label className="text-sm font-medium text-gray-300 mb-2 block">Voz</label>
+        <button
+          onClick={() => setShowBrowser(true)}
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all hover:border-purple-500/60"
           style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
         >
-          <optgroup label="Voces del sistema">
-            {voices
-              .filter((v) => v.isSystem)
-              .map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name} ({v.language})
-                </option>
-              ))}
-          </optgroup>
-          {voices.some((v) => !v.isSystem) && (
-            <optgroup label="Mis voces clonadas">
-              {voices
-                .filter((v) => !v.isSystem)
-                .map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
-            </optgroup>
-          )}
-        </select>
-      </div>
-
-      {/* Exaggeration slider */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium text-gray-300">
-            Expresividad
-          </label>
-          <span className="text-xs text-purple-400 font-mono">
-            {exaggeration.toFixed(1)}
-          </span>
-        </div>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.1"
-          value={exaggeration}
-          onChange={(e) => setExaggeration(parseFloat(e.target.value))}
-          className="w-full"
-          style={{
-            background: `linear-gradient(to right, #7C3AED ${exaggeration * 100}%, #2a2a3e ${exaggeration * 100}%)`,
-          }}
-        />
-        <div className="flex justify-between text-xs text-gray-500 mt-1">
-          <span>Neutral</span>
-          <span>Muy expresivo</span>
-        </div>
+          <div className="flex items-center gap-2.5">
+            <span className="text-base">🎙️</span>
+            <span className="text-gray-200 font-medium">
+              {selectedVoice?.name ?? "Voz por defecto"}
+            </span>
+          </div>
+          <span className="text-xs" style={{ color: "#8888a8" }}>Cambiar →</span>
+        </button>
       </div>
 
       {/* Error */}
       {error && (
         <div
           className="mb-4 p-3 rounded-lg text-sm"
-          style={{
-            background: "rgba(239,68,68,0.1)",
-            border: "1px solid rgba(239,68,68,0.3)",
-            color: "#f87171",
-          }}
+          style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}
         >
           {error}
         </div>
@@ -296,26 +242,16 @@ function GenerateTab({
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            {loadingStage === "starting" ? "⏳ Arrancando GPU..." : "🎙️ Generando audio..."}
+            {loadingStage === "starting" ? "⏳ Conectando con Fish Audio..." : "🎙️ Generando audio..."}
           </>
         ) : (
           "Generar audio"
         )}
       </button>
 
-      {loading && (
-        <p className="mt-3 text-xs text-center" style={{ color: "#8888a8" }}>
-          La primera generación puede tardar 20-30 seg mientras arranca la GPU.
-          Las siguientes son inmediatas.
-        </p>
-      )}
-
       {/* Audio player */}
       {audioUrl && lastResult && (
-        <div
-          className="mt-6 p-4 rounded-xl border"
-          style={{ background: "#12121a", borderColor: "#2a2a3e" }}
-        >
+        <div className="mt-6 p-4 rounded-xl border" style={{ background: "#12121a", borderColor: "#2a2a3e" }}>
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-gray-300">Audio generado</span>
             <div className="flex items-center gap-3 text-xs text-gray-500">
@@ -329,7 +265,7 @@ function GenerateTab({
           <audio controls src={audioUrl} className="w-full mb-3" />
           <a
             href={audioUrl}
-            download="voiceforge-audio.wav"
+            download="voiceforge-audio.mp3"
             className="flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80"
             style={{ background: "#1a1a2e", color: "#a78bfa", border: "1px solid #2a2a3e" }}
           >
@@ -337,18 +273,21 @@ function GenerateTab({
           </a>
         </div>
       )}
+
+      {/* VoiceBrowser modal */}
+      {showBrowser && (
+        <VoiceBrowser
+          clonedVoices={clonedVoices}
+          onSelect={setSelectedVoice}
+          onClose={() => setShowBrowser(false)}
+        />
+      )}
     </div>
   );
 }
 
 /* ─── Clone Modal ─────────────────────────────────────────── */
-function CloneModal({
-  onClose,
-  onCloned,
-}: {
-  onClose: () => void;
-  onCloned: () => void;
-}) {
+function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [voiceName, setVoiceName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -394,27 +333,15 @@ function CloneModal({
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">×</button>
         </div>
 
-        {/* Drop zone */}
         <div
           onClick={() => inputRef.current?.click()}
           onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
           onDragLeave={() => setDragging(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragging(false);
-            const f = e.dataTransfer.files[0];
-            if (f) handleFile(f);
-          }}
+          onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
           className="rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-all mb-4"
           style={{ borderColor: dragging ? "#7C3AED" : "#2a2a3e", background: dragging ? "rgba(124,58,237,0.05)" : "transparent" }}
         >
-          <input
-            ref={inputRef}
-            type="file"
-            className="hidden"
-            accept=".wav,.mp3,.m4a,audio/*"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
-          />
+          <input ref={inputRef} type="file" className="hidden" accept=".wav,.mp3,.m4a,audio/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
           {file ? (
             <div>
               <p className="text-green-400 font-medium mb-1">{file.name}</p>
@@ -429,7 +356,6 @@ function CloneModal({
           )}
         </div>
 
-        {/* Voice name */}
         <div className="mb-4">
           <label className="text-sm font-medium text-gray-300 mb-2 block">Nombre de la voz</label>
           <input
@@ -479,7 +405,7 @@ function VoicesTab({
 }: {
   voices: Voice[];
   onRefresh: () => void;
-  onUseVoice: (id: string) => void;
+  onUseVoice: (voice: SelectedVoice) => void;
 }) {
   const [showModal, setShowModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -526,18 +452,12 @@ function VoicesTab({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {cloned.map((voice) => (
-              <div
-                key={voice.id}
-                className="p-4 rounded-xl border"
-                style={{ background: "#12121a", borderColor: "#2a2a3e" }}
-              >
+              <div key={voice.id} className="p-4 rounded-xl border" style={{ background: "#12121a", borderColor: "#2a2a3e" }}>
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <p className="font-medium text-white">{voice.name}</p>
                     {voice.createdAt && (
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {formatDate(voice.createdAt)}
-                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">{formatDate(voice.createdAt)}</p>
                     )}
                   </div>
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(124,58,237,0.15)" }}>
@@ -546,8 +466,9 @@ function VoicesTab({
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => onUseVoice(voice.id)}
-                    className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all"
+                    onClick={() => onUseVoice({ referenceId: voice.fishAudioModelId ?? "", name: voice.name })}
+                    disabled={!voice.fishAudioModelId}
+                    className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
                     style={{ background: "rgba(124,58,237,0.15)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)" }}
                   >
                     Usar
@@ -611,11 +532,7 @@ function HistoryTab() {
         <>
           <div className="space-y-3">
             {generations.map((gen) => (
-              <div
-                key={gen.id}
-                className="p-4 rounded-xl border"
-                style={{ background: "#12121a", borderColor: "#2a2a3e" }}
-              >
+              <div key={gen.id} className="p-4 rounded-xl border" style={{ background: "#12121a", borderColor: "#2a2a3e" }}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-300 truncate">{gen.text}</p>
@@ -650,7 +567,6 @@ function HistoryTab() {
             ))}
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 mt-6">
               <button
@@ -661,9 +577,7 @@ function HistoryTab() {
               >
                 ← Anterior
               </button>
-              <span className="text-sm text-gray-500">
-                Página {page} de {totalPages}
-              </span>
+              <span className="text-sm text-gray-500">Página {page} de {totalPages}</span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
@@ -687,7 +601,7 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<Tab>("generate");
   const [credits, setCredits] = useState<number | null>(null);
   const [voices, setVoices] = useState<Voice[]>([]);
-  const [selectedVoiceId, setSelectedVoiceId] = useState("default");
+  const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(null);
 
   const fetchCredits = useCallback(async () => {
     const res = await fetch("/api/credits");
@@ -706,11 +620,10 @@ export default function DashboardPage() {
     fetchVoices();
   }, [fetchCredits, fetchVoices]);
 
-  // Show success message if coming back from Stripe
   const successCredits = searchParams.get("credits");
 
-  function handleUseVoice(voiceId: string) {
-    setSelectedVoiceId(voiceId);
+  function handleUseVoice(voice: SelectedVoice) {
+    setSelectedVoice(voice);
     setActiveTab("generate");
   }
 
@@ -719,12 +632,8 @@ export default function DashboardPage() {
       <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <main className="flex-1 p-8 overflow-auto">
-        {/* Welcome / Success banner */}
         {successCredits && (
-          <div
-            className="mb-6 p-4 rounded-xl flex items-center gap-3"
-            style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}
-          >
+          <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
             <span className="text-green-400 text-xl">✓</span>
             <p className="text-green-400 font-medium text-sm">
               ¡Compra completada! Se han añadido <strong>{successCredits} créditos</strong> a tu cuenta.
@@ -737,9 +646,7 @@ export default function DashboardPage() {
             Hola, {user?.firstName ?? "de nuevo"} 👋
           </h1>
           <p className="text-gray-400 text-sm mt-1">
-            {credits !== null
-              ? `Tienes ${credits.toLocaleString("es-ES")} créditos disponibles`
-              : "Cargando créditos..."}
+            {credits !== null ? `Tienes ${credits.toLocaleString("es-ES")} créditos disponibles` : "Cargando créditos..."}
           </p>
         </div>
 
@@ -747,7 +654,7 @@ export default function DashboardPage() {
           <GenerateTab
             voices={voices}
             onGenerated={fetchCredits}
-            initialVoiceId={selectedVoiceId}
+            initialVoice={selectedVoice}
           />
         )}
         {activeTab === "voices" && (
