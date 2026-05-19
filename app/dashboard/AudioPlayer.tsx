@@ -25,7 +25,7 @@ export function AudioPlayer({
   function togglePlay() {
     const audio = audioRef.current;
     if (!audio) return;
-    playing ? audio.pause() : audio.play();
+    if (playing) { audio.pause(); } else { audio.play(); }
   }
 
   function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
