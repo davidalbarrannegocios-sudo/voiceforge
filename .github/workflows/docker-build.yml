@@ -33,5 +33,6 @@ jobs:
           tags: |
             elitevoice/voiceforge-handler:latest
             elitevoice/voiceforge-handler:v3
+            elitevoice/voiceforge-handler:v4
           cache-from: type=gha
           cache-to: type=gha,mode=max
