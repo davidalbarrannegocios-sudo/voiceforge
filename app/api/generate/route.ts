@@ -1,7 +1,7 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { runPodGenerate } from "@/lib/runpod";
+import { fishAudioGenerate } from "@/lib/fishaudio";
 import { calculateCredits } from "@/lib/utils";
 
 export async function POST(req: Request) {
@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const { text, voice_id = "default", exaggeration = 0.5 } = await req.json();
+  const { text, voice_id = "default" } = await req.json();
 
   if (!text || typeof text !== "string" || text.trim().length === 0) {
     return NextResponse.json({ error: "Texto requerido" }, { status: 400 });
@@ -37,7 +37,8 @@ export async function POST(req: Request) {
     );
   }
 
-  let r2Key: string | undefined;
+  // For cloned voices, referenceAudioUrl holds the Fish Audio model ID
+  let referenceId: string | undefined;
   if (voice_id !== "default") {
     const clonedVoice = await prisma.clonedVoice.findFirst({
       where: { id: voice_id, userId: user.id },
@@ -45,28 +46,24 @@ export async function POST(req: Request) {
     if (!clonedVoice) {
       return NextResponse.json({ error: "Voz clonada no encontrada" }, { status: 404 });
     }
-    const publicUrl = process.env.R2_PUBLIC_URL ?? "";
-    r2Key = clonedVoice.referenceAudioUrl.replace(`${publicUrl}/`, "");
-    console.log(`[/api/generate] using cloned voice r2_key: ${r2Key}`);
+    referenceId = clonedVoice.referenceAudioUrl;
+    console.log(`[/api/generate] using Fish Audio model: ${referenceId}`);
   }
 
   let result;
   try {
-    result = await runPodGenerate({
-      type: "generate",
+    result = await fishAudioGenerate({
       text: text.trim(),
-      voice_id,
-      r2_key: r2Key,
-      exaggeration,
-      user_id: user.id,
+      referenceId,
+      userId: user.id,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[/api/generate] RunPod error:", message);
+    console.error("[/api/generate] Fish Audio error:", message);
     return NextResponse.json({ error: message }, { status: 502 });
   }
 
-  const [updatedUser, generation] = await prisma.$transaction([
+  const [updatedUser] = await prisma.$transaction([
     prisma.user.update({
       where: { id: user.id },
       data: { credits: { decrement: creditsNeeded } },

@@ -1,7 +1,7 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { runPodClone } from "@/lib/runpod";
+import { fishAudioClone } from "@/lib/fishaudio";
 
 const CLONE_COST = 10;
 
@@ -37,25 +37,21 @@ export async function POST(req: Request) {
     );
   }
 
-  const arrayBuffer = await file.arrayBuffer();
-  const audioBase64 = Buffer.from(arrayBuffer).toString("base64");
+  const audioBuffer = Buffer.from(await file.arrayBuffer());
 
   let result;
   try {
-    result = await runPodClone({
-      type: "clone",
-      audio_base64: audioBase64,
-      voice_name: voiceName.trim(),
-      user_id: user.id,
+    result = await fishAudioClone({
+      audioBuffer,
+      voiceName: voiceName.trim(),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[/api/clone] RunPod error:", message);
+    console.error("[/api/clone] Fish Audio error:", message);
     return NextResponse.json({ error: message }, { status: 502 });
   }
 
-  const referenceAudioUrl = `${process.env.R2_PUBLIC_URL}/reference-voices/${user.id}/${result.voice_id}.wav`;
-
+  // Store the Fish Audio model ID in referenceAudioUrl for use during generation
   const [updatedUser, clonedVoice] = await prisma.$transaction([
     prisma.user.update({
       where: { id: user.id },
@@ -65,7 +61,7 @@ export async function POST(req: Request) {
       data: {
         userId: user.id,
         name: voiceName.trim(),
-        referenceAudioUrl,
+        referenceAudioUrl: result.model_id,
       },
     }),
   ]);
