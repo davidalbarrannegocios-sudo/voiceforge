@@ -5,8 +5,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function calculateCharCost(charCount: number): number {
-  return Math.ceil(charCount * 1.1);
+export function calculateCharCost(charCount: number, overhead = 1.10): number {
+  return Math.ceil(charCount * overhead);
 }
 
 export function truncateText(text: string, maxLength: number): string {
