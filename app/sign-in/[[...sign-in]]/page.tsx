@@ -6,7 +6,7 @@ export default function SignInPage() {
       className="min-h-screen flex items-center justify-center"
       style={{ background: "#0a0a0f" }}
     >
-      <SignIn />
+      <SignIn fallbackRedirectUrl="/dashboard" />
     </div>
   );
 }
