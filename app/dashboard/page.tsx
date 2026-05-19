@@ -58,7 +58,7 @@ function Sidebar({
     >
       <div className="p-5 border-b" style={{ borderColor: "#2a2a3e" }}>
         <Link href="/" className="flex items-center gap-2 mb-1">
-          <Image src="/elitelabs.png" alt="Elite Labs" width={80} height={80} style={{ height: "80px", width: "auto" }} className="rounded-lg" />
+          <Image src="/elitelabs.png" alt="Elite Labs" width={28} height={28} style={{ height: "28px", width: "auto", objectFit: "contain", imageRendering: "-webkit-optimize-contrast" }} className="rounded-lg" />
         </Link>
       </div>
 
