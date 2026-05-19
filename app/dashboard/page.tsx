@@ -551,7 +551,7 @@ function HistoryTab() {
                 </div>
                 {playingId === gen.id && (
                   <div className="mt-3">
-                    <audio controls src={gen.audioUrl} autoPlay className="w-full" />
+                    <AudioPlayer src={gen.audioUrl} filename={`voiceforge-${gen.id}.mp3`} />
                   </div>
                 )}
               </div>
