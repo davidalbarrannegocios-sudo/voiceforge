@@ -1,394 +1,565 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import {
-  SignInButton,
-  SignUpButton,
-  UserButton,
-  Show,
-} from "@clerk/nextjs";
+import { useUser, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { ChevronDown, Check } from "lucide-react";
 
-const features = [
+/* ─── Data ──────────────────────────────────────────────────── */
+
+const DEMO_VOICES = [
+  { id: "1", name: "Ana García",       initials: "AG", color: "linear-gradient(135deg,#7C3AED,#4F46E5)" },
+  { id: "2", name: "Carlos López",     initials: "CL", color: "linear-gradient(135deg,#3B82F6,#1D4ED8)" },
+  { id: "3", name: "María Rodríguez",  initials: "MR", color: "linear-gradient(135deg,#EC4899,#BE185D)" },
+  { id: "4", name: "David Martín",     initials: "DM", color: "linear-gradient(135deg,#14B8A6,#0D9488)" },
+  { id: "5", name: "Sofía Fernández",  initials: "SF", color: "linear-gradient(135deg,#F97316,#C2410C)" },
+];
+
+const USE_CASES = [
   {
-    icon: "🎙️",
-    title: "Voces naturales",
-    items: [
-      "Control de expresividad",
-      "80+ idiomas soportados",
-      "Cadencia y entonación realistas",
-    ],
+    title: "Narración de vídeo",
+    tags: ["Expresivo", "Dinámico", "Profesional"],
+    bg: "linear-gradient(135deg,#1a0535 0%,#2d1b69 60%,#1e0a3c 100%)",
+    accent: "#a78bfa",
   },
   {
-    icon: "🔁",
-    title: "Clonación de voz",
-    items: [
-      "Solo 10 segundos de audio",
-      "Resultados instantáneos",
-      "Preserva el timbre único",
-    ],
+    title: "Audiolibros",
+    tags: ["Profesional", "Calmado", "Articulado"],
+    bg: "linear-gradient(135deg,#030b1a 0%,#0c2461 60%,#0a1628 100%)",
+    accent: "#60a5fa",
   },
   {
-    icon: "🌍",
-    title: "Múltiples idiomas",
-    items: [
-      "Más de 80 idiomas y acentos disponibles",
-      "Voces nativas por región",
-      "Descarga directa en MP3",
-    ],
+    title: "Contenido YouTube",
+    tags: ["Natural", "Versátil", "Multiidioma"],
+    bg: "linear-gradient(135deg,#1a0318 0%,#6b0f4e 60%,#2d0a22 100%)",
+    accent: "#f472b6",
   },
 ];
 
-const plans = [
+const FEATURES = [
+  "Locuciones de vídeo profesionales en segundos",
+  "Narración de audiolibros con voz natural",
+  "Voces de personajes únicos e inmersivos",
+];
+
+const STAT_AVATARS = [
+  { color: "#7C3AED", initials: "AL" },
+  { color: "#3B82F6", initials: "MR" },
+  { color: "#EC4899", initials: "JG" },
+  { color: "#14B8A6", initials: "PC" },
+  { color: "#F97316", initials: "SL" },
+];
+
+const FAQ_ITEMS = [
   {
-    key: "basico",
-    name: "Básico",
-    price: 6,
-    characters: "250.000",
-    popular: false,
-    features: [
-      "250.000 caracteres",
-      "Explorar voces públicas",
-      "Clonación de voz",
-      "Historial 30 días",
-    ],
+    q: "¿Qué es VoiceForge y cómo funciona?",
+    a: "VoiceForge es una plataforma de síntesis de voz con IA que convierte texto en audio de calidad profesional. Usamos modelos de inteligencia artificial avanzados para generar voces naturales en más de 80 idiomas.",
   },
   {
-    key: "pro",
-    name: "Pro",
-    price: 12,
-    characters: "600.000",
-    popular: true,
-    features: [
-      "600.000 caracteres",
-      "Explorar voces públicas",
-      "Clonación de voz ilimitada",
-      "Historial completo",
-      "Generación prioritaria",
-    ],
+    q: "¿Cómo funciona la clonación de voz?",
+    a: "Solo necesitas 10 segundos de audio limpio. Nuestra IA analiza las características únicas de la voz —timbre, cadencia, entonación— y crea un modelo personalizado que puedes usar en todas tus generaciones.",
   },
   {
-    key: "premium",
-    name: "Premium",
-    price: 24,
-    characters: "1.400.000",
-    popular: false,
-    features: [
-      "1.400.000 caracteres",
-      "Explorar voces públicas",
-      "Clonación de voz ilimitada",
-      "Historial completo",
-      "Prioridad máxima",
-      "Soporte preferente",
-    ],
+    q: "¿Los caracteres tienen fecha de caducidad?",
+    a: "No. Los caracteres que compras son tuyos para siempre. Sin suscripciones ni caducidad. Paga una vez y úsalos cuando quieras.",
+  },
+  {
+    q: "¿En cuántos idiomas puedo generar audio?",
+    a: "VoiceForge soporta más de 80 idiomas y dialectos a través de su biblioteca de voces públicas: español, inglés, francés, alemán, portugués, chino, japonés y muchos más.",
+  },
+  {
+    q: "¿Qué calidad tiene el audio generado?",
+    a: "El audio se genera en formato MP3 de alta calidad, ideal para vídeos, podcasts, audiolibros y contenido profesional. La calidad es comparable a la de un locutor profesional de estudio.",
   },
 ];
 
-function CheckIcon() {
+/* ─── Waveform bars (use-case cards) ────────────────────────── */
+const WAVE_BARS: [number, number][] = [
+  [4,15],[12,30],[20,45],[28,38],[36,22],[44,50],[52,32],[60,55],
+  [68,28],[76,42],[84,58],[92,38],[100,22],[108,48],[116,34],
+  [124,52],[132,42],[140,28],[148,38],[156,52],[164,32],[172,48],[180,22],[188,18],
+];
+
+/* ─── Sub-components ────────────────────────────────────────── */
+
+function PlayIcon() {
   return (
-    <svg
-      className="w-4 h-4 text-purple-400 flex-shrink-0"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M5 13l4 4L19 7"
-      />
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+      <path d="M3 1.5L12.5 7 3 12.5V1.5z" />
     </svg>
   );
 }
 
-export default function LandingPage() {
+function FaqItem({ item, open, onToggle }: { item: typeof FAQ_ITEMS[0]; open: boolean; onToggle: () => void }) {
   return (
-    <div className="min-h-screen" style={{ background: "#0a0a0f" }}>
-      {/* Header */}
+    <div className="rounded-xl border overflow-hidden" style={{ background: "#12121a", borderColor: "#2a2a3e" }}>
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-5 py-4 text-left transition-colors"
+        style={{ color: open ? "#a78bfa" : "white" }}
+      >
+        <span className="font-medium pr-4 text-sm md:text-base">{item.q}</span>
+        <ChevronDown
+          size={18}
+          className="flex-shrink-0 transition-transform duration-200"
+          style={{ transform: open ? "rotate(180deg)" : "none", color: "#8888a8" }}
+        />
+      </button>
+      {open && (
+        <div className="px-5 pb-5 text-sm text-gray-400 leading-relaxed border-t" style={{ borderColor: "#2a2a3e" }}>
+          {item.a}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Main Page ─────────────────────────────────────────────── */
+
+export default function LandingPage() {
+  const { isSignedIn } = useUser();
+  const [selectedVoice, setSelectedVoice] = useState(DEMO_VOICES[0].id);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  return (
+    <div className="min-h-screen" style={{ background: "#0a0a0f", color: "white" }}>
+
+      {/* ── Nav ────────────────────────────────────────────────── */}
       <header
         className="fixed top-0 left-0 right-0 z-50 border-b"
-        style={{
-          background: "rgba(10,10,15,0.85)",
-          backdropFilter: "blur(12px)",
-          borderColor: "#2a2a3e",
-        }}
+        style={{ background: "rgba(10,10,15,0.9)", backdropFilter: "blur(12px)", borderColor: "#2a2a3e" }}
       >
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
-              style={{
-                background: "linear-gradient(135deg, #7C3AED, #3B82F6)",
-              }}
+              style={{ background: "linear-gradient(135deg,#7C3AED,#3B82F6)" }}
             >
               V
             </div>
-            <span className="font-bold text-lg text-white">VoiceForge</span>
+            <span className="font-bold text-lg">VoiceForge</span>
           </Link>
 
           <nav className="flex items-center gap-3">
-            <Link
-              href="/pricing"
-              className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5"
-            >
+            <Link href="/pricing" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5">
               Precios
             </Link>
-            <Show when="signed-out">
-              <SignInButton mode="modal">
-                <button className="text-sm text-gray-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-transparent hover:border-white/10">
-                  Iniciar sesión
-                </button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <button
+            {!isSignedIn ? (
+              <>
+                <SignInButton mode="modal">
+                  <button className="text-sm text-gray-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-transparent hover:border-white/10">
+                    Iniciar sesión
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button
+                    className="text-sm font-semibold text-white px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5"
+                    style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9)" }}
+                  >
+                    Empezar gratis
+                  </button>
+                </SignUpButton>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/dashboard"
                   className="text-sm font-semibold text-white px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5"
-                  style={{
-                    background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
-                  }}
+                  style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9)" }}
                 >
-                  Empezar gratis
-                </button>
-              </SignUpButton>
-            </Show>
-            <Show when="signed-in">
-              <Link
-                href="/dashboard"
-                className="text-sm font-semibold text-white px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5"
-                style={{
-                  background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
-                }}
-              >
-                Dashboard
-              </Link>
-              <UserButton />
-            </Show>
+                  Dashboard
+                </Link>
+                <UserButton />
+              </>
+            )}
           </nav>
         </div>
       </header>
 
       <main>
-        {/* Hero */}
-        <section className="pt-32 pb-24 px-4 text-center">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-              Narración con IA de{" "}
-              <span
-                style={{
-                  background: "linear-gradient(135deg, #7C3AED, #3B82F6)",
+
+        {/* ── Hero ───────────────────────────────────────────────── */}
+        <section className="pt-32 pb-20 px-4">
+          <div className="max-w-5xl mx-auto">
+            {/* Text */}
+            <div className="text-center mb-12">
+              <div
+                className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full mb-8 border"
+                style={{ background: "rgba(124,58,237,0.1)", borderColor: "rgba(124,58,237,0.3)", color: "#a78bfa" }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                Síntesis de voz con IA avanzada
+              </div>
+
+              <h1 className="text-5xl md:text-7xl font-bold mb-5 leading-tight tracking-tight">
+                La IA más realista{" "}
+                <span style={{
+                  background: "linear-gradient(135deg,#7C3AED,#3B82F6,#a78bfa)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
-                }}
-              >
-                calidad profesional
-              </span>
-            </h1>
+                }}>
+                  habla
+                </span>
+              </h1>
 
-            <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Genera voces realistas con IA avanzada. Clona cualquier voz con
-              solo 10 segundos de audio y produce narraciones de estudio desde
-              tu navegador.
+              <p className="text-xl text-gray-400 max-w-xl mx-auto">
+                Clonación de voz, biblioteca de voces, narraciones y mucho más
+              </p>
+            </div>
+
+            {/* Demo widget */}
+            <div
+              className="rounded-2xl border overflow-hidden shadow-2xl"
+              style={{ background: "#12121a", borderColor: "#2a2a3e", boxShadow: "0 25px 60px rgba(0,0,0,0.5)" }}
+            >
+              <div className="flex flex-col md:flex-row" style={{ minHeight: "300px" }}>
+
+                {/* Left: voice list */}
+                <div
+                  className="md:w-56 flex-shrink-0 border-b md:border-b-0 md:border-r p-4"
+                  style={{ borderColor: "#2a2a3e", background: "#0d0d17" }}
+                >
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-1">Voces</p>
+                  <div className="space-y-0.5">
+                    {DEMO_VOICES.map((voice) => {
+                      const active = selectedVoice === voice.id;
+                      return (
+                        <button
+                          key={voice.id}
+                          onClick={() => setSelectedVoice(voice.id)}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-left"
+                          style={active
+                            ? { background: "rgba(124,58,237,0.15)", color: "#a78bfa" }
+                            : { color: "#9ca3af" }
+                          }
+                        >
+                          <div
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                            style={{ background: voice.color }}
+                          >
+                            {voice.initials[0]}
+                          </div>
+                          <span className="truncate font-medium">{voice.name}</span>
+                          {active && (
+                            <span
+                              className="ml-auto w-1.5 h-1.5 rounded-full flex-shrink-0"
+                              style={{ background: "#7C3AED" }}
+                            />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Right: text + button */}
+                <div className="flex-1 p-6 flex flex-col">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Texto</p>
+                  <div
+                    className="flex-1 rounded-xl p-4 text-sm text-gray-300 leading-relaxed mb-5"
+                    style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }}
+                  >
+                    Hola, soy una voz generada con inteligencia artificial por VoiceForge. La calidad es excepcional y el resultado suena completamente natural.
+                  </div>
+
+                  {!isSignedIn ? (
+                    <SignUpButton mode="modal">
+                      <button
+                        className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
+                        style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9)", boxShadow: "0 4px 20px rgba(124,58,237,0.35)" }}
+                      >
+                        <PlayIcon />
+                        Generar y reproducir
+                      </button>
+                    </SignUpButton>
+                  ) : (
+                    <Link
+                      href="/dashboard"
+                      className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
+                      style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9)", boxShadow: "0 4px 20px rgba(124,58,237,0.35)" }}
+                    >
+                      <PlayIcon />
+                      Ir al Dashboard
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Use Cases ──────────────────────────────────────────── */}
+        <section className="py-20 px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-3">Para cada caso de uso</h2>
+              <p className="text-gray-400">Genera audio profesional para cualquier proyecto</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {USE_CASES.map((uc) => (
+                <div
+                  key={uc.title}
+                  className="relative rounded-2xl overflow-hidden p-6 border"
+                  style={{ background: uc.bg, borderColor: "rgba(255,255,255,0.05)", minHeight: "220px" }}
+                >
+                  {/* Decorative waveform */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none px-4">
+                    <svg viewBox="0 0 200 60" className="w-full" fill="none">
+                      {WAVE_BARS.map(([x, h], i) => (
+                        <rect key={i} x={x} y={(60 - h) / 2} width="4" height={h} rx="2" fill="white" />
+                      ))}
+                    </svg>
+                  </div>
+
+                  <div className="relative flex flex-col justify-end h-full" style={{ minHeight: "160px" }}>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {uc.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="text-xs px-2.5 py-0.5 rounded-full font-medium"
+                          style={{ background: "rgba(255,255,255,0.1)", color: uc.accent }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <h3 className="text-xl font-bold text-white">{uc.title}</h3>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Features ───────────────────────────────────────────── */}
+        <section className="py-20 px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+
+              {/* Left */}
+              <div>
+                <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-snug">
+                  Crea voces de IA de calidad profesional para vídeos, audiolibros y personajes
+                </h2>
+                <ul className="space-y-4 mb-8">
+                  {FEATURES.map((f) => (
+                    <li key={f} className="flex items-start gap-3">
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                        style={{ background: "rgba(124,58,237,0.2)" }}
+                      >
+                        <Check size={11} style={{ color: "#a78bfa" }} />
+                      </div>
+                      <span className="text-gray-300">{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {!isSignedIn ? (
+                  <SignUpButton mode="modal">
+                    <button
+                      className="px-6 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
+                      style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9)", boxShadow: "0 4px 15px rgba(124,58,237,0.3)" }}
+                    >
+                      Empezar gratis →
+                    </button>
+                  </SignUpButton>
+                ) : (
+                  <Link
+                    href="/dashboard"
+                    className="inline-block px-6 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
+                    style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9)", boxShadow: "0 4px 15px rgba(124,58,237,0.3)" }}
+                  >
+                    Ir al Dashboard →
+                  </Link>
+                )}
+              </div>
+
+              {/* Right: mock studio card */}
+              <div className="rounded-2xl border p-5" style={{ background: "#12121a", borderColor: "#2a2a3e" }}>
+                {/* Window chrome */}
+                <div className="flex items-center gap-1.5 mb-4">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+                  <span className="ml-2 text-xs text-gray-600">voiceforge-studio</span>
+                </div>
+
+                {/* Script text */}
+                <div
+                  className="rounded-lg px-4 py-3 text-xs text-gray-400 mb-3 leading-relaxed"
+                  style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }}
+                >
+                  &ldquo;Bienvenidos a este episodio del podcast. Hoy vamos a hablar sobre el futuro de la inteligencia artificial y cómo está cambiando el mundo...&rdquo;
+                </div>
+
+                {/* Waveform */}
+                <div
+                  className="rounded-lg px-3 pt-3 pb-2 mb-3"
+                  style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }}
+                >
+                  <svg viewBox="0 0 300 36" className="w-full" fill="none">
+                    {Array.from({ length: 60 }, (_, i) => {
+                      const h = Math.abs(Math.sin(i * 0.45) * 11 + Math.sin(i * 0.9) * 7 + 10);
+                      return (
+                        <rect
+                          key={i}
+                          x={i * 5}
+                          y={(36 - h) / 2}
+                          width="3"
+                          height={h}
+                          rx="1.5"
+                          fill={i < 22 ? "#7C3AED" : "#2a2a3e"}
+                        />
+                      );
+                    })}
+                  </svg>
+                  <div className="flex justify-between mt-1 text-xs" style={{ color: "#555" }}>
+                    <span>0:07</span>
+                    <span>0:28</span>
+                  </div>
+                </div>
+
+                {/* Voice row */}
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                    style={{ background: "linear-gradient(135deg,#7C3AED,#4F46E5)" }}
+                  >
+                    A
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-white">Ana García</p>
+                    <p className="text-xs" style={{ color: "#6b7280" }}>Español · Femenino</p>
+                  </div>
+                  <div
+                    className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                    style={{ background: "rgba(124,58,237,0.15)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)" }}
+                  >
+                    <PlayIcon />
+                    Generado
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Stats ──────────────────────────────────────────────── */}
+        <section className="py-24 px-4 relative overflow-hidden">
+          {/* Background glow */}
+          <div
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            aria-hidden
+          >
+            <div
+              className="w-[600px] h-[600px] rounded-full opacity-[0.07]"
+              style={{ background: "radial-gradient(circle,#7C3AED,transparent 70%)" }}
+            />
+          </div>
+
+          <div className="max-w-3xl mx-auto text-center relative">
+            {/* Floating avatars */}
+            <div className="relative flex justify-center gap-3 mb-10">
+              {STAT_AVATARS.map((av, i) => (
+                <div
+                  key={i}
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 flex-shrink-0"
+                  style={{
+                    background: av.color,
+                    borderColor: "#0a0a0f",
+                    marginTop: i % 2 === 0 ? "0px" : "12px",
+                    boxShadow: `0 0 20px ${av.color}55`,
+                  }}
+                >
+                  {av.initials}
+                </div>
+              ))}
+            </div>
+
+            <h2 className="text-6xl md:text-8xl font-bold mb-4">
+              2.000.000<span style={{ color: "#7C3AED" }}>+</span>
+            </h2>
+            <p className="text-2xl font-semibold text-gray-200 mb-4">Voces disponibles</p>
+            <p className="text-gray-500 max-w-md mx-auto">
+              Accede a una biblioteca masiva de voces públicas o crea las tuyas propias con clonación instantánea.
             </p>
+          </div>
+        </section>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Show when="signed-out">
+        {/* ── FAQ ────────────────────────────────────────────────── */}
+        <section className="py-20 px-4">
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-12">Preguntas frecuentes</h2>
+            <div className="space-y-3">
+              {FAQ_ITEMS.map((item, i) => (
+                <FaqItem
+                  key={i}
+                  item={item}
+                  open={openFaq === i}
+                  onToggle={() => setOpenFaq(openFaq === i ? null : i)}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── CTA ────────────────────────────────────────────────── */}
+        <section className="py-20 px-4">
+          <div className="max-w-3xl mx-auto">
+            <div
+              className="rounded-2xl p-12 border relative overflow-hidden text-center"
+              style={{
+                background: "linear-gradient(135deg,rgba(124,58,237,0.12),rgba(59,130,246,0.06))",
+                borderColor: "rgba(124,58,237,0.25)",
+              }}
+            >
+              <div
+                className="absolute -top-24 -right-24 w-64 h-64 rounded-full pointer-events-none"
+                style={{ background: "radial-gradient(circle,rgba(124,58,237,0.2),transparent 70%)" }}
+                aria-hidden
+              />
+
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 relative">
+                ¡Empieza a convertir texto en audio hoy mismo!
+              </h2>
+              <p className="text-gray-400 mb-8 relative">Sin tarjeta de crédito. Explora las voces gratis.</p>
+
+              {!isSignedIn ? (
                 <SignUpButton mode="modal">
                   <button
-                    className="text-base font-semibold text-white px-8 py-4 rounded-xl transition-all hover:-translate-y-1"
-                    style={{
-                      background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
-                      boxShadow: "0 8px 30px rgba(124,58,237,0.35)",
-                    }}
+                    className="px-8 py-4 rounded-xl font-semibold text-white text-base transition-all hover:-translate-y-1 relative"
+                    style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9)", boxShadow: "0 8px 30px rgba(124,58,237,0.4)" }}
                   >
                     Empezar gratis →
                   </button>
                 </SignUpButton>
-              </Show>
-              <Show when="signed-in">
+              ) : (
                 <Link
                   href="/dashboard"
-                  className="text-base font-semibold text-white px-8 py-4 rounded-xl transition-all hover:-translate-y-1 text-center"
-                  style={{
-                    background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
-                    boxShadow: "0 8px 30px rgba(124,58,237,0.35)",
-                  }}
+                  className="inline-block px-8 py-4 rounded-xl font-semibold text-white text-base transition-all hover:-translate-y-1 relative"
+                  style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9)", boxShadow: "0 8px 30px rgba(124,58,237,0.4)" }}
                 >
                   Ir al Dashboard →
                 </Link>
-              </Show>
-              <Link
-                href="/pricing"
-                className="text-base font-semibold px-8 py-4 rounded-xl border transition-all hover:border-purple-500/50 hover:text-white text-gray-300 text-center"
-                style={{ borderColor: "#2a2a3e", background: "#12121a" }}
-              >
-                Ver precios
-              </Link>
+              )}
             </div>
           </div>
         </section>
 
-        {/* Features */}
-        <section className="pb-24 px-4">
-          <div className="max-w-5xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {features.map((feature) => (
-                <div
-                  key={feature.title}
-                  className="p-6 rounded-2xl border transition-all hover:border-purple-500/30"
-                  style={{ background: "#12121a", borderColor: "#2a2a3e" }}
-                >
-                  <div className="text-4xl mb-4">{feature.icon}</div>
-                  <h3 className="text-lg font-bold text-white mb-3">
-                    {feature.title}
-                  </h3>
-                  <ul className="space-y-2">
-                    {feature.items.map((item) => (
-                      <li
-                        key={item}
-                        className="flex items-center gap-2 text-sm text-gray-400"
-                      >
-                        <CheckIcon />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Pricing */}
-        <section id="pricing" className="pb-24 px-4">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-white mb-3">
-                Precios simples y transparentes
-              </h2>
-              <p className="text-gray-400">
-                Pago único · Sin suscripciones · Los caracteres nunca caducan
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {plans.map((plan) => (
-                <div
-                  key={plan.key}
-                  className="relative p-6 rounded-2xl border flex flex-col"
-                  style={{
-                    background: plan.popular
-                      ? "rgba(124,58,237,0.08)"
-                      : "#12121a",
-                    borderColor: plan.popular ? "#7C3AED" : "#2a2a3e",
-                  }}
-                >
-                  {plan.popular && (
-                    <div
-                      className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-bold text-white px-4 py-1 rounded-full whitespace-nowrap"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #7C3AED, #3B82F6)",
-                      }}
-                    >
-                      MÁS POPULAR
-                    </div>
-                  )}
-
-                  <div className="mb-6">
-                    <h3 className="text-lg font-bold text-white mb-1">
-                      {plan.name}
-                    </h3>
-                    <div className="flex items-baseline gap-1 mb-1">
-                      <span className="text-4xl font-bold text-white">
-                        {plan.price}€
-                      </span>
-                      <span className="text-gray-400 text-sm">pago único</span>
-                    </div>
-                    <p className="text-sm text-gray-500">
-                      {plan.characters} caracteres
-                    </p>
-                  </div>
-
-                  <ul className="space-y-2 flex-1 mb-6">
-                    {plan.features.map((f) => (
-                      <li
-                        key={f}
-                        className="flex items-center gap-2 text-sm text-gray-300"
-                      >
-                        <CheckIcon />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Show when="signed-out">
-                    <SignUpButton mode="modal">
-                      <button
-                        className="w-full py-3 rounded-lg font-semibold text-sm transition-all hover:-translate-y-0.5"
-                        style={
-                          plan.popular
-                            ? {
-                                background:
-                                  "linear-gradient(135deg, #7C3AED, #6D28D9)",
-                                color: "white",
-                                boxShadow:
-                                  "0 4px 15px rgba(124,58,237,0.3)",
-                              }
-                            : {
-                                background: "#1a1a2e",
-                                color: "#d1d5db",
-                                border: "1px solid #2a2a3e",
-                              }
-                        }
-                      >
-                        Comprar {plan.name}
-                      </button>
-                    </SignUpButton>
-                  </Show>
-                  <Show when="signed-in">
-                    <Link
-                      href={`/pricing?plan=${plan.key}`}
-                      className="block w-full py-3 rounded-lg font-semibold text-sm text-center transition-all hover:-translate-y-0.5"
-                      style={
-                        plan.popular
-                          ? {
-                              background:
-                                "linear-gradient(135deg, #7C3AED, #6D28D9)",
-                              color: "white",
-                              boxShadow: "0 4px 15px rgba(124,58,237,0.3)",
-                            }
-                          : {
-                              background: "#1a1a2e",
-                              color: "#d1d5db",
-                              border: "1px solid #2a2a3e",
-                            }
-                      }
-                    >
-                      Comprar {plan.name}
-                    </Link>
-                  </Show>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
       </main>
 
-      {/* Footer */}
+      {/* ── Footer ─────────────────────────────────────────────── */}
       <footer className="border-t py-8 px-4" style={{ borderColor: "#2a2a3e" }}>
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-gray-500 text-sm">
-            © 2025 VoiceForge. Todos los derechos reservados.
-          </p>
+          <p className="text-gray-500 text-sm">© 2025 VoiceForge. Todos los derechos reservados.</p>
           <div className="flex gap-6">
-            <Link
-              href="/pricing"
-              className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
-            >
+            <Link href="/pricing" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">
               Precios
             </Link>
-            <Link
-              href="/dashboard"
-              className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
-            >
+            <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">
               Dashboard
             </Link>
           </div>
