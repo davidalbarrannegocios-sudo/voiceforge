@@ -22,9 +22,9 @@ export async function POST(
 
   console.log(`[process-job] starting jobId=${jobId} chars=${job.text.length}`);
 
-  await prisma.job.update({ where: { id: job.id }, data: { status: "processing" } });
-
   try {
+    await prisma.job.update({ where: { id: job.id }, data: { status: "processing" } });
+
     const result = await fishAudioGenerate({
       text: job.text,
       referenceId: job.voiceId !== "default" ? job.voiceId : undefined,

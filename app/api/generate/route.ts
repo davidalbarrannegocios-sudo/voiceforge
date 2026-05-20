@@ -46,13 +46,12 @@ export async function POST(req: Request) {
       }),
     ]);
 
-    // Fire-and-forget via localhost to avoid external DNS round-trip on Railway.
-    const baseUrl = `http://localhost:${process.env.PORT ?? 3000}`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.elitelabs.es";
     const processUrl = `${baseUrl}/api/process-job/${job.id}`;
     console.log(`[generate] firing process-job → ${processUrl}`);
-    fetch(processUrl, { method: "POST" })
+    fetch(processUrl, { method: "POST", headers: { "Content-Type": "application/json" } })
       .then((r) => console.log(`[generate] process-job responded: ${r.status}`))
-      .catch((err) => console.error("[generate] process-job trigger failed:", err));
+      .catch(() => {});
 
     return NextResponse.json({ jobId: job.id, charCost, charsRemaining: user.credits - charCost });
   } catch (err) {
