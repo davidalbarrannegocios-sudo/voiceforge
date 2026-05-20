@@ -265,7 +265,7 @@ export function PaymentModal({
             </svg>
           </div>
         ) : (
-          <Elements stripe={stripePromise}>
+          <Elements stripe={stripePromise} options={{ clientSecret }}>
             <PaymentForm
               plan={plan}
               clientSecret={clientSecret}
