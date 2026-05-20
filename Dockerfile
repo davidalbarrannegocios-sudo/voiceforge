@@ -21,28 +21,25 @@ RUN npx prisma generate
 RUN npm run build
 
 # ─── runner ──────────────────────────────────────────────────
-FROM base AS runner
+FROM node:18-alpine AS runner
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Copy standalone output
+# Copy standalone output (owned by root so prisma can write at runtime)
 COPY --from=builder /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
 # Copy prisma for db push at runtime
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-
-USER nextjs
+COPY --from=builder /app/prisma ./prisma
 
 EXPOSE 3000
 
