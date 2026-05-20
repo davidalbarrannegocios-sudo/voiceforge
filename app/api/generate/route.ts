@@ -46,9 +46,11 @@ export async function POST(req: Request) {
       }),
     ]);
 
+    console.log('[generate] Job creado:', job.id);
+    console.log('[generate] Lanzando process-job a URL:', `${process.env.NEXT_PUBLIC_APP_URL}/api/process-job/${job.id}`);
+
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.elitelabs.es";
     const processUrl = `${baseUrl}/api/process-job/${job.id}`;
-    console.log(`[generate] firing process-job → ${processUrl}`);
     fetch(processUrl, { method: "POST", headers: { "Content-Type": "application/json" } })
       .then((r) => console.log(`[generate] process-job responded: ${r.status}`))
       .catch(() => {});
