@@ -167,6 +167,44 @@ function HomeTab({
   );
 }
 
+/* ─── Job types ───────────────────────────────────────────── */
+interface Job {
+  id: string;
+  status: string;
+  text: string;
+  voiceId: string;
+  voiceName?: string;
+  audioUrl?: string | null;
+  durationSeconds?: number | null;
+  error?: string | null;
+  creditsUsed: number;
+  createdAt: string;
+}
+
+function statusBadge(status: string) {
+  const map: Record<string, { label: string; color: string; bg: string }> = {
+    pending:    { label: "Pendiente",  color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
+    processing: { label: "Generando", color: "#93c5fd", bg: "rgba(59,130,246,0.12)" },
+    completed:  { label: "Listo",     color: "#4ade80", bg: "rgba(74,222,128,0.12)" },
+    failed:     { label: "Error",     color: "#f87171", bg: "rgba(239,68,68,0.12)"  },
+  };
+  const s = map[status] ?? { label: status, color: "#8888a8", bg: "#12121a" };
+  return (
+    <span
+      className="text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1"
+      style={{ color: s.color, background: s.bg }}
+    >
+      {(status === "pending" || status === "processing") && (
+        <svg className="animate-spin h-2.5 w-2.5" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+      )}
+      {s.label}
+    </span>
+  );
+}
+
 /* ─── Generate Tab ────────────────────────────────────────── */
 function GenerateTab({
   voices,
@@ -180,167 +218,186 @@ function GenerateTab({
   const [text, setText] = useState("");
   const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(initialVoice ?? null);
   const [showBrowser, setShowBrowser] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [jobId, setJobId] = useState<string | null>(null);
-  const [jobStatus, setJobStatus] = useState<string | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [lastResult, setLastResult] = useState<{
-    durationSeconds: number;
-    charsUsed: number;
-    charsRemaining: number;
-  } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobsLoaded, setJobsLoaded] = useState(false);
+  const jobsRef = useRef<Job[]>([]);
+  jobsRef.current = jobs;
 
   const charCost = calculateCharCost(text.length);
   const clonedVoices = voices.filter((v) => !v.isSystem);
 
+  // Load jobs on mount
   useEffect(() => {
-    if (!jobId) return;
+    fetch("/api/jobs")
+      .then((r) => r.json())
+      .then((data) => { setJobs(data.jobs ?? []); setJobsLoaded(true); })
+      .catch(() => setJobsLoaded(true));
+  }, []);
+
+  // Poll active jobs every 3 s
+  useEffect(() => {
     const interval = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/generate/status/${jobId}`);
-        const data = await res.json();
-        setJobStatus(data.status);
-        if (data.status === "completed") {
-          clearInterval(interval);
-          setJobId(null);
-          setLoading(false);
-          setAudioUrl(data.audioUrl);
-          setLastResult({
-            durationSeconds: data.durationSeconds ?? 0,
-            charsUsed: data.creditsUsed,
-            charsRemaining: data.charsRemaining,
-          });
-          onGenerated();
-        } else if (data.status === "failed") {
-          clearInterval(interval);
-          setJobId(null);
-          setLoading(false);
-          setError(data.error || "Error al generar el audio");
-          onGenerated();
-        }
-      } catch {
-        // network hiccup, keep polling
-      }
+      const active = jobsRef.current.filter(
+        (j) => j.status === "pending" || j.status === "processing"
+      );
+      if (active.length === 0) return;
+
+      await Promise.all(
+        active.map(async (job) => {
+          try {
+            const res = await fetch(`/api/generate/status/${job.id}`);
+            const data = await res.json();
+            const prev = jobsRef.current.find((j) => j.id === job.id);
+            if (prev && prev.status !== data.status) {
+              setJobs((cur) =>
+                cur.map((j) =>
+                  j.id === job.id
+                    ? { ...j, status: data.status, audioUrl: data.audioUrl, durationSeconds: data.durationSeconds, error: data.error }
+                    : j
+                )
+              );
+              if (data.status === "completed" || data.status === "failed") {
+                onGenerated();
+              }
+            }
+          } catch {
+            // network hiccup, keep polling
+          }
+        })
+      );
     }, 3000);
     return () => clearInterval(interval);
-  }, [jobId, onGenerated]);
+  }, [onGenerated]);
 
   async function handleGenerate() {
-    setError(null);
-    setAudioUrl(null);
-    setLastResult(null);
-    setJobStatus(null);
-    setLoading(true);
-
+    setFormError(null);
+    setSubmitting(true);
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text,
-          reference_id: selectedVoice?.referenceId ?? undefined,
-        }),
+        body: JSON.stringify({ text, reference_id: selectedVoice?.referenceId ?? undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al generar");
-      onGenerated(); // credits already deducted
-      setJobId(data.jobId);
-      setJobStatus("pending");
+
+      const newJob: Job = {
+        id: data.jobId,
+        status: "pending",
+        text: text.trim(),
+        voiceId: selectedVoice?.referenceId ?? "default",
+        voiceName: selectedVoice?.name ?? "Voz por defecto",
+        creditsUsed: data.charCost,
+        createdAt: new Date().toISOString(),
+      };
+      setJobs((cur) => [newJob, ...cur]);
+      onGenerated();
+      setText("");
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Error desconocido");
-      setLoading(false);
+      setFormError(e instanceof Error ? e.message : "Error desconocido");
+    } finally {
+      setSubmitting(false);
     }
   }
 
   return (
-    <div className="max-w-2xl">
-      {/* Text area */}
-      <div className="mb-4">
-        <label className="text-sm font-medium text-gray-300 mb-2 block">Texto</label>
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Escribe el texto a narrar..."
-          rows={6}
-          className="w-full rounded-xl p-4 text-sm text-gray-200 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-          style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
-        />
-        {text.length > 0 && (
-          <p className="mt-1.5 text-xs" style={{ color: "#8888a8" }}>
-            Esta generación costará{" "}
-            <span className="text-blue-400 font-semibold">
-              {charCost.toLocaleString("es-ES")} caracteres
-            </span>
-          </p>
-        )}
-      </div>
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
 
-      {/* Voice selector */}
-      <div className="mb-6">
-        <label className="text-sm font-medium text-gray-300 mb-2 block">Voz</label>
-        <button
-          onClick={() => setShowBrowser(true)}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all hover:border-blue-500/60"
-          style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
-        >
-          <div className="flex items-center gap-2.5">
-            <Mic size={16} style={{ color: "#93c5fd" }} />
-            <span className="text-gray-200 font-medium">
-              {selectedVoice?.name ?? "Voz por defecto"}
-            </span>
+      {/* ── Left: form ── */}
+      <div className="p-6 rounded-2xl border" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+        <h2 className="text-base font-bold text-white mb-5">Nueva generación</h2>
+
+        <div className="mb-4">
+          <label className="text-xs font-medium text-gray-400 mb-1.5 block">Texto</label>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Escribe el texto a narrar..."
+            rows={7}
+            className="w-full rounded-xl p-4 text-sm text-gray-200 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+            style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
+          />
+          {text.length > 0 && (
+            <p className="mt-1.5 text-xs" style={{ color: "#8888a8" }}>
+              Costará{" "}
+              <span className="text-blue-400 font-semibold">
+                {charCost.toLocaleString("es-ES")} caracteres
+              </span>
+            </p>
+          )}
+        </div>
+
+        <div className="mb-5">
+          <label className="text-xs font-medium text-gray-400 mb-1.5 block">Voz</label>
+          <button
+            onClick={() => setShowBrowser(true)}
+            className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all hover:border-blue-500/60"
+            style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
+          >
+            <div className="flex items-center gap-2.5">
+              <Mic size={15} style={{ color: "#93c5fd" }} />
+              <span className="text-gray-200 font-medium">{selectedVoice?.name ?? "Voz por defecto"}</span>
+            </div>
+            <span className="text-xs" style={{ color: "#8888a8" }}>Cambiar →</span>
+          </button>
+        </div>
+
+        {formError && (
+          <div className="mb-4 p-3 rounded-lg text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
+            {formError}
           </div>
-          <span className="text-xs" style={{ color: "#8888a8" }}>Cambiar →</span>
+        )}
+
+        <button
+          onClick={handleGenerate}
+          disabled={submitting || text.trim().length === 0}
+          className="w-full py-3 rounded-xl font-semibold text-white transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+          style={{
+            background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+            boxShadow: submitting ? "none" : "0 4px 15px rgba(59,130,246,0.3)",
+          }}
+        >
+          {submitting ? (
+            <>
+              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Enviando...
+            </>
+          ) : (
+            "Generar audio"
+          )}
         </button>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div
-          className="mb-4 p-3 rounded-lg text-sm"
-          style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}
-        >
-          {error}
-        </div>
-      )}
+      {/* ── Right: live job history ── */}
+      <div className="p-6 rounded-2xl border flex flex-col" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+        <h2 className="text-base font-bold text-white mb-5">Generaciones recientes</h2>
 
-      {/* Generate button */}
-      <button
-        onClick={handleGenerate}
-        disabled={loading || text.trim().length === 0}
-        className="w-full py-3 rounded-xl font-semibold text-white transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
-        style={{
-          background: "linear-gradient(135deg, #3b82f6, #2563eb)",
-          boxShadow: loading ? "none" : "0 4px 15px rgba(59,130,246,0.3)",
-        }}
-      >
-        {loading ? (
-          <>
-            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-            {jobStatus === "processing" ? "Sintetizando voz..." : "Iniciando..."}
-          </>
-        ) : (
-          "Generar audio"
-        )}
-      </button>
-
-      {/* Audio player */}
-      {audioUrl && lastResult && (
-        <div className="mt-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-300">Audio generado</span>
-            <div className="flex items-center gap-2 text-xs" style={{ color: "#8888a8" }}>
-              <span>{lastResult.charsUsed.toLocaleString("es-ES")} caracteres usados</span>
-              <span>·</span>
-              <span style={{ color: "#93c5fd" }}>{lastResult.charsRemaining.toLocaleString("es-ES")} restantes</span>
-            </div>
+        {!jobsLoaded ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: "#12121a" }} />
+            ))}
           </div>
-          <AudioPlayer src={audioUrl} filename="elitelabs-audio.mp3" />
-        </div>
-      )}
+        ) : jobs.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center py-16 text-center" style={{ color: "#8888a8" }}>
+            <Mic size={36} className="mb-3 opacity-40" />
+            <p className="text-sm font-medium">Tus generaciones aparecerán aquí</p>
+            <p className="text-xs mt-1 opacity-60">Escribe un texto y pulsa Generar</p>
+          </div>
+        ) : (
+          <div className="space-y-3 overflow-y-auto max-h-[600px] pr-1">
+            {jobs.map((job) => (
+              <JobCard key={job.id} job={job} voices={voices} />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* VoiceBrowser modal */}
       {showBrowser && (
@@ -349,6 +406,67 @@ function GenerateTab({
           onSelect={setSelectedVoice}
           onClose={() => setShowBrowser(false)}
         />
+      )}
+    </div>
+  );
+}
+
+/* ─── Job Card ─────────────────────────────────────────────── */
+function JobCard({ job, voices }: { job: Job; voices: Voice[] }) {
+  const [showPlayer, setShowPlayer] = useState(false);
+
+  const voiceName =
+    job.voiceName ??
+    voices.find((v) => v.fishAudioModelId === job.voiceId)?.name ??
+    (job.voiceId === "default" ? "Voz por defecto" : job.voiceId.slice(0, 8) + "…");
+
+  return (
+    <div className="rounded-xl border p-4" style={{ background: "#12121a", borderColor: "#2a2a3e" }}>
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-gray-200 line-clamp-2 leading-snug">{job.text}</p>
+        </div>
+        {statusBadge(job.status)}
+      </div>
+
+      <div className="flex items-center gap-3 text-xs flex-wrap" style={{ color: "#8888a8" }}>
+        <span className="flex items-center gap-1">
+          <Mic size={10} />
+          {voiceName}
+        </span>
+        <span>·</span>
+        <span>{job.creditsUsed.toLocaleString("es-ES")} chars</span>
+        {job.durationSeconds && (
+          <>
+            <span>·</span>
+            <span>{job.durationSeconds.toFixed(1)}s</span>
+          </>
+        )}
+        <span>·</span>
+        <span>{formatDate(job.createdAt)}</span>
+      </div>
+
+      {job.status === "failed" && job.error && (
+        <p className="mt-2 text-xs rounded-lg p-2" style={{ background: "rgba(239,68,68,0.08)", color: "#f87171" }}>
+          {job.error}
+        </p>
+      )}
+
+      {job.status === "completed" && job.audioUrl && (
+        <div className="mt-3">
+          {showPlayer ? (
+            <AudioPlayer src={job.audioUrl} filename={`elitelabs-${job.id}.mp3`} />
+          ) : (
+            <button
+              onClick={() => setShowPlayer(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+              style={{ background: "rgba(59,130,246,0.12)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}
+            >
+              <Play size={11} />
+              Reproducir
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
