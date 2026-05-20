@@ -17,7 +17,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider appearance={{
+      variables: {
+        colorPrimary: '#0078ff',
+        colorBackground: '#0a0a0f',
+        colorText: '#e6f0ff',
+        colorInputBackground: '#1a1a2e',
+        colorInputText: '#e6f0ff',
+        colorTextSecondary: '#a8b2c7',
+        borderRadius: '12px',
+      },
+    }}>
       <html lang="es">
         <body className={`${inter.className} antialiased`}>{children}</body>
       </html>
