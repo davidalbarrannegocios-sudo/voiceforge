@@ -1,4 +1,5 @@
 FROM node:20-alpine AS base
+# Cache bust: 2026-05-21
 
 # ─── deps ────────────────────────────────────────────────────
 FROM base AS deps
