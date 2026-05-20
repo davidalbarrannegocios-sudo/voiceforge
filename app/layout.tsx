@@ -39,6 +39,7 @@ export default function RootLayout({
         footerActionLink: { color: '#0078ff' },
         identityPreviewText: { color: '#ffffff' },
         identityPreviewEditButton: { color: '#0078ff' },
+        badge: { backgroundColor: '#0078ff', color: '#ffffff' },
       },
     }}>
       <html lang="es">
