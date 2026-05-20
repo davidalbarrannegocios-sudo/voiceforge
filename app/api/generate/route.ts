@@ -1,7 +1,6 @@
 import { currentUser } from "@clerk/nextjs/server";
-import { NextResponse, after } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { fishAudioGenerate } from "@/lib/fishaudio";
 import { calculateCharCost } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -46,52 +45,15 @@ export async function POST(req: Request) {
     }),
   ]);
 
-  // Process audio after response is sent
-  after(async () => {
-    try {
-      await prisma.job.update({ where: { id: job.id }, data: { status: "processing" } });
+  // Fire-and-forget: trigger processing without blocking this response.
+  // Railway runs a persistent Node process so the in-flight fetch keeps
+  // running after this handler returns.
+  const host = req.headers.get("host") ?? "";
+  const protocol = host.startsWith("localhost") ? "http" : "https";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `${protocol}://${host}`;
 
-      const result = await fishAudioGenerate({
-        text: text.trim(),
-        referenceId: reference_id ?? undefined,
-        userId: user.id,
-      });
-
-      await prisma.$transaction([
-        prisma.job.update({
-          where: { id: job.id },
-          data: {
-            status: "completed",
-            audioUrl: result.audio_url,
-            durationSeconds: result.duration_seconds,
-          },
-        }),
-        prisma.generation.create({
-          data: {
-            userId: user.id,
-            text: text.trim(),
-            voiceId: reference_id ?? "default",
-            audioUrl: result.audio_url,
-            durationSeconds: result.duration_seconds,
-            creditsUsed: charCost,
-          },
-        }),
-      ]);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(`[Job] Failed — jobId=${job.id} userId=${user.id} chars=${text.trim().length} error=${message}`);
-      await prisma.$transaction([
-        prisma.job.update({
-          where: { id: job.id },
-          data: { status: "failed", error: message },
-        }),
-        prisma.user.update({
-          where: { id: user.id },
-          data: { credits: { increment: charCost } },
-        }),
-      ]);
-    }
-  });
+  fetch(`${baseUrl}/api/process-job/${job.id}`, { method: "POST" })
+    .catch((err) => console.error("[generate] process-job trigger failed:", err));
 
   return NextResponse.json({ jobId: job.id, charCost, charsRemaining: user.credits - charCost });
 }

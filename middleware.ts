@@ -9,6 +9,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhooks/stripe",
   "/api/public-voices",
   "/api/demo-voice",
+  "/api/process-job/(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
