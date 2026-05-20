@@ -37,14 +37,23 @@ export async function fishAudioGenerate({
 
   console.log(`[FishAudio] TTS request — referenceId=${referenceId ?? "none"} chars=${text.length}`);
 
-  const res = await fetch(`${FISH_AUDIO_BASE}/v1/tts`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+
+  let res: Response;
+  try {
+    res = await fetch(`${FISH_AUDIO_BASE}/v1/tts`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!res.ok) {
     const errText = await res.text();

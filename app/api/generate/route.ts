@@ -79,7 +79,7 @@ export async function POST(req: Request) {
       ]);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error("[Job] Failed:", message);
+      console.error(`[Job] Failed — jobId=${job.id} userId=${user.id} chars=${text.trim().length} error=${message}`);
       await prisma.$transaction([
         prisma.job.update({
           where: { id: job.id },
