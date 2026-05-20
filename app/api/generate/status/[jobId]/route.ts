@@ -1,40 +1,25 @@
-import { currentUser } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-
-export const runtime = "nodejs";
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 export async function GET(
-  _req: Request,
+  request: Request,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
-  const clerkUser = await currentUser();
-  if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-
-  const { jobId } = await params;
-
   try {
-    const [user, job] = await Promise.all([
-      prisma.user.findUnique({ where: { clerkId: clerkUser.id } }),
-      prisma.job.findUnique({ where: { id: jobId } }),
-    ]);
+    const { jobId } = await params
+    const job = await prisma.job.findUnique({
+      where: { id: jobId },
+      select: { id: true, status: true, audioUrl: true, error: true }
+    })
 
-    if (!job) return NextResponse.json({ error: "Job no encontrado" }, { status: 404 });
-    if (!user || job.userId !== user.id) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    if (!job) {
+      return NextResponse.json({ error: 'Job no encontrado' }, { status: 404 })
     }
 
-    return NextResponse.json({
-      status: job.status,
-      audioUrl: job.audioUrl,
-      durationSeconds: job.durationSeconds,
-      error: job.error,
-      creditsUsed: job.creditsUsed,
-      charsRemaining: user.credits,
-    });
-  } catch (err) {
-    console.error(`[status] error jobId=${jobId}:`, err);
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: "Error interno", detail: message }, { status: 500 });
+    return NextResponse.json(job)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('[status] Error:', message)
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
