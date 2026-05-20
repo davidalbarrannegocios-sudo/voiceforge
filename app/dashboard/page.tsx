@@ -242,7 +242,6 @@ function GenerateTab({
             <span className="text-blue-400 font-semibold">
               {charCost.toLocaleString("es-ES")} caracteres
             </span>
-            {" "}(incluye {selectedVoice?.isCloned ? "15%" : "10%"} por procesamiento y mejora de calidad de audio)
           </p>
         )}
       </div>
