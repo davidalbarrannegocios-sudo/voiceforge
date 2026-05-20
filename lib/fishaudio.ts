@@ -30,7 +30,8 @@ export async function fishAudioGenerate({
     format: "mp3",
     mp3_bitrate: 128,
     normalize: true,
-    latency: "normal",
+    latency: "balanced",
+    chunk_length: 200,
   };
   if (referenceId) payload.reference_id = referenceId;
 
