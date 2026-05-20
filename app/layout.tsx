@@ -22,11 +22,22 @@ export default function RootLayout({
         colorPrimary: '#0078ff',
         colorBackground: '#0a0a0f',
         colorText: '#ffffff',
-        colorTextSecondary: '#a8b2c7',
+        colorTextSecondary: '#ffffff',
         colorInputBackground: '#1a1a2e',
         colorInputText: '#ffffff',
         colorNeutral: '#ffffff',
         borderRadius: '12px',
+      },
+      elements: {
+        userPreviewMainIdentifier: { color: '#ffffff' },
+        userPreviewSecondaryIdentifier: { color: '#ffffff' },
+        profileSectionTitle: { color: '#ffffff' },
+        profileSectionTitleText: { color: '#ffffff' },
+        formFieldLabel: { color: '#ffffff' },
+        identityPreviewText: { color: '#ffffff' },
+        accordionTriggerButton: { color: '#ffffff' },
+        navbarButton: { color: '#ffffff' },
+        menuItem: { color: '#ffffff' },
       },
     }}>
       <html lang="es">
