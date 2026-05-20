@@ -5,10 +5,7 @@ import { fishAudioGenerate } from "@/lib/fishaudio";
 export const runtime = "nodejs";
 export const maxDuration = 300; // 5 minutes — enough for large chunked texts
 
-export async function POST(
-  _req: Request,
-  { params }: { params: Promise<{ jobId: string }> }
-) {
+async function handleJob(params: Promise<{ jobId: string }>) {
   try {
     const { jobId } = await params;
     console.log('[process-job] Recibida petición para job:', jobId);
@@ -58,4 +55,18 @@ export async function POST(
     const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
+}
+
+export async function POST(
+  _req: Request,
+  { params }: { params: Promise<{ jobId: string }> }
+) {
+  return handleJob(params);
+}
+
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ jobId: string }> }
+) {
+  return handleJob(params);
 }

@@ -51,7 +51,7 @@ export async function POST(req: Request) {
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.elitelabs.es";
     const processUrl = `${baseUrl}/api/process-job/${job.id}`;
-    fetch(processUrl, { method: "POST", headers: { "Content-Type": "application/json" } })
+    fetch(processUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) })
       .then((r) => console.log(`[generate] process-job responded: ${r.status}`))
       .catch(() => {});
 
