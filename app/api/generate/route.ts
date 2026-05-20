@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   const isCloned = reference_id
     ? !!(await prisma.clonedVoice.findFirst({ where: { userId: user.id, referenceAudioUrl: reference_id } }))
     : false;
-  const charCost = calculateCharCost(text.trim().length, isCloned ? 1.15 : 1.10);
+  const charCost = calculateCharCost(text.trim().length);
 
   if (user.credits < charCost) {
     return NextResponse.json(

@@ -99,7 +99,7 @@ export default function PricingPage() {
             Pago único, sin suscripciones. Los caracteres nunca caducan.
             <br />
             <span className="text-sm text-gray-500">
-              Se descuenta un 10% extra por overhead de procesamiento
+              Los caracteres se descuentan exactamente según el texto generado
             </span>
           </p>
         </div>

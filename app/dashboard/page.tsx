@@ -189,7 +189,7 @@ function GenerateTab({
     charsRemaining: number;
   } | null>(null);
 
-  const charCost = calculateCharCost(text.length, selectedVoice?.isCloned ? 1.15 : 1.10);
+  const charCost = calculateCharCost(text.length);
   const clonedVoices = voices.filter((v) => !v.isSystem);
 
   async function handleGenerate() {
