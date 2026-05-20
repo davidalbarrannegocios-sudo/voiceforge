@@ -10,13 +10,17 @@ export async function POST(
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   const { jobId } = await params;
+  console.log(`[process-job] received request for jobId=${jobId}`);
 
   const job = await prisma.job.findUnique({ where: { id: jobId } });
 
   // Only process jobs that are still pending (idempotent)
   if (!job || job.status !== "pending") {
+    console.log(`[process-job] skipping jobId=${jobId} status=${job?.status ?? "not_found"}`);
     return NextResponse.json({ ok: false, reason: "not_pending" });
   }
+
+  console.log(`[process-job] starting jobId=${jobId} chars=${job.text.length}`);
 
   await prisma.job.update({ where: { id: job.id }, data: { status: "processing" } });
 

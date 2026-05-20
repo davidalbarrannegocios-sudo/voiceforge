@@ -52,7 +52,10 @@ export async function POST(req: Request) {
   const protocol = host.startsWith("localhost") ? "http" : "https";
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `${protocol}://${host}`;
 
-  fetch(`${baseUrl}/api/process-job/${job.id}`, { method: "POST" })
+  const processUrl = `${baseUrl}/api/process-job/${job.id}`;
+  console.log(`[generate] firing process-job → ${processUrl}`);
+  fetch(processUrl, { method: "POST" })
+    .then((r) => console.log(`[generate] process-job responded: ${r.status}`))
     .catch((err) => console.error("[generate] process-job trigger failed:", err));
 
   return NextResponse.json({ jobId: job.id, charCost, charsRemaining: user.credits - charCost });
