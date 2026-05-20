@@ -13,10 +13,17 @@ export async function GET(
 
   const { jobId } = await params;
 
-  const [user, job] = await Promise.all([
-    prisma.user.findUnique({ where: { clerkId: clerkUser.id } }),
-    prisma.job.findUnique({ where: { id: jobId } }),
-  ]);
+  let user, job;
+  try {
+    [user, job] = await Promise.all([
+      prisma.user.findUnique({ where: { clerkId: clerkUser.id } }),
+      prisma.job.findUnique({ where: { id: jobId } }),
+    ]);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[status] DB error jobId=${jobId}:`, message);
+    return NextResponse.json({ error: "DB error", detail: message }, { status: 500 });
+  }
 
   if (!job) return NextResponse.json({ error: "Job no encontrado" }, { status: 404 });
   if (!user || job.userId !== user.id) {
