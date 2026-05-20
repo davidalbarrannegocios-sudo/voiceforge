@@ -45,13 +45,8 @@ export async function POST(req: Request) {
     }),
   ]);
 
-  // Fire-and-forget: trigger processing without blocking this response.
-  // Railway runs a persistent Node process so the in-flight fetch keeps
-  // running after this handler returns.
-  const host = req.headers.get("host") ?? "";
-  const protocol = host.startsWith("localhost") ? "http" : "https";
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `${protocol}://${host}`;
-
+  // Fire-and-forget via localhost to avoid external DNS round-trip on Railway.
+  const baseUrl = `http://localhost:${process.env.PORT ?? 3000}`;
   const processUrl = `${baseUrl}/api/process-job/${job.id}`;
   console.log(`[generate] firing process-job → ${processUrl}`);
   fetch(processUrl, { method: "POST" })
