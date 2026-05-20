@@ -181,6 +181,8 @@ function GenerateTab({
   const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(initialVoice ?? null);
   const [showBrowser, setShowBrowser] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [jobStatus, setJobStatus] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<{
@@ -192,10 +194,43 @@ function GenerateTab({
   const charCost = calculateCharCost(text.length);
   const clonedVoices = voices.filter((v) => !v.isSystem);
 
+  useEffect(() => {
+    if (!jobId) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/generate/status/${jobId}`);
+        const data = await res.json();
+        setJobStatus(data.status);
+        if (data.status === "completed") {
+          clearInterval(interval);
+          setJobId(null);
+          setLoading(false);
+          setAudioUrl(data.audioUrl);
+          setLastResult({
+            durationSeconds: data.durationSeconds ?? 0,
+            charsUsed: data.creditsUsed,
+            charsRemaining: data.charsRemaining,
+          });
+          onGenerated();
+        } else if (data.status === "failed") {
+          clearInterval(interval);
+          setJobId(null);
+          setLoading(false);
+          setError(data.error || "Error al generar el audio");
+          onGenerated();
+        }
+      } catch {
+        // network hiccup, keep polling
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [jobId, onGenerated]);
+
   async function handleGenerate() {
     setError(null);
     setAudioUrl(null);
     setLastResult(null);
+    setJobStatus(null);
     setLoading(true);
 
     try {
@@ -209,16 +244,11 @@ function GenerateTab({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al generar");
-      setAudioUrl(data.audioUrl);
-      setLastResult({
-        durationSeconds: data.durationSeconds,
-        charsUsed: data.charsUsed,
-        charsRemaining: data.charsRemaining,
-      });
-      onGenerated();
+      onGenerated(); // credits already deducted
+      setJobId(data.jobId);
+      setJobStatus("pending");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Error desconocido");
-    } finally {
       setLoading(false);
     }
   }
@@ -290,7 +320,7 @@ function GenerateTab({
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            Generando audio...
+            {jobStatus === "processing" ? "Sintetizando voz..." : "Iniciando..."}
           </>
         ) : (
           "Generar audio"
