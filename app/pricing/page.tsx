@@ -166,6 +166,51 @@ export default function PricingPage() {
           ))}
         </div>
 
+        {/* ── Competitor comparison ── */}
+        <div className="mt-16 max-w-3xl mx-auto">
+          <h2 className="text-xl font-bold text-white mb-2 text-center">Comparativa con la competencia</h2>
+          <p className="text-sm text-gray-500 text-center mb-8">Caracteres incluidos por precio similar</p>
+
+          <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "#2a2a3e" }}>
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ background: "#12121a", borderBottom: "1px solid #2a2a3e" }}>
+                  <th className="text-left px-5 py-3 font-semibold text-gray-400">Plataforma</th>
+                  <th className="px-5 py-3 font-semibold text-gray-400 text-center">~$7/mes</th>
+                  <th className="px-5 py-3 font-semibold text-gray-400 text-center">~$13/mes</th>
+                  <th className="px-5 py-3 font-semibold text-gray-400 text-center">~$25/mes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { name: "ElevenLabs",  cols: ["30.000 chars", "121.000 chars", "❌ no disponible"] },
+                  { name: "Minimax",     cols: ["100.000 chars", "330.000 chars", "❌ no disponible"] },
+                  { name: "Fish Audio",  cols: ["Solo minutos, sin plan de chars", "—", "—"] },
+                ].map((row) => (
+                  <tr key={row.name} style={{ borderBottom: "1px solid #2a2a3e" }}>
+                    <td className="px-5 py-3.5 text-gray-300 font-medium">{row.name}</td>
+                    {row.cols.map((c) => (
+                      <td key={c} className="px-5 py-3.5 text-center text-gray-500">{c}</td>
+                    ))}
+                  </tr>
+                ))}
+                {/* Elite Labs highlighted row */}
+                <tr style={{ background: "rgba(59,130,246,0.10)", borderTop: "1px solid rgba(59,130,246,0.3)" }}>
+                  <td className="px-5 py-3.5 font-bold" style={{ color: "#93c5fd" }}>⭐ Elite Labs</td>
+                  {["200.000 chars", "500.000 chars", "1.000.000 chars"].map((c) => (
+                    <td key={c} className="px-5 py-3.5 text-center font-semibold" style={{ color: "#93c5fd" }}>{c}</td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p className="mt-5 text-center text-sm font-medium" style={{ color: "#93c5fd" }}>
+            Hasta 6x más caracteres que la competencia al mismo precio.{" "}
+            <span className="text-gray-400 font-normal">Sin límite por generación.</span>
+          </p>
+        </div>
+
         <div className="mt-16 space-y-4 max-w-2xl mx-auto">
           <h2 className="text-xl font-bold text-white mb-6 text-center">Preguntas frecuentes</h2>
           {[
