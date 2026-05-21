@@ -707,16 +707,125 @@ export default function LandingPage() {
       </main>
 
       {/* ── Footer ─────────────────────────────────────────────── */}
-      <footer className="border-t py-8 px-4" style={{ borderColor: "#2a2a3e" }}>
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-gray-500 text-sm">© 2025 Elite Labs. Todos los derechos reservados.</p>
-          <div className="flex gap-6">
-            <Link href="/pricing" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">
-              Precios
-            </Link>
-            <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">
-              Dashboard
-            </Link>
+      <footer className="border-t" style={{ borderColor: "#2a2a3e", background: "#0a0a0f" }}>
+        <div className="max-w-5xl mx-auto px-6 pt-14 pb-8">
+
+          {/* Top: brand + link columns */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
+
+            {/* Brand */}
+            <div className="col-span-2 md:col-span-1">
+              <Link href="/" className="flex items-center gap-2 mb-4">
+                <Image
+                  src="/elitelabs.png"
+                  alt="Elite Labs"
+                  width={28}
+                  height={28}
+                  style={{ height: "28px", width: "auto", objectFit: "contain", imageRendering: "-webkit-optimize-contrast" }}
+                  className="rounded-lg"
+                />
+                <span className="font-bold text-white">Elite Labs</span>
+              </Link>
+              <p className="text-sm leading-relaxed" style={{ color: "#555570" }}>
+                Síntesis de voz con IA de calidad profesional.
+              </p>
+            </div>
+
+            {/* Producto */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>Producto</p>
+              <ul className="space-y-3">
+                {[
+                  { label: "Texto a voz", href: "/dashboard" },
+                  { label: "Clonación de voz", href: "/dashboard" },
+                  { label: "Precios", href: "/pricing" },
+                ].map(({ label, href }) => (
+                  <li key={label}>
+                    <Link href={href} className="text-sm transition-colors hover:text-gray-200" style={{ color: "#8888a8" }}>
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Empresa */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>Empresa</p>
+              <ul className="space-y-3">
+                {["Sobre nosotros", "Blog", "Soporte"].map((label) => (
+                  <li key={label}>
+                    <a href="#" className="text-sm transition-colors hover:text-gray-200" style={{ color: "#8888a8" }}>
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>Legal</p>
+              <ul className="space-y-3">
+                {["Política de privacidad", "Términos de uso"].map((label) => (
+                  <li key={label}>
+                    <a href="#" className="text-sm transition-colors hover:text-gray-200" style={{ color: "#8888a8" }}>
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t mb-6" style={{ borderColor: "#1e1e2e" }} />
+
+          {/* Bottom bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs order-last sm:order-first" style={{ color: "#555570" }}>
+              © 2026 Elite Tube LLC. All rights reserved.
+            </p>
+
+            <div className="flex items-center gap-4 flex-wrap justify-center">
+              {[
+                { label: "Política de privacidad", href: "#" },
+                { label: "Términos de uso", href: "#" },
+                { label: "Contacto", href: "#" },
+              ].map(({ label, href }, i, arr) => (
+                <span key={label} className="flex items-center gap-4">
+                  <a href={href} className="text-xs transition-colors hover:text-gray-300" style={{ color: "#555570" }}>
+                    {label}
+                  </a>
+                  {i < arr.length - 1 && <span style={{ color: "#2a2a3e" }}>|</span>}
+                </span>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* X / Twitter */}
+              <a
+                href="#"
+                aria-label="X (Twitter)"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
+                style={{ color: "#555570" }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L2.013 2.25H8.08l4.253 5.623L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" />
+                </svg>
+              </a>
+              {/* YouTube */}
+              <a
+                href="#"
+                aria-label="YouTube"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
+                style={{ color: "#555570" }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                </svg>
+              </a>
+            </div>
           </div>
         </div>
       </footer>
