@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { Home, Mic, Users, Clock, Check, Play, CreditCard, Gift, Copy } from "lucide-react";
+import { Home, Mic, Users, Clock, Check, Play, CreditCard, Gift, Copy, Globe } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
@@ -31,7 +31,7 @@ interface Generation {
   createdAt: string;
 }
 
-type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral";
+type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral" | "translate";
 
 /* ─── Sidebar ─────────────────────────────────────────────── */
 function Sidebar({
@@ -50,6 +50,7 @@ function Sidebar({
     { key: "history", label: "Historial", Icon: Clock },
     { key: "billing", label: "Facturación", Icon: CreditCard },
     { key: "referral", label: "Referidos", Icon: Gift },
+    { key: "translate", label: "Traducción", Icon: Globe },
   ];
 
   return (
@@ -1063,6 +1064,227 @@ function BillingTab({
   );
 }
 
+/* ─── Translate Tab ───────────────────────────────────────── */
+const TRANSLATE_LANGS = [
+  { code: "en",  label: "Inglés",   flag: "🇬🇧" },
+  { code: "ja",  label: "Japonés",  flag: "🇯🇵" },
+  { code: "ko",  label: "Coreano",  flag: "🇰🇷" },
+  { code: "zh",  label: "Mandarín", flag: "🇨🇳" },
+  { code: "yue", label: "Cantonés", flag: "🇭🇰" },
+];
+
+interface TranslateResult {
+  audioUrl: string;
+  durationSeconds: number;
+  transcribedText: string;
+  translatedText: string;
+  targetLanguageName: string;
+  charCost: number;
+}
+
+const TRANSLATE_STEPS = [
+  { after: 0,    label: "Transcribiendo audio..." },
+  { after: 9000, label: "Traduciendo texto..." },
+  { after: 18000, label: "Generando audio traducido..." },
+];
+
+function TranslateTab({ onGenerated }: { onGenerated: () => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [targetLang, setTargetLang] = useState("en");
+  const [loading, setLoading] = useState(false);
+  const [stepLabel, setStepLabel] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<TranslateResult | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const stepTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  function handleFile(f: File) {
+    const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
+    const okType = f.type.startsWith("audio/") || ["mp3", "wav", "m4a"].includes(ext);
+    if (!okType) { setError("Formato no soportado. Usa MP3, WAV o M4A."); return; }
+    setFile(f);
+    setError(null);
+    setResult(null);
+  }
+
+  async function handleTranslate() {
+    if (!file) return;
+    setLoading(true);
+    setError(null);
+    setResult(null);
+
+    // Animate step labels
+    stepTimers.current.forEach(clearTimeout);
+    stepTimers.current = TRANSLATE_STEPS.map(({ after, label }) =>
+      setTimeout(() => setStepLabel(label), after)
+    );
+
+    try {
+      const fd = new FormData();
+      fd.append("audio", file);
+      fd.append("target_lang", targetLang);
+
+      const res = await fetch("/api/translate", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error desconocido");
+
+      setResult(data);
+      onGenerated();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error desconocido");
+    } finally {
+      stepTimers.current.forEach(clearTimeout);
+      setLoading(false);
+      setStepLabel(null);
+    }
+  }
+
+  return (
+    <div className="max-w-2xl">
+      <h2 className="text-lg font-bold text-white mb-1">Traducción de audio</h2>
+      <p className="text-sm mb-8" style={{ color: "#8888a8" }}>
+        Sube un audio en español y obtén la versión traducida al idioma de tu elección.
+      </p>
+
+      <div className="space-y-4">
+
+        {/* Step 1 — File upload */}
+        <div className="rounded-2xl border p-6" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>
+            1 · Audio de origen (en español)
+          </p>
+          <div
+            onClick={() => inputRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
+            className="rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-all"
+            style={{ borderColor: dragging ? "#3b82f6" : "#2a2a3e", background: dragging ? "rgba(59,130,246,0.05)" : "transparent" }}
+          >
+            <input
+              ref={inputRef}
+              type="file"
+              className="hidden"
+              accept=".mp3,.wav,.m4a,audio/*"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+            />
+            {file ? (
+              <div>
+                <p className="font-medium mb-1" style={{ color: "#4ade80" }}>{file.name}</p>
+                <p className="text-xs" style={{ color: "#8888a8" }}>
+                  {(file.size / 1024 / 1024).toFixed(2)} MB ·{" "}
+                  <button
+                    onClick={(ev) => { ev.stopPropagation(); setFile(null); setResult(null); }}
+                    className="text-blue-400 hover:underline"
+                  >
+                    Cambiar
+                  </button>
+                </p>
+              </div>
+            ) : (
+              <>
+                <Globe size={28} className="mx-auto mb-3" style={{ color: "#8888a8" }} />
+                <p className="text-sm text-gray-400 mb-1">Arrastra tu audio aquí o haz clic</p>
+                <p className="text-xs" style={{ color: "#555570" }}>MP3, WAV, M4A</p>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Step 2 — Language selector */}
+        <div className="rounded-2xl border p-6" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>
+            2 · Idioma de destino
+          </p>
+          <div className="grid grid-cols-5 gap-2">
+            {TRANSLATE_LANGS.map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => setTargetLang(lang.code)}
+                className="flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl text-xs font-medium transition-all"
+                style={
+                  targetLang === lang.code
+                    ? { background: "rgba(59,130,246,0.18)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
+                    : { background: "#12121a", color: "#8888a8", border: "1px solid #2a2a3e" }
+                }
+              >
+                <span className="text-xl leading-none">{lang.flag}</span>
+                {lang.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="p-4 rounded-xl text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
+            {error}
+          </div>
+        )}
+
+        {/* Submit */}
+        <button
+          onClick={handleTranslate}
+          disabled={!file || loading}
+          className="w-full py-3.5 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+          style={{
+            background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+            boxShadow: loading ? "none" : "0 4px 15px rgba(59,130,246,0.3)",
+          }}
+        >
+          {loading ? (
+            <>
+              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              {stepLabel ?? "Iniciando..."}
+            </>
+          ) : (
+            <><Globe size={15} /> Traducir audio</>
+          )}
+        </button>
+
+        {/* Result */}
+        {result && (
+          <div className="rounded-2xl border p-6 space-y-5" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#4ade80" }} />
+              <p className="text-sm font-semibold text-white">
+                Audio traducido al {result.targetLanguageName}
+              </p>
+              <span className="ml-auto text-xs px-2 py-0.5 rounded-full" style={{ color: "#8888a8", background: "#12121a", border: "1px solid #2a2a3e" }}>
+                {result.charCost.toLocaleString("es-ES")} créditos · {result.durationSeconds.toFixed(1)}s
+              </span>
+            </div>
+
+            <AudioPlayer
+              src={result.audioUrl}
+              filename={`elitelabs-${result.targetLanguageName.toLowerCase()}.mp3`}
+            />
+
+            <div className="grid gap-3">
+              <div className="rounded-xl p-4" style={{ background: "#12121a", border: "1px solid #2a2a3e" }}>
+                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555570" }}>
+                  Transcripción (español)
+                </p>
+                <p className="text-sm leading-relaxed" style={{ color: "#9ca3af" }}>{result.transcribedText}</p>
+              </div>
+              <div className="rounded-xl p-4" style={{ background: "#12121a", border: "1px solid #2a2a3e" }}>
+                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555570" }}>
+                  Traducción ({result.targetLanguageName})
+                </p>
+                <p className="text-sm leading-relaxed" style={{ color: "#9ca3af" }}>{result.translatedText}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Referral Tab ───────────────────────────────────────── */
 interface ReferralEntry {
   id: string;
@@ -1354,6 +1576,9 @@ export default function DashboardPage() {
         )}
         {activeTab === "referral" && (
           <ReferralTab onClaimed={fetchCredits} />
+        )}
+        {activeTab === "translate" && (
+          <TranslateTab onGenerated={fetchCredits} />
         )}
       </main>
     </div>
