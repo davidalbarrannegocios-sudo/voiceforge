@@ -62,41 +62,49 @@ async function fetchChunk(
   total: number,
   externalSignal?: AbortSignal,
 ): Promise<Buffer> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+  const MAX_ATTEMPTS = 3;
 
-  if (externalSignal) {
-    if (externalSignal.aborted) {
-      clearTimeout(timeoutId);
-      controller.abort();
-    } else {
-      externalSignal.addEventListener('abort', () => controller.abort(), { once: true });
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    if (externalSignal?.aborted) throw new DOMException("Aborted", "AbortError");
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+    if (externalSignal) {
+      externalSignal.addEventListener("abort", () => controller.abort(), { once: true });
     }
+
+    let res: Response;
+    try {
+      res = await fetch(`${FISH_AUDIO_BASE}/v1/tts`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    if (res.status === 429 && attempt < MAX_ATTEMPTS) {
+      console.warn(`[FishAudio] rate limited on chunk ${chunkIndex + 1}/${total}, retrying in 1s (attempt ${attempt}/${MAX_ATTEMPTS})`);
+      await new Promise((r) => setTimeout(r, 1000));
+      continue;
+    }
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Fish Audio TTS failed on chunk ${chunkIndex + 1}/${total} (${res.status}): ${errText}`);
+    }
+
+    const buf = Buffer.from(await res.arrayBuffer());
+    console.log(`[FishAudio] chunk ${chunkIndex + 1}/${total} — ${buf.length} bytes`);
+    return buf;
   }
 
-  let res: Response;
-  try {
-    res = await fetch(`${FISH_AUDIO_BASE}/v1/tts`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timeoutId);
-  }
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Fish Audio TTS failed on chunk ${chunkIndex + 1}/${total} (${res.status}): ${errText}`);
-  }
-
-  const buf = Buffer.from(await res.arrayBuffer());
-  console.log(`[FishAudio] chunk ${chunkIndex + 1}/${total} — ${buf.length} bytes`);
-  return buf;
+  throw new Error(`Fish Audio TTS rate limited on chunk ${chunkIndex + 1}/${total} after ${MAX_ATTEMPTS} attempts`);
 }
 
 export interface GenerateResult {
@@ -121,22 +129,20 @@ export async function fishAudioGenerate({
 
   console.log(`[FishAudio] TTS — referenceId=${referenceId ?? "none"} chars=${text.length} chunks=${chunks.length}`);
 
-  const audioBuffers: Buffer[] = [];
-
-  for (let i = 0; i < chunks.length; i++) {
-    const payload: Record<string, unknown> = {
-      text: chunks[i],
-      format: "mp3",
-      mp3_bitrate: 128,
-      normalize: true,
-      latency: "balanced",
-      chunk_length: 200,
-    };
-    if (referenceId) payload.reference_id = referenceId;
-
-    const buf = await fetchChunk(apiKey, payload, i, chunks.length, signal);
-    audioBuffers.push(buf);
-  }
+  const audioBuffers = await Promise.all(
+    chunks.map((chunk, i) => {
+      const payload: Record<string, unknown> = {
+        text: chunk,
+        format: "mp3",
+        mp3_bitrate: 128,
+        normalize: true,
+        latency: "balanced",
+        chunk_length: 200,
+      };
+      if (referenceId) payload.reference_id = referenceId;
+      return fetchChunk(apiKey, payload, i, chunks.length, signal);
+    })
+  );
 
   const audioBuffer = audioBuffers.length === 1 ? audioBuffers[0] : Buffer.concat(audioBuffers);
 
