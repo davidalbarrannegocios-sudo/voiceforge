@@ -119,11 +119,13 @@ export async function fishAudioGenerate({
   referenceId,
   userId,
   signal,
+  prosody,
 }: {
   text: string;
   referenceId?: string;
   userId: string;
   signal?: AbortSignal;
+  prosody?: { speed?: number; volume?: number; pitch?: number };
 }): Promise<GenerateResult> {
   const apiKey = getApiKey();
   const chunks = splitTextIntoChunks(text);
@@ -142,6 +144,9 @@ export async function fishAudioGenerate({
       chunk_length: 200,
     };
     if (referenceId) payload.reference_id = referenceId;
+    if (prosody && (prosody.speed !== 1 || prosody.volume !== 1 || prosody.pitch !== 0)) {
+      payload.prosody = prosody;
+    }
 
     const buf = await fetchChunk(apiKey, payload, i, chunks.length, signal);
     audioBuffers.push(buf);

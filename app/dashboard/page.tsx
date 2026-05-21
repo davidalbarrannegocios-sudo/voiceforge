@@ -220,6 +220,13 @@ function GenerateTab({
   const [showBrowser, setShowBrowser] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [speed, setSpeed] = useState(1.0);
+  const [volume, setVolume] = useState(1.0);
+  const [pitch, setPitch] = useState(0);
+
+  const prosodyChanged = speed !== 1 || volume !== 1 || pitch !== 0;
+  const prosody = prosodyChanged ? { speed, volume, pitch } : undefined;
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [jobsLoaded, setJobsLoaded] = useState(false);
@@ -262,7 +269,7 @@ function GenerateTab({
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, reference_id: selectedVoice?.referenceId ?? undefined }),
+        body: JSON.stringify({ text, reference_id: selectedVoice?.referenceId ?? undefined, prosody }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al generar");
@@ -315,7 +322,7 @@ function GenerateTab({
           )}
         </div>
 
-        <div className="mb-5">
+        <div className="mb-4">
           <label className="text-xs font-medium text-gray-400 mb-1.5 block">Voz</label>
           <button
             onClick={() => setShowBrowser(true)}
@@ -328,6 +335,70 @@ function GenerateTab({
             </div>
             <span className="text-xs" style={{ color: "#8888a8" }}>Cambiar →</span>
           </button>
+        </div>
+
+        {/* ── Advanced: prosody sliders ── */}
+        <div className="mb-5">
+          <button
+            onClick={() => setShowAdvanced((v) => !v)}
+            className="flex items-center gap-1.5 text-xs font-medium transition-colors"
+            style={{ color: prosodyChanged ? "#93c5fd" : "#8888a8" }}
+          >
+            {prosodyChanged && (
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
+            )}
+            Ajustes avanzados {showAdvanced ? "▲" : "▼"}
+          </button>
+
+          {showAdvanced && (
+            <div className="mt-3 space-y-4 p-4 rounded-xl" style={{ background: "#12121a", border: "1px solid #2a2a3e" }}>
+              {[
+                { label: "Velocidad", value: speed, set: setSpeed, min: 0.5, max: 2.0, step: 0.1, lo: "Lento", mid: "Normal", hi: "Rápido", fmt: (v: number) => v.toFixed(1), def: 1 },
+                { label: "Volumen",   value: volume, set: setVolume, min: 0, max: 2.0, step: 0.1, lo: "Bajo",  mid: "Normal", hi: "Alto",   fmt: (v: number) => v.toFixed(1), def: 1 },
+                { label: "Tono",      value: pitch,  set: setPitch,  min: -12, max: 12, step: 1,   lo: "Grave", mid: "Normal", hi: "Agudo",  fmt: (v: number) => (v >= 0 ? `+${v}` : `${v}`), def: 0 },
+              ].map(({ label, value, set, min, max, step, lo, mid, hi, fmt, def }) => (
+                <div key={label}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-medium text-gray-400">{label}</span>
+                    <span
+                      className="text-xs font-mono px-1.5 py-0.5 rounded"
+                      style={{
+                        color: value !== def ? "#93c5fd" : "#8888a8",
+                        background: value !== def ? "rgba(59,130,246,0.12)" : "transparent",
+                      }}
+                    >
+                      {fmt(value)}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={min}
+                    max={max}
+                    step={step}
+                    value={value}
+                    onChange={(e) => set(parseFloat(e.target.value) as never)}
+                    className="w-full h-1 rounded-full appearance-none cursor-pointer"
+                    style={{ accentColor: "#3b82f6", background: "#2a2a3e" }}
+                  />
+                  <div className="flex justify-between mt-1" style={{ color: "#555570" }}>
+                    <span className="text-xs">{lo}</span>
+                    <span className="text-xs">{mid}</span>
+                    <span className="text-xs">{hi}</span>
+                  </div>
+                </div>
+              ))}
+
+              {prosodyChanged && (
+                <button
+                  onClick={() => { setSpeed(1); setVolume(1); setPitch(0); }}
+                  className="text-xs mt-1 transition-colors"
+                  style={{ color: "#8888a8" }}
+                >
+                  Restablecer valores
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {formError && (
