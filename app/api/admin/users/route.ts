@@ -5,21 +5,26 @@ import { requireAdmin } from "@/lib/admin";
 export const runtime = "nodejs";
 
 export async function GET() {
-  const auth = await requireAdmin();
-  if (auth instanceof NextResponse) return auth;
+  try {
+    const auth = await requireAdmin();
+    if (auth instanceof NextResponse) return auth;
 
-  const users = await prisma.user.findMany({
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      email: true,
-      credits: true,
-      role: true,
-      createdAt: true,
-      _count: { select: { generations: true } },
-      purchases: { select: { amountCents: true } },
-    },
-  });
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        email: true,
+        credits: true,
+        role: true,
+        createdAt: true,
+        _count: { select: { generations: true } },
+        purchases: { select: { amountCents: true } },
+      },
+    });
 
-  return NextResponse.json(users);
+    return NextResponse.json(users);
+  } catch (e) {
+    console.error("[admin/users]", e);
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+  }
 }

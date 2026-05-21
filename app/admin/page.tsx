@@ -19,7 +19,7 @@ interface Stats {
   totalUsers: number;
   totalGenerations: number;
   totalCreditsConsumed: number;
-  totalRevenueEuros: string;
+  totalRevenueDollars: string;
 }
 
 /* ─── Helpers ─────────────────────────────────────────────── */
@@ -210,7 +210,7 @@ export default function AdminPage() {
               { label: "Usuarios totales", value: stats.totalUsers.toLocaleString("es-ES") },
               { label: "Generaciones totales", value: stats.totalGenerations.toLocaleString("es-ES") },
               { label: "Créditos consumidos", value: stats.totalCreditsConsumed.toLocaleString("es-ES") },
-              { label: "Ingresos estimados", value: `€${stats.totalRevenueEuros}` },
+              { label: "Ingresos estimados", value: `$${stats.totalRevenueDollars}` },
             ].map(({ label, value }) => (
               <div key={label} style={card}>
                 <p style={{ color: "#555570", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.5rem" }}>{label}</p>
@@ -342,7 +342,7 @@ export default function AdminPage() {
                       <td style={{ padding: "0.6rem 0.75rem", color: "#e5e7eb" }}>{u.email}</td>
                       <td style={{ padding: "0.6rem 0.75rem", color: "#93c5fd", fontWeight: 600 }}>{u.credits.toLocaleString("es-ES")}</td>
                       <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af" }}>{u._count.generations}</td>
-                      <td style={{ padding: "0.6rem 0.75rem", color: "#4ade80" }}>€{revenue.toFixed(2)}</td>
+                      <td style={{ padding: "0.6rem 0.75rem", color: "#4ade80" }}>${revenue.toFixed(2)}</td>
                       <td style={{ padding: "0.6rem 0.75rem" }}><Tag role={u.role} /></td>
                       <td style={{ padding: "0.6rem 0.75rem", color: "#555570", whiteSpace: "nowrap" }}>
                         {new Date(u.createdAt).toLocaleDateString("es-ES")}
