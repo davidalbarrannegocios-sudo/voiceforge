@@ -454,7 +454,7 @@ function GenerateTab({
       </div>
 
       {/* ── RIGHT: Settings panel ── */}
-      <div className="rounded-2xl border overflow-hidden" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+      <div className="rounded-2xl border overflow-hidden mt-12" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
         {/* Tabs */}
         <div className="flex border-b" style={{ borderColor: "#2a2a3e" }}>
           {(["ajustes", "historial"] as const).map((tab) => (
@@ -1887,7 +1887,7 @@ export default function DashboardPage() {
 
       <main className="flex-1 p-8 overflow-auto relative">
         {/* User avatar — top right */}
-        <div className="absolute top-6 right-8 z-10">
+        <div className="absolute top-8 right-8 z-10">
           <UserButton />
         </div>
         {successChars && (
