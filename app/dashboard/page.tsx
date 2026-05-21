@@ -85,8 +85,8 @@ function Sidebar({
       className="w-60 flex-shrink-0 h-screen sticky top-0 flex flex-col border-r"
       style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}
     >
-      {/* Logo + User */}
-      <div className="px-4 py-4 border-b flex items-center justify-between" style={{ borderColor: "#2a2a3e" }}>
+      {/* Logo */}
+      <div className="px-4 py-4 border-b" style={{ borderColor: "#2a2a3e" }}>
         <Link href="/" className="flex items-center gap-2.5">
           <Image
             src="/elitelabs.png"
@@ -98,7 +98,6 @@ function Sidebar({
           />
           <span className="font-bold text-white tracking-tight">Elite Labs</span>
         </Link>
-        <UserButton />
       </div>
 
       {/* Nav */}
@@ -1886,7 +1885,11 @@ export default function DashboardPage() {
     <div className="flex min-h-screen" style={{ background: "#0a0a0f" }}>
       <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="flex-1 p-8 overflow-auto relative">
+        {/* User avatar — top right */}
+        <div className="absolute top-6 right-8 z-10">
+          <UserButton />
+        </div>
         {successChars && (
           <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
             <Check size={18} className="text-green-400 flex-shrink-0" />
