@@ -1,7 +1,7 @@
 import { uploadToR2 } from "./r2";
 
 const FISH_AUDIO_BASE = "https://api.fish.audio";
-const CHUNK_MAX = 4000;
+const CHUNK_MAX = 2000;
 
 function getApiKey(): string {
   const key = process.env.FISH_AUDIO_API_KEY;
@@ -89,8 +89,9 @@ async function fetchChunk(
     }
 
     if (res.status === 429 && attempt < MAX_ATTEMPTS) {
-      console.warn(`[FishAudio] rate limited on chunk ${chunkIndex + 1}/${total}, retrying in 1s (attempt ${attempt}/${MAX_ATTEMPTS})`);
-      await new Promise((r) => setTimeout(r, 1000));
+      const waitMs = 2000 * Math.pow(2, attempt - 1); // 2s, 4s
+      console.warn(`[FishAudio] rate limited on chunk ${chunkIndex + 1}/${total}, retrying in ${waitMs / 1000}s (attempt ${attempt}/${MAX_ATTEMPTS})`);
+      await new Promise((r) => setTimeout(r, waitMs));
       continue;
     }
 
