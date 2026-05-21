@@ -211,16 +211,18 @@ export default function LandingPage() {
             <Link href="/pricing" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5">
               Precios
             </Link>
-            {!isLoaded ? (
+            {isLoaded && isSignedIn ? (
               <>
-                <Link href="/sign-in" className="text-sm text-gray-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-transparent hover:border-white/10">
-                  Iniciar sesión
+                <Link
+                  href="/dashboard"
+                  className="text-sm font-semibold text-white px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5"
+                  style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
+                >
+                  Dashboard
                 </Link>
-                <Link href="/sign-up" className="text-sm font-semibold text-white px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5" style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}>
-                  Empezar gratis
-                </Link>
+                <UserButton />
               </>
-            ) : !isSignedIn ? (
+            ) : (
               <>
                 <SignInButton mode="modal">
                   <button className="text-sm text-gray-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-transparent hover:border-white/10">
@@ -235,17 +237,6 @@ export default function LandingPage() {
                     Empezar gratis
                   </button>
                 </SignUpButton>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/dashboard"
-                  className="text-sm font-semibold text-white px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5"
-                  style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
-                >
-                  Dashboard
-                </Link>
-                <UserButton />
               </>
             )}
           </nav>
@@ -387,7 +378,7 @@ export default function LandingPage() {
                       >
                         Ir al Dashboard →
                       </Link>
-                    ) : isLoaded ? (
+                    ) : (
                       <SignUpButton mode="modal">
                         <button
                           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
@@ -396,14 +387,6 @@ export default function LandingPage() {
                           Ir al Dashboard →
                         </button>
                       </SignUpButton>
-                    ) : (
-                      <Link
-                        href="/sign-up"
-                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
-                        style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 20px rgba(59,130,246,0.35)" }}
-                      >
-                        Ir al Dashboard →
-                      </Link>
                     )}
                   </div>
                 </div>
@@ -488,7 +471,7 @@ export default function LandingPage() {
                   >
                     Ir al Dashboard →
                   </Link>
-                ) : isLoaded ? (
+                ) : (
                   <SignUpButton mode="modal">
                     <button
                       className="px-6 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
@@ -497,14 +480,6 @@ export default function LandingPage() {
                       Empezar gratis →
                     </button>
                   </SignUpButton>
-                ) : (
-                  <Link
-                    href="/sign-up"
-                    className="inline-block px-6 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
-                    style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 15px rgba(59,130,246,0.3)" }}
-                  >
-                    Empezar gratis →
-                  </Link>
                 )}
               </div>
 
@@ -715,7 +690,7 @@ export default function LandingPage() {
                 >
                   Ir al Dashboard →
                 </Link>
-              ) : isLoaded ? (
+              ) : (
                 <SignUpButton mode="modal">
                   <button
                     className="px-8 py-4 rounded-xl font-semibold text-white text-base transition-all hover:-translate-y-1 relative"
@@ -724,14 +699,6 @@ export default function LandingPage() {
                     Empezar gratis →
                   </button>
                 </SignUpButton>
-              ) : (
-                <Link
-                  href="/sign-up"
-                  className="inline-block px-8 py-4 rounded-xl font-semibold text-white text-base transition-all hover:-translate-y-1 relative"
-                  style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 8px 30px rgba(59,130,246,0.4)" }}
-                >
-                  Empezar gratis →
-                </Link>
               )}
             </div>
           </div>
