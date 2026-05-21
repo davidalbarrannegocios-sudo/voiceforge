@@ -37,6 +37,18 @@ interface UserDetail {
   generations: Generation[];
 }
 
+interface Payment {
+  id: string;
+  stripeSessionId: string;
+  paymentIntentId: string | null;
+  amount: number;
+  creditsPurchased: number;
+  status: string;
+  amountRefunded: number;
+  last4: string | null;
+  createdAt: string;
+}
+
 /* ─── Style helpers ───────────────────────────────────────── */
 const card = {
   background: "#12121a",
@@ -120,6 +132,10 @@ function UserDetailModal({
   const [detail, setDetail] = useState<UserDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [refunding, setRefunding] = useState<string | null>(null);
+  const [modalTab, setModalTab] = useState<"generaciones" | "pagos">("generaciones");
+  const [payments, setPayments] = useState<Payment[] | null>(null);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [refundingPayment, setRefundingPayment] = useState<string | null>(null);
 
   const fetchDetail = useCallback(async () => {
     setLoading(true);
@@ -136,7 +152,25 @@ function UserDetailModal({
     }
   }, [userId, toast, onClose]);
 
+  const fetchPayments = useCallback(async () => {
+    setPaymentsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/payments`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setPayments(data);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Error cargando pagos", false);
+    } finally {
+      setPaymentsLoading(false);
+    }
+  }, [userId, toast]);
+
   useEffect(() => { fetchDetail(); }, [fetchDetail]);
+
+  useEffect(() => {
+    if (modalTab === "pagos" && payments === null) fetchPayments();
+  }, [modalTab, payments, fetchPayments]);
 
   async function handleRefund(gen: Generation) {
     setRefunding(gen.id);
@@ -157,6 +191,39 @@ function UserDetailModal({
     }
   }
 
+  async function handleRefundPayment(payment: Payment) {
+    if (!payment.paymentIntentId) { toast("Sin payment intent", false); return; }
+    setRefundingPayment(payment.id);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/refund-payment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ purchaseId: payment.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast(`Reembolso de $${payment.amount.toFixed(2)} procesado. Créditos deducidos: ${data.creditsDeducted.toLocaleString("es-ES")}`);
+      setPayments(null);
+      fetchPayments();
+      fetchDetail();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Error en reembolso Stripe", false);
+    } finally {
+      setRefundingPayment(null);
+    }
+  }
+
+  function statusBadge(status: string) {
+    const map: Record<string, { label: string; color: string }> = {
+      succeeded:  { label: "COMPLETADO", color: "#4ade80" },
+      refunded:   { label: "REEMBOLSADO", color: "#f59e0b" },
+      canceled:   { label: "CANCELADO", color: "#f87171" },
+      failed:     { label: "FALLIDO", color: "#f87171" },
+    };
+    const s = map[status] ?? { label: status.toUpperCase(), color: "#8888a8" };
+    return <span style={{ color: s.color, fontSize: "0.7rem", fontWeight: 700 }}>{s.label}</span>;
+  }
+
   return (
     <div
       onClick={(e) => e.target === e.currentTarget && onClose()}
@@ -168,7 +235,7 @@ function UserDetailModal({
       }}
     >
       <div style={{
-        width: "100%", maxWidth: "900px",
+        width: "100%", maxWidth: "960px",
         background: "#0d0d17", borderRadius: "1.25rem",
         border: "1px solid #2a2a3e", overflow: "hidden",
       }}>
@@ -182,78 +249,150 @@ function UserDetailModal({
           <div style={{ padding: "3rem", textAlign: "center", color: "#555570" }}>Cargando...</div>
         ) : detail ? (
           <div style={{ padding: "1.5rem" }}>
-            {/* User info */}
+            {/* User info cards */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.75rem", marginBottom: "1.5rem" }}>
               {[
-                { label: "Email", value: detail.user.email },
+                { label: "Email",    value: detail.user.email },
                 { label: "Créditos", value: detail.user.credits.toLocaleString("es-ES") },
-                { label: "Rol", value: detail.user.role },
+                { label: "Rol",      value: detail.user.role },
                 { label: "Registro", value: new Date(detail.user.createdAt).toLocaleDateString("es-ES") },
               ].map(({ label, value }) => (
                 <div key={label} style={{ background: "#12121a", border: "1px solid #2a2a3e", borderRadius: "0.75rem", padding: "0.75rem 1rem" }}>
                   <p style={{ color: "#555570", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "0.3rem" }}>{label}</p>
-                  <p style={{ color: "#e5e7eb", fontSize: "0.85rem", fontWeight: 600 }}>{value}</p>
+                  <p style={{ color: "#e5e7eb", fontSize: "0.85rem", fontWeight: 600, wordBreak: "break-all" }}>{value}</p>
                 </div>
               ))}
             </div>
 
-            {/* Generations */}
-            <p style={{ fontWeight: 700, marginBottom: "0.75rem", fontSize: "0.9rem" }}>
-              Historial de generaciones ({detail.generations.length})
-            </p>
-            {detail.generations.length === 0 ? (
-              <p style={{ color: "#555570", fontSize: "0.85rem", padding: "1rem 0" }}>Sin generaciones.</p>
-            ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid #2a2a3e" }}>
-                      {["Fecha", "Texto", "Duración", "Créditos", "Estado", "Audio", "Acción"].map((h) => (
-                        <th key={h} style={{ padding: "0.5rem 0.75rem", textAlign: "left", color: "#555570", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {detail.generations.map((g) => (
-                      <tr key={g.id} style={{ borderBottom: "1px solid #1e1e2e", opacity: g.refunded ? 0.5 : 1 }}>
-                        <td style={{ padding: "0.6rem 0.75rem", color: "#555570", whiteSpace: "nowrap" }}>
-                          {new Date(g.createdAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}
-                        </td>
-                        <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", maxWidth: "220px" }}>
-                          <span title={g.text}>{g.text.slice(0, 50)}{g.text.length > 50 ? "…" : ""}</span>
-                        </td>
-                        <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", whiteSpace: "nowrap" }}>
-                          {g.durationSeconds.toFixed(1)}s
-                        </td>
-                        <td style={{ padding: "0.6rem 0.75rem", color: "#93c5fd", fontWeight: 600 }}>
-                          {g.creditsUsed.toLocaleString("es-ES")}
-                        </td>
-                        <td style={{ padding: "0.6rem 0.75rem" }}>
-                          {g.refunded ? (
-                            <span style={{ color: "#f59e0b", fontSize: "0.7rem", fontWeight: 700 }}>REEMBOLSADO</span>
-                          ) : (
-                            <span style={{ color: "#4ade80", fontSize: "0.7rem", fontWeight: 700 }}>COMPLETADO</span>
-                          )}
-                        </td>
-                        <td style={{ padding: "0.6rem 0.75rem" }}>
-                          <AudioCell url={g.audioUrl} />
-                        </td>
-                        <td style={{ padding: "0.6rem 0.75rem" }}>
-                          {!g.refunded && (
-                            <button
-                              onClick={() => handleRefund(g)}
-                              disabled={refunding === g.id}
-                              style={btn("#6b7280", { padding: "0.3rem 0.7rem", fontSize: "0.75rem", opacity: refunding === g.id ? 0.6 : 1 })}
-                            >
-                              {refunding === g.id ? "..." : "Devolver créditos"}
-                            </button>
-                          )}
-                        </td>
+            {/* Tabs */}
+            <div style={{ display: "flex", borderBottom: "1px solid #2a2a3e", marginBottom: "1rem" }}>
+              {(["generaciones", "pagos"] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setModalTab(t)}
+                  style={{
+                    padding: "0.6rem 1.25rem", fontSize: "0.85rem", fontWeight: 600,
+                    background: "none", border: "none", cursor: "pointer",
+                    color: modalTab === t ? "#fff" : "#555570",
+                    borderBottom: modalTab === t ? "2px solid #3b82f6" : "2px solid transparent",
+                    textTransform: "capitalize",
+                  }}
+                >
+                  {t === "generaciones" ? `Generaciones (${detail.generations.length})` : "Pagos"}
+                </button>
+              ))}
+            </div>
+
+            {/* ── Generaciones tab ── */}
+            {modalTab === "generaciones" && (
+              detail.generations.length === 0 ? (
+                <p style={{ color: "#555570", fontSize: "0.85rem", padding: "1rem 0" }}>Sin generaciones.</p>
+              ) : (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid #2a2a3e" }}>
+                        {["Fecha", "Texto", "Duración", "Créditos", "Estado", "Audio", "Acción"].map((h) => (
+                          <th key={h} style={{ padding: "0.5rem 0.75rem", textAlign: "left", color: "#555570", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {detail.generations.map((g) => (
+                        <tr key={g.id} style={{ borderBottom: "1px solid #1e1e2e", opacity: g.refunded ? 0.5 : 1 }}>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "#555570", whiteSpace: "nowrap" }}>
+                            {new Date(g.createdAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}
+                          </td>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", maxWidth: "220px" }}>
+                            <span title={g.text}>{g.text.slice(0, 50)}{g.text.length > 50 ? "…" : ""}</span>
+                          </td>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", whiteSpace: "nowrap" }}>
+                            {g.durationSeconds.toFixed(1)}s
+                          </td>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "#93c5fd", fontWeight: 600 }}>
+                            {g.creditsUsed.toLocaleString("es-ES")}
+                          </td>
+                          <td style={{ padding: "0.6rem 0.75rem" }}>
+                            {g.refunded
+                              ? <span style={{ color: "#f59e0b", fontSize: "0.7rem", fontWeight: 700 }}>REEMBOLSADO</span>
+                              : <span style={{ color: "#4ade80", fontSize: "0.7rem", fontWeight: 700 }}>COMPLETADO</span>}
+                          </td>
+                          <td style={{ padding: "0.6rem 0.75rem" }}>
+                            <AudioCell url={g.audioUrl} />
+                          </td>
+                          <td style={{ padding: "0.6rem 0.75rem" }}>
+                            {!g.refunded && (
+                              <button
+                                onClick={() => handleRefund(g)}
+                                disabled={refunding === g.id}
+                                style={btn("#6b7280", { padding: "0.3rem 0.7rem", fontSize: "0.75rem", opacity: refunding === g.id ? 0.6 : 1 })}
+                              >
+                                {refunding === g.id ? "..." : "Devolver créditos"}
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            )}
+
+            {/* ── Pagos tab ── */}
+            {modalTab === "pagos" && (
+              paymentsLoading ? (
+                <div style={{ padding: "2rem", textAlign: "center", color: "#555570" }}>Consultando Stripe...</div>
+              ) : payments === null ? null : payments.length === 0 ? (
+                <p style={{ color: "#555570", fontSize: "0.85rem", padding: "1rem 0" }}>Sin pagos registrados.</p>
+              ) : (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid #2a2a3e" }}>
+                        {["Fecha", "Importe", "Reembolsado", "Caracteres", "Tarjeta", "Estado", "Acción"].map((h) => (
+                          <th key={h} style={{ padding: "0.5rem 0.75rem", textAlign: "left", color: "#555570", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {payments.map((p) => (
+                        <tr key={p.id} style={{ borderBottom: "1px solid #1e1e2e", opacity: p.status === "refunded" ? 0.55 : 1 }}>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "#555570", whiteSpace: "nowrap" }}>
+                            {new Date(p.createdAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}
+                          </td>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "#4ade80", fontWeight: 600 }}>
+                            ${p.amount.toFixed(2)}
+                          </td>
+                          <td style={{ padding: "0.6rem 0.75rem", color: p.amountRefunded > 0 ? "#f59e0b" : "#555570" }}>
+                            {p.amountRefunded > 0 ? `$${p.amountRefunded.toFixed(2)}` : "—"}
+                          </td>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "#93c5fd", fontWeight: 600 }}>
+                            {p.creditsPurchased.toLocaleString("es-ES")}
+                          </td>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", fontFamily: "monospace" }}>
+                            {p.last4 ? `•••• ${p.last4}` : "—"}
+                          </td>
+                          <td style={{ padding: "0.6rem 0.75rem" }}>
+                            {statusBadge(p.status)}
+                          </td>
+                          <td style={{ padding: "0.6rem 0.75rem" }}>
+                            {p.status === "succeeded" && p.paymentIntentId && (
+                              <button
+                                onClick={() => handleRefundPayment(p)}
+                                disabled={refundingPayment === p.id}
+                                style={btn("#ef4444", { padding: "0.3rem 0.7rem", fontSize: "0.75rem", opacity: refundingPayment === p.id ? 0.6 : 1 })}
+                              >
+                                {refundingPayment === p.id ? "..." : "Reembolsar"}
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
             )}
           </div>
         ) : null}
