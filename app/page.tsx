@@ -753,11 +753,15 @@ export default function LandingPage() {
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>Empresa</p>
               <ul className="space-y-3">
-                {["Sobre nosotros", "Blog", "Soporte"].map((label) => (
+                {[
+                  { label: "Sobre nosotros", href: "/about" },
+                  { label: "Blog", href: "/blog" },
+                  { label: "Soporte", href: "/support" },
+                ].map(({ label, href }) => (
                   <li key={label}>
-                    <a href="#" className="text-sm transition-colors hover:text-gray-200" style={{ color: "#8888a8" }}>
+                    <Link href={href} className="text-sm transition-colors hover:text-gray-200" style={{ color: "#8888a8" }}>
                       {label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -767,11 +771,14 @@ export default function LandingPage() {
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>Legal</p>
               <ul className="space-y-3">
-                {["Política de privacidad", "Términos de uso"].map((label) => (
+                {[
+                  { label: "Política de privacidad", href: "/privacy" },
+                  { label: "Términos de uso", href: "/terms" },
+                ].map(({ label, href }) => (
                   <li key={label}>
-                    <a href="#" className="text-sm transition-colors hover:text-gray-200" style={{ color: "#8888a8" }}>
+                    <Link href={href} className="text-sm transition-colors hover:text-gray-200" style={{ color: "#8888a8" }}>
                       {label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -789,9 +796,9 @@ export default function LandingPage() {
 
             <div className="flex items-center gap-4 flex-wrap justify-center">
               {[
-                { label: "Política de privacidad", href: "#" },
-                { label: "Términos de uso", href: "#" },
-                { label: "Contacto", href: "#" },
+                { label: "Política de privacidad", href: "/privacy" },
+                { label: "Términos de uso", href: "/terms" },
+                { label: "Contacto", href: "/support" },
               ].map(({ label, href }, i, arr) => (
                 <span key={label} className="flex items-center gap-4">
                   <a href={href} className="text-xs transition-colors hover:text-gray-300" style={{ color: "#555570" }}>
