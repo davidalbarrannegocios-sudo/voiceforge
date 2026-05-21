@@ -223,54 +223,17 @@ function GenerateTab({
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [jobsLoaded, setJobsLoaded] = useState(false);
-  const jobsRef = useRef<Job[]>([]);
-  jobsRef.current = jobs;
 
   const charCost = calculateCharCost(text.length);
   const clonedVoices = voices.filter((v) => !v.isSystem);
 
-  // Load jobs on mount
+  // Load recent jobs on mount
   useEffect(() => {
     fetch("/api/jobs")
       .then((r) => r.json())
       .then((data) => { setJobs(data.jobs ?? []); setJobsLoaded(true); })
       .catch(() => setJobsLoaded(true));
   }, []);
-
-  // Poll active jobs every 3 s
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      const active = jobsRef.current.filter(
-        (j) => j.status === "pending" || j.status === "processing"
-      );
-      if (active.length === 0) return;
-
-      await Promise.all(
-        active.map(async (job) => {
-          try {
-            const res = await fetch(`/api/generate/status/${job.id}`);
-            const data = await res.json();
-            const prev = jobsRef.current.find((j) => j.id === job.id);
-            if (prev && prev.status !== data.status) {
-              setJobs((cur) =>
-                cur.map((j) =>
-                  j.id === job.id
-                    ? { ...j, status: data.status, audioUrl: data.audioUrl, durationSeconds: data.durationSeconds, error: data.error }
-                    : j
-                )
-              );
-              if (data.status === "completed" || data.status === "failed") {
-                onGenerated();
-              }
-            }
-          } catch {
-            // network hiccup, keep polling
-          }
-        })
-      );
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [onGenerated]);
 
   async function handleGenerate() {
     setFormError(null);
@@ -286,10 +249,12 @@ function GenerateTab({
 
       const newJob: Job = {
         id: data.jobId,
-        status: "pending",
+        status: "completed",
         text: text.trim(),
         voiceId: selectedVoice?.referenceId ?? "default",
         voiceName: selectedVoice?.name ?? "Voz por defecto",
+        audioUrl: data.audioUrl,
+        durationSeconds: data.durationSeconds,
         creditsUsed: data.charCost,
         createdAt: new Date().toISOString(),
       };
@@ -366,7 +331,7 @@ function GenerateTab({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Enviando...
+              Generando audio...
             </>
           ) : (
             "Generar audio"
