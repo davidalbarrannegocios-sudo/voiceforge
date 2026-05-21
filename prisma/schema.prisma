@@ -50,6 +50,7 @@ model Generation {
   audioUrl        String
   durationSeconds Float
   creditsUsed     Int
+  refunded        Boolean  @default(false)
   createdAt       DateTime @default(now())
 }
 

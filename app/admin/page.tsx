@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
@@ -22,7 +22,22 @@ interface Stats {
   totalRevenueDollars: string;
 }
 
-/* ─── Helpers ─────────────────────────────────────────────── */
+interface Generation {
+  id: string;
+  text: string;
+  audioUrl: string;
+  creditsUsed: number;
+  durationSeconds: number;
+  refunded: boolean;
+  createdAt: string;
+}
+
+interface UserDetail {
+  user: { id: string; email: string; credits: number; role: string; createdAt: string };
+  generations: Generation[];
+}
+
+/* ─── Style helpers ───────────────────────────────────────── */
 const card = {
   background: "#12121a",
   border: "1px solid #2a2a3e",
@@ -41,7 +56,7 @@ const input = {
   outline: "none",
 } as const;
 
-const btn = (color = "#3b82f6") =>
+const btn = (color = "#3b82f6", extra: React.CSSProperties = {}) =>
   ({
     background: color,
     border: "none",
@@ -52,25 +67,198 @@ const btn = (color = "#3b82f6") =>
     fontWeight: 600,
     cursor: "pointer",
     whiteSpace: "nowrap",
+    ...extra,
   } as const);
 
 function Tag({ role }: { role: string }) {
   const isAdmin = role === "admin";
   return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "2px 10px",
-        borderRadius: "999px",
-        fontSize: "0.7rem",
-        fontWeight: 700,
-        background: isAdmin ? "rgba(59,130,246,0.18)" : "rgba(255,255,255,0.06)",
-        color: isAdmin ? "#93c5fd" : "#8888a8",
-        border: `1px solid ${isAdmin ? "rgba(59,130,246,0.35)" : "#2a2a3e"}`,
-      }}
-    >
+    <span style={{
+      display: "inline-block", padding: "2px 10px", borderRadius: "999px",
+      fontSize: "0.7rem", fontWeight: 700,
+      background: isAdmin ? "rgba(59,130,246,0.18)" : "rgba(255,255,255,0.06)",
+      color: isAdmin ? "#93c5fd" : "#8888a8",
+      border: `1px solid ${isAdmin ? "rgba(59,130,246,0.35)" : "#2a2a3e"}`,
+    }}>
       {isAdmin ? "admin" : "user"}
     </span>
+  );
+}
+
+/* ─── Audio player cell ───────────────────────────────────── */
+function AudioCell({ url }: { url: string }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  function toggle() {
+    const a = audioRef.current;
+    if (!a) return;
+    if (playing) { a.pause(); setPlaying(false); }
+    else { a.play(); setPlaying(true); }
+  }
+
+  return (
+    <>
+      <audio ref={audioRef} src={url} onEnded={() => setPlaying(false)} />
+      <button onClick={toggle} style={btn(playing ? "#6b7280" : "#3b82f6", { padding: "0.3rem 0.7rem", fontSize: "0.75rem" })}>
+        {playing ? "⏸ Parar" : "▶ Escuchar"}
+      </button>
+    </>
+  );
+}
+
+/* ─── User Detail Modal ───────────────────────────────────── */
+function UserDetailModal({
+  userId,
+  onClose,
+  toast,
+}: {
+  userId: string;
+  onClose: () => void;
+  toast: (msg: string, ok?: boolean) => void;
+}) {
+  const [detail, setDetail] = useState<UserDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refunding, setRefunding] = useState<string | null>(null);
+
+  const fetchDetail = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/generations`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setDetail(data);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Error cargando detalle", false);
+      onClose();
+    } finally {
+      setLoading(false);
+    }
+  }, [userId, toast, onClose]);
+
+  useEffect(() => { fetchDetail(); }, [fetchDetail]);
+
+  async function handleRefund(gen: Generation) {
+    setRefunding(gen.id);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/refund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ generationId: gen.id, creditsToRefund: gen.creditsUsed }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast(`Devueltos ${gen.creditsUsed.toLocaleString("es-ES")} créditos. Nuevo saldo: ${data.newCredits.toLocaleString("es-ES")}`);
+      fetchDetail();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Error en reembolso", false);
+    } finally {
+      setRefunding(null);
+    }
+  }
+
+  return (
+    <div
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      style={{
+        position: "fixed", inset: 0, zIndex: 100,
+        background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)",
+        display: "flex", alignItems: "flex-start", justifyContent: "center",
+        padding: "2rem 1rem", overflowY: "auto",
+      }}
+    >
+      <div style={{
+        width: "100%", maxWidth: "900px",
+        background: "#0d0d17", borderRadius: "1.25rem",
+        border: "1px solid #2a2a3e", overflow: "hidden",
+      }}>
+        {/* Modal header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1.25rem 1.5rem", borderBottom: "1px solid #2a2a3e" }}>
+          <p style={{ fontWeight: 700, fontSize: "1rem" }}>Detalle de usuario</p>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "#8888a8", cursor: "pointer", fontSize: "1.2rem", lineHeight: 1 }}>✕</button>
+        </div>
+
+        {loading ? (
+          <div style={{ padding: "3rem", textAlign: "center", color: "#555570" }}>Cargando...</div>
+        ) : detail ? (
+          <div style={{ padding: "1.5rem" }}>
+            {/* User info */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.75rem", marginBottom: "1.5rem" }}>
+              {[
+                { label: "Email", value: detail.user.email },
+                { label: "Créditos", value: detail.user.credits.toLocaleString("es-ES") },
+                { label: "Rol", value: detail.user.role },
+                { label: "Registro", value: new Date(detail.user.createdAt).toLocaleDateString("es-ES") },
+              ].map(({ label, value }) => (
+                <div key={label} style={{ background: "#12121a", border: "1px solid #2a2a3e", borderRadius: "0.75rem", padding: "0.75rem 1rem" }}>
+                  <p style={{ color: "#555570", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "0.3rem" }}>{label}</p>
+                  <p style={{ color: "#e5e7eb", fontSize: "0.85rem", fontWeight: 600 }}>{value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Generations */}
+            <p style={{ fontWeight: 700, marginBottom: "0.75rem", fontSize: "0.9rem" }}>
+              Historial de generaciones ({detail.generations.length})
+            </p>
+            {detail.generations.length === 0 ? (
+              <p style={{ color: "#555570", fontSize: "0.85rem", padding: "1rem 0" }}>Sin generaciones.</p>
+            ) : (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #2a2a3e" }}>
+                      {["Fecha", "Texto", "Duración", "Créditos", "Estado", "Audio", "Acción"].map((h) => (
+                        <th key={h} style={{ padding: "0.5rem 0.75rem", textAlign: "left", color: "#555570", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detail.generations.map((g) => (
+                      <tr key={g.id} style={{ borderBottom: "1px solid #1e1e2e", opacity: g.refunded ? 0.5 : 1 }}>
+                        <td style={{ padding: "0.6rem 0.75rem", color: "#555570", whiteSpace: "nowrap" }}>
+                          {new Date(g.createdAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}
+                        </td>
+                        <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", maxWidth: "220px" }}>
+                          <span title={g.text}>{g.text.slice(0, 50)}{g.text.length > 50 ? "…" : ""}</span>
+                        </td>
+                        <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", whiteSpace: "nowrap" }}>
+                          {g.durationSeconds.toFixed(1)}s
+                        </td>
+                        <td style={{ padding: "0.6rem 0.75rem", color: "#93c5fd", fontWeight: 600 }}>
+                          {g.creditsUsed.toLocaleString("es-ES")}
+                        </td>
+                        <td style={{ padding: "0.6rem 0.75rem" }}>
+                          {g.refunded ? (
+                            <span style={{ color: "#f59e0b", fontSize: "0.7rem", fontWeight: 700 }}>REEMBOLSADO</span>
+                          ) : (
+                            <span style={{ color: "#4ade80", fontSize: "0.7rem", fontWeight: 700 }}>COMPLETADO</span>
+                          )}
+                        </td>
+                        <td style={{ padding: "0.6rem 0.75rem" }}>
+                          <AudioCell url={g.audioUrl} />
+                        </td>
+                        <td style={{ padding: "0.6rem 0.75rem" }}>
+                          {!g.refunded && (
+                            <button
+                              onClick={() => handleRefund(g)}
+                              disabled={refunding === g.id}
+                              style={btn("#6b7280", { padding: "0.3rem 0.7rem", fontSize: "0.75rem", opacity: refunding === g.id ? 0.6 : 1 })}
+                            >
+                              {refunding === g.id ? "..." : "Devolver créditos"}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -84,6 +272,7 @@ export default function AdminPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [search, setSearch] = useState("");
   const [feedback, setFeedback] = useState<{ msg: string; ok: boolean } | null>(null);
+  const [detailUserId, setDetailUserId] = useState<string | null>(null);
 
   // Credits form
   const [creditUserId, setCreditUserId] = useState("");
@@ -96,10 +285,10 @@ export default function AdminPage() {
   const [roleValue, setRoleValue] = useState<"admin" | "user">("admin");
   const [roleLoading, setRoleLoading] = useState(false);
 
-  const toast = (msg: string, ok = true) => {
+  const toast = useCallback((msg: string, ok = true) => {
     setFeedback({ msg, ok });
     setTimeout(() => setFeedback(null), 3500);
-  };
+  }, []);
 
   const fetchAll = useCallback(async () => {
     const [uRes, sRes] = await Promise.all([
@@ -191,7 +380,7 @@ export default function AdminPage() {
       {/* Toast */}
       {feedback && (
         <div style={{
-          position: "fixed", top: "5rem", right: "2rem", zIndex: 50,
+          position: "fixed", top: "5rem", right: "2rem", zIndex: 200,
           padding: "0.75rem 1.25rem", borderRadius: "0.75rem", fontWeight: 600, fontSize: "0.875rem",
           background: feedback.ok ? "rgba(74,222,128,0.15)" : "rgba(239,68,68,0.15)",
           color: feedback.ok ? "#4ade80" : "#f87171",
@@ -201,16 +390,25 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* User detail modal */}
+      {detailUserId && (
+        <UserDetailModal
+          userId={detailUserId}
+          onClose={() => setDetailUserId(null)}
+          toast={toast}
+        />
+      )}
+
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem" }}>
 
         {/* Stats */}
         {stats && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "2rem" }}>
             {[
-              { label: "Usuarios totales", value: stats.totalUsers.toLocaleString("es-ES") },
-              { label: "Generaciones totales", value: stats.totalGenerations.toLocaleString("es-ES") },
-              { label: "Créditos consumidos", value: stats.totalCreditsConsumed.toLocaleString("es-ES") },
-              { label: "Ingresos estimados", value: `$${stats.totalRevenueDollars}` },
+              { label: "Usuarios totales",     value: stats.totalUsers.toLocaleString("es-ES") },
+              { label: "Generaciones totales",  value: stats.totalGenerations.toLocaleString("es-ES") },
+              { label: "Créditos consumidos",   value: stats.totalCreditsConsumed.toLocaleString("es-ES") },
+              { label: "Ingresos estimados",    value: `$${stats.totalRevenueDollars}` },
             ].map(({ label, value }) => (
               <div key={label} style={card}>
                 <p style={{ color: "#555570", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.5rem" }}>{label}</p>
@@ -229,42 +427,22 @@ export default function AdminPage() {
             <form onSubmit={handleCredits} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               <div>
                 <label style={{ fontSize: "0.75rem", color: "#8888a8", display: "block", marginBottom: "0.35rem" }}>ID de usuario</label>
-                <input
-                  style={input}
-                  placeholder="cuid del usuario"
-                  value={creditUserId}
-                  onChange={(e) => setCreditUserId(e.target.value)}
-                />
+                <input style={input} placeholder="cuid del usuario" value={creditUserId} onChange={(e) => setCreditUserId(e.target.value)} />
               </div>
               <div style={{ display: "flex", gap: "0.5rem" }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: "0.75rem", color: "#8888a8", display: "block", marginBottom: "0.35rem" }}>Cantidad</label>
-                  <input
-                    style={input}
-                    type="number"
-                    min="1"
-                    placeholder="0"
-                    value={creditAmount}
-                    onChange={(e) => setCreditAmount(e.target.value)}
-                  />
+                  <input style={input} type="number" min="1" placeholder="0" value={creditAmount} onChange={(e) => setCreditAmount(e.target.value)} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: "0.75rem", color: "#8888a8", display: "block", marginBottom: "0.35rem" }}>Operación</label>
-                  <select
-                    style={{ ...input }}
-                    value={creditOp}
-                    onChange={(e) => setCreditOp(e.target.value as "add" | "subtract")}
-                  >
+                  <select style={{ ...input }} value={creditOp} onChange={(e) => setCreditOp(e.target.value as "add" | "subtract")}>
                     <option value="add">Añadir</option>
                     <option value="subtract">Quitar</option>
                   </select>
                 </div>
               </div>
-              <button
-                type="submit"
-                disabled={creditLoading}
-                style={{ ...btn(creditOp === "add" ? "#3b82f6" : "#ef4444"), opacity: creditLoading ? 0.6 : 1 }}
-              >
+              <button type="submit" disabled={creditLoading} style={{ ...btn(creditOp === "add" ? "#3b82f6" : "#ef4444"), opacity: creditLoading ? 0.6 : 1 }}>
                 {creditLoading ? "Procesando..." : creditOp === "add" ? "Añadir créditos" : "Quitar créditos"}
               </button>
             </form>
@@ -276,29 +454,16 @@ export default function AdminPage() {
             <form onSubmit={handleRole} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               <div>
                 <label style={{ fontSize: "0.75rem", color: "#8888a8", display: "block", marginBottom: "0.35rem" }}>ID de usuario</label>
-                <input
-                  style={input}
-                  placeholder="cuid del usuario"
-                  value={roleUserId}
-                  onChange={(e) => setRoleUserId(e.target.value)}
-                />
+                <input style={input} placeholder="cuid del usuario" value={roleUserId} onChange={(e) => setRoleUserId(e.target.value)} />
               </div>
               <div>
                 <label style={{ fontSize: "0.75rem", color: "#8888a8", display: "block", marginBottom: "0.35rem" }}>Nuevo rol</label>
-                <select
-                  style={{ ...input }}
-                  value={roleValue}
-                  onChange={(e) => setRoleValue(e.target.value as "admin" | "user")}
-                >
+                <select style={{ ...input }} value={roleValue} onChange={(e) => setRoleValue(e.target.value as "admin" | "user")}>
                   <option value="user">user</option>
                   <option value="admin">admin</option>
                 </select>
               </div>
-              <button
-                type="submit"
-                disabled={roleLoading}
-                style={{ ...btn(), opacity: roleLoading ? 0.6 : 1 }}
-              >
+              <button type="submit" disabled={roleLoading} style={{ ...btn(), opacity: roleLoading ? 0.6 : 1 }}>
                 {roleLoading ? "Actualizando..." : "Cambiar rol"}
               </button>
             </form>
@@ -309,18 +474,13 @@ export default function AdminPage() {
         <div style={card}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem", flexWrap: "wrap", gap: "0.75rem" }}>
             <p style={{ fontWeight: 700 }}>Usuarios ({filtered.length})</p>
-            <input
-              style={{ ...input, width: "260px" }}
-              placeholder="Buscar por email o ID..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <input style={{ ...input, width: "260px" }} placeholder="Buscar por email o ID..." value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid #2a2a3e" }}>
-                  {["ID", "Email", "Créditos", "Generaciones", "Ingresos", "Rol", "Registro"].map((h) => (
+                  {["ID", "Email", "Créditos", "Generaciones", "Ingresos", "Rol", "Registro", ""].map((h) => (
                     <th key={h} style={{ padding: "0.5rem 0.75rem", textAlign: "left", color: "#555570", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
@@ -347,12 +507,20 @@ export default function AdminPage() {
                       <td style={{ padding: "0.6rem 0.75rem", color: "#555570", whiteSpace: "nowrap" }}>
                         {new Date(u.createdAt).toLocaleDateString("es-ES")}
                       </td>
+                      <td style={{ padding: "0.6rem 0.75rem" }}>
+                        <button
+                          onClick={() => setDetailUserId(u.id)}
+                          style={btn("#1e1e2e", { border: "1px solid #2a2a3e", color: "#93c5fd", padding: "0.3rem 0.7rem", fontSize: "0.75rem" })}
+                        >
+                          Ver detalle
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={7} style={{ padding: "2rem", textAlign: "center", color: "#555570" }}>
+                    <td colSpan={8} style={{ padding: "2rem", textAlign: "center", color: "#555570" }}>
                       No se encontraron usuarios
                     </td>
                   </tr>
