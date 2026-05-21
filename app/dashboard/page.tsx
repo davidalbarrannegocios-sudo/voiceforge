@@ -241,8 +241,8 @@ function GenerateTab({
     return () => clearInterval(id);
   }, [submitting]);
 
-  const estimatedSeconds = Math.max(5, Math.ceil(text.trim().length / 100));
-  const progress = submitting ? Math.min(95, (elapsed / estimatedSeconds) * 100) : 0;
+  const estimatedSeconds = Math.max(5, Math.ceil(text.trim().length / 120));
+  const progress = submitting ? Math.min(92, (elapsed / estimatedSeconds) * 100) : 0;
   const elapsedLabel = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")}`;
 
   // Load recent jobs on mount; treat stale "processing" jobs as failed
@@ -444,7 +444,7 @@ function GenerateTab({
                 }}
               />
             </div>
-            {text.trim().length > 5000 && (
+            {text.trim().length > 3000 && (
               <p className="text-xs text-center" style={{ color: "#8888a8" }}>
                 Los audios largos pueden tardar varios minutos
               </p>
