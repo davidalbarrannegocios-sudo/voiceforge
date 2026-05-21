@@ -358,7 +358,7 @@ function GenerateTab({
   }
 
   return (
-    <div className="pt-12 grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-5 items-start min-h-[calc(100vh-120px)]">
+    <div className="pt-12 grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-5 min-h-[calc(100vh-120px)]">
 
       {/* ── LEFT: Editor ── */}
       <div className="flex flex-col rounded-2xl border overflow-hidden" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
@@ -454,7 +454,7 @@ function GenerateTab({
       </div>
 
       {/* ── RIGHT: Settings panel ── */}
-      <div className="rounded-2xl border overflow-hidden" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+      <div className="rounded-2xl border overflow-hidden h-full" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
         {/* Tabs */}
         <div className="flex border-b" style={{ borderColor: "#2a2a3e" }}>
           {(["ajustes", "historial"] as const).map((tab) => (
