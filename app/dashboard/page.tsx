@@ -101,7 +101,7 @@ function Sidebar({
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-5">
+      <nav className="flex-1 overflow-y-auto pt-8 pb-3 px-2 space-y-5">
         {sections.map((section, si) => (
           <div key={si}>
             {section.label && (
@@ -358,7 +358,7 @@ function GenerateTab({
   }
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-5 items-start">
+    <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-5 items-start min-h-[calc(100vh-120px)]">
 
       {/* ── LEFT: Editor ── */}
       <div className="flex flex-col rounded-2xl border overflow-hidden" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
@@ -386,7 +386,7 @@ function GenerateTab({
           onChange={(e) => setText(e.target.value)}
           placeholder="Escribe el texto a narrar..."
           disabled={submitting}
-          rows={14}
+          rows={20}
           className="w-full px-6 py-5 text-sm text-gray-200 resize-none focus:outline-none disabled:opacity-60"
           style={{ background: "#0d0d17", lineHeight: "1.75" }}
         />
