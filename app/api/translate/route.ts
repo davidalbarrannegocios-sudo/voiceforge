@@ -27,8 +27,9 @@ export async function POST(req: Request) {
   if (!deeplKey) return NextResponse.json({ error: "DEEPL_API_KEY no configurada" }, { status: 500 });
 
   const form = await req.formData();
-  const audioFile = form.get("audio") as File | null;
+  const audioFile  = form.get("audio") as File | null;
   const targetLang = (form.get("target_lang") as string) ?? "";
+  const referenceId = (form.get("reference_id") as string) || undefined;
 
   if (!audioFile) return NextResponse.json({ error: "No se proporcionó archivo de audio" }, { status: 400 });
   const lang = LANGUAGES[targetLang];
@@ -78,8 +79,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "DeepL devolvió una traducción vacía" }, { status: 502 });
   }
 
-  // ── Credit check & deduction ──────────────────────────────────
-  const charCost = calculateCharCost(translatedText.length);
+  // ── Credit check & deduction (x1.2 over standard TTS cost) ──
+  const charCost = Math.ceil(calculateCharCost(translatedText.length) * 1.2);
   if (user.credits < charCost) {
     return NextResponse.json(
       { error: `Créditos insuficientes. Necesitas ${charCost} para ${translatedText.length} caracteres.`, charCost, charsAvailable: user.credits },
@@ -95,7 +96,7 @@ export async function POST(req: Request) {
   // ── Step 3: Fish Audio TTS — generate translated audio ────────
   let ttsResult;
   try {
-    ttsResult = await fishAudioGenerate({ text: translatedText, userId: user.id });
+    ttsResult = await fishAudioGenerate({ text: translatedText, userId: user.id, referenceId });
   } catch (e) {
     await prisma.user.update({
       where: { id: user.id },

@@ -1088,9 +1088,11 @@ const TRANSLATE_STEPS = [
   { after: 18000, label: "Generando audio traducido..." },
 ];
 
-function TranslateTab({ onGenerated }: { onGenerated: () => void }) {
+function TranslateTab({ onGenerated, voices }: { onGenerated: () => void; voices: Voice[] }) {
   const [file, setFile] = useState<File | null>(null);
   const [targetLang, setTargetLang] = useState("en");
+  const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(null);
+  const [showBrowser, setShowBrowser] = useState(false);
   const [loading, setLoading] = useState(false);
   const [stepLabel, setStepLabel] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -1098,6 +1100,7 @@ function TranslateTab({ onGenerated }: { onGenerated: () => void }) {
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const stepTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const clonedVoices = voices.filter((v) => !v.isSystem);
 
   function handleFile(f: File) {
     const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
@@ -1124,6 +1127,7 @@ function TranslateTab({ onGenerated }: { onGenerated: () => void }) {
       const fd = new FormData();
       fd.append("audio", file);
       fd.append("target_lang", targetLang);
+      if (selectedVoice?.referenceId) fd.append("reference_id", selectedVoice.referenceId);
 
       const res = await fetch("/api/translate", { method: "POST", body: fd });
       const data = await res.json();
@@ -1216,6 +1220,47 @@ function TranslateTab({ onGenerated }: { onGenerated: () => void }) {
           </div>
         </div>
 
+        {/* Step 3 — Voice selector */}
+        <div className="rounded-2xl border p-6" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>
+            3 · Voz para el audio traducido
+          </p>
+          <button
+            onClick={() => setShowBrowser(true)}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all hover:border-blue-500/60"
+            style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
+          >
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: "rgba(59,130,246,0.15)" }}
+            >
+              <Mic size={13} style={{ color: "#93c5fd" }} />
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <p className="text-sm font-medium text-white truncate">
+                {selectedVoice?.name ?? "Voz por defecto"}
+              </p>
+              <p className="text-xs" style={{ color: "#8888a8" }}>
+                {selectedVoice?.isCloned ? "Voz clonada" : "Sistema"}
+              </p>
+            </div>
+            <span className="text-xs flex-shrink-0" style={{ color: "#8888a8" }}>→</span>
+          </button>
+        </div>
+
+        {/* Cost info */}
+        <div
+          className="flex items-start gap-3 px-4 py-3 rounded-xl text-xs leading-relaxed"
+          style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)", color: "#8888a8" }}
+        >
+          <span className="flex-shrink-0 mt-0.5" style={{ color: "#3b82f6" }}>ℹ</span>
+          <span>
+            Se aplica un pequeño incremento del{" "}
+            <span className="font-semibold" style={{ color: "#93c5fd" }}>20%</span>{" "}
+            sobre el coste estándar para cubrir los costes de transcripción y traducción automática incluidos en el proceso.
+          </span>
+        </div>
+
         {/* Error */}
         {error && (
           <div className="p-4 rounded-xl text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
@@ -1281,6 +1326,14 @@ function TranslateTab({ onGenerated }: { onGenerated: () => void }) {
           </div>
         )}
       </div>
+
+      {showBrowser && (
+        <VoiceBrowser
+          clonedVoices={clonedVoices}
+          onSelect={setSelectedVoice}
+          onClose={() => setShowBrowser(false)}
+        />
+      )}
     </div>
   );
 }
@@ -1578,7 +1631,7 @@ export default function DashboardPage() {
           <ReferralTab onClaimed={fetchCredits} />
         )}
         {activeTab === "translate" && (
-          <TranslateTab onGenerated={fetchCredits} />
+          <TranslateTab onGenerated={fetchCredits} voices={voices} />
         )}
       </main>
     </div>
