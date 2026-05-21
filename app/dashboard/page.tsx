@@ -220,13 +220,10 @@ function GenerateTab({
   const [showBrowser, setShowBrowser] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [speed, setSpeed] = useState(1.0);
   const [volume, setVolume] = useState(1.0);
-  const [pitch, setPitch] = useState(0);
-
-  const prosodyChanged = speed !== 1 || volume !== 1 || pitch !== 0;
-  const prosody = prosodyChanged ? { speed, volume, pitch } : undefined;
+  const [normalize, setNormalize] = useState(true);
+  const [rightTab, setRightTab] = useState<"ajustes" | "historial">("ajustes");
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [jobsLoaded, setJobsLoaded] = useState(false);
@@ -234,6 +231,9 @@ function GenerateTab({
 
   const charCost = calculateCharCost(text.length);
   const clonedVoices = voices.filter((v) => !v.isSystem);
+  const estimatedSeconds = Math.max(5, Math.ceil(text.trim().length / 120));
+  const progress = submitting ? Math.min(92, (elapsed / estimatedSeconds) * 100) : 0;
+  const elapsedLabel = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")}`;
 
   useEffect(() => {
     if (!submitting) { setElapsed(0); return; }
@@ -241,22 +241,17 @@ function GenerateTab({
     return () => clearInterval(id);
   }, [submitting]);
 
-  const estimatedSeconds = Math.max(5, Math.ceil(text.trim().length / 120));
-  const progress = submitting ? Math.min(92, (elapsed / estimatedSeconds) * 100) : 0;
-  const elapsedLabel = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")}`;
-
-  // Load recent jobs on mount; treat stale "processing" jobs as failed
   useEffect(() => {
     fetch("/api/jobs")
       .then((r) => r.json())
       .then((data) => {
         const fiveMinAgo = Date.now() - 5 * 60 * 1000;
-        const jobs = (data.jobs ?? []).map((j: Job) =>
+        const loaded = (data.jobs ?? []).map((j: Job) =>
           j.status === "processing" && new Date(j.createdAt).getTime() < fiveMinAgo
             ? { ...j, status: "failed", error: "Generación cancelada (página recargada)" }
             : j
         );
-        setJobs(jobs);
+        setJobs(loaded);
         setJobsLoaded(true);
       })
       .catch(() => setJobsLoaded(true));
@@ -266,10 +261,16 @@ function GenerateTab({
     setFormError(null);
     setSubmitting(true);
     try {
+      const prosody = (speed !== 1 || volume !== 1) ? { speed, volume, pitch: 0 } : undefined;
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, reference_id: selectedVoice?.referenceId ?? undefined, prosody }),
+        body: JSON.stringify({
+          text,
+          reference_id: selectedVoice?.referenceId ?? undefined,
+          prosody,
+          normalize,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al generar");
@@ -288,6 +289,7 @@ function GenerateTab({
       setJobs((cur) => [newJob, ...cur]);
       onGenerated();
       setText("");
+      setRightTab("historial");
     } catch (e: unknown) {
       setFormError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
@@ -296,189 +298,246 @@ function GenerateTab({
   }
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+    <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-5 items-start">
 
-      {/* ── Left: form ── */}
-      <div className="p-6 rounded-2xl border" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
-        <h2 className="text-base font-bold text-white mb-5">Nueva generación</h2>
-
-        <div className="mb-4">
-          <label className="text-xs font-medium text-gray-400 mb-1.5 block">Texto</label>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Escribe el texto a narrar..."
-            rows={7}
-            className="w-full rounded-xl p-4 text-sm text-gray-200 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-            style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
-          />
-          {text.length > 0 && (
-            <p className="mt-1.5 text-xs" style={{ color: "#8888a8" }}>
-              Costará{" "}
-              <span className="text-blue-400 font-semibold">
-                {charCost.toLocaleString("es-ES")} caracteres
-              </span>
+      {/* ── LEFT: Editor ── */}
+      <div className="flex flex-col rounded-2xl border overflow-hidden" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+        {/* Voice header */}
+        <div className="flex items-center gap-3 px-6 py-4 border-b" style={{ borderColor: "#2a2a3e" }}>
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ background: "rgba(59,130,246,0.15)" }}
+          >
+            <Mic size={18} style={{ color: "#93c5fd" }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white truncate">
+              {selectedVoice?.name ?? "Voz por defecto"}
             </p>
-          )}
+            <p className="text-xs" style={{ color: "#8888a8" }}>
+              {selectedVoice?.isCloned ? "Voz clonada" : "Voz del sistema"}
+            </p>
+          </div>
         </div>
 
-        <div className="mb-4">
-          <label className="text-xs font-medium text-gray-400 mb-1.5 block">Voz</label>
-          <button
-            onClick={() => setShowBrowser(true)}
-            className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all hover:border-blue-500/60"
-            style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
-          >
-            <div className="flex items-center gap-2.5">
-              <Mic size={15} style={{ color: "#93c5fd" }} />
-              <span className="text-gray-200 font-medium">{selectedVoice?.name ?? "Voz por defecto"}</span>
-            </div>
-            <span className="text-xs" style={{ color: "#8888a8" }}>Cambiar →</span>
-          </button>
-        </div>
+        {/* Textarea */}
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Escribe el texto a narrar..."
+          disabled={submitting}
+          rows={14}
+          className="w-full px-6 py-5 text-sm text-gray-200 resize-none focus:outline-none disabled:opacity-60"
+          style={{ background: "#0d0d17", lineHeight: "1.75" }}
+        />
 
-        {/* ── Advanced: prosody sliders ── */}
-        <div className="mb-5">
-          <button
-            onClick={() => setShowAdvanced((v) => !v)}
-            className="flex items-center gap-1.5 text-xs font-medium transition-colors"
-            style={{ color: prosodyChanged ? "#93c5fd" : "#8888a8" }}
-          >
-            {prosodyChanged && (
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
-            )}
-            Ajustes avanzados {showAdvanced ? "▲" : "▼"}
-          </button>
-
-          {showAdvanced && (
-            <div className="mt-3 space-y-4 p-4 rounded-xl" style={{ background: "#12121a", border: "1px solid #2a2a3e" }}>
-              {[
-                { label: "Velocidad", value: speed, set: setSpeed, min: 0.5, max: 2.0, step: 0.1, lo: "Lento", mid: "Normal", hi: "Rápido", fmt: (v: number) => v.toFixed(1), def: 1 },
-                { label: "Volumen",   value: volume, set: setVolume, min: 0, max: 2.0, step: 0.1, lo: "Bajo",  mid: "Normal", hi: "Alto",   fmt: (v: number) => v.toFixed(1), def: 1 },
-                { label: "Tono",      value: pitch,  set: setPitch,  min: -12, max: 12, step: 1,   lo: "Grave", mid: "Normal", hi: "Agudo",  fmt: (v: number) => (v >= 0 ? `+${v}` : `${v}`), def: 0 },
-              ].map(({ label, value, set, min, max, step, lo, mid, hi, fmt, def }) => (
-                <div key={label}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-medium text-gray-400">{label}</span>
-                    <span
-                      className="text-xs font-mono px-1.5 py-0.5 rounded"
-                      style={{
-                        color: value !== def ? "#93c5fd" : "#8888a8",
-                        background: value !== def ? "rgba(59,130,246,0.12)" : "transparent",
-                      }}
-                    >
-                      {fmt(value)}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min={min}
-                    max={max}
-                    step={step}
-                    value={value}
-                    onChange={(e) => set(parseFloat(e.target.value) as never)}
-                    className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                    style={{ accentColor: "#3b82f6", background: "#2a2a3e" }}
-                  />
-                  <div className="flex justify-between mt-1" style={{ color: "#555570" }}>
-                    <span className="text-xs">{lo}</span>
-                    <span className="text-xs">{mid}</span>
-                    <span className="text-xs">{hi}</span>
-                  </div>
-                </div>
-              ))}
-
-              {prosodyChanged && (
-                <button
-                  onClick={() => { setSpeed(1); setVolume(1); setPitch(0); }}
-                  className="text-xs mt-1 transition-colors"
-                  style={{ color: "#8888a8" }}
-                >
-                  Restablecer valores
-                </button>
+        {/* Bottom bar */}
+        <div className="px-6 py-4 border-t" style={{ borderColor: "#2a2a3e" }}>
+          {submitting && (
+            <div className="mb-4 space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span style={{ color: "#93c5fd" }}>Generando audio... {Math.round(progress)}%</span>
+                <span style={{ color: "#8888a8" }}>{elapsedLabel}</span>
+              </div>
+              <div className="h-1 rounded-full overflow-hidden" style={{ background: "#2a2a3e" }}>
+                <div
+                  className="h-full rounded-full transition-all duration-1000 ease-linear"
+                  style={{ width: `${progress}%`, background: "linear-gradient(90deg, #3b82f6, #2563eb)" }}
+                />
+              </div>
+              {text.trim().length > 3000 && (
+                <p className="text-xs" style={{ color: "#8888a8" }}>
+                  Los audios largos pueden tardar varios minutos
+                </p>
               )}
             </div>
           )}
+
+          {formError && (
+            <div className="mb-3 p-3 rounded-lg text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
+              {formError}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-sm" style={{ color: "#8888a8" }}>
+              {text.length.toLocaleString("es-ES")} caracteres
+              {text.length > 0 && (
+                <span className="ml-2 text-xs" style={{ color: "#555570" }}>
+                  · {charCost.toLocaleString("es-ES")} créditos
+                </span>
+              )}
+            </span>
+            <button
+              onClick={handleGenerate}
+              disabled={submitting || text.trim().length === 0}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none flex-shrink-0"
+              style={{
+                background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+                boxShadow: submitting ? "none" : "0 4px 15px rgba(59,130,246,0.3)",
+              }}
+            >
+              {submitting ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Generando...
+                </>
+              ) : (
+                "Generar audio"
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── RIGHT: Settings panel ── */}
+      <div className="rounded-2xl border overflow-hidden" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+        {/* Tabs */}
+        <div className="flex border-b" style={{ borderColor: "#2a2a3e" }}>
+          {(["ajustes", "historial"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setRightTab(tab)}
+              className="flex-1 py-3 text-sm font-medium transition-colors"
+              style={
+                rightTab === tab
+                  ? { color: "#ffffff", borderBottom: "2px solid #3b82f6" }
+                  : { color: "#8888a8" }
+              }
+            >
+              {tab === "ajustes" ? "Ajustes" : "Historial"}
+            </button>
+          ))}
         </div>
 
-        {formError && (
-          <div className="mb-4 p-3 rounded-lg text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
-            {formError}
+        {rightTab === "ajustes" && (
+          <div className="p-5 space-y-6">
+            {/* Voz */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#555570" }}>Voz</p>
+              <button
+                onClick={() => setShowBrowser(true)}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all hover:border-blue-500/60"
+                style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
+              >
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ background: "rgba(59,130,246,0.15)" }}
+                >
+                  <Mic size={13} style={{ color: "#93c5fd" }} />
+                </div>
+                <div className="flex-1 text-left min-w-0">
+                  <p className="text-sm font-medium text-white truncate">
+                    {selectedVoice?.name ?? "Voz por defecto"}
+                  </p>
+                  <p className="text-xs" style={{ color: "#8888a8" }}>
+                    {selectedVoice?.isCloned ? "Voz clonada" : "Sistema"}
+                  </p>
+                </div>
+                <span className="text-xs flex-shrink-0" style={{ color: "#8888a8" }}>→</span>
+              </button>
+            </div>
+
+            {/* Audio controls */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>Controles de audio</p>
+              <div className="space-y-5">
+                {[
+                  { label: "Volumen", value: volume, set: setVolume, min: 0, max: 2, step: 0.1, marks: ["0", "1", "2"], def: 1 },
+                  { label: "Velocidad", value: speed, set: setSpeed, min: 0.5, max: 2, step: 0.1, marks: ["0.5", "1", "2"], def: 1 },
+                ].map(({ label, value, set, min, max, step, marks, def }) => (
+                  <div key={label}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-300">{label}</span>
+                      <span
+                        className="text-xs font-mono px-1.5 py-0.5 rounded"
+                        style={{
+                          color: value !== def ? "#93c5fd" : "#8888a8",
+                          background: value !== def ? "rgba(59,130,246,0.12)" : "transparent",
+                        }}
+                      >
+                        {value.toFixed(1)}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={min}
+                      max={max}
+                      step={step}
+                      value={value}
+                      onChange={(e) => set(parseFloat(e.target.value))}
+                      className="w-full h-1 rounded-full appearance-none cursor-pointer"
+                      style={{ accentColor: "#3b82f6", background: "#2a2a3e" }}
+                    />
+                    <div className="flex justify-between mt-1 text-xs" style={{ color: "#555570" }}>
+                      {marks.map((m) => <span key={m}>{m}</span>)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Normalization toggle */}
+            <div className="border-t pt-5" style={{ borderColor: "#2a2a3e" }}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm text-gray-300">Normalización de volumen</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#8888a8" }}>Iguala el volumen del audio</p>
+                </div>
+                <button
+                  onClick={() => setNormalize((v) => !v)}
+                  className="relative w-11 h-6 rounded-full transition-colors flex-shrink-0"
+                  style={{ background: normalize ? "#3b82f6" : "#2a2a3e" }}
+                  aria-pressed={normalize}
+                >
+                  <span
+                    className="absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-200"
+                    style={{ left: normalize ? "calc(100% - 1.25rem)" : "4px" }}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {(speed !== 1 || volume !== 1) && (
+              <button
+                onClick={() => { setSpeed(1); setVolume(1); }}
+                className="text-xs transition-colors"
+                style={{ color: "#8888a8" }}
+              >
+                Restablecer valores
+              </button>
+            )}
           </div>
         )}
 
-        <button
-          onClick={handleGenerate}
-          disabled={submitting || text.trim().length === 0}
-          className="w-full py-3 rounded-xl font-semibold text-white transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
-          style={{
-            background: "linear-gradient(135deg, #3b82f6, #2563eb)",
-            boxShadow: submitting ? "none" : "0 4px 15px rgba(59,130,246,0.3)",
-          }}
-        >
-          {submitting ? (
-            <>
-              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              Generando...
-            </>
-          ) : (
-            "Generar audio"
-          )}
-        </button>
-
-        {submitting && (
-          <div className="mt-3 space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span style={{ color: "#93c5fd" }}>Generando audio... {Math.round(progress)}%</span>
-              <span style={{ color: "#8888a8" }}>{elapsedLabel}</span>
-            </div>
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#2a2a3e" }}>
-              <div
-                className="h-full rounded-full transition-all duration-1000 ease-linear"
-                style={{
-                  width: `${progress}%`,
-                  background: "linear-gradient(90deg, #3b82f6, #2563eb)",
-                }}
-              />
-            </div>
-            {text.trim().length > 3000 && (
-              <p className="text-xs text-center" style={{ color: "#8888a8" }}>
-                Los audios largos pueden tardar varios minutos
-              </p>
+        {rightTab === "historial" && (
+          <div className="p-4">
+            {!jobsLoaded ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: "#12121a" }} />
+                ))}
+              </div>
+            ) : jobs.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center" style={{ color: "#8888a8" }}>
+                <Mic size={32} className="mb-3 opacity-40" />
+                <p className="text-sm font-medium">Sin generaciones aún</p>
+                <p className="text-xs mt-1 opacity-60">Genera tu primer audio</p>
+              </div>
+            ) : (
+              <div className="space-y-2 overflow-y-auto max-h-[560px]">
+                {jobs.map((job) => (
+                  <JobCard key={job.id} job={job} voices={voices} />
+                ))}
+              </div>
             )}
           </div>
         )}
       </div>
 
-      {/* ── Right: live job history ── */}
-      <div className="p-6 rounded-2xl border flex flex-col" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
-        <h2 className="text-base font-bold text-white mb-5">Generaciones recientes</h2>
-
-        {!jobsLoaded ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: "#12121a" }} />
-            ))}
-          </div>
-        ) : jobs.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center py-16 text-center" style={{ color: "#8888a8" }}>
-            <Mic size={36} className="mb-3 opacity-40" />
-            <p className="text-sm font-medium">Tus generaciones aparecerán aquí</p>
-            <p className="text-xs mt-1 opacity-60">Escribe un texto y pulsa Generar</p>
-          </div>
-        ) : (
-          <div className="space-y-3 overflow-y-auto max-h-[600px] pr-1">
-            {jobs.map((job) => (
-              <JobCard key={job.id} job={job} voices={voices} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* VoiceBrowser modal */}
       {showBrowser && (
         <VoiceBrowser
           clonedVoices={clonedVoices}
