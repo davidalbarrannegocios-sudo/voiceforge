@@ -13,6 +13,7 @@ model User {
   clerkId      String        @unique
   email        String
   credits      Int           @default(0)
+  role         String        @default("user")
   referralCode String?       @unique
   referredBy   String?
   createdAt    DateTime      @default(now())
