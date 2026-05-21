@@ -85,8 +85,8 @@ function Sidebar({
       className="w-60 flex-shrink-0 h-screen sticky top-0 flex flex-col border-r"
       style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}
     >
-      {/* Logo */}
-      <div className="px-5 py-4 border-b" style={{ borderColor: "#2a2a3e" }}>
+      {/* Logo + User */}
+      <div className="px-4 py-4 border-b flex items-center justify-between" style={{ borderColor: "#2a2a3e" }}>
         <Link href="/" className="flex items-center gap-2.5">
           <Image
             src="/elitelabs.png"
@@ -98,6 +98,7 @@ function Sidebar({
           />
           <span className="font-bold text-white tracking-tight">Elite Labs</span>
         </Link>
+        <UserButton />
       </div>
 
       {/* Nav */}
@@ -169,13 +170,6 @@ function Sidebar({
         </div>
       </div>
 
-      {/* User row */}
-      <div
-        className="px-4 py-3 border-t flex items-center gap-3"
-        style={{ borderColor: "#1e1e2e" }}
-      >
-        <UserButton />
-      </div>
     </aside>
   );
 }
