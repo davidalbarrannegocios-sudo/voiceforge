@@ -12,7 +12,7 @@ const FAQ = [
   },
   {
     q: "¿Puedo obtener un reembolso de los créditos que no he usado?",
-    a: "Los créditos ya adquiridos no son reembolsables, salvo error técnico imputable a Elite Labs. Si crees que hubo un error, escríbenos a support@elitelabs.es y lo revisamos.",
+    a: "Los créditos ya adquiridos no son reembolsables, salvo error técnico imputable a Elite Labs. Si crees que hubo un error, escríbenos a soporte@elitelabs.es y lo revisamos.",
   },
   {
     q: "¿Cómo funciona la clonación de voz?",
@@ -118,11 +118,11 @@ export default function SupportPage() {
               Nuestro equipo responde en menos de 24 horas en días laborables.
             </p>
             <a
-              href="mailto:support@elitelabs.es"
+              href="mailto:soporte@elitelabs.es"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:-translate-y-0.5"
               style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 12px rgba(59,130,246,0.3)" }}
             >
-              support@elitelabs.es
+              soporte@elitelabs.es
             </a>
           </div>
         </div>
@@ -166,11 +166,11 @@ export default function SupportPage() {
           <p className="text-sm text-white font-medium mb-1">¿No encuentras lo que buscas?</p>
           <p className="text-xs mb-4" style={{ color: "#8888a8" }}>Escríbenos y te ayudamos personalmente.</p>
           <a
-            href="mailto:support@elitelabs.es"
+            href="mailto:soporte@elitelabs.es"
             className="text-sm font-semibold transition-colors hover:text-blue-300"
             style={{ color: "#93c5fd" }}
           >
-            support@elitelabs.es →
+            soporte@elitelabs.es →
           </a>
         </div>
       </main>

@@ -14,7 +14,7 @@ const SECTIONS = [
   },
   {
     title: "3. Registro y cuenta",
-    body: `Para usar el servicio debes registrarte con una cuenta válida. Eres responsable de mantener la confidencialidad de tus credenciales y de todas las actividades que ocurran bajo tu cuenta. Notifícanos inmediatamente a support@elitelabs.es si detectas un uso no autorizado.`,
+    body: `Para usar el servicio debes registrarte con una cuenta válida. Eres responsable de mantener la confidencialidad de tus credenciales y de todas las actividades que ocurran bajo tu cuenta. Notifícanos inmediatamente a soporte@elitelabs.es si detectas un uso no autorizado.`,
   },
   {
     title: "4. Uso aceptable",
@@ -33,7 +33,7 @@ const SECTIONS = [
   },
   {
     title: "6. Política de reembolsos",
-    body: `Los créditos una vez adquiridos no son reembolsables, salvo error técnico imputable a Elite Labs o exigencia legal aplicable. Los créditos no utilizados no tienen fecha de caducidad. Si experimentas un problema técnico que haya consumido créditos indebidamente, contacta con nosotros en support@elitelabs.es y lo revisaremos caso a caso.`,
+    body: `Los créditos una vez adquiridos no son reembolsables, salvo error técnico imputable a Elite Labs o exigencia legal aplicable. Los créditos no utilizados no tienen fecha de caducidad. Si experimentas un problema técnico que haya consumido créditos indebidamente, contacta con nosotros en soporte@elitelabs.es y lo revisaremos caso a caso.`,
   },
   {
     title: "7. Propiedad intelectual del audio generado",
@@ -61,7 +61,7 @@ const SECTIONS = [
   },
   {
     title: "13. Contacto",
-    body: `Para cualquier consulta sobre estos Términos, escríbenos a support@elitelabs.es.`,
+    body: `Para cualquier consulta sobre estos Términos, escríbenos a soporte@elitelabs.es.`,
   },
 ];
 
@@ -118,8 +118,8 @@ export default function TermsPage() {
         <div className="mt-14 pt-8 border-t" style={{ borderColor: "#2a2a3e" }}>
           <p className="text-sm" style={{ color: "#8888a8" }}>
             ¿Tienes preguntas? Escríbenos a{" "}
-            <a href="mailto:support@elitelabs.es" className="text-blue-400 hover:text-blue-300 transition-colors">
-              support@elitelabs.es
+            <a href="mailto:soporte@elitelabs.es" className="text-blue-400 hover:text-blue-300 transition-colors">
+              soporte@elitelabs.es
             </a>
           </p>
         </div>

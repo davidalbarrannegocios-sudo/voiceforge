@@ -70,7 +70,7 @@ export default function BlogPage() {
           ¿Quieres que te avisemos cuando publiquemos el primer artículo?
         </p>
         <a
-          href="mailto:support@elitelabs.es?subject=Avísame%20cuando%20abra%20el%20blog"
+          href="mailto:soporte@elitelabs.es?subject=Avísame%20cuando%20abra%20el%20blog"
           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:-translate-y-0.5"
           style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 15px rgba(59,130,246,0.3)" }}
         >

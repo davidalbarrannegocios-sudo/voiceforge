@@ -6,7 +6,7 @@ export const metadata = { title: "Política de Privacidad — Elite Labs" };
 const SECTIONS = [
   {
     title: "1. Quiénes somos",
-    body: `Elite Tube LLC es la empresa responsable de Elite Labs, una plataforma de síntesis de voz con inteligencia artificial. Domicilio social: Estado de Wyoming, Estados Unidos. Puede contactarnos en support@elitelabs.es.`,
+    body: `Elite Tube LLC es la empresa responsable de Elite Labs, una plataforma de síntesis de voz con inteligencia artificial. Domicilio social: Estado de Wyoming, Estados Unidos. Puede contactarnos en soporte@elitelabs.es.`,
   },
   {
     title: "2. Datos que recopilamos",
@@ -42,7 +42,7 @@ const SECTIONS = [
   },
   {
     title: "7. Retención de datos",
-    body: `Conservamos tus datos mientras tu cuenta esté activa. Los audios generados se almacenan durante 90 días y después se eliminan automáticamente. Puedes solicitar la eliminación de tu cuenta en cualquier momento escribiendo a support@elitelabs.es.`,
+    body: `Conservamos tus datos mientras tu cuenta esté activa. Los audios generados se almacenan durante 90 días y después se eliminan automáticamente. Puedes solicitar la eliminación de tu cuenta en cualquier momento escribiendo a soporte@elitelabs.es.`,
   },
   {
     title: "8. Tus derechos",
@@ -65,7 +65,7 @@ const SECTIONS = [
   },
   {
     title: "11. Contacto",
-    body: `Para cualquier consulta sobre privacidad, escríbenos a support@elitelabs.es. Nos comprometemos a responder en un plazo de 30 días.`,
+    body: `Para cualquier consulta sobre privacidad, escríbenos a soporte@elitelabs.es. Nos comprometemos a responder en un plazo de 30 días.`,
   },
 ];
 
@@ -122,8 +122,8 @@ export default function PrivacyPage() {
         <div className="mt-14 pt-8 border-t" style={{ borderColor: "#2a2a3e" }}>
           <p className="text-sm" style={{ color: "#8888a8" }}>
             ¿Preguntas? Escríbenos a{" "}
-            <a href="mailto:support@elitelabs.es" className="text-blue-400 hover:text-blue-300 transition-colors">
-              support@elitelabs.es
+            <a href="mailto:soporte@elitelabs.es" className="text-blue-400 hover:text-blue-300 transition-colors">
+              soporte@elitelabs.es
             </a>
           </p>
         </div>
