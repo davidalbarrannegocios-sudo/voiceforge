@@ -129,20 +129,22 @@ export async function fishAudioGenerate({
 
   console.log(`[FishAudio] TTS — referenceId=${referenceId ?? "none"} chars=${text.length} chunks=${chunks.length}`);
 
-  const audioBuffers = await Promise.all(
-    chunks.map((chunk, i) => {
-      const payload: Record<string, unknown> = {
-        text: chunk,
-        format: "mp3",
-        mp3_bitrate: 128,
-        normalize: true,
-        latency: "balanced",
-        chunk_length: 200,
-      };
-      if (referenceId) payload.reference_id = referenceId;
-      return fetchChunk(apiKey, payload, i, chunks.length, signal);
-    })
-  );
+  const audioBuffers: Buffer[] = [];
+
+  for (let i = 0; i < chunks.length; i++) {
+    const payload: Record<string, unknown> = {
+      text: chunks[i],
+      format: "mp3",
+      mp3_bitrate: 128,
+      normalize: true,
+      latency: "balanced",
+      chunk_length: 200,
+    };
+    if (referenceId) payload.reference_id = referenceId;
+
+    const buf = await fetchChunk(apiKey, payload, i, chunks.length, signal);
+    audioBuffers.push(buf);
+  }
 
   const audioBuffer = audioBuffers.length === 1 ? audioBuffers[0] : Buffer.concat(audioBuffers);
 
