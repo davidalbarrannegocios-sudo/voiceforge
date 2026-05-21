@@ -358,6 +358,11 @@ function GenerateTab({
   }
 
   return (
+    <div>
+      <h2 className="text-lg font-bold text-white mb-1">Texto a Voz</h2>
+      <p className="text-sm mb-0" style={{ color: "#8888a8" }}>
+        Convierte cualquier texto en voz natural al instante usando la IA más avanzada.
+      </p>
     <div className="pt-12 grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-5 min-h-[calc(100vh-120px)]">
 
       {/* ── LEFT: Editor ── */}
@@ -605,6 +610,7 @@ function GenerateTab({
           onClose={() => setShowBrowser(false)}
         />
       )}
+    </div>
     </div>
   );
 }
