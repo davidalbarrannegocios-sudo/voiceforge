@@ -241,7 +241,7 @@ function GenerateTab({
     return () => clearInterval(id);
   }, [submitting]);
 
-  const estimatedSeconds = Math.max(5, text.trim().length / 7);
+  const estimatedSeconds = Math.max(5, Math.ceil(text.trim().length / 100));
   const progress = submitting ? Math.min(95, (elapsed / estimatedSeconds) * 100) : 0;
   const elapsedLabel = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")}`;
 
@@ -422,7 +422,7 @@ function GenerateTab({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Generando audio... {elapsedLabel}
+              Generando...
             </>
           ) : (
             "Generar audio"
@@ -431,6 +431,10 @@ function GenerateTab({
 
         {submitting && (
           <div className="mt-3 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span style={{ color: "#93c5fd" }}>Generando audio... {Math.round(progress)}%</span>
+              <span style={{ color: "#8888a8" }}>{elapsedLabel}</span>
+            </div>
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#2a2a3e" }}>
               <div
                 className="h-full rounded-full transition-all duration-1000 ease-linear"
@@ -440,7 +444,7 @@ function GenerateTab({
                 }}
               />
             </div>
-            {text.trim().length > 1000 && (
+            {text.trim().length > 5000 && (
               <p className="text-xs text-center" style={{ color: "#8888a8" }}>
                 Los audios largos pueden tardar varios minutos
               </p>
