@@ -108,6 +108,18 @@ async function fetchChunk(
   throw new Error(`Fish Audio TTS rate limited on chunk ${chunkIndex + 1}/${total} after ${MAX_ATTEMPTS} attempts`);
 }
 
+async function processInBatches(chunks: string[], fetchFn: (index: number) => Promise<Buffer>, batchSize = 5): Promise<Buffer[]> {
+  const results: Buffer[] = [];
+  for (let i = 0; i < chunks.length; i += batchSize) {
+    const batch = chunks.slice(i, i + batchSize);
+    const batchResults = await Promise.all(
+      batch.map((_, j) => fetchFn(i + j))
+    );
+    results.push(...batchResults);
+  }
+  return results;
+}
+
 export interface GenerateResult {
   audio_url: string;
   duration_seconds: number;
@@ -132,9 +144,7 @@ export async function fishAudioGenerate({
 
   console.log(`[FishAudio] TTS — referenceId=${referenceId ?? "none"} chars=${text.length} chunks=${chunks.length}`);
 
-  const audioBuffers: Buffer[] = [];
-
-  for (let i = 0; i < chunks.length; i++) {
+  const audioBuffers = await processInBatches(chunks, (i) => {
     const payload: Record<string, unknown> = {
       text: chunks[i],
       format: "mp3",
@@ -147,10 +157,8 @@ export async function fishAudioGenerate({
     if (prosody && (prosody.speed !== 1 || prosody.volume !== 1 || prosody.pitch !== 0)) {
       payload.prosody = prosody;
     }
-
-    const buf = await fetchChunk(apiKey, payload, i, chunks.length, signal);
-    audioBuffers.push(buf);
-  }
+    return fetchChunk(apiKey, payload, i, chunks.length, signal);
+  }, 5);
 
   const audioBuffer = audioBuffers.length === 1 ? audioBuffers[0] : Buffer.concat(audioBuffers);
 
