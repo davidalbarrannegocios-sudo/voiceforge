@@ -227,11 +227,20 @@ function GenerateTab({
   const charCost = calculateCharCost(text.length);
   const clonedVoices = voices.filter((v) => !v.isSystem);
 
-  // Load recent jobs on mount
+  // Load recent jobs on mount; treat stale "processing" jobs as failed
   useEffect(() => {
     fetch("/api/jobs")
       .then((r) => r.json())
-      .then((data) => { setJobs(data.jobs ?? []); setJobsLoaded(true); })
+      .then((data) => {
+        const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+        const jobs = (data.jobs ?? []).map((j: Job) =>
+          j.status === "processing" && new Date(j.createdAt).getTime() < fiveMinAgo
+            ? { ...j, status: "failed", error: "Generación cancelada (página recargada)" }
+            : j
+        );
+        setJobs(jobs);
+        setJobsLoaded(true);
+      })
       .catch(() => setJobsLoaded(true));
   }, []);
 

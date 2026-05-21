@@ -60,9 +60,19 @@ async function fetchChunk(
   payload: Record<string, unknown>,
   chunkIndex: number,
   total: number,
+  externalSignal?: AbortSignal,
 ): Promise<Buffer> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      clearTimeout(timeoutId);
+      controller.abort();
+    } else {
+      externalSignal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
+  }
 
   let res: Response;
   try {
@@ -99,10 +109,12 @@ export async function fishAudioGenerate({
   text,
   referenceId,
   userId,
+  signal,
 }: {
   text: string;
   referenceId?: string;
   userId: string;
+  signal?: AbortSignal;
 }): Promise<GenerateResult> {
   const apiKey = getApiKey();
   const chunks = splitTextIntoChunks(text);
@@ -122,7 +134,7 @@ export async function fishAudioGenerate({
     };
     if (referenceId) payload.reference_id = referenceId;
 
-    const buf = await fetchChunk(apiKey, payload, i, chunks.length);
+    const buf = await fetchChunk(apiKey, payload, i, chunks.length, signal);
     audioBuffers.push(buf);
   }
 

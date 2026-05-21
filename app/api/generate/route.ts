@@ -56,15 +56,21 @@ export async function POST(req: Request) {
         text: trimmed,
         referenceId: reference_id || undefined,
         userId: user.id,
+        signal: req.signal,
       });
     } catch (fishErr) {
-      const errMsg = fishErr instanceof Error ? fishErr.message : String(fishErr);
-      console.error(`[generate] Fish Audio failed:`, errMsg);
+      const isAbort = req.signal.aborted;
+      const errMsg = isAbort ? "Generación cancelada" : (fishErr instanceof Error ? fishErr.message : String(fishErr));
+      if (isAbort) {
+        console.log(`[generate] client disconnected — refunding jobId=${job.id}`);
+      } else {
+        console.error(`[generate] Fish Audio failed:`, errMsg);
+      }
       await prisma.$transaction([
         prisma.user.update({ where: { id: user.id }, data: { credits: { increment: charCost } } }),
         prisma.job.update({ where: { id: job.id }, data: { status: "failed", error: errMsg } }),
       ]);
-      return NextResponse.json({ error: "Error al generar audio", detail: errMsg }, { status: 500 });
+      return NextResponse.json({ error: isAbort ? "Generación cancelada" : "Error al generar audio", detail: errMsg }, { status: 500 });
     }
 
     await prisma.$transaction([
