@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     const processUrl = `${baseUrl}/api/process-job/${job.id}`;
     fetch(processUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) })
       .then((r) => console.log(`[generate] process-job responded: ${r.status}`))
-      .catch(() => {});
+      .catch((err) => console.error('[generate] process-job fetch FAILED:', err.message, err.cause));
 
     return NextResponse.json({ jobId: job.id, charCost, charsRemaining: user.credits - charCost });
   } catch (err) {
