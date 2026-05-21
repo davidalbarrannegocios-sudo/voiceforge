@@ -797,28 +797,28 @@ function HistoryTab() {
 /* ─── Billing Tab ────────────────────────────────────────── */
 const BILLING_PLANS = [
   {
-    key: "basico",
-    name: "Básico",
-    price: 6,
-    characters: 250_000,
+    key: "starter",
+    name: "Starter",
+    price: 7,
+    characters: 200_000,
     popular: false,
-    features: ["250.000 caracteres", "Explorar voces públicas", "Clonación de voz"],
+    features: ["200.000 caracteres", "Explorar voces públicas", "Clonación de voz"],
   },
   {
     key: "pro",
     name: "Pro",
-    price: 12,
-    characters: 600_000,
+    price: 13,
+    characters: 500_000,
     popular: true,
-    features: ["600.000 caracteres", "Explorar voces públicas", "Clonación de voz ilimitada", "Generación prioritaria"],
+    features: ["500.000 caracteres", "Explorar voces públicas", "Clonación de voz ilimitada", "Generación prioritaria"],
   },
   {
-    key: "premium",
-    name: "Premium",
-    price: 24,
-    characters: 1_400_000,
+    key: "elite",
+    name: "Elite",
+    price: 25,
+    characters: 1_000_000,
     popular: false,
-    features: ["1.400.000 caracteres", "Explorar voces públicas", "Clonación de voz ilimitada", "Soporte preferente"],
+    features: ["1.000.000 caracteres", "Explorar voces públicas", "Clonación de voz ilimitada", "Soporte preferente"],
   },
 ] as const;
 
@@ -882,7 +882,7 @@ function BillingTab({
             <div className="mb-4">
               <p className="font-semibold text-white mb-1">{plan.name}</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-white">{plan.price}€</span>
+                <span className="text-3xl font-bold text-white">${plan.price}</span>
                 <span className="text-xs text-gray-500">pago único</span>
               </div>
               <p className="text-xs text-gray-500 mt-0.5">

@@ -1,23 +1,23 @@
 import Stripe from "stripe";
 
 export const PLANS = {
-  basico: {
-    name: "Básico",
-    price: 6,
-    characters: 250000,
-    priceId: process.env.STRIPE_PRICE_BASICO ?? "price_1TYpHz0yvXwXx2fj4kkUw8IT",
+  starter: {
+    name: "Starter",
+    price: 7,
+    characters: 200000,
+    priceId: process.env.STRIPE_PRICE_STARTER ?? "",
   },
   pro: {
     name: "Pro",
-    price: 12,
-    characters: 600000,
-    priceId: process.env.STRIPE_PRICE_PRO!,
+    price: 13,
+    characters: 500000,
+    priceId: process.env.STRIPE_PRICE_PRO ?? "",
   },
-  premium: {
-    name: "Premium",
-    price: 24,
-    characters: 1400000,
-    priceId: process.env.STRIPE_PRICE_PREMIUM!,
+  elite: {
+    name: "Elite",
+    price: 25,
+    characters: 1000000,
+    priceId: process.env.STRIPE_PRICE_ELITE ?? "",
   },
 } as const;
 

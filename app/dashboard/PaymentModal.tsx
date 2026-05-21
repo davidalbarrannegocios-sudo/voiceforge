@@ -156,7 +156,7 @@ function PaymentForm({
             Procesando...
           </>
         ) : (
-          `Pagar ${plan.price}€`
+          `Pagar $${plan.price}`
         )}
       </button>
     </form>
@@ -216,7 +216,7 @@ export function PaymentModal({
           <div>
             <h2 className="text-lg font-bold text-white">Plan {plan.name}</h2>
             <p className="text-sm text-gray-400 mt-0.5">
-              {plan.characters.toLocaleString("es-ES")} caracteres &middot; {plan.price}€ pago único
+              {plan.characters.toLocaleString("es-ES")} caracteres &middot; ${plan.price} pago único
             </p>
           </div>
           <button

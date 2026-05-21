@@ -9,13 +9,13 @@ import { PaymentModal, type BillingPlan } from "@/app/dashboard/PaymentModal";
 
 const PLANS: (BillingPlan & { popular: boolean; features: string[] })[] = [
   {
-    key: "basico",
-    name: "Básico",
-    price: 6,
-    characters: 250_000,
+    key: "starter",
+    name: "Starter",
+    price: 7,
+    characters: 200_000,
     popular: false,
     features: [
-      "250.000 caracteres",
+      "200.000 caracteres",
       "Explorar voces públicas",
       "Clonación de voz",
       "Historial 30 días",
@@ -24,11 +24,11 @@ const PLANS: (BillingPlan & { popular: boolean; features: string[] })[] = [
   {
     key: "pro",
     name: "Pro",
-    price: 12,
-    characters: 600_000,
+    price: 13,
+    characters: 500_000,
     popular: true,
     features: [
-      "600.000 caracteres",
+      "500.000 caracteres",
       "Explorar voces públicas",
       "Clonación de voz ilimitada",
       "Historial completo",
@@ -36,13 +36,13 @@ const PLANS: (BillingPlan & { popular: boolean; features: string[] })[] = [
     ],
   },
   {
-    key: "premium",
-    name: "Premium",
-    price: 24,
-    characters: 1_400_000,
+    key: "elite",
+    name: "Elite",
+    price: 25,
+    characters: 1_000_000,
     popular: false,
     features: [
-      "1.400.000 caracteres",
+      "1.000.000 caracteres",
       "Explorar voces públicas",
       "Clonación de voz ilimitada",
       "Historial completo",
@@ -126,7 +126,7 @@ export default function PricingPage() {
               <div className="mb-6">
                 <h3 className="text-lg font-bold text-white mb-1">{plan.name}</h3>
                 <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-4xl font-bold text-white">{plan.price}€</span>
+                  <span className="text-4xl font-bold text-white">${plan.price}</span>
                   <span className="text-gray-400 text-sm">pago único</span>
                 </div>
                 <p className="text-sm text-gray-500">

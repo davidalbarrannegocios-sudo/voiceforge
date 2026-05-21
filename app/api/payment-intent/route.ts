@@ -30,7 +30,7 @@ export async function POST(req: Request) {
 
   const paymentIntent = await getStripe().paymentIntents.create({
     amount: selectedPlan.price * 100,
-    currency: "eur",
+    currency: "usd",
     metadata: {
       userId: user.id,
       characters: String(selectedPlan.characters),
