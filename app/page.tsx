@@ -117,7 +117,7 @@ function FaqItem({ item, open, onToggle }: { item: typeof FAQ_ITEMS[0]; open: bo
 /* ─── Main Page ─────────────────────────────────────────────── */
 
 export default function LandingPage() {
-  const { isSignedIn } = useUser();
+  const { isSignedIn, isLoaded } = useUser();
   const [demoVoices, setDemoVoices] = useState<DemoVoice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<string>("");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -211,7 +211,16 @@ export default function LandingPage() {
             <Link href="/pricing" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5">
               Precios
             </Link>
-            {!isSignedIn ? (
+            {!isLoaded ? (
+              <>
+                <Link href="/sign-in" className="text-sm text-gray-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-transparent hover:border-white/10">
+                  Iniciar sesión
+                </Link>
+                <Link href="/sign-up" className="text-sm font-semibold text-white px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5" style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}>
+                  Empezar gratis
+                </Link>
+              </>
+            ) : !isSignedIn ? (
               <>
                 <SignInButton mode="modal">
                   <button className="text-sm text-gray-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-transparent hover:border-white/10">
@@ -370,7 +379,15 @@ export default function LandingPage() {
                       )}
                     </button>
 
-                    {!isSignedIn ? (
+                    {isLoaded && isSignedIn ? (
+                      <Link
+                        href="/dashboard"
+                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
+                        style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 20px rgba(59,130,246,0.35)" }}
+                      >
+                        Ir al Dashboard →
+                      </Link>
+                    ) : isLoaded ? (
                       <SignUpButton mode="modal">
                         <button
                           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
@@ -381,7 +398,7 @@ export default function LandingPage() {
                       </SignUpButton>
                     ) : (
                       <Link
-                        href="/dashboard"
+                        href="/sign-up"
                         className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
                         style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 20px rgba(59,130,246,0.35)" }}
                       >
@@ -463,7 +480,15 @@ export default function LandingPage() {
                   ))}
                 </ul>
 
-                {!isSignedIn ? (
+                {isLoaded && isSignedIn ? (
+                  <Link
+                    href="/dashboard"
+                    className="inline-block px-6 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
+                    style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 15px rgba(59,130,246,0.3)" }}
+                  >
+                    Ir al Dashboard →
+                  </Link>
+                ) : isLoaded ? (
                   <SignUpButton mode="modal">
                     <button
                       className="px-6 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
@@ -474,11 +499,11 @@ export default function LandingPage() {
                   </SignUpButton>
                 ) : (
                   <Link
-                    href="/dashboard"
+                    href="/sign-up"
                     className="inline-block px-6 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
                     style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 15px rgba(59,130,246,0.3)" }}
                   >
-                    Ir al Dashboard →
+                    Empezar gratis →
                   </Link>
                 )}
               </div>
@@ -682,7 +707,15 @@ export default function LandingPage() {
               </h2>
               <p className="text-gray-400 mb-8 relative">Sin tarjeta de crédito. Explora las voces gratis.</p>
 
-              {!isSignedIn ? (
+              {isLoaded && isSignedIn ? (
+                <Link
+                  href="/dashboard"
+                  className="inline-block px-8 py-4 rounded-xl font-semibold text-white text-base transition-all hover:-translate-y-1 relative"
+                  style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 8px 30px rgba(59,130,246,0.4)" }}
+                >
+                  Ir al Dashboard →
+                </Link>
+              ) : isLoaded ? (
                 <SignUpButton mode="modal">
                   <button
                     className="px-8 py-4 rounded-xl font-semibold text-white text-base transition-all hover:-translate-y-1 relative"
@@ -693,11 +726,11 @@ export default function LandingPage() {
                 </SignUpButton>
               ) : (
                 <Link
-                  href="/dashboard"
+                  href="/sign-up"
                   className="inline-block px-8 py-4 rounded-xl font-semibold text-white text-base transition-all hover:-translate-y-1 relative"
                   style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 8px 30px rgba(59,130,246,0.4)" }}
                 >
-                  Ir al Dashboard →
+                  Empezar gratis →
                 </Link>
               )}
             </div>
