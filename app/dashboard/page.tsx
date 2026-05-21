@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useUser, UserButton } from "@clerk/nextjs";
+import { useUser, UserButton, useClerk } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { Home, Mic, Users, Clock, Check, Play, CreditCard, Gift, Copy, Globe, FileAudio } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, CreditCard, Gift, Copy, Globe, FileAudio, Type, User } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
@@ -34,6 +34,11 @@ interface Generation {
 type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral" | "translate" | "transcribe";
 
 /* ─── Sidebar ─────────────────────────────────────────────── */
+type NavSection = {
+  label?: string;
+  items: { key: Tab | "_account"; label: string; Icon: React.ElementType }[];
+};
+
 function Sidebar({
   credits,
   activeTab,
@@ -43,73 +48,133 @@ function Sidebar({
   activeTab: Tab;
   setActiveTab: (t: Tab) => void;
 }) {
-  const navItems: { key: Tab; label: string; Icon: React.ElementType }[] = [
-    { key: "home", label: "Inicio", Icon: Home },
-    { key: "generate", label: "Generar", Icon: Mic },
-    { key: "voices", label: "Mis voces", Icon: Users },
-    { key: "history", label: "Historial", Icon: Clock },
-    { key: "billing", label: "Facturación", Icon: CreditCard },
-    { key: "referral", label: "Referidos", Icon: Gift },
-    { key: "translate", label: "Traducción", Icon: Globe },
-    { key: "transcribe", label: "Audio a Texto", Icon: FileAudio },
+  const { openUserProfile } = useClerk();
+
+  const sections: NavSection[] = [
+    {
+      items: [
+        { key: "home",   label: "Inicio",             Icon: Home },
+        { key: "voices", label: "Voz personalizada",  Icon: Mic2 },
+      ],
+    },
+    {
+      label: "Productos",
+      items: [
+        { key: "generate",   label: "Texto a voz",         Icon: Type },
+        { key: "transcribe", label: "Audio a Texto",        Icon: FileAudio },
+        { key: "translate",  label: "Traducción de audio",  Icon: Globe },
+        { key: "history",    label: "Historial",            Icon: Clock },
+      ],
+    },
+    {
+      label: "Plataforma",
+      items: [
+        { key: "billing",   label: "Facturación", Icon: CreditCard },
+        { key: "_account",  label: "Mi cuenta",   Icon: User },
+      ],
+    },
   ];
+
+  function handleNav(key: Tab | "_account") {
+    if (key === "_account") { openUserProfile(); return; }
+    setActiveTab(key);
+  }
 
   return (
     <aside
       className="w-60 flex-shrink-0 h-screen sticky top-0 flex flex-col border-r"
       style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}
     >
-      <div className="p-5 border-b" style={{ borderColor: "#2a2a3e" }}>
-        <Link href="/" className="flex items-center gap-2 mb-1">
-          <Image src="/elitelabs.png" alt="Elite Labs" width={32} height={32} style={{ height: "32px", width: "auto", objectFit: "contain", imageRendering: "-webkit-optimize-contrast" }} className="rounded-lg" />
-          <span className="font-bold text-white">Elite Labs</span>
+      {/* Logo */}
+      <div className="px-5 py-4 border-b" style={{ borderColor: "#2a2a3e" }}>
+        <Link href="/" className="flex items-center gap-2.5">
+          <Image
+            src="/elitelabs.png"
+            alt="Elite Labs"
+            width={30}
+            height={30}
+            style={{ height: "30px", width: "auto", objectFit: "contain", imageRendering: "-webkit-optimize-contrast" }}
+            className="rounded-lg"
+          />
+          <span className="font-bold text-white tracking-tight">Elite Labs</span>
         </Link>
       </div>
 
-      <nav className="flex-1 p-3 space-y-1">
-        {navItems.map(({ key, label, Icon }) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left"
-            style={
-              activeTab === key
-                ? { background: "rgba(59,130,246,0.15)", color: "#93c5fd", borderLeft: "2px solid #3b82f6" }
-                : { color: "#8888a8" }
-            }
-          >
-            <Icon size={16} />
-            {label}
-          </button>
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-5">
+        {sections.map((section, si) => (
+          <div key={si}>
+            {section.label && (
+              <p
+                className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest"
+                style={{ color: "#3a3a55" }}
+              >
+                {section.label}
+              </p>
+            )}
+            <div className="space-y-0.5">
+              {section.items.map(({ key, label, Icon }) => {
+                const isActive = key !== "_account" && activeTab === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => handleNav(key)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left group"
+                    style={
+                      isActive
+                        ? { background: "rgba(59,130,246,0.14)", color: "#93c5fd" }
+                        : { color: "#6b6b88" }
+                    }
+                  >
+                    <Icon
+                      size={15}
+                      style={{ color: isActive ? "#93c5fd" : "#4a4a65", flexShrink: 0 }}
+                    />
+                    <span className={isActive ? "" : "group-hover:text-gray-300 transition-colors"}>
+                      {label}
+                    </span>
+                    {isActive && (
+                      <span
+                        className="ml-auto w-1 h-1 rounded-full"
+                        style={{ background: "#3b82f6" }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         ))}
       </nav>
 
-      {/* Characters */}
-      <div className="p-4 border-t" style={{ borderColor: "#2a2a3e" }}>
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-xs text-gray-500">Caracteres disponibles</span>
-          <Link href="/pricing" className="text-xs font-medium" style={{ color: "#3b82f6" }}>
+      {/* Credits */}
+      <div className="px-4 py-3 border-t" style={{ borderColor: "#1e1e2e" }}>
+        <div className="mb-1.5 flex items-center justify-between">
+          <span className="text-xs" style={{ color: "#3a3a55" }}>Caracteres</span>
+          <Link href="/pricing" className="text-[11px] font-semibold transition-colors hover:text-blue-300" style={{ color: "#3b82f6" }}>
             + Comprar
           </Link>
         </div>
-        <p className="text-2xl font-bold text-white mb-2">
+        <p className="text-xl font-bold text-white mb-2">
           {credits !== null ? credits.toLocaleString("es-ES") : "—"}
         </p>
-        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#2a2a3e" }}>
+        <div className="h-1 rounded-full overflow-hidden" style={{ background: "#1e1e2e" }}>
           <div
             className="h-full rounded-full transition-all"
             style={{
-              width: `${Math.min(100, ((credits ?? 0) / 1400000) * 100)}%`,
+              width: `${Math.min(100, ((credits ?? 0) / 1_400_000) * 100)}%`,
               background: "linear-gradient(90deg, #3b82f6, #2563eb)",
             }}
           />
         </div>
       </div>
 
-      {/* User */}
-      <div className="p-4 border-t flex items-center gap-3" style={{ borderColor: "#2a2a3e" }}>
+      {/* User row */}
+      <div
+        className="px-4 py-3 border-t flex items-center gap-3"
+        style={{ borderColor: "#1e1e2e" }}
+      >
         <UserButton />
-        <span className="text-sm text-gray-400 truncate">Mi cuenta</span>
       </div>
     </aside>
   );
