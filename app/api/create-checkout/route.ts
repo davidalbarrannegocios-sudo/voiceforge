@@ -3,17 +3,17 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getStripe, PLANS, type PlanKey } from "@/lib/stripe";
 
+export const runtime = "nodejs";
+
 function getBaseUrl(req: Request): string {
   return process.env.NEXT_PUBLIC_APP_URL || `https://${new Headers(req.headers).get("host")}`;
 }
 
 export async function POST(req: Request) {
   const clerkUser = await currentUser();
-  if (!clerkUser) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  }
+  if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const { plan } = await req.json();
+  const { plan } = await req.json() as { plan: string };
 
   if (!plan || !(plan in PLANS)) {
     return NextResponse.json({ error: "Plan inválido" }, { status: 400 });
@@ -27,23 +27,34 @@ export async function POST(req: Request) {
       data: {
         clerkId: clerkUser.id,
         email: clerkUser.emailAddresses[0]?.emailAddress ?? "",
-        credits: 0,
+        credits: 10_000,
+        plan: "free",
       },
     });
   }
 
+  const stripe = getStripe();
+
+  // Get or create Stripe customer
+  let customerId = user.stripeCustomerId;
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email: user.email,
+      metadata: { userId: user.id },
+    });
+    customerId = customer.id;
+    await prisma.user.update({ where: { id: user.id }, data: { stripeCustomerId: customerId } });
+  }
+
   const baseUrl = getBaseUrl(req);
 
-  const session = await getStripe().checkout.sessions.create({
-    mode: "payment",
-    payment_method_types: ["card"],
+  const session = await stripe.checkout.sessions.create({
+    mode: "subscription",
+    customer: customerId,
     line_items: [{ price: selectedPlan.priceId, quantity: 1 }],
-    metadata: {
-      userId: user.id,
-      characters: String(selectedPlan.characters),
-      plan,
-    },
-    success_url: `${baseUrl}/dashboard?success=1&characters=${selectedPlan.characters}`,
+    metadata: { userId: user.id, plan },
+    allow_promotion_codes: true,
+    success_url: `${baseUrl}/dashboard?success=1&plan=${plan}`,
     cancel_url: `${baseUrl}/pricing?cancelled=1`,
   });
 

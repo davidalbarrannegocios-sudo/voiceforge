@@ -1026,29 +1026,82 @@ const BILLING_PLANS = [
   },
 ] as const;
 
+const PLAN_BADGE: Record<string, { label: string; color: string; bg: string }> = {
+  free:    { label: "Gratis",  color: "#6b7280", bg: "rgba(107,114,128,0.12)" },
+  starter: { label: "Starter", color: "#a78bfa", bg: "rgba(167,139,250,0.12)" },
+  pro:     { label: "Pro",     color: "#93c5fd", bg: "rgba(59,130,246,0.15)"  },
+  elite:   { label: "Elite",   color: "#fbbf24", bg: "rgba(251,191,36,0.12)"  },
+};
+
 function BillingTab({
   credits,
-  userEmail,
-  onPaymentSuccess,
+  plan,
+  planExpiresAt,
+  onRefresh,
 }: {
   credits: number | null;
-  userEmail?: string;
-  onPaymentSuccess: () => void;
+  plan: string;
+  planExpiresAt: string | null;
+  onRefresh: () => void;
 }) {
   const [activePlan, setActivePlan] = useState<BillingPlan | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  const badge = PLAN_BADGE[plan] ?? PLAN_BADGE.free;
+  const renewalDate = planExpiresAt
+    ? new Date(planExpiresAt).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })
+    : null;
+
+  async function openPortal() {
+    setPortalLoading(true);
+    try {
+      const res = await fetch("/api/create-portal-session", { method: "POST" });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } finally {
+      setPortalLoading(false);
+    }
+  }
 
   return (
     <div style={{ maxWidth: "880px" }}>
-      {/* Credits balance */}
-      <div style={{ marginBottom: "36px" }}>
-        <p style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#3a3a52", marginBottom: "8px" }}>
-          Caracteres disponibles
-        </p>
-        <div style={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
-          <span style={{ fontSize: "40px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
-            {credits !== null ? credits.toLocaleString("es-ES") : "—"}
-          </span>
-          <span style={{ fontSize: "14px", color: "#3a3a52" }}>caracteres</span>
+      {/* Top row: credits + plan status */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "16px", alignItems: "start", marginBottom: "36px" }}>
+        {/* Credits */}
+        <div>
+          <p style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#3a3a52", marginBottom: "8px" }}>
+            Caracteres disponibles
+          </p>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
+            <span style={{ fontSize: "40px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
+              {credits !== null ? credits.toLocaleString("es-ES") : "—"}
+            </span>
+            <span style={{ fontSize: "14px", color: "#3a3a52" }}>caracteres</span>
+          </div>
+        </div>
+
+        {/* Plan status card */}
+        <div style={{ borderRadius: "12px", border: "1px solid #1e1e2e", background: "#0d0d17", padding: "16px 20px", minWidth: "220px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+            <p style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#3a3a52" }}>Plan actual</p>
+            <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 10px", borderRadius: "999px", color: badge.color, background: badge.bg, letterSpacing: "0.04em" }}>
+              {badge.label}
+            </span>
+          </div>
+          {renewalDate && (
+            <p style={{ fontSize: "12px", color: "#3a3a52", marginBottom: "12px" }}>
+              Próxima renovación: <span style={{ color: "#6b6b88" }}>{renewalDate}</span>
+            </p>
+          )}
+          {plan !== "free" && (
+            <button
+              onClick={openPortal}
+              disabled={portalLoading}
+              style={{ width: "100%", padding: "8px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", color: "#d1d5db", fontSize: "12px", fontWeight: 600, cursor: "pointer", opacity: portalLoading ? 0.6 : 1 }}
+            >
+              {portalLoading ? "Cargando..." : "Gestionar suscripción"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -1060,81 +1113,77 @@ function BillingTab({
 
       {/* Plan cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
-        {BILLING_PLANS.map((plan) => (
-          <div
-            key={plan.key}
-            style={{
-              position: "relative",
-              borderRadius: "16px",
-              border: plan.popular ? "1px solid #3b82f6" : "1px solid #1e1e2e",
-              background: plan.popular ? "rgba(30,58,138,0.18)" : "#0d0d17",
-              padding: "28px 24px",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            {plan.popular && (
-              <div
-                style={{
-                  position: "absolute", top: "-11px", left: "50%", transform: "translateX(-50%)",
-                  background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff",
-                  fontSize: "10px", fontWeight: 700, padding: "3px 12px", borderRadius: "999px",
-                  whiteSpace: "nowrap", letterSpacing: "0.1em",
-                }}
-              >
-                MÁS POPULAR
-              </div>
-            )}
-
-            {/* Name + description */}
-            <p style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>{plan.name}</p>
-            <p style={{ fontSize: "12px", color: "#3a3a52", marginBottom: "20px" }}>{plan.description}</p>
-
-            {/* Price */}
-            <p style={{ fontSize: "38px", fontWeight: 800, color: "#fff", lineHeight: 1, marginBottom: "4px" }}>
-              ${plan.price}
-            </p>
-            <p style={{ fontSize: "12px", color: "#3a3a52", marginBottom: "2px" }}>pago único</p>
-            <p style={{ fontSize: "13px", color: "#6b6b88", marginBottom: "22px" }}>
-              {plan.characters.toLocaleString("es-ES")} caracteres
-            </p>
-
-            {/* CTA button */}
-            <button
-              onClick={() => setActivePlan(plan)}
-              style={
-                plan.popular
-                  ? { width: "100%", padding: "11px", borderRadius: "10px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "14px", fontWeight: 600, marginBottom: "22px", boxShadow: "0 4px 14px rgba(59,130,246,0.35)" }
-                  : { width: "100%", padding: "11px", borderRadius: "10px", border: "1px solid #2a2a3e", cursor: "pointer", background: "transparent", color: "#d1d5db", fontSize: "14px", fontWeight: 600, marginBottom: "22px" }
-              }
+        {BILLING_PLANS.map((p) => {
+          const isCurrent = plan === p.key;
+          return (
+            <div
+              key={p.key}
+              style={{
+                position: "relative",
+                borderRadius: "16px",
+                border: p.popular ? "1px solid #3b82f6" : "1px solid #1e1e2e",
+                background: p.popular ? "rgba(30,58,138,0.18)" : "#0d0d17",
+                padding: "28px 24px",
+                display: "flex",
+                flexDirection: "column",
+              }}
             >
-              Comprar
-            </button>
+              {p.popular && !isCurrent && (
+                <div style={{ position: "absolute", top: "-11px", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "10px", fontWeight: 700, padding: "3px 12px", borderRadius: "999px", whiteSpace: "nowrap", letterSpacing: "0.1em" }}>
+                  MÁS POPULAR
+                </div>
+              )}
+              {isCurrent && (
+                <div style={{ position: "absolute", top: "-11px", left: "50%", transform: "translateX(-50%)", background: "#1a1a28", border: "1px solid #2a2a3e", color: "#93c5fd", fontSize: "10px", fontWeight: 700, padding: "3px 12px", borderRadius: "999px", whiteSpace: "nowrap", letterSpacing: "0.1em" }}>
+                  PLAN ACTUAL
+                </div>
+              )}
 
-            {/* Divider */}
-            <div style={{ height: "1px", background: plan.popular ? "rgba(59,130,246,0.2)" : "#1a1a28", marginBottom: "18px" }} />
+              <p style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>{p.name}</p>
+              <p style={{ fontSize: "12px", color: "#3a3a52", marginBottom: "20px" }}>{p.description}</p>
 
-            {/* Features */}
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
-              {plan.features.map((f) => (
-                <li key={f} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "#6b6b88" }}>
-                  <Check size={13} style={{ color: "#3b82f6", flexShrink: 0 }} />
-                  {f}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+              <p style={{ fontSize: "38px", fontWeight: 800, color: "#fff", lineHeight: 1, marginBottom: "4px" }}>${p.price}</p>
+              <p style={{ fontSize: "12px", color: "#3a3a52", marginBottom: "2px" }}>/mes</p>
+              <p style={{ fontSize: "13px", color: "#6b6b88", marginBottom: "22px" }}>
+                {p.characters.toLocaleString("es-ES")} caracteres/mes
+              </p>
+
+              <button
+                onClick={() => !isCurrent && setActivePlan(p)}
+                disabled={isCurrent}
+                style={
+                  isCurrent
+                    ? { width: "100%", padding: "11px", borderRadius: "10px", border: "1px solid #2a2a3e", background: "transparent", color: "#3a3a52", fontSize: "14px", fontWeight: 600, marginBottom: "22px", cursor: "not-allowed" }
+                    : p.popular
+                    ? { width: "100%", padding: "11px", borderRadius: "10px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "14px", fontWeight: 600, marginBottom: "22px", boxShadow: "0 4px 14px rgba(59,130,246,0.35)" }
+                    : { width: "100%", padding: "11px", borderRadius: "10px", border: "1px solid #2a2a3e", cursor: "pointer", background: "transparent", color: "#d1d5db", fontSize: "14px", fontWeight: 600, marginBottom: "22px" }
+                }
+              >
+                {isCurrent ? "Plan actual" : plan !== "free" ? `Cambiar a ${p.name}` : `Suscribirse`}
+              </button>
+
+              <div style={{ height: "1px", background: p.popular ? "rgba(59,130,246,0.2)" : "#1a1a28", marginBottom: "18px" }} />
+
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
+                {p.features.map((f) => (
+                  <li key={f} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "#6b6b88" }}>
+                    <Check size={13} style={{ color: "#3b82f6", flexShrink: 0 }} />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
       </div>
 
       {activePlan && (
         <PaymentModal
           plan={activePlan}
-          userEmail={userEmail}
           onClose={() => setActivePlan(null)}
           onSuccess={() => {
             setActivePlan(null);
-            onPaymentSuccess();
+            onRefresh();
           }}
         />
       )}
@@ -1869,6 +1918,8 @@ export default function DashboardPage() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<Tab>("home");
   const [credits, setCredits] = useState<number | null>(null);
+  const [plan, setPlan] = useState<string>("free");
+  const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
   const [voices, setVoices] = useState<Voice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(null);
 
@@ -1876,6 +1927,8 @@ export default function DashboardPage() {
     const res = await fetch("/api/credits");
     const data = await res.json();
     setCredits(data.characters);
+    if (data.plan) setPlan(data.plan);
+    if ("planExpiresAt" in data) setPlanExpiresAt(data.planExpiresAt);
   }, []);
 
   const fetchVoices = useCallback(async () => {
@@ -1889,7 +1942,7 @@ export default function DashboardPage() {
     fetchVoices();
   }, [fetchCredits, fetchVoices]);
 
-  const successChars = searchParams.get("characters");
+  const successPlan = searchParams.get("plan");
 
   function handleUseVoice(voice: SelectedVoice) {
     setSelectedVoice(voice);
@@ -1926,11 +1979,11 @@ export default function DashboardPage() {
         })()}
         {/* Page content */}
         <div style={{ padding: "24px" }}>
-        {successChars && (
+        {successPlan && (
           <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
             <Check size={18} className="text-green-400 flex-shrink-0" />
             <p className="text-green-400 font-medium text-sm">
-              ¡Compra completada! Se han añadido <strong>{parseInt(successChars).toLocaleString("es-ES")} caracteres</strong> a tu cuenta.
+              ¡Suscripción activada! Tu plan <strong className="capitalize">{successPlan}</strong> ya está activo.
             </p>
           </div>
         )}
@@ -1956,8 +2009,9 @@ export default function DashboardPage() {
         {activeTab === "billing" && (
           <BillingTab
             credits={credits}
-            userEmail={user?.emailAddresses[0]?.emailAddress}
-            onPaymentSuccess={fetchCredits}
+            plan={plan}
+            planExpiresAt={planExpiresAt}
+            onRefresh={fetchCredits}
           />
         )}
         {activeTab === "referral" && (

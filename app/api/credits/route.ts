@@ -21,9 +21,7 @@ async function uniqueReferralCode(): Promise<string> {
 
 export async function GET() {
   const clerkUser = await currentUser();
-  if (!clerkUser) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  }
+  if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   let user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
 
@@ -33,9 +31,7 @@ export async function GET() {
 
     let referrerId: string | undefined;
     if (referralCookie) {
-      const referrer = await prisma.user.findUnique({
-        where: { referralCode: referralCookie },
-      });
+      const referrer = await prisma.user.findUnique({ where: { referralCode: referralCookie } });
       if (referrer) referrerId = referrer.id;
     }
 
@@ -45,7 +41,8 @@ export async function GET() {
       data: {
         clerkId: clerkUser.id,
         email: clerkUser.emailAddresses[0]?.emailAddress ?? "",
-        credits: 0,
+        credits: 10_000,
+        plan: "free",
         referralCode,
         referredBy: referrerId,
       },
@@ -57,19 +54,24 @@ export async function GET() {
       });
     }
 
-    const res = NextResponse.json({ characters: user.credits });
+    const res = NextResponse.json({
+      characters: user.credits,
+      plan: user.plan,
+      planExpiresAt: user.planExpiresAt?.toISOString() ?? null,
+    });
     if (referralCookie) res.cookies.delete("referralCode");
     return res;
   }
 
-  // Backfill referral code for existing users who don't have one
+  // Backfill referral code
   if (!user.referralCode) {
     const referralCode = await uniqueReferralCode();
-    user = await prisma.user.update({
-      where: { id: user.id },
-      data: { referralCode },
-    });
+    user = await prisma.user.update({ where: { id: user.id }, data: { referralCode } });
   }
 
-  return NextResponse.json({ characters: user.credits });
+  return NextResponse.json({
+    characters: user.credits,
+    plan: user.plan,
+    planExpiresAt: user.planExpiresAt?.toISOString() ?? null,
+  });
 }

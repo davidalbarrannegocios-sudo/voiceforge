@@ -9,21 +9,25 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  clerkId      String        @unique
-  email        String
-  credits      Int           @default(0)
-  role         String        @default("user")
-  referralCode String?       @unique
-  referredBy   String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  generations  Generation[]
-  clonedVoices ClonedVoice[]
-  purchases    Purchase[]
-  jobs         Job[]
-  referralsGiven   Referral[] @relation("referrer")
-  referralReceived Referral?  @relation("referred")
+  id                   String        @id @default(cuid())
+  clerkId              String        @unique
+  email                String
+  credits              Int           @default(0)
+  role                 String        @default("user")
+  plan                 String        @default("free")
+  planExpiresAt        DateTime?
+  stripeCustomerId     String?       @unique
+  stripeSubscriptionId String?       @unique
+  referralCode         String?       @unique
+  referredBy           String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  generations          Generation[]
+  clonedVoices         ClonedVoice[]
+  purchases            Purchase[]
+  jobs                 Job[]
+  referralsGiven       Referral[]    @relation("referrer")
+  referralReceived     Referral?     @relation("referred")
 }
 
 model Job {

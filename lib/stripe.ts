@@ -1,27 +1,41 @@
 import Stripe from "stripe";
 
+export const PLAN_CREDITS: Record<string, number> = {
+  free:    10_000,
+  starter: 200_000,
+  pro:     500_000,
+  elite:   1_000_000,
+};
+
 export const PLANS = {
   starter: {
     name: "Starter",
     price: 7,
-    characters: 200000,
-    priceId: process.env.STRIPE_PRICE_STARTER ?? "",
+    characters: 200_000,
+    priceId: process.env.STRIPE_PRICE_STARTER_MONTHLY ?? "",
   },
   pro: {
     name: "Pro",
     price: 13,
-    characters: 500000,
-    priceId: process.env.STRIPE_PRICE_PRO ?? "",
+    characters: 500_000,
+    priceId: process.env.STRIPE_PRICE_PRO_MONTHLY ?? "",
   },
   elite: {
     name: "Elite",
     price: 25,
-    characters: 1000000,
-    priceId: process.env.STRIPE_PRICE_ELITE ?? "",
+    characters: 1_000_000,
+    priceId: process.env.STRIPE_PRICE_ELITE_MONTHLY ?? "",
   },
 } as const;
 
 export type PlanKey = keyof typeof PLANS;
+
+export function getPlanFromPriceId(priceId: string): string | null {
+  for (const [key, plan] of Object.entries(PLANS)) {
+    if (plan.priceId === priceId) return key;
+  }
+  return null;
+}
 
 let _stripe: Stripe | null = null;
 
