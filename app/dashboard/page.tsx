@@ -1167,7 +1167,7 @@ function BillingTab({
   }
 
   return (
-    <div style={{ maxWidth: "880px" }}>
+    <div style={{ width: "100%" }}>
       {/* Top row: credits + plan status */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "16px", alignItems: "start", marginBottom: "36px" }}>
         {/* Credits */}
@@ -1215,7 +1215,7 @@ function BillingTab({
       </div>
 
       {/* Plan cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px" }}>
+      <div className="grid grid-cols-4 gap-4 w-full">
         {BILLING_PLANS.map((p) => {
           const isCurrent = plan === p.key;
           return (
