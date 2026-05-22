@@ -70,6 +70,7 @@ function Sidebar({
       label: "Plataforma",
       items: [
         { key: "billing",   label: "Facturación", Icon: CreditCard },
+        { key: "referral",  label: "Referidos",   Icon: Gift },
         { key: "_account",  label: "Mi cuenta",   Icon: User },
       ],
     },
