@@ -1,7 +1,58 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { X, HelpCircle, Send, ChevronLeft, MessageSquare } from "lucide-react";
+import { X, HelpCircle, Send, ChevronLeft, MessageSquare, ChevronDown } from "lucide-react";
+
+const FAQS = [
+  {
+    q: "¿Cómo funcionan los caracteres?",
+    a: "Los caracteres se descuentan según el texto generado. 1 carácter = 1 letra o símbolo.",
+  },
+  {
+    q: "¿Puedo cancelar mi suscripción?",
+    a: "Sí, puedes cancelar en cualquier momento desde Facturación → Gestionar suscripción.",
+  },
+  {
+    q: "El audio no se generó correctamente",
+    a: "Si hubo un error, los créditos se devuelven automáticamente. Si no fue así, contacta con soporte indicando el ID del audio.",
+  },
+  {
+    q: "¿Cuándo se renuevan mis caracteres?",
+    a: "Los caracteres se renuevan cada mes en la fecha de tu suscripción.",
+  },
+  {
+    q: "No puedo acceder a mi cuenta",
+    a: "Intenta restablecer tu contraseña. Si el problema persiste, contacta con soporte.",
+  },
+];
+
+function FaqAccordion() {
+  const [open, setOpen] = useState<number | null>(null);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginBottom: "16px" }}>
+      <p style={{ fontSize: "11px", fontWeight: 700, color: "#3a3a52", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px" }}>Preguntas frecuentes</p>
+      {FAQS.map((faq, i) => (
+        <div key={i} style={{ borderRadius: "10px", border: "1px solid #1e1e2e", background: "#0d0d17", overflow: "hidden" }}>
+          <button
+            onClick={() => setOpen(open === i ? null : i)}
+            style={{ width: "100%", padding: "11px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", cursor: "pointer", textAlign: "left", gap: "8px" }}
+          >
+            <span style={{ fontSize: "13px", color: "#c9cad6", fontWeight: 500 }}>{faq.q}</span>
+            <ChevronDown
+              size={14}
+              style={{ color: "#3a3a52", flexShrink: 0, transition: "transform 0.2s", transform: open === i ? "rotate(180deg)" : "rotate(0deg)" }}
+            />
+          </button>
+          {open === i && (
+            <div style={{ padding: "0 14px 12px", borderTop: "1px solid #1a1a28" }}>
+              <p style={{ fontSize: "13px", color: "#6b7280", lineHeight: 1.6, paddingTop: "10px" }}>{faq.a}</p>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const TICKET_TYPES = [
   { value: "general",   label: "Ayuda general" },
@@ -107,6 +158,8 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
           {/* ── Menu ── */}
           {view === "menu" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <FaqAccordion />
+              <div style={{ height: "1px", background: "#1a1a28", marginBottom: "2px" }} />
               <p style={{ fontSize: "13px", color: "#4a4a65", marginBottom: "4px" }}>¿En qué podemos ayudarte?</p>
               <button
                 onClick={() => { setView("new"); setSuccess(false); }}

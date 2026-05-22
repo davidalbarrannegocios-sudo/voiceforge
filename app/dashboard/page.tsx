@@ -2103,7 +2103,7 @@ export default function DashboardPage() {
                 <button
                   onClick={toggleLang}
                   title="Español / English"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", cursor: "pointer", color: "#4a4a65", transition: "color 0.15s, border-color 0.15s" }}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "50%", border: "1px solid #2a2a3e", background: "transparent", cursor: "pointer", color: "#4a4a65", transition: "color 0.15s, border-color 0.15s" }}
                   onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "#93c5fd"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#3b82f6"; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "#4a4a65"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#2a2a3e"; }}
                 >
@@ -2112,7 +2112,7 @@ export default function DashboardPage() {
                 <button
                   onClick={() => setSupportOpen(true)}
                   title="Soporte"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", cursor: "pointer", color: "#4a4a65", transition: "color 0.15s, border-color 0.15s" }}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "50%", border: "1px solid #2a2a3e", background: "transparent", cursor: "pointer", color: "#4a4a65", transition: "color 0.15s, border-color 0.15s" }}
                   onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "#93c5fd"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#3b82f6"; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "#4a4a65"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#2a2a3e"; }}
                 >
