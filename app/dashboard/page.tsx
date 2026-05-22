@@ -2045,6 +2045,7 @@ export default function DashboardPage() {
   const [voices, setVoices] = useState<Voice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(null);
   const [supportOpen, setSupportOpen] = useState(false);
+  const { t: tt, toggle: toggleLang } = useLang();
 
   const fetchCredits = useCallback(async () => {
     const res = await fetch("/api/credits");
@@ -2082,7 +2083,6 @@ export default function DashboardPage() {
       <main className="flex-1 overflow-auto relative" style={{ padding: "0" }}>
         {/* Topbar */}
         {(() => {
-          const { t: tt, lang, toggle } = useLang();
           const TAB_META: Record<Tab, { title: string; Icon: React.ElementType }> = {
             home:       { title: tt.tabs.home,       Icon: Home },
             generate:   { title: tt.tabs.generate,   Icon: Type },
@@ -2102,7 +2102,7 @@ export default function DashboardPage() {
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <button
-                  onClick={toggle}
+                  onClick={toggleLang}
                   title="Español / English"
                   style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", cursor: "pointer", color: "#4a4a65", transition: "color 0.15s, border-color 0.15s" }}
                   onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "#93c5fd"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#3b82f6"; }}

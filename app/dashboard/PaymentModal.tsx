@@ -41,13 +41,11 @@ function SubscriptionForm({
   plan,
   customerId,
   planKey,
-  onClose,
   onSuccess,
 }: {
   plan: BillingPlan;
   customerId: string;
   planKey: string;
-  onClose: () => void;
   onSuccess: () => void;
 }) {
   const stripe = useStripe();
@@ -196,7 +194,6 @@ export function PaymentModal({
   plan,
   onClose,
   onSuccess,
-  userEmail: _userEmail,
 }: {
   plan: BillingPlan;
   userEmail?: string;
@@ -288,7 +285,6 @@ export function PaymentModal({
                 plan={plan}
                 customerId={customerId}
                 planKey={planKey}
-                onClose={onClose}
                 onSuccess={handleSuccess}
               />
             </Elements>

@@ -19,8 +19,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Plan inválido" }, { status: 400 });
   }
 
-  const selectedPlan = PLANS[plan as PlanKey];
-
   let user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
   if (!user) {
     user = await prisma.user.create({
