@@ -238,8 +238,8 @@ export default function PricingPage() {
               </thead>
               <tbody>
                 {[
-                  { name: "ElevenLabs",  cols: ["30.000 chars", "121.000 chars", "❌"] },
-                  { name: "Minimax",     cols: ["100.000 chars", "330.000 chars", "❌"] },
+                  { name: "ElevenLabs",  cols: ["30.000 chars", "121.000 chars", "~200.000 chars"] },
+                  { name: "Minimax",     cols: ["100.000 chars", "330.000 chars", "~540.000 chars"] },
                   { name: "Fish Audio",  cols: ["~117.000 chars", "~217.000 chars", "~417.000 chars"] },
                 ].map((row) => (
                   <tr key={row.name} style={{ borderBottom: "1px solid #1a1a28" }}>
