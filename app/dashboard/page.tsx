@@ -289,6 +289,68 @@ function statusBadge(status: string) {
   );
 }
 
+/* ─── Slider + numeric input control ─────────────────────── */
+function SliderControl({
+  label, value, onChange, min, max, step, decimals, marks, defaultValue,
+}: {
+  label: string; value: number; onChange: (v: number) => void;
+  min: number; max: number; step: number; decimals: number;
+  marks: [string, string, string]; defaultValue: number;
+}) {
+  const [inputText, setInputText] = useState(value.toFixed(decimals));
+  const isDefault = value === defaultValue;
+
+  // Keep input text in sync when slider moves
+  useEffect(() => {
+    setInputText(value.toFixed(decimals));
+  }, [value, decimals]);
+
+  function commitInput(raw: string) {
+    const parsed = parseFloat(raw);
+    const clamped = isNaN(parsed) ? value : Math.min(max, Math.max(min, parsed));
+    const rounded = Math.round(clamped / step) * step;
+    onChange(parseFloat(rounded.toFixed(decimals)));
+    setInputText(parseFloat(rounded.toFixed(decimals)).toFixed(decimals));
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm text-gray-300">{label}</span>
+        <input
+          type="number"
+          min={min}
+          max={max}
+          step={step}
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          onBlur={(e) => commitInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && commitInput((e.target as HTMLInputElement).value)}
+          className="text-xs font-mono text-right rounded px-1.5 py-0.5 w-16 outline-none"
+          style={{
+            color: !isDefault ? "#93c5fd" : "#8888a8",
+            background: !isDefault ? "rgba(59,130,246,0.12)" : "#1a1a28",
+            border: "1px solid #2a2a3e",
+          }}
+        />
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="w-full h-1 rounded-full appearance-none cursor-pointer"
+        style={{ accentColor: "#3b82f6", background: "#2a2a3e" }}
+      />
+      <div className="flex justify-between mt-1 text-xs" style={{ color: "#555570" }}>
+        {marks.map((m) => <span key={m}>{m}</span>)}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Generate Tab ────────────────────────────────────────── */
 function GenerateTab({
   voices,
@@ -308,6 +370,7 @@ function GenerateTab({
   const [formError, setFormError] = useState<string | null>(null);
   const [speed, setSpeed] = useState(1.0);
   const [volume, setVolume] = useState(1.0);
+  const [pitch, setPitch] = useState(0.0);
   const [normalize, setNormalize] = useState(true);
   const [rightTab, setRightTab] = useState<"ajustes" | "historial">("ajustes");
   const { t } = useLang();
@@ -348,7 +411,7 @@ function GenerateTab({
     setFormError(null);
     setSubmitting(true);
     try {
-      const prosody = (speed !== 1 || volume !== 1) ? { speed, volume, pitch: 0 } : undefined;
+      const prosody = (speed !== 1 || volume !== 1 || pitch !== 0) ? { speed, volume, pitch } : undefined;
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -549,38 +612,30 @@ function GenerateTab({
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>{t.generate.audioControls}</p>
               <div className="space-y-5">
-                {[
-                  { label: t.generate.volume, value: volume, set: setVolume, min: 0, max: 2, step: 0.1, marks: ["0", "1", "2"], def: 1 },
-                  { label: t.generate.speed, value: speed, set: setSpeed, min: 0.5, max: 2, step: 0.1, marks: ["0.5", "1", "2"], def: 1 },
-                ].map(({ label, value, set, min, max, step, marks, def }) => (
-                  <div key={label}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-300">{label}</span>
-                      <span
-                        className="text-xs font-mono px-1.5 py-0.5 rounded"
-                        style={{
-                          color: value !== def ? "#93c5fd" : "#8888a8",
-                          background: value !== def ? "rgba(59,130,246,0.12)" : "transparent",
-                        }}
-                      >
-                        {value.toFixed(1)}
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={min}
-                      max={max}
-                      step={step}
-                      value={value}
-                      onChange={(e) => set(parseFloat(e.target.value))}
-                      className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                      style={{ accentColor: "#3b82f6", background: "#2a2a3e" }}
-                    />
-                    <div className="flex justify-between mt-1 text-xs" style={{ color: "#555570" }}>
-                      {marks.map((m) => <span key={m}>{m}</span>)}
-                    </div>
-                  </div>
-                ))}
+                <SliderControl
+                  label={t.generate.speed}
+                  value={speed}
+                  onChange={setSpeed}
+                  min={0.5} max={2} step={0.01} decimals={2}
+                  marks={["0.50", "1.00", "2.00"]}
+                  defaultValue={1}
+                />
+                <SliderControl
+                  label={t.generate.volume}
+                  value={volume}
+                  onChange={setVolume}
+                  min={0} max={2} step={0.01} decimals={2}
+                  marks={["0.00", "1.00", "2.00"]}
+                  defaultValue={1}
+                />
+                <SliderControl
+                  label={t.generate.pitch}
+                  value={pitch}
+                  onChange={setPitch}
+                  min={-12} max={12} step={0.1} decimals={1}
+                  marks={["Grave", "Normal", "Agudo"]}
+                  defaultValue={0}
+                />
               </div>
             </div>
 
@@ -605,9 +660,9 @@ function GenerateTab({
               </div>
             </div>
 
-            {(speed !== 1 || volume !== 1) && (
+            {(speed !== 1 || volume !== 1 || pitch !== 0) && (
               <button
-                onClick={() => { setSpeed(1); setVolume(1); }}
+                onClick={() => { setSpeed(1); setVolume(1); setPitch(0); }}
                 className="text-xs transition-colors"
                 style={{ color: "#8888a8" }}
               >
