@@ -50,6 +50,25 @@ export function getPlanFromPriceId(priceId: string): string | null {
   return null;
 }
 
+export const CREDIT_PACKS = {
+  "100k": { credits: 100_000,   price: 5,  label: "100.000 créditos"   },
+  "300k": { credits: 300_000,   price: 12, label: "300.000 créditos"   },
+  "600k": { credits: 600_000,   price: 19, label: "600.000 créditos"   },
+  "1m":   { credits: 1_000_000, price: 30, label: "1.000.000 créditos" },
+} as const;
+
+export type PackKey = keyof typeof CREDIT_PACKS;
+
+export function getPackPriceId(packKey: string): string {
+  const map: Record<string, string | undefined> = {
+    "100k": process.env.STRIPE_PRICE_CREDITS_100K,
+    "300k": process.env.STRIPE_PRICE_CREDITS_300K,
+    "600k": process.env.STRIPE_PRICE_CREDITS_600K,
+    "1m":   process.env.STRIPE_PRICE_CREDITS_1M,
+  };
+  return map[packKey] ?? "";
+}
+
 let _stripe: Stripe | null = null;
 
 export function getStripe(): Stripe {

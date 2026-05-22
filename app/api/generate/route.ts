@@ -50,13 +50,18 @@ export async function POST(req: Request) {
     if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
     const charCost = calculateCharCost(trimmed.length);
+    const totalAvailable = user.credits + user.extraCredits;
 
-    if (user.credits < charCost) {
+    if (totalAvailable < charCost) {
       return NextResponse.json(
-        { error: "Caracteres insuficientes", charCost, charsAvailable: user.credits },
+        { error: "Caracteres insuficientes", charCost, charsAvailable: totalAvailable },
         { status: 402 }
       );
     }
+
+    // Plan credits consumed first, extra credits as overflow
+    const fromPlan  = Math.min(user.credits, charCost);
+    const fromExtra = charCost - fromPlan;
 
     // Free plan: ignore requested voice, use a random public voice
     let effectiveReferenceId: string | undefined = reference_id || undefined;
@@ -69,7 +74,7 @@ export async function POST(req: Request) {
     const [, job] = await prisma.$transaction([
       prisma.user.update({
         where: { id: user.id },
-        data: { credits: { decrement: charCost } },
+        data: { credits: { decrement: fromPlan }, extraCredits: { decrement: fromExtra } },
       }),
       prisma.job.create({
         data: {
@@ -103,7 +108,7 @@ export async function POST(req: Request) {
         console.error(`[generate] Fish Audio failed:`, errMsg);
       }
       await prisma.$transaction([
-        prisma.user.update({ where: { id: user.id }, data: { credits: { increment: charCost } } }),
+        prisma.user.update({ where: { id: user.id }, data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } } }),
         prisma.job.update({ where: { id: job.id }, data: { status: "failed", error: errMsg } }),
       ]);
       return NextResponse.json({ error: isAbort ? "Generación cancelada" : "Error al generar audio", detail: errMsg }, { status: 500 });
@@ -136,7 +141,7 @@ export async function POST(req: Request) {
       audioUrl: result.audio_url,
       durationSeconds: result.duration_seconds,
       charCost,
-      charsRemaining: user.credits - charCost,
+      charsRemaining: totalAvailable - charCost,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

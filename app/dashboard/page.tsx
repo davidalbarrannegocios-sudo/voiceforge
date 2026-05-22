@@ -1136,19 +1136,26 @@ const PLAN_BADGE: Record<string, { label: string; color: string; bg: string }> =
   enterprise: { label: "Enterprise", color: "#34d399", bg: "rgba(52,211,153,0.12)"  },
 };
 
+function costPer10k(price: number, characters: number): string {
+  return `$${((price / characters) * 10_000).toFixed(2)}/10k`;
+}
+
 function BillingTab({
   credits,
+  extraCredits,
   plan,
   planExpiresAt,
   onRefresh,
 }: {
   credits: number | null;
+  extraCredits: number;
   plan: string;
   planExpiresAt: string | null;
   onRefresh: () => void;
 }) {
   const [activePlan, setActivePlan] = useState<BillingPlan | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [packLoading, setPackLoading] = useState<string | null>(null);
 
   const badge = PLAN_BADGE[plan] ?? PLAN_BADGE.free;
   const renewalDate = planExpiresAt
@@ -1166,6 +1173,21 @@ function BillingTab({
     }
   }
 
+  async function buyPack(packKey: string) {
+    setPackLoading(packKey);
+    try {
+      const res = await fetch("/api/buy-credits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ packKey }),
+      });
+      const data = await res.json();
+      if (data.checkoutUrl) window.location.href = data.checkoutUrl;
+    } finally {
+      setPackLoading(null);
+    }
+  }
+
   return (
     <div style={{ width: "100%" }}>
       {/* Top row: credits + plan status */}
@@ -1179,8 +1201,16 @@ function BillingTab({
             <span style={{ fontSize: "40px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
               {credits !== null ? credits.toLocaleString("es-ES") : "—"}
             </span>
-            <span style={{ fontSize: "14px", color: "#3a3a52" }}>caracteres</span>
+            <span style={{ fontSize: "14px", color: "#3a3a52" }}>del plan</span>
           </div>
+          {extraCredits > 0 && (
+            <div className="flex items-center gap-2 mt-2">
+              <span style={{ fontSize: "18px", fontWeight: 700, color: "#34d399" }}>
+                +{extraCredits.toLocaleString("es-ES")}
+              </span>
+              <span style={{ fontSize: "13px", color: "#34d399", opacity: 0.7 }}>créditos extra</span>
+            </div>
+          )}
         </div>
 
         {/* Plan status card */}
@@ -1247,8 +1277,11 @@ function BillingTab({
 
               <p style={{ fontSize: "38px", fontWeight: 800, color: "#fff", lineHeight: 1, marginBottom: "4px" }}>${p.price}</p>
               <p style={{ fontSize: "12px", color: "#3a3a52", marginBottom: "2px" }}>/mes</p>
-              <p style={{ fontSize: "13px", color: "#6b6b88", marginBottom: "22px" }}>
-                {p.characters.toLocaleString("es-ES")} caracteres/mes
+              <p style={{ fontSize: "13px", color: "#6b6b88", marginBottom: "4px" }}>
+                {p.characters.toLocaleString("es-ES")} chars/mes
+              </p>
+              <p style={{ fontSize: "11px", color: "#3a3a52", marginBottom: "18px" }}>
+                {costPer10k(p.price, p.characters)}
               </p>
 
               <button
@@ -1278,6 +1311,49 @@ function BillingTab({
             </div>
           );
         })}
+      </div>
+
+      {/* ── Extra credits section ── */}
+      <div style={{ marginTop: "40px", marginBottom: "20px" }}>
+        <p style={{ fontSize: "16px", fontWeight: 700, color: "#e5e7eb", marginBottom: "3px" }}>Recargar créditos extra</p>
+        <p style={{ fontSize: "13px", color: "#3a3a52" }}>Compra créditos adicionales a tu plan. Válidos 3 meses, pago único.</p>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        {[
+          { key: "100k", credits: 100_000,   price: 5,  label: "100.000 créditos" },
+          { key: "300k", credits: 300_000,   price: 12, label: "300.000 créditos" },
+          { key: "600k", credits: 600_000,   price: 19, label: "600.000 créditos" },
+          { key: "1m",   credits: 1_000_000, price: 30, label: "1.000.000 créditos" },
+        ].map((pack) => (
+          <div
+            key={pack.key}
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderRadius: "14px", border: "1px solid #1e1e2e", background: "#0d0d17" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+              <div>
+                <p style={{ fontSize: "15px", fontWeight: 700, color: "#e5e7eb" }}>{pack.label}</p>
+                <p style={{ fontSize: "12px", color: "#3a3a52", marginTop: "2px" }}>
+                  {costPer10k(pack.price, pack.credits)} · Válidos 3 meses
+                </p>
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", flexShrink: 0 }}>
+              <span style={{ fontSize: "22px", fontWeight: 800, color: "#fff" }}>${pack.price}</span>
+              <button
+                onClick={() => buyPack(pack.key)}
+                disabled={packLoading === pack.key}
+                style={{
+                  padding: "9px 20px", borderRadius: "10px", border: "none", cursor: packLoading === pack.key ? "not-allowed" : "pointer",
+                  background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "13px", fontWeight: 600,
+                  opacity: packLoading === pack.key ? 0.6 : 1, whiteSpace: "nowrap",
+                }}
+              >
+                {packLoading === pack.key ? "Cargando..." : "Comprar →"}
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {activePlan && (
@@ -2086,6 +2162,7 @@ export default function DashboardPage() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<Tab>("home");
   const [credits, setCredits] = useState<number | null>(null);
+  const [extraCredits, setExtraCredits] = useState<number>(0);
   const [plan, setPlan] = useState<string>("free");
   const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
   const [transcriptionUsed, setTranscriptionUsed] = useState<number>(0);
@@ -2098,6 +2175,7 @@ export default function DashboardPage() {
     const res = await fetch("/api/credits");
     const data = await res.json();
     setCredits(data.characters);
+    if (typeof data.extraCredits === "number") setExtraCredits(data.extraCredits);
     if (data.plan) setPlan(data.plan);
     if ("planExpiresAt" in data) setPlanExpiresAt(data.planExpiresAt);
     if (typeof data.transcriptionUsed === "number") setTranscriptionUsed(data.transcriptionUsed);
@@ -2114,7 +2192,8 @@ export default function DashboardPage() {
     fetchVoices();
   }, [fetchCredits, fetchVoices]);
 
-  const successPlan = searchParams.get("plan");
+  const successPlan     = searchParams.get("plan");
+  const creditsBought   = searchParams.get("creditsBought");
 
   function handleUseVoice(voice: SelectedVoice) {
     setSelectedVoice(voice);
@@ -2180,6 +2259,14 @@ export default function DashboardPage() {
             </p>
           </div>
         )}
+        {creditsBought && (
+          <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
+            <Check size={18} className="text-green-400 flex-shrink-0" />
+            <p className="text-green-400 font-medium text-sm">
+              ¡Recarga exitosa! Se han añadido <strong>{parseInt(creditsBought).toLocaleString("es-ES")}</strong> créditos extra a tu cuenta.
+            </p>
+          </div>
+        )}
 
         {activeTab === "home" && (
           <HomeTab user={user} credits={credits} setActiveTab={setActiveTab} />
@@ -2204,6 +2291,7 @@ export default function DashboardPage() {
         {activeTab === "billing" && (
           <BillingTab
             credits={credits}
+            extraCredits={extraCredits}
             plan={plan}
             planExpiresAt={planExpiresAt}
             onRefresh={fetchCredits}

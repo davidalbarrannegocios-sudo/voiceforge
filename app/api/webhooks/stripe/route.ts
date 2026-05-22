@@ -4,6 +4,12 @@ import { getStripe, getPlanFromPriceId, PLAN_CREDITS } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
 
+function addMonths(date: Date, months: number): Date {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
@@ -26,6 +32,36 @@ export async function POST(req: Request) {
   // ── checkout.session.completed ────────────────────────────
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
+
+    // ── Credit pack (one-time payment) ────────────────────
+    if (session.mode === "payment") {
+      const userId  = session.metadata?.userId;
+      const credits = parseInt(session.metadata?.credits ?? "0", 10);
+      if (!userId || !credits) {
+        console.error("[webhook] missing metadata in payment session", session.id);
+        return NextResponse.json({ received: true });
+      }
+
+      const paymentIntentId = typeof session.payment_intent === "string"
+        ? session.payment_intent
+        : (session.payment_intent as Stripe.PaymentIntent | null)?.id;
+
+      const expiresAt = addMonths(new Date(), 3);
+
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: userId },
+          data: { extraCredits: { increment: credits } },
+        }),
+        prisma.creditPack.create({
+          data: { userId, credits, expiresAt, stripePaymentIntentId: paymentIntentId },
+        }),
+      ]);
+
+      console.log(`[webhook] credit pack purchased: user=${userId} credits=${credits}`);
+      return NextResponse.json({ received: true });
+    }
+
     if (session.mode !== "subscription") return NextResponse.json({ received: true });
 
     const userId = session.metadata?.userId;

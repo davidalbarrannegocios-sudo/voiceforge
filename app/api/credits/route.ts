@@ -56,6 +56,7 @@ export async function GET() {
 
     const res = NextResponse.json({
       characters: user.credits,
+      extraCredits: user.extraCredits,
       plan: user.plan,
       planExpiresAt: user.planExpiresAt?.toISOString() ?? null,
       transcriptionUsed: user.transcriptionUsed,
@@ -72,6 +73,7 @@ export async function GET() {
 
   return NextResponse.json({
     characters: user.credits,
+    extraCredits: user.extraCredits,
     plan: user.plan,
     planExpiresAt: user.planExpiresAt?.toISOString() ?? null,
     transcriptionUsed: user.transcriptionUsed,

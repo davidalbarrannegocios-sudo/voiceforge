@@ -13,6 +13,7 @@ model User {
   clerkId              String        @unique
   email                String
   credits              Int           @default(0)
+  extraCredits         Int           @default(0)
   role                 String        @default("user")
   plan                 String        @default("free")
   planExpiresAt        DateTime?
@@ -30,6 +31,7 @@ model User {
   referralsGiven       Referral[]    @relation("referrer")
   referralReceived     Referral?     @relation("referred")
   supportTickets       SupportTicket[]
+  creditPacks          CreditPack[]
 }
 
 model Job {
@@ -91,6 +93,16 @@ model SupportTicket {
   adminReply  String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model CreditPack {
+  id                    String   @id @default(cuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id])
+  credits               Int
+  expiresAt             DateTime
+  stripePaymentIntentId String?  @unique
+  createdAt             DateTime @default(now())
 }
 
 model Referral {
