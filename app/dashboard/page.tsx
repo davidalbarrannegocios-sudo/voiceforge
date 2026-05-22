@@ -5,12 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, UserButton, useClerk } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, Lock, HelpCircle } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, Lock, HelpCircle, Languages } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
 import { PaymentModal, type BillingPlan } from "./PaymentModal";
 import { SupportModal } from "./SupportModal";
+import { LanguageProvider, useLang } from "./LanguageContext";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface Voice {
@@ -50,29 +51,30 @@ function Sidebar({
   setActiveTab: (t: Tab) => void;
 }) {
   const { openUserProfile } = useClerk();
+  const { t } = useLang();
 
   const sections: NavSection[] = [
     {
       items: [
-        { key: "home",   label: "Inicio",             Icon: Home },
-        { key: "voices", label: "Voz personalizada",  Icon: Mic2 },
+        { key: "home",   label: t.nav.home,        Icon: Home },
+        { key: "voices", label: t.nav.customVoice, Icon: Mic2 },
       ],
     },
     {
-      label: "Productos",
+      label: t.nav.products,
       items: [
-        { key: "generate",   label: "Texto a voz",         Icon: Type },
-        { key: "transcribe", label: "Audio a Texto",        Icon: FileAudio },
-        { key: "translate",  label: "Traducción de audio",  Icon: Globe },
-        { key: "history",    label: "Historial",            Icon: Clock },
+        { key: "generate",   label: t.nav.generate,   Icon: Type },
+        { key: "transcribe", label: t.nav.transcribe,  Icon: FileAudio },
+        { key: "translate",  label: t.nav.translate,   Icon: Globe },
+        { key: "history",    label: t.nav.history,     Icon: Clock },
       ],
     },
     {
-      label: "Plataforma",
+      label: t.nav.platform,
       items: [
-        { key: "billing",   label: "Facturación", Icon: CreditCard },
-        { key: "referral",  label: "Referidos",   Icon: Gift },
-        { key: "_account",  label: "Mi cuenta",   Icon: User },
+        { key: "billing",   label: t.nav.billing,   Icon: CreditCard },
+        { key: "referral",  label: t.nav.referrals, Icon: Gift },
+        { key: "_account",  label: t.nav.account,   Icon: User },
       ],
     },
   ];
@@ -158,9 +160,9 @@ function Sidebar({
       {/* Credits — pinned to bottom */}
       <div style={{ borderTop: "1px solid #1a1a28", padding: "16px 20px 20px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
-          <span style={{ fontSize: "11px", color: "#3a3a52", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>Caracteres</span>
+          <span style={{ fontSize: "11px", color: "#3a3a52", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>{t.nav.characters}</span>
           <Link href="/pricing" style={{ fontSize: "11px", fontWeight: 700, color: "#3b82f6", textDecoration: "none" }}>
-            + Comprar
+            {t.nav.buy}
           </Link>
         </div>
         <p style={{ fontSize: "20px", fontWeight: 800, color: "#fff", marginBottom: "8px" }}>
@@ -192,24 +194,25 @@ function HomeTab({
   credits: number | null;
   setActiveTab: (t: Tab) => void;
 }) {
+  const { t } = useLang();
+
   const cards: { key: Tab; Icon: React.ElementType; title: string; desc: string }[] = [
-    { key: "generate", Icon: Mic, title: "Texto a Voz", desc: "Convierte texto en voz natural al instante" },
-    { key: "voices", Icon: Users, title: "Mis Voces", desc: "Gestiona y clona tus voces personalizadas" },
-    { key: "history", Icon: Clock, title: "Historial", desc: "Revisa todas tus generaciones anteriores" },
+    { key: "generate", Icon: Mic,   title: t.home.cardGenerate, desc: t.home.cardGenerateDesc },
+    { key: "voices",   Icon: Users, title: t.home.cardVoices,   desc: t.home.cardVoicesDesc },
+    { key: "history",  Icon: Clock, title: t.home.cardHistory,  desc: t.home.cardHistoryDesc },
   ];
 
   return (
     <div>
       <div className="mb-10">
         <h1 className="text-3xl font-bold text-white mb-2">
-          Hola, {user?.firstName ?? "de nuevo"}
+          {t.home.greeting} {user?.firstName ?? t.home.defaultName}
         </h1>
         <p style={{ color: "#8888a8" }}>
-          Tienes{" "}
           <span className="font-semibold" style={{ color: "#93c5fd" }}>
             {credits !== null ? credits.toLocaleString("es-ES") : "—"}
           </span>{" "}
-          caracteres disponibles
+          {t.home.available}
         </p>
       </div>
 
@@ -295,6 +298,7 @@ function GenerateTab({
   const [volume, setVolume] = useState(1.0);
   const [normalize, setNormalize] = useState(true);
   const [rightTab, setRightTab] = useState<"ajustes" | "historial">("ajustes");
+  const { t } = useLang();
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [jobsLoaded, setJobsLoaded] = useState(false);
@@ -387,13 +391,13 @@ function GenerateTab({
           <div className="flex-1 min-w-0">
             {plan === "free" ? (
               <>
-                <p className="text-sm font-semibold truncate" style={{ color: "#3a3a52" }}>Voz aleatoria</p>
-                <p className="text-xs" style={{ color: "#2e2e48" }}>Solo disponible en planes de pago</p>
+                <p className="text-sm font-semibold truncate" style={{ color: "#3a3a52" }}>{t.generate.randomVoice}</p>
+                <p className="text-xs" style={{ color: "#2e2e48" }}>{t.generate.paidOnlyLong}</p>
               </>
             ) : (
               <>
-                <p className="text-sm font-semibold text-white truncate">{selectedVoice?.name ?? "Voz por defecto"}</p>
-                <p className="text-xs" style={{ color: "#8888a8" }}>{selectedVoice?.isCloned ? "Voz clonada" : "Voz del sistema"}</p>
+                <p className="text-sm font-semibold text-white truncate">{selectedVoice?.name ?? t.generate.defaultVoice}</p>
+                <p className="text-xs" style={{ color: "#8888a8" }}>{selectedVoice?.isCloned ? t.generate.clonedVoice : t.generate.systemVoice}</p>
               </>
             )}
           </div>
@@ -403,7 +407,7 @@ function GenerateTab({
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Escribe el texto a narrar..."
+          placeholder={t.generate.placeholder}
           disabled={submitting}
           rows={20}
           className="w-full px-6 py-5 text-sm text-gray-200 resize-none focus:outline-none disabled:opacity-60"
@@ -440,10 +444,10 @@ function GenerateTab({
 
           <div className="flex items-center justify-between gap-4">
             <span className="text-sm" style={{ color: "#8888a8" }}>
-              {text.length.toLocaleString("es-ES")} caracteres
+              {text.length.toLocaleString("es-ES")} {t.generate.characters}
               {text.length > 0 && (
                 <span className="ml-2 text-xs" style={{ color: "#555570" }}>
-                  · {charCost.toLocaleString("es-ES")} créditos
+                  · {charCost.toLocaleString("es-ES")} {t.generate.credits}
                 </span>
               )}
             </span>
@@ -462,10 +466,10 @@ function GenerateTab({
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Generando...
+                  {t.generate.generating}
                 </>
               ) : (
-                "Generar audio"
+                t.generate.generateBtn
               )}
             </button>
           </div>
@@ -487,7 +491,7 @@ function GenerateTab({
                   : { color: "#8888a8" }
               }
             >
-              {tab === "ajustes" ? "Ajustes" : "Historial"}
+              {tab === "ajustes" ? t.generate.settingsTab : t.generate.historyTab}
             </button>
           ))}
         </div>
@@ -496,7 +500,7 @@ function GenerateTab({
           <div className="p-5 space-y-6">
             {/* Voz */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#555570" }}>Voz</p>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#555570" }}>{t.generate.voiceLabel}</p>
               {plan === "free" ? (
                 <div
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm"
@@ -506,8 +510,8 @@ function GenerateTab({
                     <Lock size={13} style={{ color: "#2e2e48" }} />
                   </div>
                   <div className="flex-1 text-left min-w-0">
-                    <p className="text-sm font-medium truncate" style={{ color: "#2e2e48" }}>Voz aleatoria</p>
-                    <p className="text-xs" style={{ color: "#1e1e30" }}>Solo en planes de pago</p>
+                    <p className="text-sm font-medium truncate" style={{ color: "#2e2e48" }}>{t.generate.randomVoice}</p>
+                    <p className="text-xs" style={{ color: "#1e1e30" }}>{t.generate.paidOnly}</p>
                   </div>
                   <span className="text-xs flex-shrink-0" style={{ color: "#2e2e48" }}>🔒</span>
                 </div>
@@ -521,8 +525,8 @@ function GenerateTab({
                     <Mic size={13} style={{ color: "#93c5fd" }} />
                   </div>
                   <div className="flex-1 text-left min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{selectedVoice?.name ?? "Voz por defecto"}</p>
-                    <p className="text-xs" style={{ color: "#8888a8" }}>{selectedVoice?.isCloned ? "Voz clonada" : "Sistema"}</p>
+                    <p className="text-sm font-medium text-white truncate">{selectedVoice?.name ?? t.generate.defaultVoice}</p>
+                    <p className="text-xs" style={{ color: "#8888a8" }}>{selectedVoice?.isCloned ? t.generate.clonedVoice : t.generate.systemVoice}</p>
                   </div>
                   <span className="text-xs flex-shrink-0" style={{ color: "#8888a8" }}>→</span>
                 </button>
@@ -531,11 +535,11 @@ function GenerateTab({
 
             {/* Audio controls */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>Controles de audio</p>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>{t.generate.audioControls}</p>
               <div className="space-y-5">
                 {[
-                  { label: "Volumen", value: volume, set: setVolume, min: 0, max: 2, step: 0.1, marks: ["0", "1", "2"], def: 1 },
-                  { label: "Velocidad", value: speed, set: setSpeed, min: 0.5, max: 2, step: 0.1, marks: ["0.5", "1", "2"], def: 1 },
+                  { label: t.generate.volume, value: volume, set: setVolume, min: 0, max: 2, step: 0.1, marks: ["0", "1", "2"], def: 1 },
+                  { label: t.generate.speed, value: speed, set: setSpeed, min: 0.5, max: 2, step: 0.1, marks: ["0.5", "1", "2"], def: 1 },
                 ].map(({ label, value, set, min, max, step, marks, def }) => (
                   <div key={label}>
                     <div className="flex items-center justify-between mb-2">
@@ -2070,6 +2074,7 @@ export default function DashboardPage() {
   }
 
   return (
+    <LanguageProvider>
     <div className="flex min-h-screen" style={{ background: "#0a0a0f" }}>
       {supportOpen && <SupportModal onClose={() => setSupportOpen(false)} />}
       <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -2077,15 +2082,16 @@ export default function DashboardPage() {
       <main className="flex-1 overflow-auto relative" style={{ padding: "0" }}>
         {/* Topbar */}
         {(() => {
+          const { t: tt, lang, toggle } = useLang();
           const TAB_META: Record<Tab, { title: string; Icon: React.ElementType }> = {
-            home:       { title: "Inicio",              Icon: Home },
-            generate:   { title: "Texto a Voz",         Icon: Type },
-            transcribe: { title: "Audio a Texto",        Icon: FileAudio },
-            translate:  { title: "Traducción de Audio",  Icon: Globe },
-            history:    { title: "Historial",            Icon: Clock },
-            billing:    { title: "Facturación",          Icon: CreditCard },
-            voices:     { title: "Mis Voces",            Icon: Mic2 },
-            referral:   { title: "Referidos",            Icon: Gift },
+            home:       { title: tt.tabs.home,       Icon: Home },
+            generate:   { title: tt.tabs.generate,   Icon: Type },
+            transcribe: { title: tt.tabs.transcribe, Icon: FileAudio },
+            translate:  { title: tt.tabs.translate,  Icon: Globe },
+            history:    { title: tt.tabs.history,    Icon: Clock },
+            billing:    { title: tt.tabs.billing,    Icon: CreditCard },
+            voices:     { title: tt.tabs.voices,     Icon: Mic2 },
+            referral:   { title: tt.tabs.referral,   Icon: Gift },
           };
           const { title, Icon } = TAB_META[activeTab] ?? { title: "", Icon: Home };
           return (
@@ -2095,6 +2101,15 @@ export default function DashboardPage() {
                 <span style={{ fontSize: "14px", fontWeight: 600, color: "#e5e7eb" }}>{title}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <button
+                  onClick={toggle}
+                  title="Español / English"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", cursor: "pointer", color: "#4a4a65", transition: "color 0.15s, border-color 0.15s" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "#93c5fd"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#3b82f6"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "#4a4a65"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#2a2a3e"; }}
+                >
+                  <Languages size={15} />
+                </button>
                 <button
                   onClick={() => setSupportOpen(true)}
                   title="Soporte"
@@ -2171,5 +2186,6 @@ export default function DashboardPage() {
         </div>{/* end page content */}
       </main>
     </div>
+    </LanguageProvider>
   );
 }
