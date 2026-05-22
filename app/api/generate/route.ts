@@ -9,8 +9,9 @@ export const maxDuration = 300;
 
 function getExpiresAt(plan: string): Date {
   const now = new Date();
-  if (plan === "free")    return new Date(now.getTime() + 72 * 60 * 60 * 1000);
-  if (plan === "starter") return new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+  if (plan === "free")       return new Date(now.getTime() + 72 * 60 * 60 * 1000);
+  if (plan === "starter")    return new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+  if (plan === "enterprise") return new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
   return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 }
 

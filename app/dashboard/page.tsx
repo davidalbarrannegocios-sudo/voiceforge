@@ -1097,7 +1097,7 @@ const BILLING_PLANS = [
     price: 7,
     characters: 200_000,
     popular: false,
-    features: ["200.000 caracteres/mes", "Selección de voz completa", "Transcripciones ilimitadas", "3 voces clonadas"],
+    features: ["200.000 caracteres/mes", "Selección de voz completa", "Transcripciones ilimitadas", "3 voces clonadas", "Audios 14 días"],
   },
   {
     key: "pro",
@@ -1106,7 +1106,7 @@ const BILLING_PLANS = [
     price: 13,
     characters: 500_000,
     popular: true,
-    features: ["500.000 caracteres/mes", "Selección de voz completa", "Transcripciones ilimitadas", "10 voces clonadas", "Generación prioritaria"],
+    features: ["500.000 caracteres/mes", "Selección de voz completa", "Transcripciones ilimitadas", "10 voces clonadas", "Generación prioritaria", "Audios 30 días"],
   },
   {
     key: "elite",
@@ -1115,15 +1115,25 @@ const BILLING_PLANS = [
     price: 25,
     characters: 1_000_000,
     popular: false,
-    features: ["1.000.000 caracteres/mes", "Selección de voz completa", "Transcripciones ilimitadas", "20 voces clonadas", "Soporte preferente"],
+    features: ["1.000.000 caracteres/mes", "Selección de voz completa", "Transcripciones ilimitadas", "20 voces clonadas", "Soporte preferente", "Audios 30 días"],
   },
-] as const;
+  {
+    key: "enterprise",
+    name: "Enterprise",
+    description: "Para profesionales y equipos",
+    price: 110,
+    characters: 5_000_000,
+    popular: false,
+    features: ["5.000.000 caracteres/mes", "Voces clonadas ilimitadas", "Transcripciones ilimitadas", "Traducción +10% (vs +20%)", "Generación prioritaria", "Soporte preferente", "Audios 90 días"],
+  },
+];
 
 const PLAN_BADGE: Record<string, { label: string; color: string; bg: string }> = {
-  free:    { label: "Gratis",  color: "#6b7280", bg: "rgba(107,114,128,0.12)" },
-  starter: { label: "Starter", color: "#a78bfa", bg: "rgba(167,139,250,0.12)" },
-  pro:     { label: "Pro",     color: "#93c5fd", bg: "rgba(59,130,246,0.15)"  },
-  elite:   { label: "Elite",   color: "#fbbf24", bg: "rgba(251,191,36,0.12)"  },
+  free:       { label: "Gratis",     color: "#6b7280", bg: "rgba(107,114,128,0.12)" },
+  starter:    { label: "Starter",    color: "#a78bfa", bg: "rgba(167,139,250,0.12)" },
+  pro:        { label: "Pro",        color: "#93c5fd", bg: "rgba(59,130,246,0.15)"  },
+  elite:      { label: "Elite",      color: "#fbbf24", bg: "rgba(251,191,36,0.12)"  },
+  enterprise: { label: "Enterprise", color: "#34d399", bg: "rgba(52,211,153,0.12)"  },
 };
 
 function BillingTab({
@@ -1205,7 +1215,7 @@ function BillingTab({
       </div>
 
       {/* Plan cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px" }}>
         {BILLING_PLANS.map((p) => {
           const isCurrent = plan === p.key;
           return (

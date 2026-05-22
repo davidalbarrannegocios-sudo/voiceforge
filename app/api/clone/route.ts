@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   });
   if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
-  // Slot limit check
+  // Slot limit check (-1 = unlimited)
   const slotLimit = PLAN_VOICE_SLOTS[user.plan] ?? 0;
   if (slotLimit === 0) {
     return NextResponse.json(
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       { status: 403 }
     );
   }
-  if (user._count.clonedVoices >= slotLimit) {
+  if (slotLimit !== -1 && user._count.clonedVoices >= slotLimit) {
     return NextResponse.json(
       { error: `Has alcanzado el límite de ${slotLimit} voces clonadas de tu plan. Actualiza tu plan para clonar más voces.` },
       { status: 403 }

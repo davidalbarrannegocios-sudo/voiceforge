@@ -91,6 +91,25 @@ const PLANS: Plan[] = [
       "Audios disponibles 30 días",
     ],
   },
+  {
+    key: "enterprise",
+    name: "Enterprise",
+    description: "Para profesionales y equipos",
+    price: 110,
+    characters: 5_000_000,
+    popular: false,
+    free: false,
+    cta: "Suscribirse",
+    features: [
+      "5.000.000 caracteres/mes",
+      "Voces clonadas ilimitadas",
+      "Transcripciones y traducciones ilimitadas",
+      "Traducción de audio +10%",
+      "Generación prioritaria",
+      "Soporte preferente",
+      "Audios disponibles 90 días",
+    ],
+  },
 ];
 
 export default function PricingPage() {
@@ -150,7 +169,7 @@ export default function PricingPage() {
         </div>
 
         {/* Plans grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "72px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "14px", marginBottom: "72px" }}>
           {PLANS.map((plan) => (
             <div
               key={plan.key}
@@ -160,13 +179,18 @@ export default function PricingPage() {
                 padding: "28px 22px",
                 display: "flex",
                 flexDirection: "column",
-                border: plan.popular ? "1px solid #3b82f6" : plan.free ? "1px solid #2a2a3e" : "1px solid #1e1e2e",
-                background: plan.popular ? "rgba(30,58,138,0.18)" : plan.free ? "#111118" : "#0d0d17",
+                border: plan.key === "enterprise" ? "1px solid #10b981" : plan.popular ? "1px solid #3b82f6" : plan.free ? "1px solid #2a2a3e" : "1px solid #1e1e2e",
+                background: plan.key === "enterprise" ? "rgba(16,185,129,0.07)" : plan.popular ? "rgba(30,58,138,0.18)" : plan.free ? "#111118" : "#0d0d17",
               }}
             >
               {plan.popular && (
                 <div style={{ position: "absolute", top: "-11px", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "10px", fontWeight: 700, padding: "3px 12px", borderRadius: "999px", whiteSpace: "nowrap", letterSpacing: "0.1em" }}>
                   MÁS POPULAR
+                </div>
+              )}
+              {plan.key === "enterprise" && (
+                <div style={{ position: "absolute", top: "-11px", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#10b981,#059669)", color: "#fff", fontSize: "10px", fontWeight: 700, padding: "3px 12px", borderRadius: "999px", whiteSpace: "nowrap", letterSpacing: "0.1em" }}>
+                  PROFESIONAL
                 </div>
               )}
 
@@ -198,7 +222,9 @@ export default function PricingPage() {
                 onClick={() => handleSelect(plan)}
                 disabled={loadingPlan === plan.key}
                 style={
-                  plan.popular
+                  plan.key === "enterprise"
+                    ? { width: "100%", padding: "11px", borderRadius: "10px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#10b981,#059669)", color: "#fff", fontSize: "14px", fontWeight: 600, marginBottom: "22px", boxShadow: "0 4px 14px rgba(16,185,129,0.3)", opacity: loadingPlan === plan.key ? 0.7 : 1 }
+                    : plan.popular
                     ? { width: "100%", padding: "11px", borderRadius: "10px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "14px", fontWeight: 600, marginBottom: "22px", boxShadow: "0 4px 14px rgba(59,130,246,0.35)", opacity: loadingPlan === plan.key ? 0.7 : 1 }
                     : plan.free
                     ? { width: "100%", padding: "11px", borderRadius: "10px", border: "1px solid #2a2a3e", cursor: "pointer", background: "transparent", color: "#6b7280", fontSize: "14px", fontWeight: 600, marginBottom: "22px" }
@@ -208,12 +234,12 @@ export default function PricingPage() {
                 {loadingPlan === plan.key ? "Cargando..." : plan.cta}
               </button>
 
-              <div style={{ height: "1px", background: plan.popular ? "rgba(59,130,246,0.2)" : "#1a1a28", marginBottom: "18px" }} />
+              <div style={{ height: "1px", background: plan.key === "enterprise" ? "rgba(16,185,129,0.2)" : plan.popular ? "rgba(59,130,246,0.2)" : "#1a1a28", marginBottom: "18px" }} />
 
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
                 {plan.features.map((f) => (
                   <li key={f} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: plan.free ? "#4a4a65" : "#6b6b88" }}>
-                    <Check size={13} style={{ color: plan.free ? "#4a4a65" : "#3b82f6", flexShrink: 0 }} />
+                    <Check size={13} style={{ color: plan.key === "enterprise" ? "#10b981" : plan.free ? "#4a4a65" : "#3b82f6", flexShrink: 0 }} />
                     {f}
                   </li>
                 ))}
@@ -234,29 +260,30 @@ export default function PricingPage() {
             <table style={{ width: "100%", fontSize: "13px", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#0d0d17", borderBottom: "1px solid #1a1a28" }}>
-                  <th style={{ textAlign: "left", padding: "12px 20px", fontWeight: 600, color: "#3a3a52" }}>Plataforma</th>
-                  <th style={{ padding: "12px 20px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$7/mes</th>
-                  <th style={{ padding: "12px 20px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$13/mes</th>
-                  <th style={{ padding: "12px 20px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$25/mes</th>
+                  <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "#3a3a52" }}>Plataforma</th>
+                  <th style={{ padding: "12px 10px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$7/mes</th>
+                  <th style={{ padding: "12px 10px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$13/mes</th>
+                  <th style={{ padding: "12px 10px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$25/mes</th>
+                  <th style={{ padding: "12px 10px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$110/mes</th>
                 </tr>
               </thead>
               <tbody>
                 {[
-                  { name: "ElevenLabs",  cols: ["30.000 chars", "121.000 chars", "~200.000 chars"] },
-                  { name: "Minimax",     cols: ["100.000 chars", "330.000 chars", "~540.000 chars"] },
-                  { name: "Fish Audio",  cols: ["~117.000 chars", "~217.000 chars", "~417.000 chars"] },
+                  { name: "ElevenLabs", cols: ["30.000 chars",    "121.000 chars",  "~200.000 chars",   "~2.200.000 chars"] },
+                  { name: "Minimax",    cols: ["100.000 chars",   "330.000 chars",  "~540.000 chars",   "~1.800.000 chars"] },
+                  { name: "Fish Audio", cols: ["~117.000 chars",  "~217.000 chars", "~417.000 chars",   "~1.800.000 chars"] },
                 ].map((row) => (
                   <tr key={row.name} style={{ borderBottom: "1px solid #1a1a28" }}>
-                    <td style={{ padding: "12px 20px", color: "#4a4a65", fontWeight: 500 }}>{row.name}</td>
+                    <td style={{ padding: "12px 16px", color: "#4a4a65", fontWeight: 500 }}>{row.name}</td>
                     {row.cols.map((c, i) => (
-                      <td key={i} style={{ padding: "12px 20px", textAlign: "center", color: "#2e2e48" }}>{c}</td>
+                      <td key={i} style={{ padding: "12px 10px", textAlign: "center", color: "#2e2e48" }}>{c}</td>
                     ))}
                   </tr>
                 ))}
                 <tr style={{ background: "rgba(59,130,246,0.08)", borderTop: "1px solid rgba(59,130,246,0.2)" }}>
-                  <td style={{ padding: "12px 20px", fontWeight: 700, color: "#93c5fd" }}>⭐ Elite Labs</td>
-                  {["200.000 chars", "500.000 chars", "1.000.000 chars"].map((c) => (
-                    <td key={c} style={{ padding: "12px 20px", textAlign: "center", fontWeight: 600, color: "#93c5fd" }}>{c}</td>
+                  <td style={{ padding: "12px 16px", fontWeight: 700, color: "#93c5fd" }}>⭐ Elite Labs</td>
+                  {["200.000 chars", "500.000 chars", "1.000.000 chars", "5.000.000 chars"].map((c) => (
+                    <td key={c} style={{ padding: "12px 10px", textAlign: "center", fontWeight: 600, color: "#93c5fd" }}>{c}</td>
                   ))}
                 </tr>
               </tbody>

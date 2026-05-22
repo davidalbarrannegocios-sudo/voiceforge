@@ -89,8 +89,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "DeepL devolvió una traducción vacía" }, { status: 502 });
   }
 
-  // ── Credit check & deduction (x1.2 over standard TTS cost) ──
-  const charCost = Math.ceil(calculateCharCost(translatedText.length) * 1.2);
+  // ── Credit check & deduction (enterprise: x1.1, others: x1.2) ──
+  const translateMultiplier = user.plan === "enterprise" ? 1.1 : 1.2;
+  const charCost = Math.ceil(calculateCharCost(translatedText.length) * translateMultiplier);
   if (user.credits < charCost) {
     return NextResponse.json(
       { error: `Créditos insuficientes. Necesitas ${charCost} para ${translatedText.length} caracteres.`, charCost, charsAvailable: user.credits },

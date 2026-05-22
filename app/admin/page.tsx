@@ -5,7 +5,7 @@ import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
 /* ─── Types ───────────────────────────────────────────────── */
-const PLAN_PRICE: Record<string, number> = { free: 0, starter: 7, pro: 13, elite: 25 };
+const PLAN_PRICE: Record<string, number> = { free: 0, starter: 7, pro: 13, elite: 25, enterprise: 110 };
 
 interface AdminUser {
   id: string;
