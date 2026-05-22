@@ -82,63 +82,69 @@ function Sidebar({
 
   return (
     <aside
-      className="w-60 flex-shrink-0 h-screen sticky top-0 flex flex-col border-r"
-      style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}
+      style={{
+        width: "240px",
+        flexShrink: 0,
+        height: "100vh",
+        position: "sticky",
+        top: 0,
+        display: "flex",
+        flexDirection: "column",
+        borderRight: "1px solid #1e1e2e",
+        background: "#0d0d17",
+      }}
     >
-      {/* Logo */}
-      <div className="px-4 py-4 border-b" style={{ borderColor: "#2a2a3e" }}>
+      {/* Logo — 64px tall to match topbar */}
+      <div style={{ height: "64px", display: "flex", alignItems: "center", paddingLeft: "20px", paddingRight: "20px", flexShrink: 0 }}>
         <Link href="/" className="flex items-center gap-2.5">
           <Image
             src="/elitelabs.png"
             alt="Elite Labs"
-            width={30}
-            height={30}
-            style={{ height: "30px", width: "auto", objectFit: "contain", imageRendering: "-webkit-optimize-contrast" }}
+            width={28}
+            height={28}
+            style={{ height: "28px", width: "auto", objectFit: "contain", imageRendering: "-webkit-optimize-contrast" }}
             className="rounded-lg"
           />
-          <span className="font-bold text-white tracking-tight">Elite Labs</span>
+          <span className="font-bold text-white tracking-tight text-sm">Elite Labs</span>
         </Link>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto pt-4 pb-3 px-2 space-y-5">
+      <nav style={{ flex: 1, paddingTop: "8px", paddingBottom: "8px", paddingLeft: "12px", paddingRight: "12px", overflowY: "auto" }}>
         {sections.map((section, si) => (
-          <div key={si}>
+          <div key={si} style={{ marginBottom: si < sections.length - 1 ? "20px" : 0 }}>
             {section.label && (
-              <p
-                className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest"
-                style={{ color: "#3a3a55" }}
-              >
+              <p style={{ paddingLeft: "12px", marginBottom: "4px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#2e2e48" }}>
                 {section.label}
               </p>
             )}
-            <div className="space-y-0.5">
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
               {section.items.map(({ key, label, Icon }) => {
                 const isActive = key !== "_account" && activeTab === key;
                 return (
                   <button
                     key={key}
                     onClick={() => handleNav(key)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left group"
-                    style={
-                      isActive
-                        ? { background: "rgba(59,130,246,0.14)", color: "#93c5fd" }
-                        : { color: "#6b6b88" }
-                    }
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      fontSize: "13px",
+                      fontWeight: 500,
+                      textAlign: "left",
+                      border: "none",
+                      cursor: "pointer",
+                      transition: "background 0.15s",
+                      background: isActive ? "rgba(59,130,246,0.12)" : "transparent",
+                      color: isActive ? "#93c5fd" : "#5a5a78",
+                    }}
                   >
-                    <Icon
-                      size={15}
-                      style={{ color: isActive ? "#93c5fd" : "#4a4a65", flexShrink: 0 }}
-                    />
-                    <span className={isActive ? "" : "group-hover:text-gray-300 transition-colors"}>
-                      {label}
-                    </span>
-                    {isActive && (
-                      <span
-                        className="ml-auto w-1 h-1 rounded-full"
-                        style={{ background: "#3b82f6" }}
-                      />
-                    )}
+                    <Icon size={15} style={{ color: isActive ? "#93c5fd" : "#3e3e58", flexShrink: 0 }} />
+                    <span style={{ flex: 1 }}>{label}</span>
+                    {isActive && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#3b82f6", flexShrink: 0 }} />}
                   </button>
                 );
               })}
@@ -147,28 +153,29 @@ function Sidebar({
         ))}
       </nav>
 
-      {/* Credits */}
-      <div className="px-4 py-3 border-t" style={{ borderColor: "#1e1e2e" }}>
-        <div className="mb-1.5 flex items-center justify-between">
-          <span className="text-xs" style={{ color: "#3a3a55" }}>Caracteres</span>
-          <Link href="/pricing" className="text-[11px] font-semibold transition-colors hover:text-blue-300" style={{ color: "#3b82f6" }}>
+      {/* Credits — pinned to bottom */}
+      <div style={{ borderTop: "1px solid #1a1a28", padding: "16px 20px 20px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+          <span style={{ fontSize: "11px", color: "#3a3a52", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>Caracteres</span>
+          <Link href="/pricing" style={{ fontSize: "11px", fontWeight: 700, color: "#3b82f6", textDecoration: "none" }}>
             + Comprar
           </Link>
         </div>
-        <p className="text-xl font-bold text-white mb-2">
+        <p style={{ fontSize: "20px", fontWeight: 800, color: "#fff", marginBottom: "8px" }}>
           {credits !== null ? credits.toLocaleString("es-ES") : "—"}
         </p>
-        <div className="h-1 rounded-full overflow-hidden" style={{ background: "#1e1e2e" }}>
+        <div style={{ height: "3px", borderRadius: "999px", background: "#1a1a28", overflow: "hidden" }}>
           <div
-            className="h-full rounded-full transition-all"
             style={{
+              height: "100%",
+              borderRadius: "999px",
+              transition: "width 0.4s",
               width: `${Math.min(100, ((credits ?? 0) / 1_400_000) * 100)}%`,
               background: "linear-gradient(90deg, #3b82f6, #2563eb)",
             }}
           />
         </div>
       </div>
-
     </aside>
   );
 }
@@ -204,7 +211,7 @@ function HomeTab({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {cards.map(({ key, Icon, title, desc }) => (
           <button
             key={key}
@@ -358,12 +365,15 @@ function GenerateTab({
   }
 
   return (
-    <div>
-      <h2 className="text-lg font-bold text-white mb-1">Texto a Voz</h2>
-      <p className="text-sm mb-0" style={{ color: "#8888a8" }}>
-        Convierte cualquier texto en voz natural al instante usando la IA más avanzada.
-      </p>
-    <div className="pt-12 grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-5 min-h-[calc(100vh-120px)]">
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      {/* Header */}
+      <div style={{ paddingRight: "48px" }}>
+        <h2 className="text-lg font-bold text-white mb-1">Texto a Voz</h2>
+        <p className="text-sm" style={{ color: "#8888a8" }}>
+          Convierte cualquier texto en voz natural al instante usando la IA más avanzada.
+        </p>
+      </div>
+    <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6" style={{ minHeight: "calc(100vh - 200px)" }}>
 
       {/* ── LEFT: Editor ── */}
       <div className="flex flex-col rounded-2xl border overflow-hidden" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
@@ -393,7 +403,7 @@ function GenerateTab({
           disabled={submitting}
           rows={20}
           className="w-full px-6 py-5 text-sm text-gray-200 resize-none focus:outline-none disabled:opacity-60"
-          style={{ background: "#0d0d17", lineHeight: "1.75" }}
+          style={{ background: "#0d0d17", lineHeight: "1.75", minHeight: "400px" }}
         />
 
         {/* Bottom bar */}
@@ -1891,11 +1901,13 @@ export default function DashboardPage() {
     <div className="flex min-h-screen" style={{ background: "#0a0a0f" }}>
       <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <main className="flex-1 p-8 overflow-auto relative">
-        {/* User avatar — top right */}
-        <div className="absolute top-8 right-8 z-10">
+      <main className="flex-1 overflow-auto relative" style={{ padding: "0" }}>
+        {/* Topbar — same 64px height as sidebar logo */}
+        <div style={{ height: "64px", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: "24px", flexShrink: 0, position: "sticky", top: 0, zIndex: 10, background: "rgba(10,10,15,0.92)", backdropFilter: "blur(8px)" }}>
           <UserButton />
         </div>
+        {/* Page content */}
+        <div style={{ padding: "24px" }}>
         {successChars && (
           <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
             <Check size={18} className="text-green-400 flex-shrink-0" />
@@ -1939,6 +1951,7 @@ export default function DashboardPage() {
         {activeTab === "transcribe" && (
           <TranscribeTab onTranscribed={fetchCredits} />
         )}
+        </div>{/* end page content */}
       </main>
     </div>
   );
