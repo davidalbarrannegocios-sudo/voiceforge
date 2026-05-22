@@ -2,7 +2,6 @@ import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getStripe, getPriceId, PLANS, type PlanKey } from "@/lib/stripe";
-import Stripe from "stripe";
 
 export const runtime = "nodejs";
 
@@ -75,18 +74,17 @@ export async function POST(req: Request) {
     });
     console.log("[create-subscription] Suscripción creada:", subscription.id);
 
-    const invoice = subscription.latest_invoice as Stripe.Invoice;
-    const paymentIntent = (invoice as unknown as { payment_intent: Stripe.PaymentIntent | null })?.payment_intent;
-    console.log("[create-subscription] PaymentIntent:", paymentIntent?.id, "secret:", !!paymentIntent?.client_secret);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const paymentIntent = (subscription.latest_invoice as any)?.payment_intent;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clientSecret = (paymentIntent as any)?.client_secret;
+    console.log("[create-subscription] clientSecret obtenido:", !!clientSecret);
 
-    if (!paymentIntent?.client_secret) {
-      return NextResponse.json({ error: "No se pudo crear el intento de pago" }, { status: 500 });
+    if (!clientSecret) {
+      return NextResponse.json({ error: "No se pudo obtener el client secret" }, { status: 500 });
     }
 
-    return NextResponse.json({
-      clientSecret: paymentIntent.client_secret,
-      subscriptionId: subscription.id,
-    });
+    return NextResponse.json({ clientSecret, subscriptionId: subscription.id });
   } catch (error) {
     console.error("[create-subscription] Error completo:", error);
     const message = error instanceof Error ? error.message : String(error);
