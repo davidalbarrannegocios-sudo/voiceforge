@@ -1054,7 +1054,7 @@ const BILLING_PLANS = [
     price: 7,
     characters: 200_000,
     popular: false,
-    features: ["200.000 caracteres/mes", "Selección de voz completa", "3 voces clonadas"],
+    features: ["200.000 caracteres/mes", "Selección de voz completa", "Transcripciones ilimitadas", "3 voces clonadas"],
   },
   {
     key: "pro",
@@ -1063,7 +1063,7 @@ const BILLING_PLANS = [
     price: 13,
     characters: 500_000,
     popular: true,
-    features: ["500.000 caracteres/mes", "Selección de voz completa", "10 voces clonadas", "Generación prioritaria"],
+    features: ["500.000 caracteres/mes", "Selección de voz completa", "Transcripciones ilimitadas", "10 voces clonadas", "Generación prioritaria"],
   },
   {
     key: "elite",
@@ -1072,7 +1072,7 @@ const BILLING_PLANS = [
     price: 25,
     characters: 1_000_000,
     popular: false,
-    features: ["1.000.000 caracteres/mes", "Selección de voz completa", "20 voces clonadas", "Soporte preferente"],
+    features: ["1.000.000 caracteres/mes", "Selección de voz completa", "Transcripciones ilimitadas", "20 voces clonadas", "Soporte preferente"],
   },
 ] as const;
 
@@ -1265,7 +1265,13 @@ const TRANSLATE_STEPS = [
   { after: 18000, label: "Generando audio traducido..." },
 ];
 
-function TranslateTab({ onGenerated, voices }: { onGenerated: () => void; voices: Voice[] }) {
+function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling }: {
+  onGenerated: () => void;
+  voices: Voice[];
+  plan: string;
+  transcriptionUsed: number;
+  onBilling: () => void;
+}) {
   const [file, setFile] = useState<File | null>(null);
   const [targetLang, setTargetLang] = useState("en");
   const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(null);
@@ -1321,11 +1327,38 @@ function TranslateTab({ onGenerated, voices }: { onGenerated: () => void; voices
     }
   }
 
+  const FREE_LIMIT = 2;
+  const isFreeExhausted = plan === "free" && transcriptionUsed >= FREE_LIMIT;
+  const freeRemaining = Math.max(0, FREE_LIMIT - transcriptionUsed);
+
   return (
     <div className="max-w-2xl">
-      <p className="text-sm mb-8" style={{ color: "#8888a8" }}>
+      <p className="text-sm mb-4" style={{ color: "#8888a8" }}>
         Sube un audio en español y obtén la versión traducida al idioma de tu elección.
       </p>
+
+      {/* Free plan usage indicator */}
+      {plan === "free" && (
+        isFreeExhausted ? (
+          <div className="mb-6 p-4 rounded-xl flex items-center justify-between gap-4" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+            <p className="text-sm" style={{ color: "#f87171" }}>
+              Has agotado tus usos gratuitos. Actualiza tu plan para continuar.
+            </p>
+            <button
+              onClick={onBilling}
+              style={{ padding: "6px 14px", borderRadius: "8px", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0 }}
+            >
+              Ver planes
+            </button>
+          </div>
+        ) : (
+          <div className="mb-6 p-3 rounded-xl" style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)" }}>
+            <p className="text-xs" style={{ color: "#4a6fa8" }}>
+              Plan gratuito · <strong style={{ color: "#93c5fd" }}>{freeRemaining} de {FREE_LIMIT} usos restantes</strong> · Suscríbete para uso ilimitado
+            </p>
+          </div>
+        )
+      )}
 
       <div className="space-y-4">
 
@@ -1529,7 +1562,12 @@ interface TranscribeResult {
   charsRemaining: number;
 }
 
-function TranscribeTab({ onTranscribed }: { onTranscribed: () => void }) {
+function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
+  onTranscribed: () => void;
+  plan: string;
+  transcriptionUsed: number;
+  onBilling: () => void;
+}) {
   const [file, setFile] = useState<File | null>(null);
   const [lang, setLang] = useState("es");
   const [loading, setLoading] = useState(false);
@@ -1587,11 +1625,38 @@ function TranscribeTab({ onTranscribed }: { onTranscribed: () => void }) {
     URL.revokeObjectURL(url);
   }
 
+  const FREE_LIMIT = 2;
+  const isFreeExhausted = plan === "free" && transcriptionUsed >= FREE_LIMIT;
+  const freeRemaining = Math.max(0, FREE_LIMIT - transcriptionUsed);
+
   return (
     <div className="max-w-2xl">
-      <p className="text-sm mb-8" style={{ color: "#8888a8" }}>
+      <p className="text-sm mb-4" style={{ color: "#8888a8" }}>
         Sube un archivo de audio y obtén la transcripción exacta usando reconocimiento de voz de Fish Audio.
       </p>
+
+      {/* Free plan usage indicator */}
+      {plan === "free" && (
+        isFreeExhausted ? (
+          <div className="mb-6 p-4 rounded-xl flex items-center justify-between gap-4" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+            <p className="text-sm" style={{ color: "#f87171" }}>
+              Has agotado tus usos gratuitos. Actualiza tu plan para continuar.
+            </p>
+            <button
+              onClick={onBilling}
+              style={{ padding: "6px 14px", borderRadius: "8px", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0 }}
+            >
+              Ver planes
+            </button>
+          </div>
+        ) : (
+          <div className="mb-6 p-3 rounded-xl" style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)" }}>
+            <p className="text-xs" style={{ color: "#4a6fa8" }}>
+              Plan gratuito · <strong style={{ color: "#93c5fd" }}>{freeRemaining} de {FREE_LIMIT} usos restantes</strong> · Suscríbete para uso ilimitado
+            </p>
+          </div>
+        )
+      )}
 
       <div className="space-y-4">
 
@@ -1970,6 +2035,7 @@ export default function DashboardPage() {
   const [credits, setCredits] = useState<number | null>(null);
   const [plan, setPlan] = useState<string>("free");
   const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
+  const [transcriptionUsed, setTranscriptionUsed] = useState<number>(0);
   const [voices, setVoices] = useState<Voice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(null);
 
@@ -1979,6 +2045,7 @@ export default function DashboardPage() {
     setCredits(data.characters);
     if (data.plan) setPlan(data.plan);
     if ("planExpiresAt" in data) setPlanExpiresAt(data.planExpiresAt);
+    if (typeof data.transcriptionUsed === "number") setTranscriptionUsed(data.transcriptionUsed);
   }, []);
 
   const fetchVoices = useCallback(async () => {
@@ -2070,10 +2137,21 @@ export default function DashboardPage() {
           <ReferralTab onClaimed={fetchCredits} />
         )}
         {activeTab === "translate" && (
-          <TranslateTab onGenerated={fetchCredits} voices={voices} />
+          <TranslateTab
+            onGenerated={fetchCredits}
+            voices={voices}
+            plan={plan}
+            transcriptionUsed={transcriptionUsed}
+            onBilling={() => setActiveTab("billing")}
+          />
         )}
         {activeTab === "transcribe" && (
-          <TranscribeTab onTranscribed={fetchCredits} />
+          <TranscribeTab
+            onTranscribed={fetchCredits}
+            plan={plan}
+            transcriptionUsed={transcriptionUsed}
+            onBilling={() => setActiveTab("billing")}
+          />
         )}
         </div>{/* end page content */}
       </main>

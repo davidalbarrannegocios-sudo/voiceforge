@@ -8,6 +8,8 @@ import { calculateCharCost } from "@/lib/utils";
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
+const FREE_TRANSCRIPTION_LIMIT = 2;
+
 // Internal code → DeepL TargetLanguageCode + display name
 const LANGUAGES: Record<string, { name: string; deeplCode: deepl.TargetLanguageCode }> = {
   en:  { name: "Inglés",   deeplCode: "en-US" },
@@ -37,6 +39,14 @@ export async function POST(req: Request) {
 
   const user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
   if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
+
+  // Free plan limit check
+  if (user.plan === "free" && user.transcriptionUsed >= FREE_TRANSCRIPTION_LIMIT) {
+    return NextResponse.json(
+      { error: "Has usado tus 2 transcripciones/traducciones gratuitas. Suscríbete a cualquier plan de pago para uso ilimitado." },
+      { status: 403 }
+    );
+  }
 
   // ── Step 1: Fish Audio ASR — transcribe audio ─────────────────
   const asrForm = new FormData();
@@ -90,7 +100,10 @@ export async function POST(req: Request) {
 
   await prisma.user.update({
     where: { id: user.id },
-    data: { credits: { decrement: charCost } },
+    data: {
+      credits: { decrement: charCost },
+      ...(user.plan === "free" && { transcriptionUsed: { increment: 1 } }),
+    },
   });
 
   // ── Step 3: Fish Audio TTS — generate translated audio ────────

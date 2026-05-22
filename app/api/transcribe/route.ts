@@ -7,6 +7,7 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 
 const SUPPORTED_LANGS = ["es", "en", "ja", "ko", "zh"];
+const FREE_TRANSCRIPTION_LIMIT = 2;
 
 export async function POST(req: Request) {
   const clerkUser = await currentUser();
@@ -24,6 +25,14 @@ export async function POST(req: Request) {
 
   const user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
   if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
+
+  // Free plan limit check
+  if (user.plan === "free" && user.transcriptionUsed >= FREE_TRANSCRIPTION_LIMIT) {
+    return NextResponse.json(
+      { error: "Has usado tus 2 transcripciones/traducciones gratuitas. Suscríbete a cualquier plan de pago para uso ilimitado." },
+      { status: 403 }
+    );
+  }
 
   // Fish Audio ASR
   const asrForm = new FormData();
@@ -49,23 +58,27 @@ export async function POST(req: Request) {
 
   console.log(`[transcribe] ASR → ${transcribedText.length} chars, lang=${language}`);
 
-  // Credit check & deduction (x1 — same as TTS)
+  // Credit check & deduction
   const charCost = calculateCharCost(transcribedText.length);
   if (user.credits < charCost) {
     return NextResponse.json(
       { error: `Créditos insuficientes. Necesitas ${charCost} para ${transcribedText.length} caracteres.`, charCost, charsAvailable: user.credits },
-      { status: 402 },
+      { status: 402 }
     );
   }
 
-  await prisma.user.update({
+  const updated = await prisma.user.update({
     where: { id: user.id },
-    data: { credits: { decrement: charCost } },
+    data: {
+      credits: { decrement: charCost },
+      ...(user.plan === "free" && { transcriptionUsed: { increment: 1 } }),
+    },
   });
 
   return NextResponse.json({
     transcribedText,
     charCost,
-    charsRemaining: user.credits - charCost,
+    charsRemaining: updated.credits,
+    transcriptionUsed: updated.transcriptionUsed,
   });
 }

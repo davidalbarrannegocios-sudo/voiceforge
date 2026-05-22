@@ -18,6 +18,7 @@ model User {
   planExpiresAt        DateTime?
   stripeCustomerId     String?       @unique
   stripeSubscriptionId String?       @unique
+  transcriptionUsed    Int           @default(0)
   referralCode         String?       @unique
   referredBy           String?
   createdAt            DateTime      @default(now())

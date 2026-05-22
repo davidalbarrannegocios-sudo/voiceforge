@@ -58,6 +58,7 @@ export async function GET() {
       characters: user.credits,
       plan: user.plan,
       planExpiresAt: user.planExpiresAt?.toISOString() ?? null,
+      transcriptionUsed: user.transcriptionUsed,
     });
     if (referralCookie) res.cookies.delete("referralCode");
     return res;
@@ -73,5 +74,6 @@ export async function GET() {
     characters: user.credits,
     plan: user.plan,
     planExpiresAt: user.planExpiresAt?.toISOString() ?? null,
+    transcriptionUsed: user.transcriptionUsed,
   });
 }

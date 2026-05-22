@@ -32,8 +32,8 @@ const PLANS: Plan[] = [
     features: [
       "10.000 caracteres al registrarte",
       "Voz aleatoria (sin selección)",
+      "2 transcripciones/traducciones",
       "Sin clonación de voz",
-      "Historial 7 días",
     ],
   },
   {
@@ -48,8 +48,8 @@ const PLANS: Plan[] = [
     features: [
       "200.000 caracteres/mes",
       "Selección de voz completa",
+      "Transcripciones y traducciones ilimitadas",
       "3 voces clonadas",
-      "Historial 30 días",
     ],
   },
   {
@@ -64,8 +64,8 @@ const PLANS: Plan[] = [
     features: [
       "500.000 caracteres/mes",
       "Selección de voz completa",
+      "Transcripciones y traducciones ilimitadas",
       "10 voces clonadas",
-      "Historial completo",
       "Generación prioritaria",
     ],
   },
@@ -81,8 +81,8 @@ const PLANS: Plan[] = [
     features: [
       "1.000.000 caracteres/mes",
       "Selección de voz completa",
+      "Transcripciones y traducciones ilimitadas",
       "20 voces clonadas",
-      "Historial completo",
       "Prioridad máxima",
       "Soporte preferente",
     ],
