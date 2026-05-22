@@ -11,6 +11,13 @@ export async function POST(req: Request) {
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { planKey } = await req.json() as { planKey: string };
+  console.log("[create-subscription] Iniciando, priceId recibido:", planKey);
+  console.log("[create-subscription] Variables de entorno:", {
+    starter: !!process.env.STRIPE_PRICE_STARTER_MONTHLY,
+    pro: !!process.env.STRIPE_PRICE_PRO_MONTHLY,
+    elite: !!process.env.STRIPE_PRICE_ELITE_MONTHLY,
+    stripeKey: !!process.env.STRIPE_SECRET_KEY,
+  });
   if (!planKey || !(planKey in PLANS)) {
     return NextResponse.json({ error: "Plan inválido" }, { status: 400 });
   }
