@@ -81,7 +81,7 @@ export async function POST(req: Request) {
 
     // Retrieve subscription to get period end
     const sub = await stripe.subscriptions.retrieve(subscriptionId);
-    const periodEnd = new Date((sub as unknown as { current_period_end: number }).current_period_end * 1000);
+    const periodEnd = new Date(sub.items.data[0].current_period_end * 1000);
     const credits = PLAN_CREDITS[planKey] ?? 0;
 
     await prisma.user.update({
@@ -120,7 +120,7 @@ export async function POST(req: Request) {
 
     // Get updated period end from subscription
     const sub = await stripe.subscriptions.retrieve(subscriptionId);
-    const periodEnd = new Date((sub as unknown as { current_period_end: number }).current_period_end * 1000);
+    const periodEnd = new Date(sub.items.data[0].current_period_end * 1000);
     const credits = PLAN_CREDITS[user.plan] ?? PLAN_CREDITS.free;
 
     await prisma.user.update({
@@ -162,7 +162,7 @@ export async function POST(req: Request) {
     const newPlan = getPlanFromPriceId(priceId);
     if (!newPlan || newPlan === user.plan) return NextResponse.json({ received: true });
 
-    const periodEnd = new Date((sub as unknown as { current_period_end: number }).current_period_end * 1000);
+    const periodEnd = new Date(sub.items.data[0].current_period_end * 1000);
     const credits = PLAN_CREDITS[newPlan] ?? 0;
 
     await prisma.user.update({
