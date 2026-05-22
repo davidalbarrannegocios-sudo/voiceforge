@@ -24,6 +24,21 @@ interface Stats {
   totalRevenueDollars: string;
 }
 
+interface SupportTicket {
+  id: string;
+  type: string;
+  description: string;
+  status: string;
+  adminReply: string | null;
+  createdAt: string;
+  user: { email: string; plan: string };
+}
+
+const TICKET_TYPE_LABELS: Record<string, string> = {
+  general: "Ayuda general", technical: "Problema técnico",
+  billing: "Facturación", refund: "Reembolso", other: "Otro",
+};
+
 interface Generation {
   id: string;
   text: string;
@@ -414,6 +429,10 @@ export default function AdminPage() {
   const [search, setSearch] = useState("");
   const [feedback, setFeedback] = useState<{ msg: string; ok: boolean } | null>(null);
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [replyTicketId, setReplyTicketId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [replyLoading, setReplyLoading] = useState(false);
 
   // Credits form
   const [creditUserId, setCreditUserId] = useState("");
@@ -432,14 +451,17 @@ export default function AdminPage() {
   }, []);
 
   const fetchAll = useCallback(async () => {
-    const [uRes, sRes] = await Promise.all([
+    const [uRes, sRes, tRes] = await Promise.all([
       fetch("/api/admin/users"),
       fetch("/api/admin/stats"),
+      fetch("/api/admin/support"),
     ]);
     if (uRes.status === 403 || uRes.status === 401) { setAuthorized(false); return; }
     setAuthorized(true);
     setUsers(await uRes.json());
     setStats(await sRes.json());
+    const tData = await tRes.json();
+    setTickets(Array.isArray(tData) ? tData : []);
   }, []);
 
   useEffect(() => { if (isLoaded && user) fetchAll(); }, [isLoaded, user, fetchAll]);
@@ -483,6 +505,24 @@ export default function AdminPage() {
     } catch (err) {
       toast(err instanceof Error ? err.message : "Error", false);
     } finally { setRoleLoading(false); }
+  }
+
+  async function handleReply(ticketId: string, close: boolean) {
+    setReplyLoading(true);
+    try {
+      const res = await fetch(`/api/admin/support/${ticketId}/reply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reply: replyText, close }),
+      });
+      if (!res.ok) throw new Error("Error al responder");
+      toast(close ? "Ticket cerrado" : "Respuesta enviada");
+      setReplyTicketId(null);
+      setReplyText("");
+      fetchAll();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Error", false);
+    } finally { setReplyLoading(false); }
   }
 
   if (!isLoaded || authorized === null)
@@ -676,6 +716,95 @@ export default function AdminPage() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Support tickets */}
+        <div style={{ ...card, marginTop: "1.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "1rem" }}>
+            <p style={{ fontWeight: 700 }}>Tickets de soporte</p>
+            {tickets.filter(t => t.status === "open").length > 0 && (
+              <span style={{ padding: "2px 10px", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 700, background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.3)" }}>
+                {tickets.filter(t => t.status === "open").length} abiertos
+              </span>
+            )}
+          </div>
+          {tickets.length === 0 ? (
+            <p style={{ color: "#555570", fontSize: "0.85rem" }}>No hay tickets.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {tickets.map(ticket => (
+                <div key={ticket.id} style={{ borderRadius: "12px", border: `1px solid ${ticket.status === "closed" ? "#1e1e2e" : "#2a2a3e"}`, background: "#0a0a0f", overflow: "hidden" }}>
+                  <div style={{ padding: "12px 16px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#9ca3af" }}>{TICKET_TYPE_LABELS[ticket.type] ?? ticket.type}</span>
+                        <span style={{ fontSize: "0.65rem", color: "#555570" }}>·</span>
+                        <span style={{ fontSize: "0.7rem", color: "#555570" }}>{ticket.user.email}</span>
+                        <span style={{ fontSize: "0.65rem", padding: "1px 7px", borderRadius: "999px", background: ticket.status === "closed" ? "rgba(107,114,128,0.12)" : "rgba(59,130,246,0.12)", color: ticket.status === "closed" ? "#6b7280" : "#93c5fd", border: `1px solid ${ticket.status === "closed" ? "#2a2a3e" : "rgba(59,130,246,0.25)"}`, fontWeight: 700 }}>
+                          {ticket.status === "closed" ? "CERRADO" : "ABIERTO"}
+                        </span>
+                        <span style={{ fontSize: "0.65rem", color: "#2e2e48", marginLeft: "auto" }}>
+                          {new Date(ticket.createdAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: "0.8rem", color: "#6b7280", lineHeight: 1.5 }}>{ticket.description}</p>
+                      {ticket.adminReply && (
+                        <div style={{ marginTop: "8px", padding: "8px 12px", borderRadius: "8px", background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)" }}>
+                          <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "#3b82f6", marginBottom: "3px" }}>TU RESPUESTA</p>
+                          <p style={{ fontSize: "0.78rem", color: "#93c5fd" }}>{ticket.adminReply}</p>
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
+                      {ticket.status === "open" && (
+                        <>
+                          <button
+                            onClick={() => { setReplyTicketId(replyTicketId === ticket.id ? null : ticket.id); setReplyText(ticket.adminReply ?? ""); }}
+                            style={btn("#1e3a5f", { padding: "0.3rem 0.7rem", fontSize: "0.75rem", border: "1px solid rgba(59,130,246,0.3)" })}
+                          >
+                            Responder
+                          </button>
+                          <button
+                            onClick={() => handleReply(ticket.id, true)}
+                            style={btn("#1e1e2e", { padding: "0.3rem 0.7rem", fontSize: "0.75rem", border: "1px solid #2a2a3e", color: "#6b7280" })}
+                          >
+                            Cerrar
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  {replyTicketId === ticket.id && (
+                    <div style={{ padding: "12px 16px", borderTop: "1px solid #1e1e2e", background: "#0d0d17" }}>
+                      <textarea
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        placeholder="Escribe tu respuesta..."
+                        rows={3}
+                        style={{ ...input, resize: "vertical", marginBottom: "8px" }}
+                      />
+                      <div style={{ display: "flex", gap: "6px" }}>
+                        <button
+                          onClick={() => handleReply(ticket.id, false)}
+                          disabled={replyLoading || !replyText.trim()}
+                          style={btn("#3b82f6", { padding: "0.4rem 1rem", fontSize: "0.8rem", opacity: replyLoading || !replyText.trim() ? 0.6 : 1 })}
+                        >
+                          {replyLoading ? "Enviando..." : "Enviar respuesta"}
+                        </button>
+                        <button
+                          onClick={() => handleReply(ticket.id, true)}
+                          disabled={replyLoading}
+                          style={btn("#1e3a5f", { padding: "0.4rem 1rem", fontSize: "0.8rem", border: "1px solid rgba(59,130,246,0.3)" })}
+                        >
+                          Responder y cerrar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

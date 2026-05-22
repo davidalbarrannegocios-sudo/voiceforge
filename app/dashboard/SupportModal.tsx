@@ -1,0 +1,242 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { X, HelpCircle, Send, ChevronLeft, MessageSquare } from "lucide-react";
+
+const TICKET_TYPES = [
+  { value: "general",   label: "Ayuda general" },
+  { value: "technical", label: "Problema técnico" },
+  { value: "billing",   label: "Problema de facturación" },
+  { value: "refund",    label: "Solicitar reembolso" },
+  { value: "other",     label: "Otro" },
+];
+
+interface SupportTicket {
+  id: string;
+  type: string;
+  description: string;
+  status: string;
+  adminReply: string | null;
+  createdAt: string;
+}
+
+type View = "menu" | "new" | "list";
+
+export function SupportModal({ onClose }: { onClose: () => void }) {
+  const [view, setView] = useState<View>("menu");
+  const [type, setType] = useState("general");
+  const [description, setDescription] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
+
+  const fetchTickets = useCallback(async () => {
+    setTicketsLoading(true);
+    try {
+      const res = await fetch("/api/support");
+      const data = await res.json();
+      setTickets(Array.isArray(data) ? data : []);
+    } finally {
+      setTicketsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (view === "list") fetchTickets();
+  }, [view, fetchTickets]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!description.trim()) return;
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, description }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setSuccess(true);
+      setDescription("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al enviar");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function goBack() {
+    setView("menu");
+    setSuccess(false);
+    setError(null);
+  }
+
+  const typeLabel = (val: string) => TICKET_TYPES.find(t => t.value === val)?.label ?? val;
+
+  return (
+    <div
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px", background: "rgba(0,0,0,0.75)" }}
+    >
+      <div style={{ width: "100%", maxWidth: "480px", borderRadius: "20px", background: "#0d0d17", border: "1px solid #1e1e2e", overflow: "hidden" }}>
+
+        {/* Header */}
+        <div style={{ padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #1a1a28" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {view !== "menu" && (
+              <button onClick={goBack} style={{ background: "none", border: "none", cursor: "pointer", color: "#4a4a65", padding: "2px", display: "flex", alignItems: "center" }}>
+                <ChevronLeft size={16} />
+              </button>
+            )}
+            <HelpCircle size={15} style={{ color: "#3b82f6" }} />
+            <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>
+              {view === "menu" ? "Soporte" : view === "new" ? "Nuevo ticket" : "Mis tickets"}
+            </span>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#3a3a52", padding: "2px" }}>
+            <X size={18} />
+          </button>
+        </div>
+
+        <div style={{ padding: "20px 24px 24px" }}>
+
+          {/* ── Menu ── */}
+          {view === "menu" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <p style={{ fontSize: "13px", color: "#4a4a65", marginBottom: "4px" }}>¿En qué podemos ayudarte?</p>
+              <button
+                onClick={() => { setView("new"); setSuccess(false); }}
+                style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid #2a2a3e", background: "#12121a", cursor: "pointer", textAlign: "left" }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#e5e7eb", fontSize: "14px", fontWeight: 500 }}>
+                  <Send size={14} style={{ color: "#3b82f6", flexShrink: 0 }} />
+                  Crear nuevo ticket
+                </div>
+                <p style={{ fontSize: "12px", color: "#4a4a65", marginTop: "4px", marginLeft: "24px" }}>Contacta con nuestro equipo</p>
+              </button>
+              <button
+                onClick={() => setView("list")}
+                style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid #2a2a3e", background: "#12121a", cursor: "pointer", textAlign: "left" }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#e5e7eb", fontSize: "14px", fontWeight: 500 }}>
+                  <MessageSquare size={14} style={{ color: "#3b82f6", flexShrink: 0 }} />
+                  Ver mis tickets
+                </div>
+                <p style={{ fontSize: "12px", color: "#4a4a65", marginTop: "4px", marginLeft: "24px" }}>Consulta el estado de tus solicitudes</p>
+              </button>
+            </div>
+          )}
+
+          {/* ── New ticket ── */}
+          {view === "new" && (
+            success ? (
+              <div style={{ textAlign: "center", padding: "24px 0" }}>
+                <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                  <Send size={20} style={{ color: "#4ade80" }} />
+                </div>
+                <p style={{ fontSize: "15px", fontWeight: 700, color: "#fff", marginBottom: "8px" }}>¡Ticket enviado!</p>
+                <p style={{ fontSize: "13px", color: "#4a4a65" }}>Te responderemos lo antes posible.</p>
+                <button
+                  onClick={goBack}
+                  style={{ marginTop: "20px", padding: "10px 24px", borderRadius: "10px", border: "none", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}
+                >
+                  Volver
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "#6b7280", marginBottom: "6px" }}>Tipo de solicitud</label>
+                  <select
+                    value={type}
+                    onChange={(e) => setType(e.target.value)}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: "10px", background: "#0a0a0f", border: "1px solid #2a2a3e", color: "#e5e7eb", fontSize: "14px", outline: "none" }}
+                  >
+                    {TICKET_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "#6b7280", marginBottom: "6px" }}>Descripción</label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Describe tu problema o pregunta con el mayor detalle posible..."
+                    rows={5}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: "10px", background: "#0a0a0f", border: "1px solid #2a2a3e", color: "#e5e7eb", fontSize: "14px", outline: "none", resize: "vertical", boxSizing: "border-box" }}
+                  />
+                </div>
+                {error && (
+                  <div style={{ padding: "10px 12px", borderRadius: "8px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171", fontSize: "13px" }}>
+                    {error}
+                  </div>
+                )}
+                <button
+                  type="submit"
+                  disabled={loading || !description.trim()}
+                  style={{ padding: "12px", borderRadius: "10px", border: "none", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: loading || !description.trim() ? "not-allowed" : "pointer", opacity: loading || !description.trim() ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+                >
+                  <Send size={13} />
+                  {loading ? "Enviando..." : "Enviar solicitud"}
+                </button>
+              </form>
+            )
+          )}
+
+          {/* ── Ticket list ── */}
+          {view === "list" && (
+            ticketsLoading ? (
+              <div style={{ padding: "32px 0", textAlign: "center", color: "#4a4a65", fontSize: "13px" }}>Cargando tickets...</div>
+            ) : tickets.length === 0 ? (
+              <div style={{ padding: "32px 0", textAlign: "center" }}>
+                <p style={{ color: "#4a4a65", fontSize: "13px" }}>No tienes tickets abiertos.</p>
+                <button
+                  onClick={() => setView("new")}
+                  style={{ marginTop: "12px", padding: "8px 20px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", color: "#3b82f6", fontSize: "13px", cursor: "pointer" }}
+                >
+                  Crear uno ahora
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "380px", overflowY: "auto" }}>
+                {tickets.map(ticket => (
+                  <div
+                    key={ticket.id}
+                    style={{ padding: "14px", borderRadius: "12px", border: `1px solid ${ticket.status === "closed" ? "#1a1a28" : "#2a2a3e"}`, background: "#12121a" }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: 600, color: "#9ca3af" }}>{typeLabel(ticket.type)}</span>
+                      <span style={{
+                        fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px",
+                        background: ticket.status === "closed" ? "rgba(107,114,128,0.12)" : "rgba(59,130,246,0.12)",
+                        color: ticket.status === "closed" ? "#6b7280" : "#93c5fd",
+                        border: `1px solid ${ticket.status === "closed" ? "#2a2a3e" : "rgba(59,130,246,0.25)"}`,
+                      }}>
+                        {ticket.status === "closed" ? "CERRADO" : "ABIERTO"}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: "13px", color: "#6b7280", lineHeight: 1.5 }}>
+                      {ticket.description.length > 120 ? ticket.description.slice(0, 120) + "…" : ticket.description}
+                    </p>
+                    {ticket.adminReply && (
+                      <div style={{ padding: "10px 12px", borderRadius: "8px", background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)", marginTop: "10px" }}>
+                        <p style={{ fontSize: "10px", fontWeight: 700, color: "#3b82f6", marginBottom: "4px", letterSpacing: "0.05em" }}>RESPUESTA DEL EQUIPO</p>
+                        <p style={{ fontSize: "13px", color: "#93c5fd", lineHeight: 1.5 }}>{ticket.adminReply}</p>
+                      </div>
+                    )}
+                    <p style={{ fontSize: "11px", color: "#2e2e48", marginTop: "8px" }}>
+                      {new Date(ticket.createdAt).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

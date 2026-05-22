@@ -5,11 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, UserButton, useClerk } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, Lock } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, Lock, HelpCircle } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
 import { PaymentModal, type BillingPlan } from "./PaymentModal";
+import { SupportModal } from "./SupportModal";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface Voice {
@@ -2039,6 +2040,7 @@ export default function DashboardPage() {
   const [transcriptionUsed, setTranscriptionUsed] = useState<number>(0);
   const [voices, setVoices] = useState<Voice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(null);
+  const [supportOpen, setSupportOpen] = useState(false);
 
   const fetchCredits = useCallback(async () => {
     const res = await fetch("/api/credits");
@@ -2069,6 +2071,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen" style={{ background: "#0a0a0f" }}>
+      {supportOpen && <SupportModal onClose={() => setSupportOpen(false)} />}
       <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <main className="flex-1 overflow-auto relative" style={{ padding: "0" }}>
@@ -2091,7 +2094,18 @@ export default function DashboardPage() {
                 <Icon size={16} style={{ color: "#4a4a65" }} />
                 <span style={{ fontSize: "14px", fontWeight: 600, color: "#e5e7eb" }}>{title}</span>
               </div>
-              <UserButton />
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <button
+                  onClick={() => setSupportOpen(true)}
+                  title="Soporte"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", cursor: "pointer", color: "#4a4a65", transition: "color 0.15s, border-color 0.15s" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "#93c5fd"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#3b82f6"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "#4a4a65"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#2a2a3e"; }}
+                >
+                  <HelpCircle size={15} />
+                </button>
+                <UserButton />
+              </div>
             </div>
           );
         })()}

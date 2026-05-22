@@ -29,6 +29,7 @@ model User {
   jobs                 Job[]
   referralsGiven       Referral[]    @relation("referrer")
   referralReceived     Referral?     @relation("referred")
+  supportTickets       SupportTicket[]
 }
 
 model Job {
@@ -76,6 +77,18 @@ model Purchase {
   creditsPurchased Int
   amountCents      Int
   createdAt        DateTime @default(now())
+}
+
+model SupportTicket {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  type        String
+  description String
+  status      String   @default("open")
+  adminReply  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Referral {
