@@ -19,60 +19,66 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Precio no configurado para este plan" }, { status: 500 });
   }
 
-  let user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
-  if (!user) {
-    user = await prisma.user.create({
-      data: {
-        clerkId: clerkUser.id,
-        email: clerkUser.emailAddresses[0]?.emailAddress ?? "",
-        credits: 10_000,
-        plan: "free",
-      },
+  try {
+    let user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          clerkId: clerkUser.id,
+          email: clerkUser.emailAddresses[0]?.emailAddress ?? "",
+          credits: 10_000,
+          plan: "free",
+        },
+      });
+    }
+
+    const stripe = getStripe();
+
+    // Get or create Stripe customer
+    let customerId = user.stripeCustomerId;
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: { userId: user.id },
+      });
+      customerId = customer.id;
+      await prisma.user.update({ where: { id: user.id }, data: { stripeCustomerId: customerId } });
+    }
+
+    // Cancel any existing incomplete subscription for this customer to avoid duplicates
+    const existing = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "incomplete",
+      limit: 5,
     });
-  }
+    for (const sub of existing.data) {
+      await stripe.subscriptions.cancel(sub.id);
+    }
 
-  const stripe = getStripe();
-
-  // Get or create Stripe customer
-  let customerId = user.stripeCustomerId;
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: user.email,
+    // Create the subscription in incomplete state
+    const subscription = await stripe.subscriptions.create({
+      customer: customerId,
+      items: [{ price: priceId }],
+      payment_behavior: "default_incomplete",
+      payment_settings: { save_default_payment_method: "on_subscription" },
+      expand: ["latest_invoice.payment_intent"],
       metadata: { userId: user.id },
     });
-    customerId = customer.id;
-    await prisma.user.update({ where: { id: user.id }, data: { stripeCustomerId: customerId } });
+
+    const invoice = subscription.latest_invoice as Stripe.Invoice;
+    const paymentIntent = (invoice as unknown as { payment_intent: Stripe.PaymentIntent | null })?.payment_intent;
+
+    if (!paymentIntent?.client_secret) {
+      return NextResponse.json({ error: "No se pudo crear el intento de pago" }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      clientSecret: paymentIntent.client_secret,
+      subscriptionId: subscription.id,
+    });
+  } catch (error) {
+    console.error("[create-subscription] Error:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  // Cancel any existing incomplete subscription for this customer to avoid duplicates
-  const existing = await stripe.subscriptions.list({
-    customer: customerId,
-    status: "incomplete",
-    limit: 5,
-  });
-  for (const sub of existing.data) {
-    await stripe.subscriptions.cancel(sub.id);
-  }
-
-  // Create the subscription in incomplete state
-  const subscription = await stripe.subscriptions.create({
-    customer: customerId,
-    items: [{ price: priceId }],
-    payment_behavior: "default_incomplete",
-    payment_settings: { save_default_payment_method: "on_subscription" },
-    expand: ["latest_invoice.payment_intent"],
-    metadata: { userId: user.id },
-  });
-
-  const invoice = subscription.latest_invoice as Stripe.Invoice;
-  const paymentIntent = (invoice as unknown as { payment_intent: Stripe.PaymentIntent | null })?.payment_intent;
-
-  if (!paymentIntent?.client_secret) {
-    return NextResponse.json({ error: "No se pudo crear el intento de pago" }, { status: 500 });
-  }
-
-  return NextResponse.json({
-    clientSecret: paymentIntent.client_secret,
-    subscriptionId: subscription.id,
-  });
 }
