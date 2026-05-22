@@ -39,10 +39,16 @@ const ELEMENTS_APPEARANCE = {
 /* ─── Inner form (inside <Elements>) ─────────────────────── */
 function SubscriptionForm({
   plan,
+  customerId,
+  planKey,
   onClose,
+  onSuccess,
 }: {
   plan: BillingPlan;
+  customerId: string;
+  planKey: string;
   onClose: () => void;
+  onSuccess: () => void;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -69,8 +75,10 @@ function SubscriptionForm({
       return;
     }
 
-    const { error: confirmErr } = await stripe.confirmPayment({
+    // Step 1: confirm the SetupIntent to register the card
+    const { error: setupErr, setupIntent } = await stripe.confirmSetup({
       elements,
+      redirect: "if_required",
       confirmParams: {
         return_url: `${baseUrl}/dashboard?success=true&plan=${plan.key}`,
         payment_method_data: {
@@ -79,11 +87,39 @@ function SubscriptionForm({
       },
     });
 
-    // confirmPayment redirects on success; only reaches here on error
-    if (confirmErr) {
-      setError(confirmErr.message ?? "Error al procesar el pago");
+    if (setupErr) {
+      setError(setupErr.message ?? "Error al guardar el método de pago");
       setLoading(false);
+      return;
     }
+
+    // setupIntent is undefined only if a redirect happened (handled by return_url)
+    const paymentMethodId =
+      typeof setupIntent?.payment_method === "string"
+        ? setupIntent.payment_method
+        : setupIntent?.payment_method?.id;
+
+    if (!paymentMethodId) {
+      setError("No se pudo obtener el método de pago. Inténtalo de nuevo.");
+      setLoading(false);
+      return;
+    }
+
+    // Step 2: create the subscription with the saved payment method
+    const res = await fetch("/api/activate-subscription", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customerId, planKey, paymentMethodId }),
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      setError(data.error ?? "Error al activar la suscripción");
+      setLoading(false);
+      return;
+    }
+
+    onSuccess();
   }
 
   return (
@@ -159,7 +195,7 @@ function SubscriptionForm({
 export function PaymentModal({
   plan,
   onClose,
-  onSuccess: _onSuccess,
+  onSuccess,
   userEmail: _userEmail,
 }: {
   plan: BillingPlan;
@@ -168,6 +204,7 @@ export function PaymentModal({
   onSuccess: () => void;
 }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   const planKey = plan.key as PlanKey;
@@ -187,8 +224,12 @@ export function PaymentModal({
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
-        if (data.clientSecret) setClientSecret(data.clientSecret);
-        else setFetchError(data.error ?? "No se pudo iniciar la suscripción");
+        if (data.clientSecret) {
+          setClientSecret(data.clientSecret);
+          setCustomerId(data.customerId);
+        } else {
+          setFetchError(data.error ?? "No se pudo iniciar el proceso de pago");
+        }
       })
       .catch(() => {
         if (!cancelled) setFetchError("Error de conexión. Inténtalo de nuevo.");
@@ -196,6 +237,11 @@ export function PaymentModal({
 
     return () => { cancelled = true; };
   }, [planKey]);
+
+  function handleSuccess() {
+    onSuccess();
+    onClose();
+  }
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px", background: "rgba(0,0,0,0.8)" }}>
@@ -225,7 +271,7 @@ export function PaymentModal({
             <div style={{ padding: "12px", borderRadius: "10px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171", fontSize: "13px", textAlign: "center" }}>
               {fetchError}
             </div>
-          ) : !clientSecret ? (
+          ) : !clientSecret || !customerId ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", padding: "32px 0" }}>
               <svg style={{ color: "#3b82f6" }} className="animate-spin h-7 w-7" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -238,7 +284,13 @@ export function PaymentModal({
               stripe={stripePromise}
               options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}
             >
-              <SubscriptionForm plan={plan} onClose={onClose} />
+              <SubscriptionForm
+                plan={plan}
+                customerId={customerId}
+                planKey={planKey}
+                onClose={onClose}
+                onSuccess={handleSuccess}
+              />
             </Elements>
           )}
         </div>
