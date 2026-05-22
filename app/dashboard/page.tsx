@@ -94,8 +94,8 @@ function Sidebar({
         background: "#0d0d17",
       }}
     >
-      {/* Logo — 64px tall to match topbar */}
-      <div style={{ height: "64px", display: "flex", alignItems: "center", paddingLeft: "20px", paddingRight: "20px", flexShrink: 0 }}>
+      {/* Logo */}
+      <div style={{ height: "56px", display: "flex", alignItems: "center", paddingLeft: "20px", paddingRight: "20px", flexShrink: 0 }}>
         <Link href="/" className="flex items-center gap-2.5">
           <Image
             src="/elitelabs.png"
@@ -366,13 +366,6 @@ function GenerateTab({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      {/* Header */}
-      <div style={{ paddingRight: "48px" }}>
-        <h2 className="text-lg font-bold text-white mb-1">Texto a Voz</h2>
-        <p className="text-sm" style={{ color: "#8888a8" }}>
-          Convierte cualquier texto en voz natural al instante usando la IA más avanzada.
-        </p>
-      </div>
     <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6" style={{ minHeight: "calc(100vh - 200px)" }}>
 
       {/* ── LEFT: Editor ── */}
@@ -922,8 +915,6 @@ function HistoryTab() {
 
   return (
     <div>
-      <h2 className="text-lg font-bold text-white mb-6">Historial de generaciones</h2>
-
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -1045,8 +1036,6 @@ function BillingTab({
 
   return (
     <div className="max-w-3xl">
-      <h2 className="text-lg font-bold text-white mb-6">Facturación</h2>
-
       {/* Current balance card */}
       <div
         className="rounded-xl border p-5 mb-8 flex items-center justify-between gap-4"
@@ -1221,7 +1210,6 @@ function TranslateTab({ onGenerated, voices }: { onGenerated: () => void; voices
 
   return (
     <div className="max-w-2xl">
-      <h2 className="text-lg font-bold text-white mb-1">Traducción de audio</h2>
       <p className="text-sm mb-8" style={{ color: "#8888a8" }}>
         Sube un audio en español y obtén la versión traducida al idioma de tu elección.
       </p>
@@ -1488,7 +1476,6 @@ function TranscribeTab({ onTranscribed }: { onTranscribed: () => void }) {
 
   return (
     <div className="max-w-2xl">
-      <h2 className="text-lg font-bold text-white mb-1">Audio a Texto</h2>
       <p className="text-sm mb-8" style={{ color: "#8888a8" }}>
         Sube un archivo de audio y obtén la transcripción exacta usando reconocimiento de voz de Fish Audio.
       </p>
@@ -1713,8 +1700,6 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
 
   return (
     <div className="max-w-2xl">
-      <h2 className="text-lg font-bold text-white mb-6">Programa de referidos</h2>
-
       {/* Referral link */}
       <div className="rounded-xl border p-5 mb-6" style={cardStyle}>
         <p className="text-xs text-gray-500 mb-1">Tu enlace de referido</p>
@@ -1902,10 +1887,29 @@ export default function DashboardPage() {
       <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <main className="flex-1 overflow-auto relative" style={{ padding: "0" }}>
-        {/* Topbar — same 64px height as sidebar logo */}
-        <div style={{ height: "64px", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: "24px", flexShrink: 0, position: "sticky", top: 0, zIndex: 10, background: "rgba(10,10,15,0.92)", backdropFilter: "blur(8px)" }}>
-          <UserButton />
-        </div>
+        {/* Topbar */}
+        {(() => {
+          const TAB_META: Record<Tab, { title: string; Icon: React.ElementType }> = {
+            home:       { title: "Inicio",              Icon: Home },
+            generate:   { title: "Texto a Voz",         Icon: Type },
+            transcribe: { title: "Audio a Texto",        Icon: FileAudio },
+            translate:  { title: "Traducción de Audio",  Icon: Globe },
+            history:    { title: "Historial",            Icon: Clock },
+            billing:    { title: "Facturación",          Icon: CreditCard },
+            voices:     { title: "Mis Voces",            Icon: Mic2 },
+            referral:   { title: "Referidos",            Icon: Gift },
+          };
+          const { title, Icon } = TAB_META[activeTab] ?? { title: "", Icon: Home };
+          return (
+            <div style={{ height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", position: "sticky", top: 0, zIndex: 10, borderBottom: "1px solid #1a1a28", background: "#0a0a0f", flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <Icon size={16} style={{ color: "#4a4a65" }} />
+                <span style={{ fontSize: "14px", fontWeight: 600, color: "#e5e7eb" }}>{title}</span>
+              </div>
+              <UserButton />
+            </div>
+          );
+        })()}
         {/* Page content */}
         <div style={{ padding: "24px" }}>
         {successChars && (
