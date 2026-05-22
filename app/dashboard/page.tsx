@@ -11,7 +11,7 @@ import { VoiceBrowser, SelectedVoice } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
 import { PaymentModal, type BillingPlan } from "./PaymentModal";
 import { SupportModal } from "./SupportModal";
-import { LanguageProvider, useLang } from "./LanguageContext";
+import { useLang } from "./LanguageContext";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface Voice {
@@ -2075,7 +2075,6 @@ export default function DashboardPage() {
   }
 
   return (
-    <LanguageProvider>
     <div className="flex min-h-screen" style={{ background: "#0a0a0f" }}>
       {supportOpen && <SupportModal onClose={() => setSupportOpen(false)} />}
       <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -2186,6 +2185,5 @@ export default function DashboardPage() {
         </div>{/* end page content */}
       </main>
     </div>
-    </LanguageProvider>
   );
 }
