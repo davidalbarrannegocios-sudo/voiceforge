@@ -31,8 +31,8 @@ const PLANS: Plan[] = [
     cta: "Empezar gratis",
     features: [
       "10.000 caracteres al registrarte",
-      "Voces públicas incluidas",
-      "1 voz clonada",
+      "Voz aleatoria (sin selección)",
+      "Sin clonación de voz",
       "Historial 7 días",
     ],
   },
@@ -47,8 +47,8 @@ const PLANS: Plan[] = [
     cta: "Suscribirse",
     features: [
       "200.000 caracteres/mes",
-      "Voces públicas incluidas",
-      "Clonación de voz",
+      "Selección de voz completa",
+      "3 voces clonadas",
       "Historial 30 días",
     ],
   },
@@ -63,8 +63,8 @@ const PLANS: Plan[] = [
     cta: "Suscribirse",
     features: [
       "500.000 caracteres/mes",
-      "Voces públicas incluidas",
-      "Clonación ilimitada",
+      "Selección de voz completa",
+      "10 voces clonadas",
       "Historial completo",
       "Generación prioritaria",
     ],
@@ -80,8 +80,8 @@ const PLANS: Plan[] = [
     cta: "Suscribirse",
     features: [
       "1.000.000 caracteres/mes",
-      "Voces públicas incluidas",
-      "Clonación ilimitada",
+      "Selección de voz completa",
+      "20 voces clonadas",
       "Historial completo",
       "Prioridad máxima",
       "Soporte preferente",

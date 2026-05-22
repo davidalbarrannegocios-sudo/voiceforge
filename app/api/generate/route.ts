@@ -7,6 +7,24 @@ import { calculateCharCost } from "@/lib/utils";
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
+async function getRandomPublicVoiceId(): Promise<string | undefined> {
+  const apiKey = process.env.FISH_AUDIO_API_KEY;
+  if (!apiKey) return undefined;
+  try {
+    const res = await fetch(
+      "https://api.fish.audio/model?page_size=20&page_number=1&sort_by=task_count&language=es",
+      { headers: { Authorization: `Bearer ${apiKey}` } }
+    );
+    if (!res.ok) return undefined;
+    const data = await res.json();
+    const voices: { _id: string }[] = data.items ?? [];
+    if (voices.length === 0) return undefined;
+    return voices[Math.floor(Math.random() * voices.length)]._id;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function POST(req: Request) {
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -32,6 +50,12 @@ export async function POST(req: Request) {
       );
     }
 
+    // Free plan: ignore requested voice, use a random public voice
+    let effectiveReferenceId: string | undefined = reference_id || undefined;
+    if (user.plan === "free") {
+      effectiveReferenceId = await getRandomPublicVoiceId();
+    }
+
     const [, job] = await prisma.$transaction([
       prisma.user.update({
         where: { id: user.id },
@@ -42,19 +66,19 @@ export async function POST(req: Request) {
           userId: user.id,
           status: "processing",
           text: trimmed,
-          voiceId: reference_id ?? "default",
+          voiceId: effectiveReferenceId ?? "default",
           creditsUsed: charCost,
         },
       }),
     ]);
 
-    console.log(`[generate] jobId=${job.id} chars=${trimmed.length}`);
+    console.log(`[generate] jobId=${job.id} chars=${trimmed.length} plan=${user.plan}`);
 
     let result;
     try {
       result = await fishAudioGenerate({
         text: trimmed,
-        referenceId: reference_id || undefined,
+        referenceId: effectiveReferenceId,
         userId: user.id,
         signal: req.signal,
         prosody: prosody ?? undefined,
@@ -87,7 +111,7 @@ export async function POST(req: Request) {
         data: {
           userId: user.id,
           text: trimmed,
-          voiceId: reference_id ?? "default",
+          voiceId: effectiveReferenceId ?? "default",
           audioUrl: result.audio_url,
           durationSeconds: result.duration_seconds,
           creditsUsed: charCost,

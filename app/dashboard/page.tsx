@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, UserButton, useClerk } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, CreditCard, Gift, Copy, Globe, FileAudio, Type, User } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, Lock } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
@@ -277,10 +277,12 @@ function GenerateTab({
   voices,
   onGenerated,
   initialVoice,
+  plan,
 }: {
   voices: Voice[];
   onGenerated: () => void;
   initialVoice?: SelectedVoice | null;
+  plan: string;
 }) {
   const [text, setText] = useState("");
   const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(initialVoice ?? null);
@@ -374,17 +376,24 @@ function GenerateTab({
         <div className="flex items-center gap-3 px-6 py-4 border-b" style={{ borderColor: "#2a2a3e" }}>
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ background: "rgba(59,130,246,0.15)" }}
+            style={{ background: plan === "free" ? "rgba(74,74,101,0.15)" : "rgba(59,130,246,0.15)" }}
           >
-            <Mic size={18} style={{ color: "#93c5fd" }} />
+            {plan === "free"
+              ? <Lock size={18} style={{ color: "#3a3a52" }} />
+              : <Mic size={18} style={{ color: "#93c5fd" }} />}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white truncate">
-              {selectedVoice?.name ?? "Voz por defecto"}
-            </p>
-            <p className="text-xs" style={{ color: "#8888a8" }}>
-              {selectedVoice?.isCloned ? "Voz clonada" : "Voz del sistema"}
-            </p>
+            {plan === "free" ? (
+              <>
+                <p className="text-sm font-semibold truncate" style={{ color: "#3a3a52" }}>Voz aleatoria</p>
+                <p className="text-xs" style={{ color: "#2e2e48" }}>Solo disponible en planes de pago</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-semibold text-white truncate">{selectedVoice?.name ?? "Voz por defecto"}</p>
+                <p className="text-xs" style={{ color: "#8888a8" }}>{selectedVoice?.isCloned ? "Voz clonada" : "Voz del sistema"}</p>
+              </>
+            )}
           </div>
         </div>
 
@@ -486,27 +495,36 @@ function GenerateTab({
             {/* Voz */}
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#555570" }}>Voz</p>
-              <button
-                onClick={() => setShowBrowser(true)}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all hover:border-blue-500/60"
-                style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
-              >
+              {plan === "free" ? (
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ background: "rgba(59,130,246,0.15)" }}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm"
+                  style={{ background: "#0d0d17", border: "1px solid #1a1a28", cursor: "not-allowed" }}
                 >
-                  <Mic size={13} style={{ color: "#93c5fd" }} />
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(74,74,101,0.12)" }}>
+                    <Lock size={13} style={{ color: "#2e2e48" }} />
+                  </div>
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="text-sm font-medium truncate" style={{ color: "#2e2e48" }}>Voz aleatoria</p>
+                    <p className="text-xs" style={{ color: "#1e1e30" }}>Solo en planes de pago</p>
+                  </div>
+                  <span className="text-xs flex-shrink-0" style={{ color: "#2e2e48" }}>🔒</span>
                 </div>
-                <div className="flex-1 text-left min-w-0">
-                  <p className="text-sm font-medium text-white truncate">
-                    {selectedVoice?.name ?? "Voz por defecto"}
-                  </p>
-                  <p className="text-xs" style={{ color: "#8888a8" }}>
-                    {selectedVoice?.isCloned ? "Voz clonada" : "Sistema"}
-                  </p>
-                </div>
-                <span className="text-xs flex-shrink-0" style={{ color: "#8888a8" }}>→</span>
-              </button>
+              ) : (
+                <button
+                  onClick={() => setShowBrowser(true)}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all hover:border-blue-500/60"
+                  style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
+                >
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(59,130,246,0.15)" }}>
+                    <Mic size={13} style={{ color: "#93c5fd" }} />
+                  </div>
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{selectedVoice?.name ?? "Voz por defecto"}</p>
+                    <p className="text-xs" style={{ color: "#8888a8" }}>{selectedVoice?.isCloned ? "Voz clonada" : "Sistema"}</p>
+                  </div>
+                  <span className="text-xs flex-shrink-0" style={{ color: "#8888a8" }}>→</span>
+                </button>
+              )}
             </div>
 
             {/* Audio controls */}
@@ -800,15 +818,19 @@ function VoicesTab({
   voices,
   onRefresh,
   onUseVoice,
+  plan,
 }: {
   voices: Voice[];
   onRefresh: () => void;
   onUseVoice: (voice: SelectedVoice) => void;
+  plan: string;
 }) {
   const [showModal, setShowModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const cloned = voices.filter((v) => !v.isSystem);
+  const slotLimit = VOICE_SLOT_LIMITS[plan] ?? 0;
+  const atLimit = plan === "free" || cloned.length >= slotLimit;
 
   async function handleDelete(voiceId: string) {
     setDeletingId(voiceId);
@@ -831,17 +853,42 @@ function VoicesTab({
 
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-white">Mis voces clonadas</h2>
-          <button
-            onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:-translate-y-0.5"
-            style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
-          >
-            + Clonar nueva voz
-          </button>
+          <div>
+            <h2 className="text-lg font-bold text-white">Mis voces clonadas</h2>
+            {plan === "free" ? (
+              <p className="text-xs mt-0.5" style={{ color: "#2e2e48" }}>No disponible en el plan gratuito</p>
+            ) : (
+              <p className="text-xs mt-0.5" style={{ color: cloned.length >= slotLimit ? "#f87171" : "#3a3a52" }}>
+                {cloned.length}/{slotLimit} slots utilizados
+              </p>
+            )}
+          </div>
+          {plan === "free" ? (
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold" style={{ background: "#0d0d17", border: "1px solid #1e1e2e", color: "#2e2e48" }}>
+              <Lock size={13} />
+              Clonar voz
+            </div>
+          ) : (
+            <button
+              onClick={() => !atLimit && setShowModal(true)}
+              disabled={atLimit}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              style={atLimit ? { background: "#1a1a28", border: "1px solid #2a2a3e", color: "#3a3a52" } : { background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+            >
+              {atLimit ? `Límite alcanzado (${cloned.length}/${slotLimit})` : "+ Clonar nueva voz"}
+            </button>
+          )}
         </div>
 
-        {cloned.length === 0 ? (
+        {plan === "free" ? (
+          <div className="text-center py-16" style={{ color: "#2e2e48" }}>
+            <div className="flex justify-center mb-3">
+              <Lock size={40} style={{ color: "#2e2e48" }} />
+            </div>
+            <p className="font-medium mb-1">Clonación de voz bloqueada</p>
+            <p className="text-sm">Disponible desde el plan Starter ($7/mes)</p>
+          </div>
+        ) : cloned.length === 0 ? (
           <div className="text-center py-16" style={{ color: "#8888a8" }}>
             <div className="flex justify-center mb-3">
               <Mic size={40} style={{ color: "#8888a8" }} />
@@ -995,6 +1042,9 @@ function HistoryTab() {
   );
 }
 
+/* ─── Plan limits (mirrored from lib/stripe.ts for client use) ── */
+const VOICE_SLOT_LIMITS: Record<string, number> = { free: 0, starter: 3, pro: 10, elite: 20 };
+
 /* ─── Billing Tab ────────────────────────────────────────── */
 const BILLING_PLANS = [
   {
@@ -1004,7 +1054,7 @@ const BILLING_PLANS = [
     price: 7,
     characters: 200_000,
     popular: false,
-    features: ["200.000 caracteres", "Voces públicas incluidas", "Clonación de voz"],
+    features: ["200.000 caracteres/mes", "Selección de voz completa", "3 voces clonadas"],
   },
   {
     key: "pro",
@@ -1013,7 +1063,7 @@ const BILLING_PLANS = [
     price: 13,
     characters: 500_000,
     popular: true,
-    features: ["500.000 caracteres", "Voces públicas incluidas", "Clonación ilimitada", "Generación prioritaria"],
+    features: ["500.000 caracteres/mes", "Selección de voz completa", "10 voces clonadas", "Generación prioritaria"],
   },
   {
     key: "elite",
@@ -1022,7 +1072,7 @@ const BILLING_PLANS = [
     price: 25,
     characters: 1_000_000,
     popular: false,
-    features: ["1.000.000 caracteres", "Voces públicas incluidas", "Clonación ilimitada", "Soporte preferente"],
+    features: ["1.000.000 caracteres/mes", "Selección de voz completa", "20 voces clonadas", "Soporte preferente"],
   },
 ] as const;
 
@@ -1996,6 +2046,7 @@ export default function DashboardPage() {
             voices={voices}
             onGenerated={fetchCredits}
             initialVoice={selectedVoice}
+            plan={plan}
           />
         )}
         {activeTab === "voices" && (
@@ -2003,6 +2054,7 @@ export default function DashboardPage() {
             voices={voices}
             onRefresh={fetchVoices}
             onUseVoice={handleUseVoice}
+            plan={plan}
           />
         )}
         {activeTab === "history" && <HistoryTab />}

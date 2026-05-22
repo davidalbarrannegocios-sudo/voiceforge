@@ -7,6 +7,13 @@ export const PLAN_CREDITS: Record<string, number> = {
   elite:   1_000_000,
 };
 
+export const PLAN_VOICE_SLOTS: Record<string, number> = {
+  free:    0,
+  starter: 3,
+  pro:     10,
+  elite:   20,
+};
+
 export const PLANS = {
   starter: {
     name: "Starter",
