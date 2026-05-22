@@ -32,70 +32,87 @@ export async function POST(req: Request) {
   // ── checkout.session.completed ────────────────────────────
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
+    try {
+      console.log("[webhook] checkout.session.completed iniciando");
+      console.log("[webhook] session.id:", session.id);
+      console.log("[webhook] session.mode:", session.mode);
+      console.log("[webhook] metadata:", JSON.stringify(session.metadata));
+      console.log("[webhook] userId:", session.metadata?.userId);
+      console.log("[webhook] plan:", session.metadata?.plan);
+      console.log("[webhook] subscription:", session.subscription);
 
-    // ── Credit pack (one-time payment) ────────────────────
-    if (session.mode === "payment") {
-      const userId  = session.metadata?.userId;
-      const credits = parseInt(session.metadata?.credits ?? "0", 10);
-      if (!userId || !credits) {
-        console.error("[webhook] missing metadata in payment session", session.id);
+      // ── Credit pack (one-time payment) ────────────────────
+      if (session.mode === "payment") {
+        const userId  = session.metadata?.userId;
+        const credits = parseInt(session.metadata?.credits ?? "0", 10);
+        if (!userId || !credits) {
+          console.error("[webhook] missing metadata in payment session", session.id);
+          return NextResponse.json({ received: true });
+        }
+
+        const paymentIntentId = typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : (session.payment_intent as Stripe.PaymentIntent | null)?.id;
+
+        const expiresAt = addMonths(new Date(), 3);
+
+        console.log("[webhook] Actualizando usuario en DB (credit pack)...");
+        await prisma.$transaction([
+          prisma.user.update({
+            where: { id: userId },
+            data: { extraCredits: { increment: credits } },
+          }),
+          prisma.creditPack.create({
+            data: { userId, credits, expiresAt, stripePaymentIntentId: paymentIntentId },
+          }),
+        ]);
+
+        console.log(`[webhook] credit pack purchased: user=${userId} credits=${credits}`);
         return NextResponse.json({ received: true });
       }
 
-      const paymentIntentId = typeof session.payment_intent === "string"
-        ? session.payment_intent
-        : (session.payment_intent as Stripe.PaymentIntent | null)?.id;
+      if (session.mode !== "subscription") return NextResponse.json({ received: true });
 
-      const expiresAt = addMonths(new Date(), 3);
+      const userId = session.metadata?.userId;
+      const planKey = session.metadata?.plan;
+      if (!userId || !planKey) {
+        console.error("[webhook] missing metadata in session", session.id);
+        return NextResponse.json({ received: true });
+      }
 
-      await prisma.$transaction([
-        prisma.user.update({
-          where: { id: userId },
-          data: { extraCredits: { increment: credits } },
-        }),
-        prisma.creditPack.create({
-          data: { userId, credits, expiresAt, stripePaymentIntentId: paymentIntentId },
-        }),
-      ]);
+      const subscriptionId = typeof session.subscription === "string"
+        ? session.subscription
+        : session.subscription?.id;
+      if (!subscriptionId) {
+        console.error("[webhook] no subscription ID in session", session.id);
+        return NextResponse.json({ received: true });
+      }
 
-      console.log(`[webhook] credit pack purchased: user=${userId} credits=${credits}`);
-      return NextResponse.json({ received: true });
+      console.log("[webhook] Recuperando suscripción de Stripe:", subscriptionId);
+      const sub = await stripe.subscriptions.retrieve(subscriptionId);
+      console.log("[webhook] sub.items.data[0]:", JSON.stringify(sub.items.data[0]?.current_period_end));
+      const periodEnd = new Date(sub.items.data[0].current_period_end * 1000);
+      const credits = PLAN_CREDITS[planKey] ?? 0;
+      console.log("[webhook] periodEnd:", periodEnd, "credits:", credits);
+
+      console.log("[webhook] Actualizando usuario en DB...");
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          plan: planKey,
+          planExpiresAt: periodEnd,
+          stripeSubscriptionId: subscriptionId,
+          stripeCustomerId: typeof session.customer === "string" ? session.customer : undefined,
+          credits,
+        },
+      });
+
+      console.log(`[webhook] subscription activated: user=${userId} plan=${planKey} credits=${credits}`);
+    } catch (error) {
+      console.error("[webhook] Error completo:", error);
+      console.error("[webhook] Stack:", error instanceof Error ? error.stack : error);
+      return NextResponse.json({ received: true }, { status: 200 });
     }
-
-    if (session.mode !== "subscription") return NextResponse.json({ received: true });
-
-    const userId = session.metadata?.userId;
-    const planKey = session.metadata?.plan;
-    if (!userId || !planKey) {
-      console.error("[webhook] missing metadata in session", session.id);
-      return NextResponse.json({ received: true });
-    }
-
-    const subscriptionId = typeof session.subscription === "string"
-      ? session.subscription
-      : session.subscription?.id;
-    if (!subscriptionId) {
-      console.error("[webhook] no subscription ID in session", session.id);
-      return NextResponse.json({ received: true });
-    }
-
-    // Retrieve subscription to get period end
-    const sub = await stripe.subscriptions.retrieve(subscriptionId);
-    const periodEnd = new Date(sub.items.data[0].current_period_end * 1000);
-    const credits = PLAN_CREDITS[planKey] ?? 0;
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        plan: planKey,
-        planExpiresAt: periodEnd,
-        stripeSubscriptionId: subscriptionId,
-        stripeCustomerId: typeof session.customer === "string" ? session.customer : undefined,
-        credits,
-      },
-    });
-
-    console.log(`[webhook] subscription activated: user=${userId} plan=${planKey} credits=${credits}`);
   }
 
   // ── invoice.paid ──────────────────────────────────────────
