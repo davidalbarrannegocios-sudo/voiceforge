@@ -173,5 +173,32 @@ export async function POST(req: Request) {
     console.log(`[webhook] plan changed: user=${user.id} plan=${newPlan}`);
   }
 
+  // ── payment_intent.succeeded (credit pack backup) ─────────
+  if (event.type === "payment_intent.succeeded") {
+    const pi = event.data.object as Stripe.PaymentIntent;
+    const userId  = pi.metadata?.userId;
+    const credits = parseInt(pi.metadata?.credits ?? "0", 10);
+
+    if (!userId || !credits) return NextResponse.json({ received: true });
+
+    // Idempotency: skip if already credited
+    const existing = await prisma.creditPack.findUnique({ where: { stripePaymentIntentId: pi.id } });
+    if (existing) return NextResponse.json({ received: true });
+
+    const expiresAt = addMonths(new Date(), 3);
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: userId },
+        data: { extraCredits: { increment: credits } },
+      }),
+      prisma.creditPack.create({
+        data: { userId, credits, expiresAt, stripePaymentIntentId: pi.id },
+      }),
+    ]);
+
+    console.log(`[webhook] credit pack (pi.succeeded): user=${userId} credits=${credits}`);
+  }
+
   return NextResponse.json({ received: true });
 }

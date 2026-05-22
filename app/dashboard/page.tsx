@@ -11,6 +11,7 @@ import { VoiceBrowser, SelectedVoice } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
 import { PaymentModal, type BillingPlan } from "./PaymentModal";
 import { SupportModal } from "./SupportModal";
+import { CreditPackModal } from "./CreditPackModal";
 import { useLang } from "./LanguageContext";
 
 /* ─── Types ──────────────────────────────────────────────── */
@@ -1154,8 +1155,9 @@ function BillingTab({
   onRefresh: () => void;
 }) {
   const [activePlan, setActivePlan] = useState<BillingPlan | null>(null);
+  const [activePack, setActivePack] = useState<string | null>(null);
+  const [successCredits, setSuccessCredits] = useState<number | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [packLoading, setPackLoading] = useState<string | null>(null);
 
   const badge = PLAN_BADGE[plan] ?? PLAN_BADGE.free;
   const renewalDate = planExpiresAt
@@ -1173,20 +1175,6 @@ function BillingTab({
     }
   }
 
-  async function buyPack(packKey: string) {
-    setPackLoading(packKey);
-    try {
-      const res = await fetch("/api/buy-credits", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packKey }),
-      });
-      const data = await res.json();
-      if (data.checkoutUrl) window.location.href = data.checkoutUrl;
-    } finally {
-      setPackLoading(null);
-    }
-  }
 
   return (
     <div style={{ width: "100%" }}>
@@ -1341,20 +1329,28 @@ function BillingTab({
             <div style={{ display: "flex", alignItems: "center", gap: "16px", flexShrink: 0 }}>
               <span style={{ fontSize: "22px", fontWeight: 800, color: "#fff" }}>${pack.price}</span>
               <button
-                onClick={() => buyPack(pack.key)}
-                disabled={packLoading === pack.key}
+                onClick={() => setActivePack(pack.key)}
                 style={{
-                  padding: "9px 20px", borderRadius: "10px", border: "none", cursor: packLoading === pack.key ? "not-allowed" : "pointer",
+                  padding: "9px 20px", borderRadius: "10px", border: "none", cursor: "pointer",
                   background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "13px", fontWeight: 600,
-                  opacity: packLoading === pack.key ? 0.6 : 1, whiteSpace: "nowrap",
+                  whiteSpace: "nowrap",
                 }}
               >
-                {packLoading === pack.key ? "Cargando..." : "Comprar →"}
+                Comprar →
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      {successCredits !== null && (
+        <div className="mt-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
+          <Check size={18} className="text-green-400 flex-shrink-0" />
+          <p className="text-green-400 font-medium text-sm">
+            ¡Recarga exitosa! Se han añadido <strong>{successCredits.toLocaleString("es-ES")}</strong> créditos extra a tu cuenta.
+          </p>
+        </div>
+      )}
 
       {activePlan && (
         <PaymentModal
@@ -1362,6 +1358,18 @@ function BillingTab({
           onClose={() => setActivePlan(null)}
           onSuccess={() => {
             setActivePlan(null);
+            onRefresh();
+          }}
+        />
+      )}
+
+      {activePack && (
+        <CreditPackModal
+          packKey={activePack}
+          onClose={() => setActivePack(null)}
+          onSuccess={(credits) => {
+            setActivePack(null);
+            setSuccessCredits(credits);
             onRefresh();
           }}
         />
