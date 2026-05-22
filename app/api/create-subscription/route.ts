@@ -27,6 +27,7 @@ export async function POST(req: Request) {
   }
 
   try {
+    console.log("[create-subscription] Buscando usuario en DB...");
     let user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
     if (!user) {
       user = await prisma.user.create({
@@ -38,12 +39,13 @@ export async function POST(req: Request) {
         },
       });
     }
+    console.log("[create-subscription] Usuario encontrado:", user?.id);
 
     const stripe = getStripe();
 
-    // Get or create Stripe customer
     let customerId = user.stripeCustomerId;
     if (!customerId) {
+      console.log("[create-subscription] Creando customer en Stripe...");
       const customer = await stripe.customers.create({
         email: user.email,
         metadata: { userId: user.id },
@@ -51,8 +53,8 @@ export async function POST(req: Request) {
       customerId = customer.id;
       await prisma.user.update({ where: { id: user.id }, data: { stripeCustomerId: customerId } });
     }
+    console.log("[create-subscription] Customer ID:", customerId);
 
-    // Cancel any existing incomplete subscription for this customer to avoid duplicates
     const existing = await stripe.subscriptions.list({
       customer: customerId,
       status: "incomplete",
@@ -62,7 +64,7 @@ export async function POST(req: Request) {
       await stripe.subscriptions.cancel(sub.id);
     }
 
-    // Create the subscription in incomplete state
+    console.log("[create-subscription] Creando suscripción con priceId:", priceId);
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
       items: [{ price: priceId }],
@@ -71,9 +73,11 @@ export async function POST(req: Request) {
       expand: ["latest_invoice.payment_intent"],
       metadata: { userId: user.id },
     });
+    console.log("[create-subscription] Suscripción creada:", subscription.id);
 
     const invoice = subscription.latest_invoice as Stripe.Invoice;
     const paymentIntent = (invoice as unknown as { payment_intent: Stripe.PaymentIntent | null })?.payment_intent;
+    console.log("[create-subscription] PaymentIntent:", paymentIntent?.id, "secret:", !!paymentIntent?.client_secret);
 
     if (!paymentIntent?.client_secret) {
       return NextResponse.json({ error: "No se pudo crear el intento de pago" }, { status: 500 });
@@ -84,7 +88,7 @@ export async function POST(req: Request) {
       subscriptionId: subscription.id,
     });
   } catch (error) {
-    console.error("[create-subscription] Error:", error);
+    console.error("[create-subscription] Error completo:", error);
     const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
