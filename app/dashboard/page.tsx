@@ -1000,26 +1000,29 @@ const BILLING_PLANS = [
   {
     key: "starter",
     name: "Starter",
+    description: "Para creadores que están empezando",
     price: 7,
     characters: 200_000,
     popular: false,
-    features: ["200.000 caracteres", "Explorar voces públicas", "Clonación de voz"],
+    features: ["200.000 caracteres", "Voces públicas incluidas", "Clonación de voz"],
   },
   {
     key: "pro",
     name: "Pro",
+    description: "La mejor opción para creadores activos",
     price: 13,
     characters: 500_000,
     popular: true,
-    features: ["500.000 caracteres", "Explorar voces públicas", "Clonación de voz ilimitada", "Generación prioritaria"],
+    features: ["500.000 caracteres", "Voces públicas incluidas", "Clonación ilimitada", "Generación prioritaria"],
   },
   {
     key: "elite",
     name: "Elite",
+    description: "Máximo rendimiento sin límites",
     price: 25,
     characters: 1_000_000,
     popular: false,
-    features: ["1.000.000 caracteres", "Explorar voces públicas", "Clonación de voz ilimitada", "Soporte preferente"],
+    features: ["1.000.000 caracteres", "Voces públicas incluidas", "Clonación ilimitada", "Soporte preferente"],
   },
 ] as const;
 
@@ -1035,80 +1038,91 @@ function BillingTab({
   const [activePlan, setActivePlan] = useState<BillingPlan | null>(null);
 
   return (
-    <div className="max-w-3xl">
-      {/* Current balance card */}
-      <div
-        className="rounded-xl border p-5 mb-8 flex items-center justify-between gap-4"
-        style={{ background: "#12121a", borderColor: "#2a2a3e" }}
-      >
-        <div>
-          <p className="text-xs text-gray-500 mb-1">Saldo actual</p>
-          <p className="text-2xl font-bold text-white">
+    <div style={{ maxWidth: "880px" }}>
+      {/* Credits balance */}
+      <div style={{ marginBottom: "36px" }}>
+        <p style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#3a3a52", marginBottom: "8px" }}>
+          Caracteres disponibles
+        </p>
+        <div style={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
+          <span style={{ fontSize: "40px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
             {credits !== null ? credits.toLocaleString("es-ES") : "—"}
-            <span className="text-base font-normal text-gray-400 ml-2">caracteres</span>
-          </p>
-        </div>
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ background: "rgba(59,130,246,0.15)" }}
-        >
-          <CreditCard size={18} style={{ color: "#93c5fd" }} />
+          </span>
+          <span style={{ fontSize: "14px", color: "#3a3a52" }}>caracteres</span>
         </div>
       </div>
 
-      {/* Recharge section */}
-      <p className="text-sm font-semibold text-gray-300 mb-4">Recargar caracteres</p>
+      {/* Section header */}
+      <div style={{ marginBottom: "20px" }}>
+        <p style={{ fontSize: "16px", fontWeight: 700, color: "#e5e7eb", marginBottom: "3px" }}>Recargar caracteres</p>
+        <p style={{ fontSize: "13px", color: "#3a3a52" }}>Administra tus caracteres aquí</p>
+      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Plan cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
         {BILLING_PLANS.map((plan) => (
           <div
             key={plan.key}
-            className="relative rounded-xl border flex flex-col p-5"
             style={{
-              background: plan.popular ? "rgba(59,130,246,0.08)" : "#12121a",
-              borderColor: plan.popular ? "#3b82f6" : "#2a2a3e",
+              position: "relative",
+              borderRadius: "16px",
+              border: plan.popular ? "1px solid #3b82f6" : "1px solid #1e1e2e",
+              background: plan.popular ? "rgba(30,58,138,0.18)" : "#0d0d17",
+              padding: "28px 24px",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
             {plan.popular && (
               <div
-                className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-xs font-bold text-white px-3 py-0.5 rounded-full whitespace-nowrap"
-                style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
+                style={{
+                  position: "absolute", top: "-11px", left: "50%", transform: "translateX(-50%)",
+                  background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff",
+                  fontSize: "10px", fontWeight: 700, padding: "3px 12px", borderRadius: "999px",
+                  whiteSpace: "nowrap", letterSpacing: "0.1em",
+                }}
               >
-                POPULAR
+                MÁS POPULAR
               </div>
             )}
 
-            <div className="mb-4">
-              <p className="font-semibold text-white mb-1">{plan.name}</p>
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-white">${plan.price}</span>
-                <span className="text-xs text-gray-500">pago único</span>
-              </div>
-              <p className="text-xs text-gray-500 mt-0.5">
-                {plan.characters.toLocaleString("es-ES")} caracteres
-              </p>
-            </div>
+            {/* Name + description */}
+            <p style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>{plan.name}</p>
+            <p style={{ fontSize: "12px", color: "#3a3a52", marginBottom: "20px" }}>{plan.description}</p>
 
-            <ul className="space-y-1.5 flex-1 mb-5">
-              {plan.features.map((f) => (
-                <li key={f} className="flex items-center gap-2 text-xs text-gray-400">
-                  <Check size={11} style={{ color: "#93c5fd", flexShrink: 0 }} />
-                  {f}
-                </li>
-              ))}
-            </ul>
+            {/* Price */}
+            <p style={{ fontSize: "38px", fontWeight: 800, color: "#fff", lineHeight: 1, marginBottom: "4px" }}>
+              ${plan.price}
+            </p>
+            <p style={{ fontSize: "12px", color: "#3a3a52", marginBottom: "2px" }}>pago único</p>
+            <p style={{ fontSize: "13px", color: "#6b6b88", marginBottom: "22px" }}>
+              {plan.characters.toLocaleString("es-ES")} caracteres
+            </p>
 
+            {/* CTA button */}
             <button
               onClick={() => setActivePlan(plan)}
-              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5 flex items-center justify-center"
               style={
                 plan.popular
-                  ? { background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "white", boxShadow: "0 4px 12px rgba(59,130,246,0.3)" }
-                  : { background: "#1a1a2e", color: "#d1d5db", border: "1px solid #2a2a3e" }
+                  ? { width: "100%", padding: "11px", borderRadius: "10px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "14px", fontWeight: 600, marginBottom: "22px", boxShadow: "0 4px 14px rgba(59,130,246,0.35)" }
+                  : { width: "100%", padding: "11px", borderRadius: "10px", border: "1px solid #2a2a3e", cursor: "pointer", background: "transparent", color: "#d1d5db", fontSize: "14px", fontWeight: 600, marginBottom: "22px" }
               }
             >
               Comprar
             </button>
+
+            {/* Divider */}
+            <div style={{ height: "1px", background: plan.popular ? "rgba(59,130,246,0.2)" : "#1a1a28", marginBottom: "18px" }} />
+
+            {/* Features */}
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
+              {plan.features.map((f) => (
+                <li key={f} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "#6b6b88" }}>
+                  <Check size={13} style={{ color: "#3b82f6", flexShrink: 0 }} />
+                  {f}
+                </li>
+              ))}
+            </ul>
           </div>
         ))}
       </div>
