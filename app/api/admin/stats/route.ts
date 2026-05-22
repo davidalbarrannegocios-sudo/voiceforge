@@ -9,19 +9,23 @@ export async function GET() {
     const auth = await requireAdmin();
     if (auth instanceof NextResponse) return auth;
 
-    const [totalUsers, totalGenerations, creditsAggregate, revenueAggregate] =
+    const [totalUsers, totalGenerations, creditsAggregate, starterCount, proCount, eliteCount] =
       await Promise.all([
         prisma.user.count(),
         prisma.generation.count(),
         prisma.generation.aggregate({ _sum: { creditsUsed: true } }),
-        prisma.purchase.aggregate({ _sum: { amountCents: true } }),
+        prisma.user.count({ where: { plan: "starter" } }),
+        prisma.user.count({ where: { plan: "pro" } }),
+        prisma.user.count({ where: { plan: "elite" } }),
       ]);
+
+    const mrr = starterCount * 7 + proCount * 13 + eliteCount * 25;
 
     return NextResponse.json({
       totalUsers,
       totalGenerations,
       totalCreditsConsumed: creditsAggregate._sum.creditsUsed ?? 0,
-      totalRevenueDollars: ((revenueAggregate._sum.amountCents ?? 0) / 100).toFixed(2),
+      totalRevenueDollars: mrr.toFixed(2),
     });
   } catch (e) {
     console.error("[admin/stats]", e);

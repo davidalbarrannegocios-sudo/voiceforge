@@ -5,14 +5,16 @@ import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
 /* ─── Types ───────────────────────────────────────────────── */
+const PLAN_PRICE: Record<string, number> = { free: 0, starter: 7, pro: 13, elite: 25 };
+
 interface AdminUser {
   id: string;
   email: string;
   credits: number;
+  plan: string;
   role: string;
   createdAt: string;
   _count: { generations: number };
-  purchases: { amountCents: number }[];
 }
 
 interface Stats {
@@ -547,7 +549,7 @@ export default function AdminPage() {
               { label: "Usuarios totales",     value: stats.totalUsers.toLocaleString("es-ES") },
               { label: "Generaciones totales",  value: stats.totalGenerations.toLocaleString("es-ES") },
               { label: "Créditos consumidos",   value: stats.totalCreditsConsumed.toLocaleString("es-ES") },
-              { label: "Ingresos estimados",    value: `$${stats.totalRevenueDollars}` },
+              { label: "MRR estimado",           value: `$${stats.totalRevenueDollars}/mes` },
             ].map(({ label, value }) => (
               <div key={label} style={card}>
                 <p style={{ color: "#555570", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.5rem" }}>{label}</p>
@@ -626,7 +628,7 @@ export default function AdminPage() {
               </thead>
               <tbody>
                 {filtered.map((u) => {
-                  const revenue = u.purchases.reduce((s, p) => s + p.amountCents, 0) / 100;
+                  const planPrice = PLAN_PRICE[u.plan] ?? 0;
                   return (
                     <tr key={u.id} style={{ borderBottom: "1px solid #1e1e2e" }}>
                       <td style={{ padding: "0.6rem 0.75rem", color: "#555570", fontFamily: "monospace", fontSize: "0.7rem" }}>
@@ -641,7 +643,14 @@ export default function AdminPage() {
                       <td style={{ padding: "0.6rem 0.75rem", color: "#e5e7eb" }}>{u.email}</td>
                       <td style={{ padding: "0.6rem 0.75rem", color: "#93c5fd", fontWeight: 600 }}>{u.credits.toLocaleString("es-ES")}</td>
                       <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af" }}>{u._count.generations}</td>
-                      <td style={{ padding: "0.6rem 0.75rem", color: "#4ade80" }}>${revenue.toFixed(2)}</td>
+                      <td style={{ padding: "0.6rem 0.75rem" }}>
+                        <span style={{ color: planPrice > 0 ? "#4ade80" : "#555570", fontWeight: 600 }}>
+                          {planPrice > 0 ? `$${planPrice}/mes` : "—"}
+                        </span>
+                        <span style={{ marginLeft: "6px", fontSize: "0.65rem", color: "#555570", textTransform: "uppercase" }}>
+                          {u.plan}
+                        </span>
+                      </td>
                       <td style={{ padding: "0.6rem 0.75rem" }}><Tag role={u.role} /></td>
                       <td style={{ padding: "0.6rem 0.75rem", color: "#555570", whiteSpace: "nowrap" }}>
                         {new Date(u.createdAt).toLocaleDateString("es-ES")}

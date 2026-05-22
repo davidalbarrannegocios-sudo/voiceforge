@@ -15,10 +15,10 @@ export async function GET() {
         id: true,
         email: true,
         credits: true,
+        plan: true,
         role: true,
         createdAt: true,
         _count: { select: { generations: true } },
-        purchases: { select: { amountCents: true } },
       },
     });
 
