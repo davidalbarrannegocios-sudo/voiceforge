@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, HeadObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export const r2Client = new S3Client({
@@ -48,4 +48,14 @@ export async function r2KeyExists(key: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export async function deleteFromR2(key: string): Promise<void> {
+  await r2Client.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+}
+
+export function keyFromPublicUrl(url: string): string {
+  const base = process.env.R2_PUBLIC_URL ?? "";
+  if (base && url.startsWith(base)) return url.slice(base.length + 1);
+  try { return new URL(url).pathname.slice(1); } catch { return url; }
 }

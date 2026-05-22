@@ -26,11 +26,12 @@ interface Voice {
 interface Generation {
   id: string;
   text: string;
-  audioUrl: string;
+  audioUrl: string | null;
   creditsUsed: number;
   durationSeconds: number;
   voiceId: string;
   createdAt: string;
+  expiresAt: string | null;
 }
 
 type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral" | "translate" | "transcribe";
@@ -237,6 +238,16 @@ function HomeTab({
       </div>
     </div>
   );
+}
+
+function formatExpiry(expiresAt: string | null): { label: string; expired: boolean } | null {
+  if (!expiresAt) return null;
+  const diffMs = new Date(expiresAt).getTime() - Date.now();
+  if (diffMs <= 0) return { label: "Audio expirado", expired: true };
+  const h = Math.floor(diffMs / (1000 * 60 * 60));
+  const d = Math.floor(h / 24);
+  if (d >= 1) return { label: `Expira en ${d} día${d === 1 ? "" : "s"}`, expired: false };
+  return { label: `Expira en ${h}h`, expired: false };
 }
 
 /* ─── Job types ───────────────────────────────────────────── */
@@ -945,7 +956,7 @@ function VoicesTab({
 }
 
 /* ─── History Tab ─────────────────────────────────────────── */
-function HistoryTab() {
+function HistoryTab({ plan }: { plan: string }) {
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -968,6 +979,14 @@ function HistoryTab() {
 
   return (
     <div>
+      {/* Free plan banner */}
+      {plan === "free" && (
+        <div className="mb-5 p-3 rounded-xl flex items-start gap-3 text-sm" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", color: "#fbbf24" }}>
+          <span style={{ flexShrink: 0, marginTop: "1px" }}>⚠️</span>
+          <span>Tus audios expiran a las <strong>72 horas</strong>. Suscríbete para guardarlos hasta 30 días.</span>
+        </div>
+      )}
+
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -984,41 +1003,59 @@ function HistoryTab() {
       ) : (
         <>
           <div className="space-y-3">
-            {generations.map((gen) => (
-              <div key={gen.id} className="p-4 rounded-xl border" style={{ background: "#12121a", borderColor: "#2a2a3e" }}>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-300 truncate">{gen.text}</p>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                      <span>{formatDate(gen.createdAt)}</span>
-                      <span>·</span>
-                      <span>{gen.creditsUsed.toLocaleString("es-ES")} chars</span>
-                      <span>·</span>
-                      <span>{gen.durationSeconds.toFixed(1)}s</span>
+            {generations.map((gen) => {
+              const expiry = formatExpiry(gen.expiresAt ?? null);
+              const isExpired = expiry?.expired || !gen.audioUrl;
+              return (
+                <div key={gen.id} className="p-4 rounded-xl border" style={{ background: "#12121a", borderColor: isExpired ? "#1e1e2e" : "#2a2a3e" }}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm truncate ${isExpired ? "text-gray-600" : "text-gray-300"}`}>{gen.text}</p>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 flex-wrap">
+                        <span>{formatDate(gen.createdAt)}</span>
+                        <span>·</span>
+                        <span>{gen.creditsUsed.toLocaleString("es-ES")} chars</span>
+                        <span>·</span>
+                        <span>{gen.durationSeconds.toFixed(1)}s</span>
+                        {expiry && (
+                          <>
+                            <span>·</span>
+                            <span style={{ color: expiry.expired ? "#6b7280" : expiry.label.includes("h") ? "#f59e0b" : "#4a4a65" }}>
+                              {expiry.label}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {isExpired ? (
+                        <span className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "#12121a", color: "#4a4a65", border: "1px solid #1e1e2e" }}>
+                          Audio expirado
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => setPlayingId(playingId === gen.id ? null : gen.id)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                          style={{
+                            background: playingId === gen.id ? "rgba(59,130,246,0.2)" : "#1a1a2e",
+                            color: playingId === gen.id ? "#93c5fd" : "#8888a8",
+                            border: `1px solid ${playingId === gen.id ? "rgba(59,130,246,0.3)" : "#2a2a3e"}`,
+                          }}
+                        >
+                          <Play size={11} />
+                          {playingId === gen.id ? "Reproduciendo" : "Reproducir"}
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => setPlayingId(playingId === gen.id ? null : gen.id)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                      style={{
-                        background: playingId === gen.id ? "rgba(59,130,246,0.2)" : "#1a1a2e",
-                        color: playingId === gen.id ? "#93c5fd" : "#8888a8",
-                        border: `1px solid ${playingId === gen.id ? "rgba(59,130,246,0.3)" : "#2a2a3e"}`,
-                      }}
-                    >
-                      <Play size={11} />
-                      {playingId === gen.id ? "Reproduciendo" : "Reproducir"}
-                    </button>
-                  </div>
+                  {!isExpired && playingId === gen.id && (
+                    <div className="mt-3">
+                      <AudioPlayer src={gen.audioUrl!} filename={`elitelabs-${gen.id}.mp3`} />
+                    </div>
+                  )}
                 </div>
-                {playingId === gen.id && (
-                  <div className="mt-3">
-                    <AudioPlayer src={gen.audioUrl} filename={`elitelabs-${gen.id}.mp3`} />
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {totalPages > 1 && (
@@ -2153,7 +2190,7 @@ export default function DashboardPage() {
             plan={plan}
           />
         )}
-        {activeTab === "history" && <HistoryTab />}
+        {activeTab === "history" && <HistoryTab plan={plan} />}
         {activeTab === "billing" && (
           <BillingTab
             credits={credits}

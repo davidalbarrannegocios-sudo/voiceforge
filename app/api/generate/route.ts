@@ -7,6 +7,13 @@ import { calculateCharCost } from "@/lib/utils";
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
+function getExpiresAt(plan: string): Date {
+  const now = new Date();
+  if (plan === "free")    return new Date(now.getTime() + 72 * 60 * 60 * 1000);
+  if (plan === "starter") return new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+  return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+}
+
 async function getRandomPublicVoiceId(): Promise<string | undefined> {
   const apiKey = process.env.FISH_AUDIO_API_KEY;
   if (!apiKey) return undefined;
@@ -56,6 +63,8 @@ export async function POST(req: Request) {
       effectiveReferenceId = await getRandomPublicVoiceId();
     }
 
+    const expiresAt = getExpiresAt(user.plan);
+
     const [, job] = await prisma.$transaction([
       prisma.user.update({
         where: { id: user.id },
@@ -68,6 +77,7 @@ export async function POST(req: Request) {
           text: trimmed,
           voiceId: effectiveReferenceId ?? "default",
           creditsUsed: charCost,
+          expiresAt,
         },
       }),
     ]);
@@ -115,6 +125,7 @@ export async function POST(req: Request) {
           audioUrl: result.audio_url,
           durationSeconds: result.duration_seconds,
           creditsUsed: charCost,
+          expiresAt,
         },
       }),
     ]);

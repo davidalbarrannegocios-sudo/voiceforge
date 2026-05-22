@@ -34,6 +34,7 @@ const PLANS: Plan[] = [
       "Voz aleatoria (sin selección)",
       "2 transcripciones/traducciones",
       "Sin clonación de voz",
+      "Audios disponibles 72 horas",
     ],
   },
   {
@@ -50,6 +51,7 @@ const PLANS: Plan[] = [
       "Selección de voz completa",
       "Transcripciones y traducciones ilimitadas",
       "3 voces clonadas",
+      "Audios disponibles 14 días",
     ],
   },
   {
@@ -67,6 +69,7 @@ const PLANS: Plan[] = [
       "Transcripciones y traducciones ilimitadas",
       "10 voces clonadas",
       "Generación prioritaria",
+      "Audios disponibles 30 días",
     ],
   },
   {
@@ -85,6 +88,7 @@ const PLANS: Plan[] = [
       "20 voces clonadas",
       "Prioridad máxima",
       "Soporte preferente",
+      "Audios disponibles 30 días",
     ],
   },
 ];

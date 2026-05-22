@@ -36,6 +36,7 @@ export async function GET(req: Request) {
         durationSeconds: true,
         voiceId: true,
         createdAt: true,
+        expiresAt: true,
       },
     }),
     prisma.generation.count({ where: { userId: user.id } }),
