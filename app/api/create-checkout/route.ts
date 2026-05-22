@@ -1,7 +1,7 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getStripe, PLANS, type PlanKey } from "@/lib/stripe";
+import { getStripe, PLANS, getPriceId, type PlanKey } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
-    line_items: [{ price: selectedPlan.priceId, quantity: 1 }],
+    line_items: [{ price: getPriceId(plan as PlanKey), quantity: 1 }],
     metadata: { userId: user.id, plan },
     allow_promotion_codes: true,
     success_url: `${baseUrl}/dashboard?success=1&plan=${plan}`,

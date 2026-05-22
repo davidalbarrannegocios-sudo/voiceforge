@@ -170,11 +170,11 @@ export function PaymentModal({
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const priceId = PLANS[plan.key as PlanKey]?.priceId ?? "";
+  const planKey = plan.key as PlanKey;
 
   useEffect(() => {
-    if (!priceId) {
-      setFetchError("Precio no configurado para este plan. Contacta con soporte.");
+    if (!(planKey in PLANS)) {
+      setFetchError("Plan inválido. Contacta con soporte.");
       return;
     }
 
@@ -182,7 +182,7 @@ export function PaymentModal({
     fetch("/api/create-subscription", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ priceId }),
+      body: JSON.stringify({ planKey }),
     })
       .then((r) => r.json())
       .then((data) => {
@@ -195,7 +195,7 @@ export function PaymentModal({
       });
 
     return () => { cancelled = true; };
-  }, [priceId]);
+  }, [planKey]);
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px", background: "rgba(0,0,0,0.8)" }}>

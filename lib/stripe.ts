@@ -15,31 +15,31 @@ export const PLAN_VOICE_SLOTS: Record<string, number> = {
 };
 
 export const PLANS = {
-  starter: {
-    name: "Starter",
-    price: 7,
-    characters: 200_000,
-    priceId: process.env.STRIPE_PRICE_STARTER_MONTHLY ?? "",
-  },
-  pro: {
-    name: "Pro",
-    price: 13,
-    characters: 500_000,
-    priceId: process.env.STRIPE_PRICE_PRO_MONTHLY ?? "",
-  },
-  elite: {
-    name: "Elite",
-    price: 25,
-    characters: 1_000_000,
-    priceId: process.env.STRIPE_PRICE_ELITE_MONTHLY ?? "",
-  },
+  starter: { name: "Starter", price: 7,  characters: 200_000 },
+  pro:     { name: "Pro",     price: 13, characters: 500_000 },
+  elite:   { name: "Elite",  price: 25, characters: 1_000_000 },
 } as const;
 
 export type PlanKey = keyof typeof PLANS;
 
+/** Server-only: resolve priceId from environment variables */
+export function getPriceId(planKey: string): string {
+  const map: Record<string, string | undefined> = {
+    starter: process.env.STRIPE_PRICE_STARTER_MONTHLY,
+    pro:     process.env.STRIPE_PRICE_PRO_MONTHLY,
+    elite:   process.env.STRIPE_PRICE_ELITE_MONTHLY,
+  };
+  return map[planKey] ?? "";
+}
+
 export function getPlanFromPriceId(priceId: string): string | null {
-  for (const [key, plan] of Object.entries(PLANS)) {
-    if (plan.priceId === priceId) return key;
+  const map: Record<string, string | undefined> = {
+    starter: process.env.STRIPE_PRICE_STARTER_MONTHLY,
+    pro:     process.env.STRIPE_PRICE_PRO_MONTHLY,
+    elite:   process.env.STRIPE_PRICE_ELITE_MONTHLY,
+  };
+  for (const [key, id] of Object.entries(map)) {
+    if (id && id === priceId) return key;
   }
   return null;
 }

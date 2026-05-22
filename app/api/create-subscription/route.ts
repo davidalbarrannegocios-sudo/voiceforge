@@ -1,7 +1,7 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getStripe } from "@/lib/stripe";
+import { getStripe, getPriceId, PLANS, type PlanKey } from "@/lib/stripe";
 import Stripe from "stripe";
 
 export const runtime = "nodejs";
@@ -10,8 +10,14 @@ export async function POST(req: Request) {
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const { priceId } = await req.json() as { priceId: string };
-  if (!priceId) return NextResponse.json({ error: "priceId requerido" }, { status: 400 });
+  const { planKey } = await req.json() as { planKey: string };
+  if (!planKey || !(planKey in PLANS)) {
+    return NextResponse.json({ error: "Plan inválido" }, { status: 400 });
+  }
+  const priceId = getPriceId(planKey as PlanKey);
+  if (!priceId) {
+    return NextResponse.json({ error: "Precio no configurado para este plan" }, { status: 500 });
+  }
 
   let user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
   if (!user) {
