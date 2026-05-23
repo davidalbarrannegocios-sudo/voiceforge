@@ -241,22 +241,24 @@ export function PaymentModal({
   }
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px", background: "rgba(0,0,0,0.8)" }}>
-      <div style={{ width: "100%", maxWidth: "440px", borderRadius: "20px", background: "#0d0d17", border: "1px solid #1e1e2e", overflow: "hidden" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "flex-start", justifyContent: "center", overflowY: "auto", padding: "20px", background: "rgba(0,0,0,0.8)" }}>
+      <div style={{ position: "relative", width: "100%", maxWidth: "440px", maxHeight: "90vh", overflowY: "auto", borderRadius: "16px", background: "#0d0d17", border: "1px solid #1e1e2e", margin: "auto" }}>
 
-        {/* Header */}
-        <div style={{ padding: "20px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-          <div>
-            <p style={{ fontSize: "17px", fontWeight: 700, color: "#fff", marginBottom: "3px" }}>
-              Suscripción {plan.name}
-            </p>
-            <p style={{ fontSize: "13px", color: "#3a3a52" }}>
-              {plan.characters.toLocaleString("es-ES")} caracteres/mes · ${plan.price}/mes
-            </p>
-          </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#3a3a52", padding: "2px", marginLeft: "12px", flexShrink: 0 }}>
+        {/* Close button — sticky so it's always visible */}
+        <div style={{ position: "sticky", top: 0, zIndex: 10, display: "flex", justifyContent: "flex-end", padding: "14px 16px 0", background: "#0d0d17" }}>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280", padding: "4px", lineHeight: 0 }}>
             <X size={18} />
           </button>
+        </div>
+
+        {/* Header */}
+        <div style={{ padding: "0 24px 0" }}>
+          <p style={{ fontSize: "17px", fontWeight: 700, color: "#fff", marginBottom: "3px" }}>
+            Suscripción {plan.name}
+          </p>
+          <p style={{ fontSize: "13px", color: "#3a3a52" }}>
+            {plan.characters.toLocaleString("es-ES")} caracteres/mes · ${plan.price}/mes
+          </p>
         </div>
 
         {/* Divider */}
