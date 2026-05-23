@@ -1315,7 +1315,7 @@ const BILLING_PLANS = [
     price: 110,
     characters: 5_000_000,
     popular: false,
-    features: ["5.000.000 caracteres/mes", "Voces clonadas ilimitadas", "Transcripciones ilimitadas", "Traducción +10% (vs +20%)", "Generación prioritaria", "Soporte preferente", "Audios 90 días"],
+    features: ["5.000.000 caracteres/mes", "Voces clonadas ilimitadas", "Transcripciones ilimitadas", "Traducción +10% (vs +20%)", "Generación prioritaria", "Soporte preferente", "Audios 90 días", "Seats de equipo incluidos (valor $5/seat/mes)", "SPONSORED:Gratis · Patrocinado por EliteLabs"],
   },
 ];
 
@@ -1534,12 +1534,23 @@ function BillingTab({
               {/* Features */}
               <div style={{ height: "1px", background: "#1a1a28", marginBottom: "12px" }} />
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "7px" }}>
-                {p.features.map((f) => (
-                  <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "6px", fontSize: "11px", color: "#6b6b88", lineHeight: 1.4 }}>
-                    <Check size={11} style={{ color: "#3b82f6", flexShrink: 0, marginTop: "1px" }} />
-                    {f}
-                  </li>
-                ))}
+                {p.features.map((f) => {
+                  if (f.startsWith("SPONSORED:")) {
+                    return (
+                      <li key={f}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.25)", borderRadius: "6px", padding: "2px 7px", fontSize: "10px", fontWeight: 700, color: "#4ade80" }}>
+                          ♥ {f.slice(10)}
+                        </span>
+                      </li>
+                    );
+                  }
+                  return (
+                    <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "6px", fontSize: "11px", color: "#6b6b88", lineHeight: 1.4 }}>
+                      <Check size={11} style={{ color: p.key === "enterprise" ? "#34d399" : "#3b82f6", flexShrink: 0, marginTop: "1px" }} />
+                      {f}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           );
