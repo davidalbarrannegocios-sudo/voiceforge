@@ -41,6 +41,10 @@ const T = {
       cardVoicesDesc: "Gestiona y clona tus voces personalizadas",
       cardHistory: "Historial",
       cardHistoryDesc: "Revisa todas tus generaciones anteriores",
+      cardTranscribe: "Audio a Texto",
+      cardTranscribeDesc: "Transcribe cualquier audio a texto al instante",
+      cardTranslate: "Traducción de Audio",
+      cardTranslateDesc: "Traduce tus audios a otros idiomas automáticamente",
     },
     generate: {
       placeholder: "Escribe el texto a narrar...",
@@ -99,6 +103,10 @@ const T = {
       cardVoicesDesc: "Manage and clone your custom voices",
       cardHistory: "History",
       cardHistoryDesc: "Review all your previous generations",
+      cardTranscribe: "Audio to Text",
+      cardTranscribeDesc: "Transcribe any audio to text instantly",
+      cardTranslate: "Audio Translation",
+      cardTranslateDesc: "Translate your audio to other languages automatically",
     },
     generate: {
       placeholder: "Write the text to narrate...",
