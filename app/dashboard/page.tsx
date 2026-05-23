@@ -688,22 +688,7 @@ function GenerateTab({
             {/* Voz */}
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#555570" }}>{t.generate.voiceLabel}</p>
-              {plan === "free" ? (
-                <div
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm"
-                  style={{ background: "#0d0d17", border: "1px solid #1a1a28", cursor: "not-allowed" }}
-                >
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(74,74,101,0.12)" }}>
-                    <Lock size={13} style={{ color: "#2e2e48" }} />
-                  </div>
-                  <div className="flex-1 text-left min-w-0">
-                    <p className="text-sm font-medium truncate" style={{ color: "#2e2e48" }}>{t.generate.randomVoice}</p>
-                    <p className="text-xs" style={{ color: "#1e1e30" }}>{t.generate.paidOnly}</p>
-                  </div>
-                  <span className="text-xs flex-shrink-0" style={{ color: "#2e2e48" }}>🔒</span>
-                </div>
-              ) : (
-                <button
+              <button
                   onClick={() => setShowBrowser(true)}
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all hover:border-blue-500/60"
                   style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
@@ -717,7 +702,6 @@ function GenerateTab({
                   </div>
                   <span className="text-xs flex-shrink-0" style={{ color: "#8888a8" }}>→</span>
                 </button>
-              )}
 
               {/* Preview button */}
               {plan !== "free" && (
@@ -840,6 +824,7 @@ function GenerateTab({
           clonedVoices={clonedVoices}
           onSelect={setSelectedVoice}
           onClose={() => setShowBrowser(false)}
+          plan={plan}
         />
       )}
     </div>
@@ -1927,6 +1912,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling 
           clonedVoices={clonedVoices}
           onSelect={setSelectedVoice}
           onClose={() => setShowBrowser(false)}
+          plan={plan}
         />
       )}
     </div>
