@@ -13,10 +13,12 @@ export interface SelectedVoice {
 interface FishVoice {
   _id: string;
   title: string;
+  description?: string;
   languages: string[];
   tags: string[];
   cover_image: string;
   task_count: number;
+  like_count?: number;
 }
 
 interface ClonedVoice {
@@ -46,6 +48,19 @@ const GENDER_TAG_SET = new Set([
   "male", "man", "masculine", "masculino", "hombre",
   "female", "woman", "feminine", "femenino", "mujer",
 ]);
+
+const LANG_FLAGS: Record<string, string> = {
+  es: "🇪🇸", en: "🇺🇸", ja: "🇯🇵", zh: "🇨🇳",
+  fr: "🇫🇷", de: "🇩🇪", pt: "🇧🇷", ko: "🇰🇷", it: "🇮🇹",
+};
+
+function getAge(tags: string[]): string | null {
+  const t = tags.map((s) => s.toLowerCase());
+  if (t.some((s) => ["young", "joven", "youth", "young adult", "young-adult"].includes(s))) return "Joven";
+  if (t.some((s) => ["middle age", "mediana edad", "middle-age", "middle aged"].includes(s))) return "Mediana Edad";
+  if (t.some((s) => ["old", "elderly", "senior", "elder", "antiguo", "aged"].includes(s))) return "Mayor";
+  return null;
+}
 
 const LANGS = [
   { code: "es", label: "Español" },
@@ -83,15 +98,15 @@ function formatCount(n: number): string {
 
 /* ── Sub-components ─────────────────────────────────────────── */
 
-function VoiceAvatar({ name, coverImage, size = "md" }: { name: string; coverImage?: string; size?: "sm" | "md" }) {
+function VoiceAvatar({ name, coverImage, size = "md" }: { name: string; coverImage?: string; size?: "sm" | "md" | "lg" }) {
   const [imgFailed, setImgFailed] = useState(false);
 
   // Reset error state whenever the URL changes
   useEffect(() => { setImgFailed(false); }, [coverImage]);
 
   const initial = name[0]?.toUpperCase() ?? "?";
-  const cls = size === "md" ? "w-11 h-11" : "w-9 h-9";
-  const fontSize = size === "md" ? 15 : 13;
+  const cls = size === "lg" ? "w-12 h-12" : size === "md" ? "w-11 h-11" : "w-9 h-9";
+  const fontSize = size === "lg" ? 16 : size === "md" ? 15 : 13;
   const showImage = !!coverImage && coverImage.trim() !== "" && !imgFailed;
   const proxiedSrc = coverImage ? `/api/voice-image?url=${encodeURIComponent(coverImage)}` : "";
 
@@ -198,65 +213,83 @@ function VoiceRow({
   isPremium: boolean;
 }) {
   const g = getGender(voice.tags);
+  const age = getAge(voice.tags);
   const isPreviewing = previewingId === voice._id;
   const isPreviewLoading = previewLoadingId === voice._id;
-  const extraTags = voice.tags
-    .filter((t) => !GENDER_TAG_SET.has(t.toLowerCase()))
-    .slice(0, 2);
+
+  const pillStyle = { background: "rgba(255,255,255,0.05)", color: "#6b7280", border: "1px solid rgba(255,255,255,0.07)" };
 
   return (
     <div
-      className="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all"
-      style={{
-        background: "#0d0d17",
-        borderColor: isLocked ? "#1e1e2e" : "#1e1e2e",
-      }}
+      className="flex items-center gap-4 px-5 py-3.5 transition-colors"
+      style={{ background: "transparent", borderBottom: "1px solid #111118" }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.02)")}
+      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
     >
-      {/* Avatar */}
-      <VoiceAvatar name={voice.title} coverImage={voice.cover_image} />
+      {/* Avatar 48px */}
+      <VoiceAvatar name={voice.title} coverImage={voice.cover_image} size="lg" />
 
-      {/* Info */}
+      {/* Center info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <span className="text-sm font-semibold text-white truncate">{voice.title}</span>
+        {/* Name row */}
+        <div className="flex items-center gap-2 mb-0.5">
+          <span className="text-sm font-semibold text-white truncate leading-tight">{voice.title}</span>
           {isPremium && (
             <span
-              className="px-1.5 py-0.5 rounded text-xs font-semibold flex-shrink-0"
-              style={{ background: "rgba(245,158,11,0.12)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.25)" }}
+              className="px-1.5 py-0.5 rounded text-xs font-bold flex-shrink-0"
+              style={{ background: "rgba(245,158,11,0.12)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.2)" }}
             >
               ✦
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {voice.languages.slice(0, 2).map((l) => (
-            <span
-              key={l}
-              className="px-1.5 py-0.5 rounded text-xs"
-              style={{ background: "rgba(59,130,246,0.12)", color: "#93c5fd" }}
-            >
-              {l.toUpperCase()}
-            </span>
-          ))}
+
+        {/* Description */}
+        {voice.description && (
+          <p className="text-xs mb-1 truncate" style={{ color: "#555570" }}>{voice.description}</p>
+        )}
+
+        {/* Pills */}
+        <div className="flex items-center gap-1.5 flex-wrap mt-1">
+          {voice.languages.slice(0, 3).map((l) => {
+            const code = l.toLowerCase();
+            const flag = LANG_FLAGS[code] ?? "🌐";
+            return (
+              <span key={l} className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>
+                <span>{flag}</span>
+                <span>{l.toUpperCase()}</span>
+              </span>
+            );
+          })}
           {g && (
-            <span className="px-1.5 py-0.5 rounded text-xs" style={{ background: "rgba(255,255,255,0.04)", color: "#6b6b88" }}>
+            <span className="px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>
               {g === "male" ? "Masculino" : "Femenino"}
             </span>
           )}
-          {extraTags.map((tag) => (
-            <span key={tag} className="text-xs" style={{ color: "#444460" }}>
-              {tag}
+          {age && (
+            <span className="px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>
+              {age}
             </span>
-          ))}
+          )}
         </div>
       </div>
 
       {/* Stats */}
-      <div className="flex items-center gap-1 flex-shrink-0" style={{ color: "#444460" }}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
-        </svg>
-        <span className="text-xs">{formatCount(voice.task_count)}</span>
+      <div className="flex-shrink-0 flex flex-col items-end gap-1" style={{ minWidth: "60px" }}>
+        <div className="flex items-center gap-1" style={{ color: "#444460" }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+          </svg>
+          <span className="text-xs">{formatCount(voice.task_count)}</span>
+        </div>
+        {typeof voice.like_count === "number" && voice.like_count > 0 && (
+          <div className="flex items-center gap-1" style={{ color: "#444460" }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+            <span className="text-xs">{formatCount(voice.like_count)}</span>
+          </div>
+        )}
       </div>
 
       {/* Actions */}
@@ -264,22 +297,21 @@ function VoiceRow({
         <button
           onClick={() => onPreview(voice._id)}
           disabled={isPreviewLoading}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60"
+          className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60"
           style={{
-            background: isPreviewing ? "rgba(59,130,246,0.25)" : "rgba(59,130,246,0.08)",
-            color: "#93c5fd",
-            border: "1px solid rgba(59,130,246,0.2)",
+            background: isPreviewing ? "rgba(59,130,246,0.2)" : "transparent",
+            color: isPreviewing ? "#93c5fd" : "#6b7280",
+            border: `1px solid ${isPreviewing ? "rgba(59,130,246,0.35)" : "rgba(255,255,255,0.1)"}`,
           }}
         >
-          {isPreviewLoading ? "···" : isPreviewing ? "⏹" : "▶"}
-          <span className="hidden sm:inline">{isPreviewLoading ? "" : isPreviewing ? "Stop" : "Preview"}</span>
+          {isPreviewLoading ? "···" : isPreviewing ? "⏹ Stop" : "▶ Vista previa"}
         </button>
         <button
           onClick={() => onUse(voice)}
           className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
           style={
             isLocked
-              ? { background: "#12121a", color: "#3a3a52", border: "1px solid #1e1e2e" }
+              ? { background: "#12121a", color: "#3a3a52", border: "1px solid #1a1a2a" }
               : { background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff" }
           }
         >
@@ -539,15 +571,15 @@ export function VoiceBrowser({
 
               {/* Voice list */}
               {loading ? (
-                <div className="space-y-2 mt-2">
+                <div className="rounded-xl overflow-hidden mt-2" style={{ border: "1px solid #1a1a2a" }}>
                   {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: "#0d0d17" }} />
+                    <div key={i} className="h-[72px] animate-pulse" style={{ background: i % 2 === 0 ? "#0d0d17" : "#0b0b15", borderBottom: "1px solid #111118" }} />
                   ))}
                 </div>
               ) : filteredVoices.length === 0 ? (
                 <p className="text-center py-16 text-sm" style={{ color: "#555570" }}>No se encontraron voces</p>
               ) : (
-                <div className="space-y-1.5 mt-2">
+                <div className="rounded-xl overflow-hidden mt-2" style={{ border: "1px solid #1a1a2a", background: "#0a0a12" }}>
                   {filteredVoices.map((voice) => {
                     const isPremium = isPremiumVoice(voice._id);
                     const isLocked = isPremium && !userCanUsePremium;
@@ -618,7 +650,7 @@ export function VoiceBrowser({
                   </button>
                 </div>
               ) : (
-                <div className="space-y-1.5">
+                <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #1a1a2a", background: "#0a0a12" }}>
                   {filteredRecent.map((voice) => {
                     const isPremium = isPremiumVoice(voice._id);
                     const isLocked = isPremium && !userCanUsePremium;
