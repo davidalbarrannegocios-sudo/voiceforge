@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const { plan } = await req.json() as { plan: string };
+  const { plan, billing = "monthly" } = await req.json() as { plan: string; billing?: "monthly" | "annual" };
 
   if (!plan || !(plan in PLANS)) {
     return NextResponse.json({ error: "Plan inválido" }, { status: 400 });
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
-    line_items: [{ price: getPriceId(plan as PlanKey), quantity: 1 }],
+    line_items: [{ price: getPriceId(plan as PlanKey, billing), quantity: 1 }],
     metadata: { userId: user.id, plan },
     allow_promotion_codes: true,
     success_url: `${baseUrl}/dashboard?success=1&plan=${plan}`,

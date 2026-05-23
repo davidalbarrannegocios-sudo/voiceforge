@@ -27,25 +27,42 @@ export const PLANS = {
 export type PlanKey = keyof typeof PLANS;
 
 /** Server-only: resolve priceId from environment variables */
-export function getPriceId(planKey: string): string {
-  const map: Record<string, string | undefined> = {
+export function getPriceId(planKey: string, billing: "monthly" | "annual" = "monthly"): string {
+  const monthly: Record<string, string | undefined> = {
     starter:    process.env.STRIPE_PRICE_STARTER_MONTHLY,
     pro:        process.env.STRIPE_PRICE_PRO_MONTHLY,
     elite:      process.env.STRIPE_PRICE_ELITE_MONTHLY,
     enterprise: process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY,
   };
-  return map[planKey] ?? "";
+  const annual: Record<string, string | undefined> = {
+    starter:    process.env.STRIPE_PRICE_STARTER_ANNUAL,
+    pro:        process.env.STRIPE_PRICE_PRO_ANNUAL,
+    elite:      process.env.STRIPE_PRICE_ELITE_ANNUAL,
+    enterprise: process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL,
+  };
+  if (billing === "annual") return annual[planKey] ?? monthly[planKey] ?? "";
+  return monthly[planKey] ?? "";
 }
 
 export function getPlanFromPriceId(priceId: string): string | null {
-  const map: Record<string, string | undefined> = {
-    starter:    process.env.STRIPE_PRICE_STARTER_MONTHLY,
-    pro:        process.env.STRIPE_PRICE_PRO_MONTHLY,
-    elite:      process.env.STRIPE_PRICE_ELITE_MONTHLY,
-    enterprise: process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY,
-  };
-  for (const [key, id] of Object.entries(map)) {
-    if (id && id === priceId) return key;
+  const maps: Record<string, string | undefined>[] = [
+    {
+      starter:    process.env.STRIPE_PRICE_STARTER_MONTHLY,
+      pro:        process.env.STRIPE_PRICE_PRO_MONTHLY,
+      elite:      process.env.STRIPE_PRICE_ELITE_MONTHLY,
+      enterprise: process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY,
+    },
+    {
+      starter:    process.env.STRIPE_PRICE_STARTER_ANNUAL,
+      pro:        process.env.STRIPE_PRICE_PRO_ANNUAL,
+      elite:      process.env.STRIPE_PRICE_ELITE_ANNUAL,
+      enterprise: process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL,
+    },
+  ];
+  for (const map of maps) {
+    for (const [key, id] of Object.entries(map)) {
+      if (id && id === priceId) return key;
+    }
   }
   return null;
 }

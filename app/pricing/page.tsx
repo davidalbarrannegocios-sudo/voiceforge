@@ -116,6 +116,7 @@ export default function PricingPage() {
   const { isSignedIn } = useUser();
   const router = useRouter();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
 
   async function handleSelect(plan: Plan) {
     if (plan.free) {
@@ -131,13 +132,20 @@ export default function PricingPage() {
       const res = await fetch("/api/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: plan.key }),
+        body: JSON.stringify({ plan: plan.key, billing }),
       });
       const data = await res.json();
       if (data.checkoutUrl) window.location.href = data.checkoutUrl;
     } finally {
       setLoadingPlan(null);
     }
+  }
+
+  function annualMonthly(price: number) {
+    return Math.round(price * 0.83 * 10) / 10;
+  }
+  function annualTotal(price: number) {
+    return Math.round(annualMonthly(price) * 12);
   }
 
   return (
@@ -156,16 +164,37 @@ export default function PricingPage() {
 
       <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "64px 24px 80px" }}>
         {/* Hero */}
-        <div style={{ textAlign: "center", marginBottom: "56px" }}>
+        <div style={{ textAlign: "center", marginBottom: "40px" }}>
           <h1 style={{ fontSize: "42px", fontWeight: 800, color: "#fff", marginBottom: "12px", lineHeight: 1.1 }}>
             Elige tu plan
           </h1>
           <p style={{ fontSize: "16px", color: "#4a4a65", marginBottom: "6px" }}>
-            Suscripción mensual. Cancela cuando quieras. Los caracteres se renuevan cada mes.
+            Cancela cuando quieras. Los caracteres se renuevan cada período.
           </p>
           <p style={{ fontSize: "13px", color: "#2e2e48" }}>
             Los caracteres se descuentan exactamente según el texto generado
           </p>
+        </div>
+
+        {/* Monthly / Annual toggle */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "40px" }}>
+          <div style={{ display: "inline-flex", background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: "10px", padding: "3px", gap: "2px" }}>
+            <button
+              onClick={() => setBilling("monthly")}
+              style={{ padding: "8px 24px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: 600, background: billing === "monthly" ? "#1a1a2e" : "transparent", color: billing === "monthly" ? "#e5e7eb" : "#4a4a65", transition: "all 0.15s" }}
+            >
+              Mensual
+            </button>
+            <button
+              onClick={() => setBilling("annual")}
+              style={{ padding: "8px 24px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: 600, background: billing === "annual" ? "#1a1a2e" : "transparent", color: billing === "annual" ? "#e5e7eb" : "#4a4a65", display: "flex", alignItems: "center", gap: "8px", transition: "all 0.15s" }}
+            >
+              Anual
+              <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e", letterSpacing: "0.03em" }}>
+                −17%
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Plans grid */}
@@ -209,9 +238,16 @@ export default function PricingPage() {
               ) : (
                 <>
                   <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginBottom: "2px" }}>
-                    <span style={{ fontSize: "36px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>${plan.price}</span>
+                    <span style={{ fontSize: "36px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
+                      ${billing === "annual" ? annualMonthly(plan.price) : plan.price}
+                    </span>
                     <span style={{ fontSize: "13px", color: "#3a3a52" }}>/mes</span>
                   </div>
+                  {billing === "annual" ? (
+                    <p style={{ fontSize: "12px", color: "#22c55e", marginBottom: "4px" }}>
+                      Facturado ${annualTotal(plan.price)}/año
+                    </p>
+                  ) : null}
                   <p style={{ fontSize: "13px", color: "#3a3a52", marginBottom: "22px" }}>
                     {plan.characters.toLocaleString("es-ES")} caracteres/mes
                   </p>
