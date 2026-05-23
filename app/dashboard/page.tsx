@@ -569,24 +569,13 @@ function GenerateTab({
         <div className="flex items-center gap-3 px-6 py-4 border-b" style={{ borderColor: "#2a2a3e" }}>
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ background: plan === "free" ? "rgba(74,74,101,0.15)" : "rgba(59,130,246,0.15)" }}
+            style={{ background: "rgba(59,130,246,0.15)" }}
           >
-            {plan === "free"
-              ? <Lock size={18} style={{ color: "#3a3a52" }} />
-              : <Mic size={18} style={{ color: "#93c5fd" }} />}
+            <Mic size={18} style={{ color: "#93c5fd" }} />
           </div>
           <div className="flex-1 min-w-0">
-            {plan === "free" ? (
-              <>
-                <p className="text-sm font-semibold truncate" style={{ color: "#3a3a52" }}>{t.generate.randomVoice}</p>
-                <p className="text-xs" style={{ color: "#2e2e48" }}>{t.generate.paidOnlyLong}</p>
-              </>
-            ) : (
-              <>
-                <p className="text-sm font-semibold text-white truncate">{selectedVoice?.name ?? t.generate.defaultVoice}</p>
-                <p className="text-xs" style={{ color: "#8888a8" }}>{selectedVoice?.isCloned ? t.generate.clonedVoice : t.generate.systemVoice}</p>
-              </>
-            )}
+            <p className="text-sm font-semibold text-white truncate">{selectedVoice?.name ?? t.generate.defaultVoice}</p>
+            <p className="text-xs" style={{ color: "#8888a8" }}>{selectedVoice?.isCloned ? t.generate.clonedVoice : t.generate.systemVoice}</p>
           </div>
         </div>
 
