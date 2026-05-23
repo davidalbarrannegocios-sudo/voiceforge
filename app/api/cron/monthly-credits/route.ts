@@ -42,6 +42,7 @@ export async function POST(req: Request) {
 
       if (user.plan === "enterprise" && team && team.members.length > 0) {
         const distributions = team.members.map((m) => ({
+          memberId: m.id,
           userId: m.userId,
           credits: Math.floor(planCredits * m.percentage / 100),
         }));
@@ -57,6 +58,13 @@ export async function POST(req: Request) {
             prisma.user.update({
               where: { id: d.userId },
               data: { credits: { increment: d.credits } },
+            })
+          ),
+          // Reset creditsLastDistributed so next manual distribution diffs correctly
+          ...distributions.map((d) =>
+            prisma.teamMember.update({
+              where: { id: d.memberId },
+              data: { creditsLastDistributed: d.credits },
             })
           ),
         ]);
