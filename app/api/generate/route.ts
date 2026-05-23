@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const { text, reference_id, prosody } = await req.json();
+  const { text, reference_id, prosody, voiceName } = await req.json();
   console.log("[generate] prosody del request:", JSON.stringify(prosody));
 
   if (!text || typeof text !== "string" || text.trim().length === 0) {
@@ -83,6 +83,7 @@ export async function POST(req: Request) {
           status: "processing",
           text: trimmed,
           voiceId: effectiveReferenceId ?? "default",
+          voiceName: (voiceName as string | undefined) ?? "Voz por defecto",
           creditsUsed: charCost,
           expiresAt,
         },

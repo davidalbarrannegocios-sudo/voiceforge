@@ -41,6 +41,7 @@ model Job {
   status          String    @default("pending")
   text            String
   voiceId         String
+  voiceName       String?
   audioUrl        String?
   durationSeconds Float?
   error           String?

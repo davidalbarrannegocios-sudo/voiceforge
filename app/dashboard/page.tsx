@@ -257,7 +257,7 @@ interface Job {
   status: string;
   text: string;
   voiceId: string;
-  voiceName?: string;
+  voiceName?: string | null;
   audioUrl?: string | null;
   durationSeconds?: number | null;
   error?: string | null;
@@ -420,6 +420,7 @@ function GenerateTab({
         body: JSON.stringify({
           text,
           reference_id: selectedVoice?.referenceId ?? undefined,
+          voiceName: selectedVoice?.name ?? "Voz por defecto",
           prosody,
           normalize,
         }),
@@ -755,7 +756,7 @@ function GenerateTab({
             ) : (
               <div className="space-y-2 overflow-y-auto max-h-[560px]">
                 {jobs.map((job) => (
-                  <JobCard key={job.id} job={job} voices={voices} />
+                  <JobCard key={job.id} job={job} />
                 ))}
               </div>
             )}
@@ -776,13 +777,10 @@ function GenerateTab({
 }
 
 /* ─── Job Card ─────────────────────────────────────────────── */
-function JobCard({ job, voices }: { job: Job; voices: Voice[] }) {
+function JobCard({ job }: { job: Job }) {
   const [showPlayer, setShowPlayer] = useState(false);
 
-  const voiceName =
-    job.voiceName ??
-    voices.find((v) => v.fishAudioModelId === job.voiceId)?.name ??
-    (job.voiceId === "default" ? "Voz por defecto" : job.voiceId.slice(0, 8) + "…");
+  const voiceName = job.voiceName ?? "Voz por defecto";
 
   return (
     <div className="rounded-xl border p-4" style={{ background: "#12121a", borderColor: "#2a2a3e" }}>
