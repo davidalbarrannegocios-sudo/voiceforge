@@ -1946,7 +1946,6 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
   onBilling: () => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
-  const [lang, setLang] = useState("es");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<TranscribeResult | null>(null);
@@ -1971,7 +1970,6 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
     try {
       const fd = new FormData();
       fd.append("audio", file);
-      fd.append("language", lang);
       const res = await fetch("/api/transcribe", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error desconocido");
@@ -2077,30 +2075,6 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                 <p className="text-xs" style={{ color: "#555570" }}>MP3, WAV, M4A, FLAC</p>
               </>
             )}
-          </div>
-        </div>
-
-        {/* Step 2 — Language */}
-        <div className="rounded-2xl border p-6" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
-          <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>
-            2 · Idioma del audio
-          </p>
-          <div className="grid grid-cols-5 gap-2">
-            {TRANSCRIBE_LANGS.map((l) => (
-              <button
-                key={l.code}
-                onClick={() => setLang(l.code)}
-                className="flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl text-xs font-medium transition-all"
-                style={
-                  lang === l.code
-                    ? { background: "rgba(59,130,246,0.18)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
-                    : { background: "#12121a", color: "#8888a8", border: "1px solid #2a2a3e" }
-                }
-              >
-                <span className="text-xl leading-none">{l.flag}</span>
-                {l.label}
-              </button>
-            ))}
           </div>
         </div>
 
