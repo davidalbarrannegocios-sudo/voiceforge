@@ -1336,12 +1336,16 @@ function BillingTab({
   extraCredits,
   plan,
   planExpiresAt,
+  nextRenewalDate,
+  daysUntilRenewal,
   onRefresh,
 }: {
   credits: number | null;
   extraCredits: number;
   plan: string;
   planExpiresAt: string | null;
+  nextRenewalDate: string | null;
+  daysUntilRenewal: number | null;
   onRefresh: () => void;
 }) {
   const [activePlan, setActivePlan] = useState<BillingPlan | null>(null);
@@ -1350,9 +1354,11 @@ function BillingTab({
   const [portalLoading, setPortalLoading] = useState(false);
 
   const badge = PLAN_BADGE[plan] ?? PLAN_BADGE.free;
-  const renewalDate = planExpiresAt
-    ? new Date(planExpiresAt).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })
+
+  const renewalDateLabel = nextRenewalDate
+    ? new Date(nextRenewalDate).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })
     : null;
+  const renewalSoon = daysUntilRenewal !== null && daysUntilRenewal <= 2;
 
   async function openPortal() {
     setPortalLoading(true);
@@ -1399,10 +1405,26 @@ function BillingTab({
               {badge.label}
             </span>
           </div>
-          {renewalDate && (
-            <p style={{ fontSize: "12px", color: "#3a3a52", marginBottom: "12px" }}>
-              Próxima renovación: <span style={{ color: "#6b6b88" }}>{renewalDate}</span>
-            </p>
+          {renewalDateLabel && (
+            <div style={{ marginBottom: "12px" }}>
+              <p style={{ fontSize: "12px", color: "#3a3a52", display: "flex", alignItems: "center", gap: "5px" }}>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: renewalSoon ? "#f59e0b" : "#3a3a52" }}>
+                  <rect x="1" y="3" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M5 1v3M11 1v3M1 7h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <span>
+                  {plan === "free" ? "Próxima recarga: " : "Próxima renovación: "}
+                  <span style={{ color: renewalSoon ? "#f59e0b" : "#6b6b88" }}>{renewalDateLabel}</span>
+                </span>
+              </p>
+              {renewalSoon ? (
+                <p style={{ fontSize: "11px", color: "#f59e0b", marginTop: "3px", fontWeight: 600 }}>¡Renueva pronto!</p>
+              ) : daysUntilRenewal !== null ? (
+                <p style={{ fontSize: "11px", color: "#3a3a52", marginTop: "3px" }}>
+                  En {daysUntilRenewal} día{daysUntilRenewal !== 1 ? "s" : ""}
+                </p>
+              ) : null}
+            </div>
           )}
           {plan !== "free" && (
             <button
@@ -2368,6 +2390,8 @@ export default function DashboardPage() {
   const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(null);
   const [supportOpen, setSupportOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [nextRenewalDate, setNextRenewalDate] = useState<string | null>(null);
+  const [daysUntilRenewal, setDaysUntilRenewal] = useState<number | null>(null);
   const { t: tt, toggle: toggleLang } = useLang();
 
   const fetchCredits = useCallback(async () => {
@@ -2378,6 +2402,8 @@ export default function DashboardPage() {
     if (data.plan) setPlan(data.plan);
     if ("planExpiresAt" in data) setPlanExpiresAt(data.planExpiresAt);
     if (typeof data.transcriptionUsed === "number") setTranscriptionUsed(data.transcriptionUsed);
+    if ("nextRenewalDate" in data) setNextRenewalDate(data.nextRenewalDate);
+    if (typeof data.daysUntilRenewal === "number") setDaysUntilRenewal(data.daysUntilRenewal);
   }, []);
 
   const fetchVoices = useCallback(async () => {
@@ -2520,6 +2546,8 @@ export default function DashboardPage() {
             extraCredits={extraCredits}
             plan={plan}
             planExpiresAt={planExpiresAt}
+            nextRenewalDate={nextRenewalDate}
+            daysUntilRenewal={daysUntilRenewal}
             onRefresh={fetchCredits}
           />
         )}

@@ -60,6 +60,7 @@ export async function GET() {
       plan: user.plan,
       planExpiresAt: user.planExpiresAt?.toISOString() ?? null,
       transcriptionUsed: user.transcriptionUsed,
+      ...computeRenewal(user),
     });
     if (referralCookie) res.cookies.delete("referralCode");
     return res;
@@ -77,5 +78,29 @@ export async function GET() {
     plan: user.plan,
     planExpiresAt: user.planExpiresAt?.toISOString() ?? null,
     transcriptionUsed: user.transcriptionUsed,
+    ...computeRenewal(user),
   });
+}
+
+function computeRenewal(user: { plan: string; planExpiresAt: Date | null; createdAt: Date }) {
+  let nextRenewalDate: string | null = null;
+  let daysUntilRenewal: number | null = null;
+
+  if (user.plan !== "free" && user.planExpiresAt) {
+    nextRenewalDate = user.planExpiresAt.toISOString();
+  } else {
+    // Free plan: renewal on same day-of-month as createdAt, next upcoming occurrence
+    const now = new Date();
+    const created = new Date(user.createdAt);
+    const renewal = new Date(now.getFullYear(), now.getMonth(), created.getDate());
+    if (renewal <= now) renewal.setMonth(renewal.getMonth() + 1);
+    nextRenewalDate = renewal.toISOString();
+  }
+
+  if (nextRenewalDate) {
+    const ms = new Date(nextRenewalDate).getTime() - Date.now();
+    daysUntilRenewal = Math.ceil(ms / (1000 * 60 * 60 * 24));
+  }
+
+  return { nextRenewalDate, daysUntilRenewal };
 }
