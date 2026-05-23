@@ -423,7 +423,7 @@ export function VoiceBrowser({
                             className="absolute top-2 right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-semibold"
                             style={{ background: "rgba(245,158,11,0.15)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.3)" }}
                           >
-                            {isLocked && <span>🔒</span>} Starter+
+                            Starter+
                           </div>
                         )}
 
@@ -455,11 +455,11 @@ export function VoiceBrowser({
                             className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all"
                             style={
                               isLocked
-                                ? { background: "rgba(245,158,11,0.1)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.25)" }
+                                ? { background: "#1e1e2e", color: "#4a4a65", border: "1px solid #2a2a3e" }
                                 : { background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff" }
                             }
                           >
-                            {isLocked ? "🔒 Usar" : "Usar"}
+                            Usar
                           </button>
                         </div>
                       </div>
