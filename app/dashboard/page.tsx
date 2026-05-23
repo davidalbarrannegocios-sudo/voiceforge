@@ -1029,7 +1029,7 @@ function VoicesTab({
 
   const cloned = voices.filter((v) => !v.isSystem);
   const slotLimit = VOICE_SLOT_LIMITS[plan] ?? 0;
-  const atLimit = plan === "free" || cloned.length >= slotLimit;
+  const atLimit = plan === "free" || (slotLimit !== Infinity && cloned.length >= slotLimit);
 
   async function handleDelete(voiceId: string) {
     setDeletingId(voiceId);
@@ -1057,8 +1057,8 @@ function VoicesTab({
             {plan === "free" ? (
               <p className="text-xs mt-0.5" style={{ color: "#2e2e48" }}>No disponible en el plan gratuito</p>
             ) : (
-              <p className="text-xs mt-0.5" style={{ color: cloned.length >= slotLimit ? "#f87171" : "#3a3a52" }}>
-                {cloned.length}/{slotLimit} slots utilizados
+              <p className="text-xs mt-0.5" style={{ color: "#3a3a52" }}>
+                {slotLimit === Infinity ? `${cloned.length} / Ilimitadas` : `${cloned.length}/${slotLimit} slots utilizados`}
               </p>
             )}
           </div>
@@ -1074,7 +1074,7 @@ function VoicesTab({
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               style={atLimit ? { background: "#1a1a28", border: "1px solid #2a2a3e", color: "#3a3a52" } : { background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
             >
-              {atLimit ? `Límite alcanzado (${cloned.length}/${slotLimit})` : "+ Clonar nueva voz"}
+              {atLimit ? `Límite alcanzado (${cloned.length}/${slotLimit})` : "+ Clonar nueva voz" }
             </button>
           )}
         </div>
@@ -1268,7 +1268,7 @@ function HistoryTab({ plan }: { plan: string }) {
 }
 
 /* ─── Plan limits (mirrored from lib/stripe.ts for client use) ── */
-const VOICE_SLOT_LIMITS: Record<string, number> = { free: 0, starter: 3, pro: 10, elite: 20 };
+const VOICE_SLOT_LIMITS: Record<string, number> = { free: 0, starter: 3, pro: 10, elite: 20, enterprise: Infinity };
 
 /* ─── Billing Tab ────────────────────────────────────────── */
 const BILLING_PLANS = [
