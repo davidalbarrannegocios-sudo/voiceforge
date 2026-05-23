@@ -6,8 +6,10 @@ export const runtime = "nodejs";
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { memberId: string } }
+  { params }: { params: Promise<{ memberId: string }> }
 ) {
+  const { memberId } = await params;
+
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
@@ -18,7 +20,7 @@ export async function DELETE(
   if (!team) return NextResponse.json({ error: "No tienes un equipo" }, { status: 404 });
 
   const member = await prisma.teamMember.findFirst({
-    where: { id: params.memberId, teamId: team.id },
+    where: { id: memberId, teamId: team.id },
   });
   if (!member) return NextResponse.json({ error: "Miembro no encontrado" }, { status: 404 });
 
