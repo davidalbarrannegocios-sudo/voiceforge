@@ -2689,17 +2689,19 @@ function TeamTab({ credits }: { credits: number | null }) {
         {success && <p className="text-sm px-1" style={{ color: "#4ade80" }}>{success}</p>}
 
         {team.members.length > 0 && (
-          <button
-            onClick={handleSaveDistribution}
-            disabled={saving || totalAssigned > 100}
-            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50 transition-all"
-            style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
-          >
-            {saving ? "Guardando..." : "Guardar distribución"}
-          </button>
-          <p className="text-xs text-center leading-relaxed" style={{ color: "#555570" }}>
-            Los créditos se distribuirán automáticamente el día 1 de cada mes según estos porcentajes. Los cambios que guardes ahora se aplicarán en la próxima renovación.
-          </p>
+          <>
+            <button
+              onClick={handleSaveDistribution}
+              disabled={saving || totalAssigned > 100}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50 transition-all"
+              style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+            >
+              {saving ? "Guardando..." : "Guardar distribución"}
+            </button>
+            <p className="text-xs text-center leading-relaxed" style={{ color: "#555570" }}>
+              Los créditos se distribuirán automáticamente el día 1 de cada mes según estos porcentajes. Los cambios que guardes ahora se aplicarán en la próxima renovación.
+            </p>
+          </>
         )}
       </div>
 
