@@ -1,6 +1,7 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getStripe } from "@/lib/stripe";
 import { cookies } from "next/headers";
 
 function generateReferralCode(): string {
@@ -54,13 +55,14 @@ export async function GET() {
       });
     }
 
+    const renewal = await computeRenewal(user);
     const res = NextResponse.json({
       characters: user.credits,
       extraCredits: user.extraCredits,
       plan: user.plan,
       planExpiresAt: user.planExpiresAt?.toISOString() ?? null,
       transcriptionUsed: user.transcriptionUsed,
-      ...computeRenewal(user),
+      ...renewal,
     });
     if (referralCookie) res.cookies.delete("referralCode");
     return res;
@@ -72,23 +74,40 @@ export async function GET() {
     user = await prisma.user.update({ where: { id: user.id }, data: { referralCode } });
   }
 
+  // Lazy backfill: paid plan but planExpiresAt missing → fetch from Stripe and save
+  if (user.plan !== "free" && !user.planExpiresAt && user.stripeSubscriptionId) {
+    try {
+      const sub = await getStripe().subscriptions.retrieve(user.stripeSubscriptionId);
+      const periodEnd = new Date(sub.items.data[0].current_period_end * 1000);
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { planExpiresAt: periodEnd },
+      });
+      console.log(`[credits] backfilled planExpiresAt for user=${user.id}: ${periodEnd.toISOString()}`);
+    } catch (err) {
+      console.error("[credits] failed to backfill planExpiresAt:", err);
+    }
+  }
+
+  const renewal = await computeRenewal(user);
+
   return NextResponse.json({
     characters: user.credits,
     extraCredits: user.extraCredits,
     plan: user.plan,
     planExpiresAt: user.planExpiresAt?.toISOString() ?? null,
     transcriptionUsed: user.transcriptionUsed,
-    ...computeRenewal(user),
+    ...renewal,
   });
 }
 
-function computeRenewal(user: { plan: string; planExpiresAt: Date | null; createdAt: Date }) {
+async function computeRenewal(user: { plan: string; planExpiresAt: Date | null; createdAt: Date }) {
   let nextRenewalDate: string | null = null;
   let daysUntilRenewal: number | null = null;
 
   if (user.plan !== "free" && user.planExpiresAt) {
     nextRenewalDate = user.planExpiresAt.toISOString();
-  } else {
+  } else if (user.plan === "free") {
     // Free plan: renewal on same day-of-month as createdAt, next upcoming occurrence
     const now = new Date();
     const created = new Date(user.createdAt);
