@@ -292,7 +292,7 @@ function PricingContent() {
                 <div style={{ marginTop: "16px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "10px", padding: "14px" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
                     <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#fff" }}>
-                      <Users size={14} style={{ color: "#fff", flexShrink: 0 }} /> Seats de equipo
+                      <Users size={14} style={{ color: "#fff", flexShrink: 0 }} /> Seats
                     </span>
                     <span style={{ fontSize: "12px", color: "#555570", textDecoration: "line-through" }}>$5/seat/mes</span>
                   </div>
