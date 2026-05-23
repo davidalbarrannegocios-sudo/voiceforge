@@ -56,25 +56,30 @@ export async function POST(req: Request) {
   if (process.env.RESEND_API_KEY) {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const ownerName = owner.email.split("@")[0];
-    const result = await resend.emails.send({
-      from: "Elite Labs <onboarding@resend.dev>",
-      to: "albarranjimenezd@gmail.com", // TODO: change to invitee.email once elitelabs.es domain is verified in Resend
-      subject: `Te han añadido al equipo "${team.name}" en Elite Labs`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; color: #e5e7eb; background: #0a0a0f; padding: 32px; border-radius: 12px;">
-          <h2 style="color: #fff; margin-top: 0;">¡Bienvenido al equipo!</h2>
-          <p>Hola,</p>
-          <p><strong>${ownerName}</strong> te ha añadido a su equipo <strong>"${team.name}"</strong> en Elite Labs.</p>
-          <p>Recibirás caracteres mensuales automáticamente según la distribución configurada por el administrador del equipo.</p>
-          <a href="https://elitelabs.es/dashboard"
-             style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: #3b82f6; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600;">
-            Acceder al dashboard
-          </a>
-          <p style="margin-top: 24px; font-size: 12px; color: #6b7280;">Elite Labs · elitelabs.es</p>
-        </div>
-      `,
-    });
-    console.log("[team/invite] Resend result:", JSON.stringify(result, null, 2));
+    console.log("[team/invite] Sending email to: " + invitee.email);
+    try {
+      const result = await resend.emails.send({
+        from: "Elite Labs <onboarding@resend.dev>",
+        to: "albarranjimenezd@gmail.com", // TODO: change to invitee.email once elitelabs.es domain is verified in Resend
+        subject: `Te han añadido al equipo "${team.name}" en Elite Labs`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; color: #e5e7eb; background: #0a0a0f; padding: 32px; border-radius: 12px;">
+            <h2 style="color: #fff; margin-top: 0;">¡Bienvenido al equipo!</h2>
+            <p>Hola,</p>
+            <p><strong>${ownerName}</strong> te ha añadido a su equipo <strong>"${team.name}"</strong> en Elite Labs.</p>
+            <p>Recibirás caracteres mensuales automáticamente según la distribución configurada por el administrador del equipo.</p>
+            <a href="https://elitelabs.es/dashboard"
+               style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: #3b82f6; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600;">
+              Acceder al dashboard
+            </a>
+            <p style="margin-top: 24px; font-size: 12px; color: #6b7280;">Elite Labs · elitelabs.es</p>
+          </div>
+        `,
+      });
+      console.log("[team/invite] Resend result:", JSON.stringify(result));
+    } catch (err) {
+      console.error("[team/invite] Resend error:", err);
+    }
   }
 
   return NextResponse.json({ member });
