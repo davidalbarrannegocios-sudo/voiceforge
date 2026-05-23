@@ -18,6 +18,11 @@ export async function GET() {
         plan: true,
         role: true,
         createdAt: true,
+        stripeSubscriptionId: true,
+        stripeCustomerId: true,
+        planExpiresAt: true,
+        billingInterval: true,
+        creditsRenewedAt: true,
         _count: { select: { generations: true } },
       },
     });

@@ -14,7 +14,24 @@ interface AdminUser {
   plan: string;
   role: string;
   createdAt: string;
+  stripeSubscriptionId: string | null;
+  stripeCustomerId: string | null;
+  planExpiresAt: string | null;
+  billingInterval: string;
+  creditsRenewedAt: string | null;
   _count: { generations: number };
+}
+
+interface StripeSubDetail {
+  noSubscription?: boolean;
+  subscriptionId?: string;
+  customerId?: string | null;
+  status?: string;
+  cancelAtPeriodEnd?: boolean;
+  currentPeriodEnd?: string | null;
+  cancelAt?: string | null;
+  interval?: string | null;
+  error?: string;
 }
 
 interface Stats {
@@ -153,6 +170,8 @@ function UserDetailModal({
   const [payments, setPayments] = useState<Payment[] | null>(null);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
   const [refundingPayment, setRefundingPayment] = useState<string | null>(null);
+  const [stripeSub, setStripeSub] = useState<StripeSubDetail | null>(null);
+  const [stripeSubLoading, setStripeSubLoading] = useState(false);
 
   const fetchDetail = useCallback(async () => {
     setLoading(true);
@@ -183,7 +202,21 @@ function UserDetailModal({
     }
   }, [userId, toast]);
 
+  const fetchStripeSub = useCallback(async () => {
+    setStripeSubLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/subscription`);
+      const data = await res.json();
+      setStripeSub(data);
+    } catch {
+      setStripeSub({ error: "Error de conexión" });
+    } finally {
+      setStripeSubLoading(false);
+    }
+  }, [userId]);
+
   useEffect(() => { fetchDetail(); }, [fetchDetail]);
+  useEffect(() => { fetchStripeSub(); }, [fetchStripeSub]);
 
   useEffect(() => {
     if (modalTab === "pagos" && payments === null) fetchPayments();
@@ -279,6 +312,75 @@ function UserDetailModal({
                   <p style={{ color: "#e5e7eb", fontSize: "0.85rem", fontWeight: 600, wordBreak: "break-all" }}>{value}</p>
                 </div>
               ))}
+            </div>
+
+            {/* Estado Stripe */}
+            <div style={{ marginBottom: "1.5rem", padding: "1rem", borderRadius: "0.75rem", background: "#0a0a0f", border: "1px solid #2a2a3e" }}>
+              <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#555570", marginBottom: "0.75rem" }}>Estado Stripe</p>
+              {stripeSubLoading ? (
+                <p style={{ color: "#555570", fontSize: "0.8rem" }}>Consultando Stripe...</p>
+              ) : stripeSub?.noSubscription ? (
+                <p style={{ color: "#555570", fontSize: "0.8rem" }}>Sin suscripción en Stripe</p>
+              ) : stripeSub?.error ? (
+                <p style={{ color: "#f87171", fontSize: "0.8rem" }}>{stripeSub.error}</p>
+              ) : stripeSub ? (() => {
+                const statusColors: Record<string, string> = {
+                  active: "#4ade80", canceled: "#f87171", past_due: "#f59e0b",
+                  trialing: "#93c5fd", incomplete: "#f59e0b", unpaid: "#f87171",
+                };
+                const statusLabels: Record<string, string> = {
+                  active: "ACTIVO", canceled: "CANCELADO", past_due: "PAGO PENDIENTE",
+                  trialing: "TRIAL", incomplete: "INCOMPLETO", unpaid: "IMPAGADO",
+                };
+                const col = statusColors[stripeSub.status ?? ""] ?? "#8888a8";
+                const lbl = statusLabels[stripeSub.status ?? ""] ?? (stripeSub.status ?? "").toUpperCase();
+                const periodDate = stripeSub.currentPeriodEnd
+                  ? new Date(stripeSub.currentPeriodEnd).toLocaleDateString("es-ES", { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" })
+                  : null;
+                const cancelDate = stripeSub.cancelAt
+                  ? new Date(stripeSub.cancelAt).toLocaleDateString("es-ES", { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" })
+                  : null;
+                return (
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "1rem" }}>
+                    <span style={{ fontSize: "0.7rem", fontWeight: 700, padding: "2px 10px", borderRadius: "999px", color: col, background: `${col}22`, border: `1px solid ${col}55` }}>
+                      {lbl}
+                    </span>
+                    {stripeSub.cancelAtPeriodEnd && periodDate && (
+                      <span style={{ fontSize: "0.78rem", color: "#f59e0b", fontWeight: 600 }}>
+                        ⚠ Cancela el {periodDate}
+                      </span>
+                    )}
+                    {!stripeSub.cancelAtPeriodEnd && stripeSub.status === "active" && periodDate && (
+                      <span style={{ fontSize: "0.78rem", color: "#4ade80" }}>
+                        ↻ Renueva el {periodDate}
+                      </span>
+                    )}
+                    {stripeSub.status === "past_due" && (
+                      <span style={{ fontSize: "0.78rem", color: "#f87171", fontWeight: 600 }}>
+                        ✕ Pago pendiente — requiere acción
+                      </span>
+                    )}
+                    {stripeSub.status === "canceled" && cancelDate && (
+                      <span style={{ fontSize: "0.78rem", color: "#f87171" }}>
+                        Cancelado el {cancelDate}
+                      </span>
+                    )}
+                    <span style={{ fontSize: "0.72rem", color: "#6b7280", padding: "1px 8px", borderRadius: "999px", border: "1px solid #2a2a3e" }}>
+                      {stripeSub.interval === "year" ? "Anual" : "Mensual"}
+                    </span>
+                    {stripeSub.customerId && (
+                      <a
+                        href={`https://dashboard.stripe.com/customers/${stripeSub.customerId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: "0.75rem", color: "#93c5fd", textDecoration: "none", padding: "3px 10px", borderRadius: "6px", border: "1px solid rgba(59,130,246,0.3)", background: "rgba(59,130,246,0.08)" }}
+                      >
+                        Ver en Stripe ↗
+                      </a>
+                    )}
+                  </div>
+                );
+              })() : null}
             </div>
 
             {/* Tabs */}
@@ -661,7 +763,7 @@ export default function AdminPage() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid #2a2a3e" }}>
-                  {["ID", "Email", "Créditos", "Generaciones", "Ingresos", "Rol", "Registro", ""].map((h) => (
+                  {["ID", "Email", "Créditos", "Generaciones", "Ingresos", "Suscripción", "Rol", "Registro", ""].map((h) => (
                     <th key={h} style={{ padding: "0.5rem 0.75rem", textAlign: "left", color: "#555570", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
@@ -691,6 +793,24 @@ export default function AdminPage() {
                           {u.plan}
                         </span>
                       </td>
+                      <td style={{ padding: "0.6rem 0.75rem" }}>
+                        {(() => {
+                          const now = new Date();
+                          const expires = u.planExpiresAt ? new Date(u.planExpiresAt) : null;
+                          const expired = expires && expires < now;
+                          if (expired) {
+                            return <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", color: "#f87171", background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.3)", whiteSpace: "nowrap" }}>Expirado</span>;
+                          }
+                          if (!u.stripeSubscriptionId || u.plan === "free") {
+                            return <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", color: "#6b7280", background: "rgba(107,114,128,0.1)", border: "1px solid #2a2a3e", whiteSpace: "nowrap" }}>Sin plan</span>;
+                          }
+                          const dateStr = expires ? expires.toLocaleDateString("es-ES", { timeZone: "UTC", day: "numeric", month: "short" }) : null;
+                          if (u.billingInterval === "annual") {
+                            return <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", color: "#93c5fd", background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.3)", whiteSpace: "nowrap" }}>Anual{dateStr ? ` · ${dateStr}` : ""}</span>;
+                          }
+                          return <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", color: "#4ade80", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", whiteSpace: "nowrap" }}>Mensual{dateStr ? ` · ${dateStr}` : ""}</span>;
+                        })()}
+                      </td>
                       <td style={{ padding: "0.6rem 0.75rem" }}><Tag role={u.role} /></td>
                       <td style={{ padding: "0.6rem 0.75rem", color: "#555570", whiteSpace: "nowrap" }}>
                         {new Date(u.createdAt).toLocaleDateString("es-ES")}
@@ -708,7 +828,7 @@ export default function AdminPage() {
                 })}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={8} style={{ padding: "2rem", textAlign: "center", color: "#555570" }}>
+                    <td colSpan={9} style={{ padding: "2rem", textAlign: "center", color: "#555570" }}>
                       No se encontraron usuarios
                     </td>
                   </tr>
