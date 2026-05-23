@@ -112,12 +112,13 @@ function VoiceAvatar({ name, coverImage, size = "md" }: { name: string; coverIma
   const cls = size === "md" ? "w-11 h-11" : "w-9 h-9";
   const fontSize = size === "md" ? 15 : 13;
   const showImage = !!coverImage && coverImage.trim() !== "" && !imgFailed;
+  const proxiedSrc = coverImage ? `/api/voice-image?url=${encodeURIComponent(coverImage)}` : "";
 
   if (showImage) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={coverImage}
+        src={proxiedSrc}
         alt=""
         className={`${cls} flex-shrink-0`}
         style={{ borderRadius: "50%", objectFit: "cover" }}
