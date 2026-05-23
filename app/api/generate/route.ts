@@ -38,6 +38,7 @@ export async function POST(req: Request) {
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { text, reference_id, prosody } = await req.json();
+  console.log("[generate] prosody del request:", JSON.stringify(prosody));
 
   if (!text || typeof text !== "string" || text.trim().length === 0) {
     return NextResponse.json({ error: "Texto requerido" }, { status: 400 });

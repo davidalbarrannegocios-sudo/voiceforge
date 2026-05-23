@@ -149,6 +149,8 @@ export async function fishAudioGenerate({
   const apiKey = getApiKey();
   const chunks = splitTextIntoChunks(text);
 
+  console.log("[fishaudio] Iniciando generación");
+  console.log("[fishaudio] prosody recibido:", JSON.stringify(prosody));
   console.log(`[FishAudio] TTS — referenceId=${referenceId ?? "none"} chars=${text.length} chunks=${chunks.length}`);
 
   const batchSize = getBatchSize(text.length);
