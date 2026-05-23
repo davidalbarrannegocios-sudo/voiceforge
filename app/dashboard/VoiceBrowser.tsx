@@ -35,6 +35,13 @@ interface FavoriteVoice {
   createdAt: string;
 }
 
+interface AdvancedFilters {
+  genders: string[];
+  ages: string[];
+  useCases: string[];
+  qualities: string[];
+}
+
 export { FREE_VOICE_IDS };
 
 function isPremiumVoice(id: string) {
@@ -52,10 +59,8 @@ function getGender(tags: string[]): "male" | "female" | null {
   return null;
 }
 
-const GENDER_TAG_SET = new Set([
-  "male", "man", "masculine", "masculino", "hombre",
-  "female", "woman", "feminine", "femenino", "mujer",
-]);
+const MALE_TAGS = new Set(["male", "man", "masculine", "masculino", "hombre"]);
+const FEMALE_TAGS = new Set(["female", "woman", "feminine", "femenino", "mujer"]);
 
 const LANG_FLAGS: Record<string, string> = {
   es: "🇪🇸", en: "🇺🇸", ja: "🇯🇵", zh: "🇨🇳",
@@ -82,6 +87,25 @@ const LANGS = [
 const RECENT_KEY = "vf_recent_voices";
 const MAX_RECENT = 12;
 
+const EMPTY_FILTERS: AdvancedFilters = { genders: [], ages: [], useCases: [], qualities: [] };
+
+const USE_CASE_TAGS: Record<string, string[]> = {
+  "Conversacional": ["conversational", "conversation", "chat", "dialogue", "natural"],
+  "Narración": ["narration", "narrator", "storytelling", "audiobook", "narrative"],
+  "Personaje": ["character", "character voice", "gaming", "anime"],
+  "Educativo": ["educational", "education", "tutorial", "learning", "lecture"],
+  "Publicidad": ["advertising", "commercial", "promo", "promotion", "ad"],
+  "Redes Sociales": ["social media", "social", "tiktok", "youtube", "shorts"],
+};
+
+const QUALITY_TAGS: Record<string, string[]> = {
+  "Profundo": ["deep", "bass", "low", "baritone", "powerful"],
+  "Suave": ["soft", "smooth", "gentle", "subtle"],
+  "Brillante": ["bright", "clear", "crisp", "sharp"],
+  "Energético": ["energetic", "dynamic", "lively", "vibrant", "excited"],
+  "Calmado": ["calm", "relaxed", "soothing", "peaceful", "serene"],
+};
+
 function saveRecentVoice(voice: FishVoice) {
   try {
     const stored = localStorage.getItem(RECENT_KEY);
@@ -104,12 +128,53 @@ function formatCount(n: number): string {
   return String(n);
 }
 
+function matchesAdvancedFilters(voice: FishVoice, filters: AdvancedFilters): boolean {
+  const tags = voice.tags.map((s) => s.toLowerCase());
+
+  if (filters.genders.length > 0) {
+    const match = filters.genders.some((g) => {
+      if (g === "male") return tags.some((t) => MALE_TAGS.has(t));
+      if (g === "female") return tags.some((t) => FEMALE_TAGS.has(t));
+      if (g === "neutral") return !tags.some((t) => MALE_TAGS.has(t) || FEMALE_TAGS.has(t));
+      return false;
+    });
+    if (!match) return false;
+  }
+
+  if (filters.ages.length > 0) {
+    const match = filters.ages.some((a) => {
+      if (a === "young") return tags.some((t) => ["young", "joven", "youth", "young adult", "young-adult"].includes(t));
+      if (a === "middleage") return tags.some((t) => ["middle age", "mediana edad", "middle-age", "middle aged"].includes(t));
+      if (a === "old") return tags.some((t) => ["old", "elderly", "senior", "elder", "antiguo", "aged"].includes(t));
+      return false;
+    });
+    if (!match) return false;
+  }
+
+  if (filters.useCases.length > 0) {
+    const match = filters.useCases.some((useCase) => {
+      const matchTags = USE_CASE_TAGS[useCase] ?? [];
+      return matchTags.some((mt) => tags.some((t) => t.includes(mt)));
+    });
+    if (!match) return false;
+  }
+
+  if (filters.qualities.length > 0) {
+    const match = filters.qualities.some((quality) => {
+      const matchTags = QUALITY_TAGS[quality] ?? [];
+      return matchTags.some((mt) => tags.some((t) => t.includes(mt)));
+    });
+    if (!match) return false;
+  }
+
+  return true;
+}
+
 /* ── Sub-components ─────────────────────────────────────────── */
 
 function VoiceAvatar({ name, coverImage, size = "md" }: { name: string; coverImage?: string; size?: "sm" | "md" | "lg" }) {
   const [imgFailed, setImgFailed] = useState(false);
 
-  // Reset error state whenever the URL changes
   useEffect(() => { setImgFailed(false); }, [coverImage]);
 
   const initial = name[0]?.toUpperCase() ?? "?";
@@ -212,6 +277,129 @@ function HeartIcon({ filled }: { filled: boolean }) {
     >
       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
     </svg>
+  );
+}
+
+function FilterPanel({
+  filters,
+  onChange,
+  onReset,
+  onClose,
+}: {
+  filters: AdvancedFilters;
+  onChange: (f: AdvancedFilters) => void;
+  onReset: () => void;
+  onClose: () => void;
+}) {
+  function toggleItem(key: keyof AdvancedFilters, value: string) {
+    const arr = filters[key] as string[];
+    const updated = arr.includes(value) ? arr.filter((x) => x !== value) : [...arr, value];
+    onChange({ ...filters, [key]: updated });
+  }
+
+  function Pill({ filterKey, value, label }: { filterKey: keyof AdvancedFilters; value: string; label: string }) {
+    const active = (filters[filterKey] as string[]).includes(value);
+    return (
+      <button
+        onClick={() => toggleItem(filterKey, value)}
+        className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
+        style={
+          active
+            ? { background: "rgba(59,130,246,0.2)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
+            : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a3e" }
+        }
+      >
+        {label}
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className="absolute inset-y-0 right-0 w-72 flex flex-col z-20 overflow-y-auto"
+      style={{ background: "#0d0d17", borderLeft: "1px solid #1e1e2e" }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0" style={{ borderColor: "#1e1e2e" }}>
+        <span className="text-sm font-semibold text-white">Filtros</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onReset}
+            className="text-xs font-medium transition-colors"
+            style={{ color: "#555570" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#e2e2f0")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#555570")}
+          >
+            Restablecer
+          </button>
+          <button
+            onClick={onClose}
+            className="w-6 h-6 rounded-md flex items-center justify-center transition-colors flex-shrink-0"
+            style={{ color: "#555570", background: "transparent" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#1e1e2e")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Sections */}
+      <div className="px-4 py-4 flex flex-col gap-5 flex-1">
+        {/* Género */}
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#555570" }}>Género</p>
+          <div className="flex flex-wrap gap-1.5">
+            <Pill filterKey="genders" value="male" label="Masculino" />
+            <Pill filterKey="genders" value="female" label="Femenino" />
+            <Pill filterKey="genders" value="neutral" label="Neutral" />
+          </div>
+        </div>
+
+        {/* Edad */}
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#555570" }}>Edad</p>
+          <div className="flex flex-wrap gap-1.5">
+            <Pill filterKey="ages" value="young" label="Joven" />
+            <Pill filterKey="ages" value="middleage" label="Mediana Edad" />
+            <Pill filterKey="ages" value="old" label="Antiguo" />
+          </div>
+        </div>
+
+        {/* Caso de Uso */}
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#555570" }}>Caso de Uso</p>
+          <div className="flex flex-wrap gap-1.5">
+            {Object.keys(USE_CASE_TAGS).map((label) => (
+              <Pill key={label} filterKey="useCases" value={label} label={label} />
+            ))}
+          </div>
+        </div>
+
+        {/* Calidad de Voz */}
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#555570" }}>Calidad de Voz</p>
+          <div className="flex flex-wrap gap-1.5">
+            {Object.keys(QUALITY_TAGS).map((label) => (
+              <Pill key={label} filterKey="qualities" value={label} label={label} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Apply button */}
+      <div className="px-4 py-4 border-t flex-shrink-0" style={{ borderColor: "#1e1e2e" }}>
+        <button
+          onClick={onClose}
+          className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
+          style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+        >
+          Aplicar filtros
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -369,7 +557,6 @@ export function VoiceBrowser({
 }) {
   const [tab, setTab] = useState<"recent" | "explore" | "favorites" | "cloned">("explore");
   const [language, setLanguage] = useState("es");
-  const [gender, setGender] = useState<"" | "male" | "female">("");
   const [tier, setTier] = useState<"all" | "free" | "premium">("all");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -383,9 +570,13 @@ export function VoiceBrowser({
   const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
   const [previewingId, setPreviewingId] = useState<string | null>(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [filters, setFilters] = useState<AdvancedFilters>(EMPTY_FILTERS);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const userCanUsePremium = canUsePremium(plan);
+  const activeFilterCount =
+    filters.genders.length + filters.ages.length + filters.useCases.length + filters.qualities.length;
 
   // Load recently used from localStorage
   useEffect(() => {
@@ -407,7 +598,6 @@ export function VoiceBrowser({
 
   async function toggleFavorite(voice: FishVoice) {
     const wasFav = favoriteIds.has(voice._id);
-    // Optimistic update
     if (wasFav) {
       setFavoriteIds((prev) => { const s = new Set(prev); s.delete(voice._id); return s; });
       setFavoriteVoices((prev) => prev.filter((f) => f.voiceId !== voice._id));
@@ -428,7 +618,6 @@ export function VoiceBrowser({
         body: JSON.stringify({ voiceId: voice._id, voiceName: voice.title, coverImage: voice.cover_image }),
       });
     } catch {
-      // Revert on error
       if (wasFav) {
         setFavoriteIds((prev) => new Set(prev).add(voice._id));
         setFavoriteVoices((prev) => [{
@@ -450,7 +639,7 @@ export function VoiceBrowser({
     return () => clearTimeout(t);
   }, [search]);
 
-  useEffect(() => { setPage(1); }, [language, gender]);
+  useEffect(() => { setPage(1); }, [language]);
 
   const fetchVoices = useCallback(async () => {
     if (tab !== "explore") return;
@@ -458,7 +647,6 @@ export function VoiceBrowser({
     try {
       const p = new URLSearchParams({ page: String(page), language });
       if (debouncedSearch) p.set("search", debouncedSearch);
-      if (gender) p.set("tag", gender);
       const res = await fetch(`/api/fish-voices?${p}`);
       const data = await res.json();
       setPublicVoices(data.items ?? []);
@@ -466,7 +654,7 @@ export function VoiceBrowser({
     } finally {
       setLoading(false);
     }
-  }, [tab, language, gender, debouncedSearch, page]);
+  }, [tab, language, debouncedSearch, page]);
 
   useEffect(() => { fetchVoices(); }, [fetchVoices]);
   useEffect(() => () => { audioRef.current?.pause(); }, []);
@@ -514,9 +702,9 @@ export function VoiceBrowser({
   }
 
   const filteredVoices = publicVoices.filter((v) => {
-    if (tier === "free") return !isPremiumVoice(v._id);
-    if (tier === "premium") return isPremiumVoice(v._id);
-    return true;
+    if (tier === "free" && isPremiumVoice(v._id)) return false;
+    if (tier === "premium" && !isPremiumVoice(v._id)) return false;
+    return matchesAdvancedFilters(v, filters);
   });
 
   const filteredRecent = recentVoices.filter((v) => {
@@ -581,316 +769,352 @@ export function VoiceBrowser({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
-          {/* ── Explore tab ── */}
-          {tab === "explore" && (
-            <div className="px-6 py-4">
-              {/* Search + dropdowns row */}
-              <div className="flex gap-3 mb-4">
-                {/* Search */}
-                <div className="flex-1 relative">
-                  <svg
-                    className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                    width="15" height="15" viewBox="0 0 24 24" fill="none"
-                    stroke="#555570" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        <div className="flex-1 overflow-hidden relative">
+          <div className="h-full overflow-y-auto">
+
+            {/* ── Explore tab ── */}
+            {tab === "explore" && (
+              <div className="px-6 py-4">
+                {/* Search + controls row */}
+                <div className="flex gap-3 mb-4">
+                  {/* Search */}
+                  <div className="flex-1 relative">
+                    <svg
+                      className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                      width="15" height="15" viewBox="0 0 24 24" fill="none"
+                      stroke="#555570" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    >
+                      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Buscar voces..."
+                      className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-gray-200 focus:outline-none"
+                      style={{ background: "#0d0d17", border: "1px solid #1e1e2e" }}
+                    />
+                  </div>
+
+                  {/* Language dropdown */}
+                  <select
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                    className="px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer focus:outline-none"
+                    style={{ background: "#0d0d17", border: "1px solid #1e1e2e", color: "#c0c0d8", minWidth: "120px" }}
                   >
-                    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-                  </svg>
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Buscar voces..."
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-gray-200 focus:outline-none"
-                    style={{ background: "#0d0d17", border: "1px solid #1e1e2e" }}
-                  />
+                    {LANGS.map(({ code, label }) => (
+                      <option key={code} value={code}>{label}</option>
+                    ))}
+                  </select>
+
+                  {/* Advanced filter button */}
+                  <button
+                    onClick={() => setShowFilterPanel((p) => !p)}
+                    className="relative flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+                    style={
+                      showFilterPanel || activeFilterCount > 0
+                        ? { background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
+                        : { background: "#0d0d17", color: "#c0c0d8", border: "1px solid #1e1e2e" }
+                    }
+                    title="Filtros avanzados"
+                  >
+                    {/* Sliders icon */}
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="4" y1="21" x2="4" y2="14" />
+                      <line x1="4" y1="10" x2="4" y2="3" />
+                      <line x1="12" y1="21" x2="12" y2="12" />
+                      <line x1="12" y1="8" x2="12" y2="3" />
+                      <line x1="20" y1="21" x2="20" y2="16" />
+                      <line x1="20" y1="12" x2="20" y2="3" />
+                      <line x1="1" y1="14" x2="7" y2="14" />
+                      <line x1="9" y1="8" x2="15" y2="8" />
+                      <line x1="17" y1="16" x2="23" y2="16" />
+                    </svg>
+                    <span>Filtros</span>
+                    {activeFilterCount > 0 && (
+                      <span
+                        className="flex items-center justify-center w-4 h-4 rounded-full text-xs font-bold text-white"
+                        style={{ background: "#3b82f6", fontSize: "10px" }}
+                      >
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </button>
                 </div>
 
-                {/* Language dropdown */}
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer focus:outline-none"
-                  style={{ background: "#0d0d17", border: "1px solid #1e1e2e", color: "#c0c0d8", minWidth: "120px" }}
-                >
-                  {LANGS.map(({ code, label }) => (
-                    <option key={code} value={code}>{label}</option>
-                  ))}
-                </select>
+                {/* Tier pills */}
+                <div className="flex items-center gap-2 mb-4">
+                  <TierPill active={tier === "all"} onClick={() => setTier("all")}>Todas</TierPill>
+                  <TierPill active={tier === "free"} onClick={() => setTier("free")}>Gratis</TierPill>
+                  <TierPill active={tier === "premium"} onClick={() => setTier("premium")} amber>✦ Premium</TierPill>
+                  {!userCanUsePremium && tier === "premium" && (
+                    <span className="text-xs ml-1" style={{ color: "#444460" }}>Requiere plan Starter+</span>
+                  )}
+                </div>
 
-                {/* Gender dropdown */}
-                <select
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value as "" | "male" | "female")}
-                  className="px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer focus:outline-none"
-                  style={{ background: "#0d0d17", border: "1px solid #1e1e2e", color: "#c0c0d8", minWidth: "120px" }}
+                {/* Default voice row */}
+                <button
+                  onClick={() => handleSelect(null)}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border mb-2 transition-all text-left"
+                  style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1e1e2e")}
                 >
-                  <option value="">Todos</option>
-                  <option value="male">Masculino</option>
-                  <option value="female">Femenino</option>
-                </select>
-              </div>
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#12121a" }}>🎙️</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white">Voz por defecto</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Se generará una voz estándar</p>
+                  </div>
+                  <span className="text-xs flex-shrink-0" style={{ color: "#3b82f6" }}>Seleccionar →</span>
+                </button>
 
-              {/* Tier pills */}
-              <div className="flex items-center gap-2 mb-4">
-                <TierPill active={tier === "all"} onClick={() => setTier("all")}>Todas</TierPill>
-                <TierPill active={tier === "free"} onClick={() => setTier("free")}>Gratis</TierPill>
-                <TierPill active={tier === "premium"} onClick={() => setTier("premium")} amber>✦ Premium</TierPill>
-                {!userCanUsePremium && tier === "premium" && (
-                  <span className="text-xs ml-1" style={{ color: "#444460" }}>Requiere plan Starter+</span>
+                {/* Voice list */}
+                {loading ? (
+                  <div className="rounded-xl overflow-hidden mt-2" style={{ border: "1px solid #1a1a2a" }}>
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <div key={i} className="h-[72px] animate-pulse" style={{ background: i % 2 === 0 ? "#0d0d17" : "#0b0b15", borderBottom: "1px solid #111118" }} />
+                    ))}
+                  </div>
+                ) : filteredVoices.length === 0 ? (
+                  <p className="text-center py-16 text-sm" style={{ color: "#555570" }}>No se encontraron voces</p>
+                ) : (
+                  <div className="rounded-xl overflow-hidden mt-2" style={{ border: "1px solid #1a1a2a", background: "#0a0a12" }}>
+                    {filteredVoices.map((voice) => {
+                      const isPremium = isPremiumVoice(voice._id);
+                      const isLocked = isPremium && !userCanUsePremium;
+                      return (
+                        <VoiceRow
+                          key={voice._id}
+                          voice={voice}
+                          previewingId={previewingId}
+                          previewLoadingId={previewLoadingId}
+                          onPreview={handlePreview}
+                          onUse={handleVoiceClick}
+                          isPremium={isPremium}
+                          isLocked={isLocked}
+                          isFavorite={favoriteIds.has(voice._id)}
+                          onToggleFavorite={toggleFavorite}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-3 mt-6 pb-2">
+                    <button
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                      className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
+                      style={{ background: "#0d0d17", color: "#c0c0d8", border: "1px solid #1e1e2e" }}
+                    >
+                      ← Anterior
+                    </button>
+                    <span className="text-sm" style={{ color: "#555570" }}>{page} / {totalPages}</span>
+                    <button
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={page >= totalPages}
+                      className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
+                      style={{ background: "#0d0d17", color: "#c0c0d8", border: "1px solid #1e1e2e" }}
+                    >
+                      Siguiente →
+                    </button>
+                  </div>
                 )}
               </div>
+            )}
 
-              {/* Default voice row */}
-              <button
-                onClick={() => handleSelect(null)}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border mb-2 transition-all text-left"
-                style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1e1e2e")}
-              >
-                <div className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#12121a" }}>🎙️</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white">Voz por defecto</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Se generará una voz estándar</p>
+            {/* ── Recent tab ── */}
+            {tab === "recent" && (
+              <div className="px-6 py-4">
+                {/* Tier pills */}
+                <div className="flex items-center gap-2 mb-4">
+                  <TierPill active={tier === "all"} onClick={() => setTier("all")}>Todas</TierPill>
+                  <TierPill active={tier === "free"} onClick={() => setTier("free")}>Gratis</TierPill>
+                  <TierPill active={tier === "premium"} onClick={() => setTier("premium")} amber>✦ Premium</TierPill>
                 </div>
-                <span className="text-xs flex-shrink-0" style={{ color: "#3b82f6" }}>Seleccionar →</span>
-              </button>
 
-              {/* Voice list */}
-              {loading ? (
-                <div className="rounded-xl overflow-hidden mt-2" style={{ border: "1px solid #1a1a2a" }}>
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="h-[72px] animate-pulse" style={{ background: i % 2 === 0 ? "#0d0d17" : "#0b0b15", borderBottom: "1px solid #111118" }} />
-                  ))}
-                </div>
-              ) : filteredVoices.length === 0 ? (
-                <p className="text-center py-16 text-sm" style={{ color: "#555570" }}>No se encontraron voces</p>
-              ) : (
-                <div className="rounded-xl overflow-hidden mt-2" style={{ border: "1px solid #1a1a2a", background: "#0a0a12" }}>
-                  {filteredVoices.map((voice) => {
-                    const isPremium = isPremiumVoice(voice._id);
-                    const isLocked = isPremium && !userCanUsePremium;
-                    return (
-                      <VoiceRow
-                        key={voice._id}
-                        voice={voice}
-                        previewingId={previewingId}
-                        previewLoadingId={previewLoadingId}
-                        onPreview={handlePreview}
-                        onUse={handleVoiceClick}
-                        isPremium={isPremium}
-                        isLocked={isLocked}
-                        isFavorite={favoriteIds.has(voice._id)}
-                        onToggleFavorite={toggleFavorite}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-3 mt-6 pb-2">
-                  <button
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                    className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
-                    style={{ background: "#0d0d17", color: "#c0c0d8", border: "1px solid #1e1e2e" }}
-                  >
-                    ← Anterior
-                  </button>
-                  <span className="text-sm" style={{ color: "#555570" }}>{page} / {totalPages}</span>
-                  <button
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page >= totalPages}
-                    className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
-                    style={{ background: "#0d0d17", color: "#c0c0d8", border: "1px solid #1e1e2e" }}
-                  >
-                    Siguiente →
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── Recent tab ── */}
-          {tab === "recent" && (
-            <div className="px-6 py-4">
-              {/* Tier pills */}
-              <div className="flex items-center gap-2 mb-4">
-                <TierPill active={tier === "all"} onClick={() => setTier("all")}>Todas</TierPill>
-                <TierPill active={tier === "free"} onClick={() => setTier("free")}>Gratis</TierPill>
-                <TierPill active={tier === "premium"} onClick={() => setTier("premium")} amber>✦ Premium</TierPill>
+                {filteredRecent.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-24" style={{ color: "#555570" }}>
+                    <svg className="mb-4" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    <p className="font-medium mb-1 text-sm">Aún no has usado ninguna voz</p>
+                    <p className="text-xs mb-4">Las voces que uses aparecerán aquí</p>
+                    <button
+                      onClick={() => setTab("explore")}
+                      className="px-4 py-2 rounded-lg text-xs font-semibold text-white"
+                      style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+                    >
+                      Explorar voces
+                    </button>
+                  </div>
+                ) : (
+                  <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #1a1a2a", background: "#0a0a12" }}>
+                    {filteredRecent.map((voice) => {
+                      const isPremium = isPremiumVoice(voice._id);
+                      const isLocked = isPremium && !userCanUsePremium;
+                      return (
+                        <VoiceRow
+                          key={voice._id}
+                          voice={voice}
+                          previewingId={previewingId}
+                          previewLoadingId={previewLoadingId}
+                          onPreview={handlePreview}
+                          onUse={handleVoiceClick}
+                          isPremium={isPremium}
+                          isLocked={isLocked}
+                          isFavorite={favoriteIds.has(voice._id)}
+                          onToggleFavorite={toggleFavorite}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
               </div>
+            )}
 
-              {filteredRecent.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-24" style={{ color: "#555570" }}>
-                  <svg className="mb-4" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                  </svg>
-                  <p className="font-medium mb-1 text-sm">Aún no has usado ninguna voz</p>
-                  <p className="text-xs mb-4">Las voces que uses aparecerán aquí</p>
-                  <button
-                    onClick={() => setTab("explore")}
-                    className="px-4 py-2 rounded-lg text-xs font-semibold text-white"
-                    style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
-                  >
-                    Explorar voces
-                  </button>
-                </div>
-              ) : (
-                <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #1a1a2a", background: "#0a0a12" }}>
-                  {filteredRecent.map((voice) => {
-                    const isPremium = isPremiumVoice(voice._id);
-                    const isLocked = isPremium && !userCanUsePremium;
-                    return (
-                      <VoiceRow
-                        key={voice._id}
-                        voice={voice}
-                        previewingId={previewingId}
-                        previewLoadingId={previewLoadingId}
-                        onPreview={handlePreview}
-                        onUse={handleVoiceClick}
-                        isPremium={isPremium}
-                        isLocked={isLocked}
-                        isFavorite={favoriteIds.has(voice._id)}
-                        onToggleFavorite={toggleFavorite}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+            {/* ── Favorites tab ── */}
+            {tab === "favorites" && (
+              <div className="px-6 py-4">
+                {favoriteVoices.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-24" style={{ color: "#555570" }}>
+                    <HeartIcon filled={false} />
+                    <p className="font-medium mb-1 text-sm mt-4">No tienes voces favoritas</p>
+                    <p className="text-xs mb-4">Haz clic en el corazón de cualquier voz para guardarla aquí</p>
+                    <button
+                      onClick={() => setTab("explore")}
+                      className="px-4 py-2 rounded-lg text-xs font-semibold text-white"
+                      style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+                    >
+                      Explorar voces
+                    </button>
+                  </div>
+                ) : (
+                  <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #1a1a2a", background: "#0a0a12" }}>
+                    {favoriteVoices.map((fav) => {
+                      const favVoice: FishVoice = {
+                        _id: fav.voiceId,
+                        title: fav.voiceName,
+                        cover_image: fav.coverImage ?? "",
+                        languages: [],
+                        tags: [],
+                        task_count: 0,
+                      };
+                      const isPremium = isPremiumVoice(fav.voiceId);
+                      const isLocked = isPremium && !userCanUsePremium;
+                      return (
+                        <VoiceRow
+                          key={fav.id}
+                          voice={favVoice}
+                          previewingId={previewingId}
+                          previewLoadingId={previewLoadingId}
+                          onPreview={handlePreview}
+                          onUse={handleVoiceClick}
+                          isPremium={isPremium}
+                          isLocked={isLocked}
+                          isFavorite={true}
+                          onToggleFavorite={toggleFavorite}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
-          {/* ── Favorites tab ── */}
-          {tab === "favorites" && (
-            <div className="px-6 py-4">
-              {favoriteVoices.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-24" style={{ color: "#555570" }}>
-                  <HeartIcon filled={false} />
-                  <p className="font-medium mb-1 text-sm mt-4">No tienes voces favoritas</p>
-                  <p className="text-xs mb-4">Haz clic en el corazón de cualquier voz para guardarla aquí</p>
-                  <button
-                    onClick={() => setTab("explore")}
-                    className="px-4 py-2 rounded-lg text-xs font-semibold text-white"
-                    style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
-                  >
-                    Explorar voces
-                  </button>
-                </div>
-              ) : (
-                <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #1a1a2a", background: "#0a0a12" }}>
-                  {favoriteVoices.map((fav) => {
-                    const favVoice: FishVoice = {
-                      _id: fav.voiceId,
-                      title: fav.voiceName,
-                      cover_image: fav.coverImage ?? "",
-                      languages: [],
-                      tags: [],
-                      task_count: 0,
-                    };
-                    const isPremium = isPremiumVoice(fav.voiceId);
-                    const isLocked = isPremium && !userCanUsePremium;
-                    return (
-                      <VoiceRow
-                        key={fav.id}
-                        voice={favVoice}
-                        previewingId={previewingId}
-                        previewLoadingId={previewLoadingId}
-                        onPreview={handlePreview}
-                        onUse={handleVoiceClick}
-                        isPremium={isPremium}
-                        isLocked={isLocked}
-                        isFavorite={true}
-                        onToggleFavorite={toggleFavorite}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+            {/* ── Cloned tab ── */}
+            {tab === "cloned" && (
+              <div className="px-6 py-4">
+                {/* Default option */}
+                <button
+                  onClick={() => handleSelect(null)}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border mb-3 transition-all text-left"
+                  style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1e1e2e")}
+                >
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#12121a" }}>🎙️</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white">Voz por defecto</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Se generará una voz estándar</p>
+                  </div>
+                  <span className="text-xs flex-shrink-0" style={{ color: "#3b82f6" }}>Seleccionar →</span>
+                </button>
 
-          {/* ── Cloned tab ── */}
-          {tab === "cloned" && (
-            <div className="px-6 py-4">
-              {/* Default option */}
-              <button
-                onClick={() => handleSelect(null)}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border mb-3 transition-all text-left"
-                style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1e1e2e")}
-              >
-                <div className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#12121a" }}>🎙️</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white">Voz por defecto</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Se generará una voz estándar</p>
-                </div>
-                <span className="text-xs flex-shrink-0" style={{ color: "#3b82f6" }}>Seleccionar →</span>
-              </button>
-
-              {clonedVoices.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20" style={{ color: "#555570" }}>
-                  <span className="text-4xl mb-3">🎤</span>
-                  <p className="font-medium mb-1 text-sm">No tienes voces clonadas</p>
-                  <p className="text-xs">Ve a &quot;Mis voces&quot; para clonar una</p>
-                </div>
-              ) : (
-                <div className="space-y-1.5">
-                  {clonedVoices.map((voice) => {
-                    const modelId = voice.fishAudioModelId;
-                    const isPreviewing = previewingId === modelId;
-                    const isPreviewLoading = previewLoadingId === modelId;
-                    return (
-                      <div
-                        key={voice.id}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl border"
-                        style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
-                      >
+                {clonedVoices.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20" style={{ color: "#555570" }}>
+                    <span className="text-4xl mb-3">🎤</span>
+                    <p className="font-medium mb-1 text-sm">No tienes voces clonadas</p>
+                    <p className="text-xs">Ve a &quot;Mis voces&quot; para clonar una</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {clonedVoices.map((voice) => {
+                      const modelId = voice.fishAudioModelId;
+                      const isPreviewing = previewingId === modelId;
+                      const isPreviewLoading = previewLoadingId === modelId;
+                      return (
                         <div
-                          className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-sm"
-                          style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+                          key={voice.id}
+                          className="flex items-center gap-3 px-4 py-3 rounded-xl border"
+                          style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
                         >
-                          {voice.name[0]?.toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-white truncate">{voice.name}</p>
-                          <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Voz clonada</p>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {modelId && (
-                            <button
-                              onClick={() => handlePreview(modelId)}
-                              disabled={isPreviewLoading}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60"
-                              style={{
-                                background: isPreviewing ? "rgba(59,130,246,0.25)" : "rgba(59,130,246,0.08)",
-                                color: "#93c5fd",
-                                border: "1px solid rgba(59,130,246,0.2)",
-                              }}
-                            >
-                              {isPreviewLoading ? "···" : isPreviewing ? "⏹" : "▶"}
-                              <span className="hidden sm:inline">{isPreviewLoading ? "" : isPreviewing ? "Stop" : "Preview"}</span>
-                            </button>
-                          )}
-                          <button
-                            onClick={() => modelId && handleSelect({ referenceId: modelId, name: voice.name, isCloned: true })}
-                            disabled={!modelId}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white disabled:opacity-50"
+                          <div
+                            className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-sm"
                             style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
                           >
-                            Usar
-                          </button>
+                            {voice.name[0]?.toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-white truncate">{voice.name}</p>
+                            <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Voz clonada</p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {modelId && (
+                              <button
+                                onClick={() => handlePreview(modelId)}
+                                disabled={isPreviewLoading}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60"
+                                style={{
+                                  background: isPreviewing ? "rgba(59,130,246,0.25)" : "rgba(59,130,246,0.08)",
+                                  color: "#93c5fd",
+                                  border: "1px solid rgba(59,130,246,0.2)",
+                                }}
+                              >
+                                {isPreviewLoading ? "···" : isPreviewing ? "⏹" : "▶"}
+                                <span className="hidden sm:inline">{isPreviewLoading ? "" : isPreviewing ? "Stop" : "Preview"}</span>
+                              </button>
+                            )}
+                            <button
+                              onClick={() => modelId && handleSelect({ referenceId: modelId, name: voice.name, isCloned: true })}
+                              disabled={!modelId}
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white disabled:opacity-50"
+                              style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+                            >
+                              Usar
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+
+          {/* Advanced filter panel overlay */}
+          {showFilterPanel && tab === "explore" && (
+            <FilterPanel
+              filters={filters}
+              onChange={setFilters}
+              onReset={() => setFilters(EMPTY_FILTERS)}
+              onClose={() => setShowFilterPanel(false)}
+            />
           )}
         </div>
       </div>
