@@ -2697,6 +2697,9 @@ function TeamTab({ credits }: { credits: number | null }) {
           >
             {saving ? "Guardando..." : "Guardar distribución"}
           </button>
+          <p className="text-xs text-center leading-relaxed" style={{ color: "#555570" }}>
+            Los créditos se distribuirán automáticamente el día 1 de cada mes según estos porcentajes. Los cambios que guardes ahora se aplicarán en la próxima renovación.
+          </p>
         )}
       </div>
 
