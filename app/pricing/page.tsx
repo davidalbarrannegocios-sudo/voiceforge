@@ -110,8 +110,6 @@ const PLANS: Plan[] = [
       "Generación prioritaria",
       "Soporte preferente",
       "Audios disponibles 90 días",
-      "Seats de equipo incluidos (valor $5/seat/mes)",
-      "SPONSORED:Gratis · Patrocinado por EliteLabs",
     ],
   },
 ];
@@ -282,24 +280,29 @@ function PricingContent() {
               <div style={{ height: "1px", background: plan.key === "enterprise" ? "rgba(16,185,129,0.2)" : plan.popular ? "rgba(59,130,246,0.2)" : "#1a1a28", marginBottom: "18px" }} />
 
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
-                {plan.features.map((f) => {
-                  if (f.startsWith("SPONSORED:")) {
-                    return (
-                      <li key={f}>
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", borderRadius: "8px", padding: "4px 10px", fontSize: "12px", fontWeight: 700, color: "#4ade80" }}>
-                          ♥ {f.slice(10)}
-                        </span>
-                      </li>
-                    );
-                  }
-                  return (
-                    <li key={f} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: plan.free ? "#4a4a65" : "#6b6b88" }}>
-                      <Check size={13} style={{ color: plan.key === "enterprise" ? "#10b981" : plan.free ? "#4a4a65" : "#3b82f6", flexShrink: 0 }} />
-                      {f}
-                    </li>
-                  );
-                })}
+                {plan.features.map((f) => (
+                  <li key={f} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: plan.free ? "#4a4a65" : "#6b6b88" }}>
+                    <Check size={13} style={{ color: plan.key === "enterprise" ? "#10b981" : plan.free ? "#4a4a65" : "#3b82f6", flexShrink: 0 }} />
+                    {f}
+                  </li>
+                ))}
               </ul>
+
+              {plan.key === "enterprise" && (
+                <div style={{ marginTop: "16px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "10px", padding: "14px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#fff" }}>
+                      👥 Seats de equipo
+                    </span>
+                    <span style={{ fontSize: "12px", color: "#555570", textDecoration: "line-through" }}>$5/seat/mes</span>
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.35)", borderRadius: "8px", padding: "4px 12px", fontSize: "12px", fontWeight: 700, color: "#4ade80" }}>
+                      ♥ EliteLabs lo patrocina · GRATIS
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
