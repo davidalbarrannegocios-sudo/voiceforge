@@ -126,3 +126,35 @@ input[type="range"]::-moz-range-thumb {
     cursor: not-allowed;
   }
 }
+
+/* Clerk modal overrides */
+.cl-modalContent,
+.cl-card,
+.cl-userProfile-root {
+  background-color: #0d0d17 !important;
+  color: #e5e7eb !important;
+}
+
+.cl-userProfile-root p,
+.cl-userProfile-root span,
+.cl-userProfile-root label,
+.cl-userProfile-root h1,
+.cl-userProfile-root h2,
+.cl-userProfile-root h3 {
+  color: #e5e7eb !important;
+}
+
+.cl-userProfile-root .cl-formFieldLabel,
+.cl-userProfile-root .cl-profileSectionTitle,
+.cl-userProfile-root .cl-navbarButton {
+  color: #e5e7eb !important;
+}
+
+.cl-userProfile-root .cl-profileSectionTitleText {
+  color: #9ca3af !important;
+}
+
+.cl-internal-b3fm6y,
+.cl-internal-1dauvpw {
+  color: #e5e7eb !important;
+}
