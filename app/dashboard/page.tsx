@@ -1603,6 +1603,7 @@ function BillingTab({
       {activePlan && (
         <PaymentModal
           plan={activePlan}
+          billing={billing}
           onClose={() => setActivePlan(null)}
           onSuccess={() => {
             setActivePlan(null);

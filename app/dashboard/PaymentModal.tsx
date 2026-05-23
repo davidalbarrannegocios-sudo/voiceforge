@@ -41,11 +41,13 @@ function SubscriptionForm({
   plan,
   customerId,
   planKey,
+  billing,
   onSuccess,
 }: {
   plan: BillingPlan;
   customerId: string;
   planKey: string;
+  billing: "monthly" | "annual";
   onSuccess: () => void;
 }) {
   const stripe = useStripe();
@@ -107,7 +109,7 @@ function SubscriptionForm({
     const res = await fetch("/api/activate-subscription", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ customerId, planKey, paymentMethodId }),
+      body: JSON.stringify({ customerId, planKey, paymentMethodId, billing }),
     });
     const data = await res.json();
 
@@ -177,6 +179,8 @@ function SubscriptionForm({
             </svg>
             Procesando...
           </>
+        ) : billing === "annual" ? (
+          `Suscribirse por $${Math.round(Math.round(plan.price * 0.83 * 10) / 10 * 12)}/año`
         ) : (
           `Suscribirse por $${plan.price}/mes`
         )}
@@ -192,10 +196,12 @@ function SubscriptionForm({
 /* ─── Outer modal ─────────────────────────────────────────── */
 export function PaymentModal({
   plan,
+  billing = "monthly",
   onClose,
   onSuccess,
 }: {
   plan: BillingPlan;
+  billing?: "monthly" | "annual";
   userEmail?: string;
   onClose: () => void;
   onSuccess: () => void;
@@ -255,9 +261,17 @@ export function PaymentModal({
         <div style={{ padding: "0 24px 0" }}>
           <p style={{ fontSize: "17px", fontWeight: 700, color: "#fff", marginBottom: "3px" }}>
             Suscripción {plan.name}
+            {billing === "annual" && (
+              <span style={{ marginLeft: "8px", fontSize: "11px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e" }}>
+                Anual −17%
+              </span>
+            )}
           </p>
           <p style={{ fontSize: "13px", color: "#3a3a52" }}>
-            {plan.characters.toLocaleString("es-ES")} caracteres/mes · ${plan.price}/mes
+            {plan.characters.toLocaleString("es-ES")} caracteres/mes ·{" "}
+            {billing === "annual"
+              ? `$${Math.round(Math.round(plan.price * 0.83 * 10) / 10 * 12)}/año`
+              : `$${plan.price}/mes`}
           </p>
         </div>
 
@@ -287,6 +301,7 @@ export function PaymentModal({
                 plan={plan}
                 customerId={customerId}
                 planKey={planKey}
+                billing={billing}
                 onSuccess={handleSuccess}
               />
             </Elements>

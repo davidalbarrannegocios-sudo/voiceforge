@@ -9,10 +9,11 @@ export async function POST(req: Request) {
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const { customerId, planKey, paymentMethodId } = await req.json() as {
+  const { customerId, planKey, paymentMethodId, billing = "monthly" } = await req.json() as {
     customerId: string;
     planKey: string;
     paymentMethodId: string;
+    billing?: "monthly" | "annual";
   };
 
   console.log("[activate-subscription] customerId:", customerId, "planKey:", planKey, "pmId:", paymentMethodId);
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Plan inválido" }, { status: 400 });
   }
 
-  const priceId = getPriceId(planKey as PlanKey);
+  const priceId = getPriceId(planKey as PlanKey, billing);
   if (!priceId) {
     return NextResponse.json({ error: "Precio no configurado para este plan" }, { status: 500 });
   }
