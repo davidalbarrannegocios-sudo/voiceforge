@@ -2390,6 +2390,7 @@ export default function DashboardPage() {
   const [transcriptionUsed, setTranscriptionUsed] = useState<number>(0);
   const [voices, setVoices] = useState<Voice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(null);
+  const [translateVoice, setTranslateVoice] = useState<SelectedVoice | null>(null);
   const [supportOpen, setSupportOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [nextRenewalDate, setNextRenewalDate] = useState<string | null>(null);
@@ -2564,8 +2565,8 @@ export default function DashboardPage() {
             plan={plan}
             transcriptionUsed={transcriptionUsed}
             onBilling={() => setActiveTab("billing")}
-            selectedVoice={selectedVoice}
-            onVoiceChange={setSelectedVoice}
+            selectedVoice={translateVoice}
+            onVoiceChange={setTranslateVoice}
           />
         )}
         {activeTab === "transcribe" && (

@@ -12,11 +12,16 @@ const FREE_TRANSCRIPTION_LIMIT = 2;
 
 // Internal code → DeepL TargetLanguageCode + display name
 const LANGUAGES: Record<string, { name: string; deeplCode: deepl.TargetLanguageCode }> = {
-  en:  { name: "Inglés",   deeplCode: "en-US" },
-  ja:  { name: "Japonés",  deeplCode: "ja" },
-  ko:  { name: "Coreano",  deeplCode: "ko" },
-  zh:  { name: "Mandarín", deeplCode: "zh-HANS" },
-  yue: { name: "Cantonés", deeplCode: "zh-HANT" },
+  en:  { name: "Inglés",    deeplCode: "en-US" },
+  zh:  { name: "Chino",     deeplCode: "zh-HANS" },
+  de:  { name: "Alemán",    deeplCode: "de" },
+  ja:  { name: "Japonés",   deeplCode: "ja" },
+  fr:  { name: "Francés",   deeplCode: "fr" },
+  es:  { name: "Español",   deeplCode: "es" },
+  ko:  { name: "Coreano",   deeplCode: "ko" },
+  ar:  { name: "Árabe",     deeplCode: "ar" },
+  ru:  { name: "Ruso",      deeplCode: "ru" },
+  pt:  { name: "Portugués", deeplCode: "pt-BR" },
 };
 
 export async function POST(req: Request) {
