@@ -62,6 +62,18 @@ function Sidebar({
 }) {
   const { openUserProfile } = useClerk();
   const { t } = useLang();
+  const [leaveConfirm, setLeaveConfirm] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+
+  async function handleLeave() {
+    setLeaving(true);
+    try {
+      const res = await fetch("/api/team/leave", { method: "POST" });
+      if (res.ok) window.location.reload();
+    } finally {
+      setLeaving(false);
+    }
+  }
 
   const platformItems: { key: Tab | "_account"; label: string; Icon: React.ElementType }[] = [
     { key: "billing",   label: t.nav.billing,   Icon: CreditCard },
@@ -209,19 +221,57 @@ function Sidebar({
           <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#2e2e48", marginBottom: "8px" }}>
             Equipo
           </p>
-          <div style={{ background: "#111122", border: "1px solid #1e1e32", borderRadius: "10px", padding: "10px 12px", display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: "rgba(59,130,246,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <Users size={14} style={{ color: "#3b82f6" }} />
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <p style={{ fontSize: "12px", fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {memberInfo.teamName}
+          {leaveConfirm ? (
+            <div style={{ background: "#110a0a", border: "1px solid #3a1a1a", borderRadius: "10px", padding: "10px 12px" }}>
+              <p style={{ fontSize: "11px", color: "#fca5a5", marginBottom: "8px", lineHeight: 1.4 }}>
+                ¿Salir del equipo <strong>{memberInfo.teamName}</strong>? Perderás{" "}
+                {memberInfo.creditsLastDistributed > 0
+                  ? <strong>{memberInfo.creditsLastDistributed.toLocaleString("es-ES")} créditos</strong>
+                  : "los créditos asignados"}{" "}
+                que se devolverán al administrador.
               </p>
-              <p style={{ fontSize: "11px", color: "#3a3a52", marginTop: "1px" }}>
-                Miembro · {(memberInfo.percentage > 0 ? Math.floor(5_000_000 * memberInfo.percentage / 100) : memberInfo.creditsLastDistributed).toLocaleString("es-ES")} car.
-              </p>
+              <div style={{ display: "flex", gap: "6px" }}>
+                <button
+                  onClick={() => setLeaveConfirm(false)}
+                  disabled={leaving}
+                  style={{ flex: 1, padding: "5px 0", borderRadius: "7px", border: "1px solid #2a2a3e", background: "transparent", color: "#5a5a78", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleLeave}
+                  disabled={leaving}
+                  style={{ flex: 1, padding: "5px 0", borderRadius: "7px", border: "none", background: "#ef4444", color: "#fff", fontSize: "11px", fontWeight: 600, cursor: "pointer", opacity: leaving ? 0.6 : 1 }}
+                >
+                  {leaving ? "..." : "Salir"}
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <>
+              <div style={{ background: "#111122", border: "1px solid #1e1e32", borderRadius: "10px", padding: "10px 12px", display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: "rgba(59,130,246,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Users size={14} style={{ color: "#3b82f6" }} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: "12px", fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {memberInfo.teamName}
+                  </p>
+                  <p style={{ fontSize: "11px", color: "#3a3a52", marginTop: "1px" }}>
+                    Miembro · {(memberInfo.percentage > 0 ? Math.floor(5_000_000 * memberInfo.percentage / 100) : memberInfo.creditsLastDistributed).toLocaleString("es-ES")} car.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setLeaveConfirm(true)}
+                style={{ marginTop: "6px", width: "100%", padding: "5px 0", borderRadius: "7px", border: "1px solid #2a1a1a", background: "transparent", color: "#7a3a3a", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.borderColor = "#4a1a1a"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "#7a3a3a"; e.currentTarget.style.borderColor = "#2a1a1a"; }}
+              >
+                Salir del equipo
+              </button>
+            </>
+          )}
         </div>
       )}
     </aside>
@@ -2455,6 +2505,8 @@ function TeamTab({ credits }: { credits: number | null }) {
   const [percentages, setPercentages] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingTeam, setDeletingTeam] = useState(false);
 
   useEffect(() => {
     fetch("/api/team")
@@ -2521,6 +2573,19 @@ function TeamTab({ credits }: { credits: number | null }) {
     if (!res.ok) { flash("error", data.error); return; }
     setTeam((t) => t ? { ...t, members: t.members.filter((m) => m.id !== memberId) } : t);
     setPercentages((p) => { const c = { ...p }; delete c[memberId]; return c; });
+  }
+
+  async function handleDeleteTeam() {
+    setDeletingTeam(true);
+    try {
+      const res = await fetch("/api/team", { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) { flash("error", data.error); setShowDeleteModal(false); return; }
+      setTeam(null);
+      setShowDeleteModal(false);
+    } finally {
+      setDeletingTeam(false);
+    }
   }
 
   async function handleSaveDistribution() {
@@ -2757,6 +2822,57 @@ function TeamTab({ credits }: { credits: number | null }) {
           </button>
         </div>
       </div>
+
+      {/* Danger zone */}
+      <div className="rounded-2xl border p-5" style={{ background: "#0d0d17", borderColor: "#3a1a1a" }}>
+        <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#7a3a3a" }}>
+          Zona de peligro
+        </p>
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-xs" style={{ color: "#555570" }}>
+            Al eliminar el equipo los créditos asignados a los miembros se devolverán a tu cuenta.
+          </p>
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+            style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.18)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; }}
+          >
+            Eliminar equipo
+          </button>
+        </div>
+      </div>
+
+      {/* Delete confirmation modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
+          <div className="rounded-2xl border p-6 w-full max-w-sm space-y-4" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+            <h3 className="text-base font-bold text-white">¿Eliminar el equipo &ldquo;{team.name}&rdquo;?</h3>
+            <p className="text-sm" style={{ color: "#8888a8" }}>
+              Los créditos asignados a los miembros se devolverán automáticamente a tu cuenta antes de eliminar el equipo. Los miembros perderán acceso inmediatamente.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deletingTeam}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50"
+                style={{ background: "#1a1a2e", border: "1px solid #2a2a3e", color: "#8888a8" }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteTeam}
+                disabled={deletingTeam}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg, #ef4444, #dc2626)" }}
+              >
+                {deletingTeam ? "Eliminando..." : "Eliminar equipo"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
