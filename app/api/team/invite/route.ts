@@ -52,13 +52,13 @@ export async function POST(req: Request) {
     },
   });
 
-  // Send notification email to the invited user (non-blocking)
+  // Send notification email — TO is hardcoded for Resend sandbox testing (onboarding@resend.dev only works for verified emails)
   if (process.env.RESEND_API_KEY) {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const ownerName = owner.email.split("@")[0];
-    resend.emails.send({
+    const result = await resend.emails.send({
       from: "Elite Labs <onboarding@resend.dev>",
-      to: invitee.email,
+      to: "albarranjimenezd@gmail.com", // TODO: change to invitee.email once elitelabs.es domain is verified in Resend
       subject: `Te han añadido al equipo "${team.name}" en Elite Labs`,
       html: `
         <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; color: #e5e7eb; background: #0a0a0f; padding: 32px; border-radius: 12px;">
@@ -73,7 +73,8 @@ export async function POST(req: Request) {
           <p style="margin-top: 24px; font-size: 12px; color: #6b7280;">Elite Labs · elitelabs.es</p>
         </div>
       `,
-    }).catch((err) => console.error("[team/invite] email error:", err));
+    });
+    console.log("[team/invite] Resend result:", JSON.stringify(result, null, 2));
   }
 
   return NextResponse.json({ member });

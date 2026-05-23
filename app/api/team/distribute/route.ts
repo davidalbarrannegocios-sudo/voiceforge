@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
+import { Resend } from "resend";
 
 export const runtime = "nodejs";
 
@@ -81,6 +82,43 @@ export async function PUT(req: Request) {
     where: { id: team.id },
     include: { members: { orderBy: { createdAt: "asc" } } },
   });
+
+  // Send credit update emails to affected members (non-blocking)
+  if (process.env.RESEND_API_KEY) {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const affectedDiffs = diffs.filter((d) => d.diff !== 0);
+
+    for (const d of affectedDiffs) {
+      const member = memberMap.get(d.memberId)!;
+      const pct = distributions.find((dist) => dist.memberId === d.memberId)?.percentage ?? 0;
+      const isIncrease = d.diff > 0;
+      const subject = "Tu asignación de créditos en Elite Labs ha cambiado";
+      const changeText = isIncrease
+        ? `Se han <strong>añadido ${d.diff.toLocaleString("es-ES")} créditos</strong> a tu cuenta.`
+        : `Se han <strong>reducido ${Math.abs(d.diff).toLocaleString("es-ES")} créditos</strong> de tu cuenta.`;
+
+      resend.emails.send({
+        from: "Elite Labs <onboarding@resend.dev>",
+        to: member.email,
+        subject,
+        html: `
+          <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; color: #e5e7eb; background: #0a0a0f; padding: 32px; border-radius: 12px;">
+            <h2 style="color: #fff; margin-top: 0;">Actualización de créditos</h2>
+            <p>Hola,</p>
+            <p>El administrador del equipo <strong>"${team.name}"</strong> ha actualizado tu asignación de créditos.</p>
+            <p>${changeText}</p>
+            <p>Tu nueva asignación mensual es de <strong>${d.newCredits.toLocaleString("es-ES")} caracteres</strong> (${pct}% del plan).</p>
+            <p>Estos créditos ya están disponibles en tu cuenta.</p>
+            <a href="https://elitelabs.es/dashboard"
+               style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: #3b82f6; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600;">
+              Acceder al dashboard
+            </a>
+            <p style="margin-top: 24px; font-size: 12px; color: #6b7280;">Elite Labs · elitelabs.es</p>
+          </div>
+        `,
+      }).catch((err) => console.error("[team/distribute] email error:", err));
+    }
+  }
 
   return NextResponse.json({ team: updated });
 }
