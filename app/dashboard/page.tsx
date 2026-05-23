@@ -1282,6 +1282,15 @@ const VOICE_SLOT_LIMITS: Record<string, number> = { free: 0, starter: 3, pro: 10
 /* ─── Billing Tab ────────────────────────────────────────── */
 const BILLING_PLANS = [
   {
+    key: "free",
+    name: "Free",
+    description: "Para explorar la plataforma",
+    price: 0,
+    characters: 10_000,
+    popular: false,
+    features: ["10.000 caracteres/mes", "Voces del sistema", "Transcripciones (30 min/mes)", "Historial 7 días"],
+  },
+  {
     key: "starter",
     name: "Starter",
     description: "Para creadores que están empezando",
@@ -1352,6 +1361,7 @@ function BillingTab({
   const [activePack, setActivePack] = useState<string | null>(null);
   const [successCredits, setSuccessCredits] = useState<number | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
 
   const badge = PLAN_BADGE[plan] ?? PLAN_BADGE.free;
 
@@ -1371,139 +1381,171 @@ function BillingTab({
     }
   }
 
-
   return (
     <div style={{ width: "100%" }}>
-      {/* Top row: credits + plan status */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "16px", alignItems: "start", marginBottom: "36px" }}>
-        {/* Credits */}
-        <div>
-          <p style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#3a3a52", marginBottom: "8px" }}>
-            Caracteres disponibles
-          </p>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
-            <span style={{ fontSize: "40px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
-              {credits !== null ? credits.toLocaleString("es-ES") : "—"}
-            </span>
-            <span style={{ fontSize: "14px", color: "#3a3a52" }}>del plan</span>
-          </div>
-          {extraCredits > 0 && (
-            <div className="flex items-center gap-2 mt-2">
-              <span style={{ fontSize: "18px", fontWeight: 700, color: "#34d399" }}>
-                +{extraCredits.toLocaleString("es-ES")}
-              </span>
-              <span style={{ fontSize: "13px", color: "#34d399", opacity: 0.7 }}>créditos extra</span>
-            </div>
-          )}
-        </div>
+      {/* ── Header ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+        <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#fff", margin: 0 }}>Suscripción</h2>
+        <span style={{ fontSize: "11px", fontWeight: 700, padding: "3px 11px", borderRadius: "999px", color: badge.color, background: badge.bg, letterSpacing: "0.05em" }}>
+          {badge.label}
+        </span>
+      </div>
 
-        {/* Plan status card */}
-        <div style={{ borderRadius: "12px", border: "1px solid #1e1e2e", background: "#0d0d17", padding: "16px 20px", minWidth: "220px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
-            <p style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#3a3a52" }}>Plan actual</p>
-            <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 10px", borderRadius: "999px", color: badge.color, background: badge.bg, letterSpacing: "0.04em" }}>
-              {badge.label}
-            </span>
+      {/* ── Info banner ── */}
+      <div style={{ borderRadius: "12px", border: "1px solid #1e1e2e", background: "#0d0d17", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "28px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "24px", flexWrap: "wrap" }}>
+          <div>
+            <p style={{ fontSize: "11px", color: "#3a3a52", marginBottom: "3px" }}>Caracteres disponibles</p>
+            <p style={{ fontSize: "17px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "baseline", gap: "6px" }}>
+              {credits !== null ? credits.toLocaleString("es-ES") : "—"}
+              {extraCredits > 0 && (
+                <span style={{ fontSize: "12px", fontWeight: 600, color: "#34d399" }}>+{extraCredits.toLocaleString("es-ES")} extra</span>
+              )}
+            </p>
           </div>
           {renewalDateLabel && (
-            <div style={{ marginBottom: "12px" }}>
-              <p style={{ fontSize: "12px", color: "#3a3a52", display: "flex", alignItems: "center", gap: "5px" }}>
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: renewalSoon ? "#f59e0b" : "#3a3a52" }}>
-                  <rect x="1" y="3" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M5 1v3M11 1v3M1 7h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                <span>
-                  {plan === "free" ? "Próxima recarga: " : "Próxima renovación: "}
-                  <span style={{ color: renewalSoon ? "#f59e0b" : "#6b6b88" }}>{renewalDateLabel}</span>
-                </span>
-              </p>
-              {renewalSoon ? (
-                <p style={{ fontSize: "11px", color: "#f59e0b", marginTop: "3px", fontWeight: 600 }}>¡Renueva pronto!</p>
-              ) : daysUntilRenewal !== null ? (
-                <p style={{ fontSize: "11px", color: "#3a3a52", marginTop: "3px" }}>
-                  En {daysUntilRenewal} día{daysUntilRenewal !== 1 ? "s" : ""}
+            <>
+              <div style={{ width: "1px", height: "32px", background: "#1e1e2e", flexShrink: 0 }} />
+              <div>
+                <p style={{ fontSize: "11px", color: "#3a3a52", marginBottom: "3px" }}>
+                  {plan === "free" ? "Próxima recarga" : "Próxima renovación"}
                 </p>
-              ) : null}
-            </div>
+                <p style={{ fontSize: "14px", fontWeight: 600, color: renewalSoon ? "#f59e0b" : "#d1d5db", display: "flex", alignItems: "center", gap: "5px" }}>
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                    <rect x="1" y="3" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M5 1v3M11 1v3M1 7h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  {renewalDateLabel}
+                  {renewalSoon && <span style={{ fontSize: "11px", color: "#f59e0b", fontWeight: 700 }}>· ¡pronto!</span>}
+                  {!renewalSoon && daysUntilRenewal !== null && (
+                    <span style={{ fontSize: "11px", color: "#3a3a52", fontWeight: 400 }}>· en {daysUntilRenewal}d</span>
+                  )}
+                </p>
+              </div>
+            </>
           )}
-          {plan !== "free" && (
-            <button
-              onClick={openPortal}
-              disabled={portalLoading}
-              style={{ width: "100%", padding: "8px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", color: "#d1d5db", fontSize: "12px", fontWeight: 600, cursor: "pointer", opacity: portalLoading ? 0.6 : 1 }}
-            >
-              {portalLoading ? "Cargando..." : "Gestionar suscripción"}
-            </button>
-          )}
+        </div>
+        {plan !== "free" && (
+          <button
+            onClick={openPortal}
+            disabled={portalLoading}
+            style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", color: "#d1d5db", fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", opacity: portalLoading ? 0.6 : 1 }}
+          >
+            {portalLoading ? "Cargando..." : "Gestionar suscripción →"}
+          </button>
+        )}
+      </div>
+
+      {/* ── Monthly / Annual toggle ── */}
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px" }}>
+        <div style={{ display: "inline-flex", background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: "10px", padding: "3px", gap: "2px" }}>
+          <button
+            onClick={() => setBilling("monthly")}
+            style={{ padding: "7px 22px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, background: billing === "monthly" ? "#1a1a2e" : "transparent", color: billing === "monthly" ? "#e5e7eb" : "#4a4a65", transition: "all 0.15s" }}
+          >
+            Mensual
+          </button>
+          <button
+            onClick={() => setBilling("annual")}
+            style={{ padding: "7px 22px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, background: billing === "annual" ? "#1a1a2e" : "transparent", color: billing === "annual" ? "#e5e7eb" : "#4a4a65", display: "flex", alignItems: "center", gap: "7px", transition: "all 0.15s" }}
+          >
+            Anual
+            <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e", letterSpacing: "0.03em" }}>
+              −17%
+            </span>
+          </button>
         </div>
       </div>
 
-      {/* Section header */}
-      <div style={{ marginBottom: "20px" }}>
-        <p style={{ fontSize: "16px", fontWeight: 700, color: "#e5e7eb", marginBottom: "3px" }}>Recargar caracteres</p>
-        <p style={{ fontSize: "13px", color: "#3a3a52" }}>Administra tus caracteres aquí</p>
-      </div>
-
-      {/* Plan cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 w-full">
+      {/* ── Plan cards (5 in a row) ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 w-full">
         {BILLING_PLANS.map((p) => {
           const isCurrent = plan === p.key;
+          const planBadge = PLAN_BADGE[p.key];
+          const monthlyPrice = billing === "annual" && p.price > 0
+            ? Math.round(p.price * 0.83 * 10) / 10
+            : p.price;
+          const borderColor = isCurrent ? (planBadge?.color ?? "#3b82f6") : p.popular ? "#3b82f6" : "#1e1e2e";
+          const bgColor = isCurrent
+            ? "rgba(255,255,255,0.03)"
+            : p.popular ? "rgba(30,58,138,0.12)" : "#0d0d17";
+          const isDowngrade = plan !== "free" && p.key === "free";
+
           return (
             <div
               key={p.key}
-              style={{
-                position: "relative",
-                borderRadius: "16px",
-                border: p.popular ? "1px solid #3b82f6" : "1px solid #1e1e2e",
-                background: p.popular ? "rgba(30,58,138,0.18)" : "#0d0d17",
-                padding: "28px 24px",
-                display: "flex",
-                flexDirection: "column",
-              }}
+              style={{ borderRadius: "14px", border: `1px solid ${borderColor}`, background: bgColor, padding: "18px 14px", display: "flex", flexDirection: "column" }}
             >
-              {p.popular && !isCurrent && (
-                <div style={{ position: "absolute", top: "-11px", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "10px", fontWeight: 700, padding: "3px 12px", borderRadius: "999px", whiteSpace: "nowrap", letterSpacing: "0.1em" }}>
-                  MÁS POPULAR
+              {/* Card header */}
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "14px", minHeight: "28px" }}>
+                <p style={{ fontSize: "15px", fontWeight: 700, color: "#fff", margin: 0 }}>{p.name}</p>
+                {isCurrent ? (
+                  <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px", color: planBadge?.color, background: planBadge?.bg, letterSpacing: "0.05em", whiteSpace: "nowrap", flexShrink: 0 }}>
+                    ACTUAL
+                  </span>
+                ) : p.popular ? (
+                  <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px", color: "#93c5fd", background: "rgba(59,130,246,0.15)", letterSpacing: "0.05em", whiteSpace: "nowrap", flexShrink: 0 }}>
+                    POPULAR
+                  </span>
+                ) : null}
+              </div>
+
+              {/* Price */}
+              <div style={{ marginBottom: "14px" }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "3px" }}>
+                  <span style={{ fontSize: "26px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
+                    {p.price === 0 ? "Gratis" : `$${monthlyPrice}`}
+                  </span>
+                  {p.price > 0 && <span style={{ fontSize: "11px", color: "#3a3a52" }}>/mes</span>}
                 </div>
-              )}
-              {isCurrent && (
-                <div style={{ position: "absolute", top: "-11px", left: "50%", transform: "translateX(-50%)", background: "#1a1a28", border: "1px solid #2a2a3e", color: "#93c5fd", fontSize: "10px", fontWeight: 700, padding: "3px 12px", borderRadius: "999px", whiteSpace: "nowrap", letterSpacing: "0.1em" }}>
-                  PLAN ACTUAL
-                </div>
-              )}
+                {billing === "annual" && p.price > 0 && (
+                  <p style={{ fontSize: "10px", color: "#4a4a65", marginTop: "2px" }}>
+                    ${Math.round(monthlyPrice * 12)}/año
+                  </p>
+                )}
+                <p style={{ fontSize: "11px", color: "#4a4a65", marginTop: "5px" }}>
+                  {p.characters.toLocaleString("es-ES")} chars/mes
+                </p>
+                {p.price > 0 && (
+                  <p style={{ fontSize: "10px", color: "#3a3a52", marginTop: "2px" }}>
+                    {costPer10k(monthlyPrice, p.characters)}
+                  </p>
+                )}
+              </div>
 
-              <p style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>{p.name}</p>
-              <p style={{ fontSize: "12px", color: "#3a3a52", marginBottom: "20px" }}>{p.description}</p>
-
-              <p style={{ fontSize: "38px", fontWeight: 800, color: "#fff", lineHeight: 1, marginBottom: "4px" }}>${p.price}</p>
-              <p style={{ fontSize: "12px", color: "#3a3a52", marginBottom: "2px" }}>/mes</p>
-              <p style={{ fontSize: "13px", color: "#6b6b88", marginBottom: "4px" }}>
-                {p.characters.toLocaleString("es-ES")} chars/mes
-              </p>
-              <p style={{ fontSize: "11px", color: "#3a3a52", marginBottom: "18px" }}>
-                {costPer10k(p.price, p.characters)}
-              </p>
-
+              {/* CTA button */}
               <button
-                onClick={() => !isCurrent && setActivePlan(p)}
+                onClick={() => {
+                  if (isCurrent) return;
+                  if (isDowngrade || p.key === "free") { openPortal(); return; }
+                  setActivePlan(p);
+                }}
                 disabled={isCurrent}
                 style={
                   isCurrent
-                    ? { width: "100%", padding: "11px", borderRadius: "10px", border: "1px solid #2a2a3e", background: "transparent", color: "#3a3a52", fontSize: "14px", fontWeight: 600, marginBottom: "22px", cursor: "not-allowed" }
+                    ? { width: "100%", padding: "9px 8px", borderRadius: "9px", border: "1px solid #2a2a3e", background: "transparent", color: "#3a3a52", fontSize: "12px", fontWeight: 600, marginBottom: "14px", cursor: "not-allowed" }
                     : p.popular
-                    ? { width: "100%", padding: "11px", borderRadius: "10px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "14px", fontWeight: 600, marginBottom: "22px", boxShadow: "0 4px 14px rgba(59,130,246,0.35)" }
-                    : { width: "100%", padding: "11px", borderRadius: "10px", border: "1px solid #2a2a3e", cursor: "pointer", background: "transparent", color: "#d1d5db", fontSize: "14px", fontWeight: 600, marginBottom: "22px" }
+                    ? { width: "100%", padding: "9px 8px", borderRadius: "9px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "12px", fontWeight: 600, marginBottom: "14px" }
+                    : { width: "100%", padding: "9px 8px", borderRadius: "9px", border: "1px solid #2a2a3e", cursor: "pointer", background: "transparent", color: "#d1d5db", fontSize: "12px", fontWeight: 600, marginBottom: "14px" }
                 }
               >
-                {isCurrent ? "Plan actual" : plan !== "free" ? `Cambiar a ${p.name}` : `Suscribirse`}
+                {isCurrent
+                  ? "Plan actual"
+                  : isDowngrade
+                  ? "Cambiar a Free"
+                  : plan !== "free"
+                  ? `Cambiar a ${p.name}`
+                  : p.key === "free"
+                  ? "Plan actual"
+                  : "Suscribirse"}
               </button>
 
-              <div style={{ height: "1px", background: p.popular ? "rgba(59,130,246,0.2)" : "#1a1a28", marginBottom: "18px" }} />
-
-              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
+              {/* Features */}
+              <div style={{ height: "1px", background: "#1a1a28", marginBottom: "12px" }} />
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "7px" }}>
                 {p.features.map((f) => (
-                  <li key={f} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "#6b6b88" }}>
-                    <Check size={13} style={{ color: "#3b82f6", flexShrink: 0 }} />
+                  <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "6px", fontSize: "11px", color: "#6b6b88", lineHeight: 1.4 }}>
+                    <Check size={11} style={{ color: "#3b82f6", flexShrink: 0, marginTop: "1px" }} />
                     {f}
                   </li>
                 ))}
@@ -1514,8 +1556,8 @@ function BillingTab({
       </div>
 
       {/* ── Extra credits section ── */}
-      <div style={{ marginTop: "40px", marginBottom: "20px" }}>
-        <p style={{ fontSize: "16px", fontWeight: 700, color: "#e5e7eb", marginBottom: "3px" }}>Recargar créditos extra</p>
+      <div style={{ marginTop: "44px", marginBottom: "16px" }}>
+        <p style={{ fontSize: "16px", fontWeight: 700, color: "#e5e7eb", marginBottom: "3px" }}>Créditos extra</p>
         <p style={{ fontSize: "13px", color: "#3a3a52" }}>Compra créditos adicionales a tu plan. Válidos 3 meses, pago único.</p>
       </div>
 
@@ -1528,25 +1570,19 @@ function BillingTab({
         ].map((pack) => (
           <div
             key={pack.key}
-            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderRadius: "14px", border: "1px solid #1e1e2e", background: "#0d0d17" }}
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderRadius: "12px", border: "1px solid #1e1e2e", background: "#0d0d17" }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-              <div>
-                <p style={{ fontSize: "15px", fontWeight: 700, color: "#e5e7eb" }}>{pack.label}</p>
-                <p style={{ fontSize: "12px", color: "#3a3a52", marginTop: "2px" }}>
-                  {costPer10k(pack.price, pack.credits)} · Válidos 3 meses
-                </p>
-              </div>
+            <div>
+              <p style={{ fontSize: "14px", fontWeight: 700, color: "#e5e7eb" }}>{pack.label}</p>
+              <p style={{ fontSize: "11px", color: "#3a3a52", marginTop: "2px" }}>
+                {costPer10k(pack.price, pack.credits)} · Válidos 3 meses
+              </p>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "16px", flexShrink: 0 }}>
-              <span style={{ fontSize: "22px", fontWeight: 800, color: "#fff" }}>${pack.price}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "14px", flexShrink: 0 }}>
+              <span style={{ fontSize: "20px", fontWeight: 800, color: "#fff" }}>${pack.price}</span>
               <button
                 onClick={() => setActivePack(pack.key)}
-                style={{
-                  padding: "9px 20px", borderRadius: "10px", border: "none", cursor: "pointer",
-                  background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "13px", fontWeight: 600,
-                  whiteSpace: "nowrap",
-                }}
+                style={{ padding: "8px 18px", borderRadius: "9px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap" }}
               >
                 Comprar →
               </button>
