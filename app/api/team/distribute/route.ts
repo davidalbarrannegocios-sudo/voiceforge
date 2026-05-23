@@ -100,7 +100,7 @@ export async function PUT(req: Request) {
       console.log("[team/distribute] Sending email to: " + member.email);
       try {
         const result = await resend.emails.send({
-          from: "Elite Labs <onboarding@resend.dev>",
+          from: "Elite Labs <noreply@elitelabs.es>",
           to: member.email,
           subject,
           html: `

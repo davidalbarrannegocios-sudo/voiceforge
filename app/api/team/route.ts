@@ -11,12 +11,32 @@ export async function GET() {
   const user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
   if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
+  // Check if owner first
   const team = await prisma.team.findUnique({
     where: { ownerId: user.id },
     include: { members: { orderBy: { createdAt: "asc" } } },
   });
+  if (team) return NextResponse.json({ team, memberInfo: null });
 
-  return NextResponse.json({ team: team ?? null });
+  // Check if member of someone else's team
+  const membership = await prisma.teamMember.findUnique({
+    where: { userId: user.id },
+    include: { team: true },
+  });
+  if (membership) {
+    return NextResponse.json({
+      team: null,
+      memberInfo: {
+        id: membership.id,
+        percentage: membership.percentage,
+        creditsLastDistributed: membership.creditsLastDistributed,
+        teamName: membership.team.name,
+        teamId: membership.teamId,
+      },
+    });
+  }
+
+  return NextResponse.json({ team: null, memberInfo: null });
 }
 
 export async function POST(req: Request) {

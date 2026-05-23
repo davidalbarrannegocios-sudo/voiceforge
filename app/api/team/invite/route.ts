@@ -59,7 +59,7 @@ export async function POST(req: Request) {
     console.log("[team/invite] Sending email to: " + invitee.email);
     try {
       const result = await resend.emails.send({
-        from: "Elite Labs <onboarding@resend.dev>",
+        from: "Elite Labs <noreply@elitelabs.es>",
         to: "albarranjimenezd@gmail.com", // TODO: change to invitee.email once elitelabs.es domain is verified in Resend
         subject: `Te han añadido al equipo "${team.name}" en Elite Labs`,
         html: `

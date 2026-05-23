@@ -50,6 +50,7 @@ function Sidebar({
   onClose,
   desktop = false,
   plan,
+  memberInfo,
 }: {
   credits: number | null;
   activeTab: Tab;
@@ -57,6 +58,7 @@ function Sidebar({
   onClose?: () => void;
   desktop?: boolean;
   plan?: string;
+  memberInfo?: { percentage: number; creditsLastDistributed: number; teamName: string } | null;
 }) {
   const { openUserProfile } = useClerk();
   const { t } = useLang();
@@ -200,6 +202,28 @@ function Sidebar({
           />
         </div>
       </div>
+
+      {/* Team membership section — only for non-owner members */}
+      {memberInfo && (
+        <div style={{ borderTop: "1px solid #1a1a28", padding: "12px 20px 16px" }}>
+          <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#2e2e48", marginBottom: "8px" }}>
+            Equipo
+          </p>
+          <div style={{ background: "#111122", border: "1px solid #1e1e32", borderRadius: "10px", padding: "10px 12px", display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: "rgba(59,130,246,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Users size={14} style={{ color: "#3b82f6" }} />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ fontSize: "12px", fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {memberInfo.teamName}
+              </p>
+              <p style={{ fontSize: "11px", color: "#3a3a52", marginTop: "1px" }}>
+                Miembro · {(memberInfo.percentage > 0 ? Math.floor(5_000_000 * memberInfo.percentage / 100) : memberInfo.creditsLastDistributed).toLocaleString("es-ES")} car.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
@@ -2747,6 +2771,7 @@ export default function DashboardPage() {
   const [plan, setPlan] = useState<string>("free");
   const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
   const [transcriptionUsed, setTranscriptionUsed] = useState<number>(0);
+  const [memberInfo, setMemberInfo] = useState<{ percentage: number; creditsLastDistributed: number; teamName: string } | null>(null);
   const [voices, setVoices] = useState<Voice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(null);
   const [translateVoice, setTranslateVoice] = useState<SelectedVoice | null>(null);
@@ -2774,10 +2799,18 @@ export default function DashboardPage() {
     setVoices(data);
   }, []);
 
+  const fetchMemberInfo = useCallback(async () => {
+    const res = await fetch("/api/team");
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.memberInfo) setMemberInfo(data.memberInfo);
+  }, []);
+
   useEffect(() => {
     fetchCredits();
     fetchVoices();
-  }, [fetchCredits, fetchVoices]);
+    fetchMemberInfo();
+  }, [fetchCredits, fetchVoices, fetchMemberInfo]);
 
   const successPlan     = searchParams.get("plan");
   const creditsBought   = searchParams.get("creditsBought");
@@ -2805,11 +2838,11 @@ export default function DashboardPage() {
         className={`fixed inset-y-0 left-0 z-50 flex flex-col lg:hidden transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
         style={{ width: "260px", background: "#0d0d17", borderRight: "1px solid #1e1e2e" }}
       >
-        <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} onClose={() => setSidebarOpen(false)} plan={plan} />
+        <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} onClose={() => setSidebarOpen(false)} plan={plan} memberInfo={memberInfo} />
       </div>
 
       {/* Desktop sidebar */}
-      <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} desktop plan={plan} />
+      <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} desktop plan={plan} memberInfo={memberInfo} />
 
       <main className="flex-1 overflow-auto relative min-w-0" style={{ padding: "0" }}>
         {/* Topbar */}
