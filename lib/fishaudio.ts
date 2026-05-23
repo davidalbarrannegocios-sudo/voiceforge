@@ -173,6 +173,7 @@ export async function fishAudioGenerate({
           : undefined,
       };
     }
+    console.log("[fishaudio] payload prosody:", JSON.stringify(payload.prosody));
     return fetchChunk(apiKey, payload, i, chunks.length, signal);
   }, batchSize);
 
