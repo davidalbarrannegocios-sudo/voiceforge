@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import { Check } from "lucide-react";
+import { Check, Users } from "lucide-react";
 import { PaymentModal, type BillingPlan } from "@/app/dashboard/PaymentModal";
 
 type Plan = {
@@ -292,13 +292,13 @@ function PricingContent() {
                 <div style={{ marginTop: "16px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "10px", padding: "14px" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
                     <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#fff" }}>
-                      👥 Seats de equipo
+                      <Users size={14} style={{ color: "#fff", flexShrink: 0 }} /> Seats de equipo
                     </span>
                     <span style={{ fontSize: "12px", color: "#555570", textDecoration: "line-through" }}>$5/seat/mes</span>
                   </div>
                   <div style={{ textAlign: "center" }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.35)", borderRadius: "8px", padding: "4px 12px", fontSize: "12px", fontWeight: 700, color: "#4ade80" }}>
-                      ♥ EliteLabs lo patrocina · GRATIS
+                      EliteLabs lo patrocina · GRATIS
                     </span>
                   </div>
                 </div>

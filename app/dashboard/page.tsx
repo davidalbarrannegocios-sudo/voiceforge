@@ -1546,13 +1546,13 @@ function BillingTab({
                 <div style={{ marginTop: "12px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "10px", padding: "12px" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
                     <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", fontWeight: 700, color: "#fff" }}>
-                      👥 Seats de equipo
+                      <Users size={12} style={{ color: "#fff", flexShrink: 0 }} /> Seats de equipo
                     </span>
                     <span style={{ fontSize: "10px", color: "#555570", textDecoration: "line-through" }}>$5/seat/mes</span>
                   </div>
                   <div style={{ textAlign: "center" }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.35)", borderRadius: "6px", padding: "3px 8px", fontSize: "10px", fontWeight: 700, color: "#4ade80" }}>
-                      ♥ EliteLabs lo patrocina · GRATIS
+                      EliteLabs lo patrocina · GRATIS
                     </span>
                   </div>
                 </div>
