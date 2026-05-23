@@ -682,8 +682,8 @@ function GenerateTab({
                   label={t.generate.speed}
                   value={speed}
                   onChange={setSpeed}
-                  min={0.5} max={2} step={0.01} decimals={2}
-                  marks={["0.50", "1.00", "2.00"]}
+                  min={0.5} max={1.5} step={0.01} decimals={2}
+                  marks={["0.50", "1.00", "1.50"]}
                   defaultValue={1}
                 />
                 <SliderControl
@@ -698,7 +698,7 @@ function GenerateTab({
                   label={t.generate.pitch}
                   value={pitch}
                   onChange={setPitch}
-                  min={-12} max={12} step={0.1} decimals={1}
+                  min={-6} max={6} step={0.1} decimals={1}
                   marks={["Grave", "Normal", "Agudo"]}
                   defaultValue={0}
                 />
