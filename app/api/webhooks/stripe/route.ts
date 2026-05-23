@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { getStripe, getPlanFromPriceId, PLAN_CREDITS } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
+import { Resend } from "resend";
 
 function addMonths(date: Date, months: number): Date {
   const d = new Date(date);
@@ -145,6 +146,40 @@ export async function POST(req: Request) {
     const periodEnd = new Date(sub.items.data[0].current_period_end * 1000);
     const planCredits = PLAN_CREDITS[user.plan] ?? PLAN_CREDITS.free;
 
+    // Enterprise monthly renewal: distribute to team members (reset, don't accumulate)
+    if (billingReason === "subscription_cycle" && user.plan === "enterprise") {
+      const team = await prisma.team.findUnique({
+        where: { ownerId: user.id },
+        include: { members: { where: { percentage: { gt: 0 } } } },
+      });
+
+      if (team && team.members.length > 0) {
+        const distributions = team.members.map((m) => ({
+          memberId: m.id,
+          userId: m.userId,
+          credits: Math.floor(planCredits * m.percentage / 100),
+        }));
+        const totalDistributed = distributions.reduce((sum, d) => sum + d.credits, 0);
+        const ownerCredits = planCredits - totalDistributed;
+
+        await prisma.$transaction([
+          prisma.user.update({
+            where: { id: user.id },
+            data: { credits: ownerCredits, planExpiresAt: periodEnd },
+          }),
+          ...distributions.map((d) =>
+            prisma.user.update({ where: { id: d.userId }, data: { credits: d.credits } })
+          ),
+          ...distributions.map((d) =>
+            prisma.teamMember.update({ where: { id: d.memberId }, data: { creditsLastDistributed: d.credits } })
+          ),
+        ]);
+
+        console.log(`[webhook] enterprise renewal distributed: user=${user.id} ownerCredits=${ownerCredits} members=${distributions.length}`);
+        return NextResponse.json({ received: true });
+      }
+    }
+
     // subscription_cycle = monthly renewal → reset to plan credits (don't accumulate)
     // subscription_update = plan upgrade/downgrade → accumulate on top of remaining credits
     const creditsUpdate = billingReason === "subscription_cycle"
@@ -164,6 +199,52 @@ export async function POST(req: Request) {
     const sub = event.data.object as Stripe.Subscription;
     const user = await prisma.user.findFirst({ where: { stripeSubscriptionId: sub.id } });
     if (!user) return NextResponse.json({ received: true });
+
+    // Enterprise cancellation: zero out all team member credits
+    if (user.plan === "enterprise") {
+      const team = await prisma.team.findUnique({
+        where: { ownerId: user.id },
+        include: { members: true },
+      });
+
+      if (team && team.members.length > 0) {
+        await prisma.$transaction([
+          ...team.members.map((m) =>
+            prisma.user.update({ where: { id: m.userId }, data: { credits: 0 } })
+          ),
+          ...team.members.map((m) =>
+            prisma.teamMember.update({ where: { id: m.id }, data: { creditsLastDistributed: 0 } })
+          ),
+        ]);
+
+        // Notify members (non-blocking)
+        if (process.env.RESEND_API_KEY) {
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          for (const member of team.members) {
+            resend.emails.send({
+              from: "Elite Labs <noreply@elitelabs.es>",
+              to: member.email,
+              subject: "Tu acceso al equipo Enterprise ha finalizado",
+              html: `
+                <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; color: #e5e7eb; background: #0a0a0f; padding: 32px; border-radius: 12px;">
+                  <h2 style="color: #fff; margin-top: 0;">Acceso al equipo finalizado</h2>
+                  <p>Hola,</p>
+                  <p>El plan Enterprise del equipo <strong>"${team.name}"</strong> ha sido cancelado.</p>
+                  <p>Los créditos asignados a tu cuenta por este equipo han sido eliminados. Puedes suscribirte a un plan propio para seguir usando Elite Labs.</p>
+                  <a href="https://elitelabs.es/pricing"
+                     style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: #3b82f6; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                    Ver planes
+                  </a>
+                  <p style="margin-top: 24px; font-size: 12px; color: #6b7280;">Elite Labs · elitelabs.es</p>
+                </div>
+              `,
+            }).catch((err) => console.error("[webhook] member cancellation email error:", err));
+          }
+        }
+
+        console.log(`[webhook] enterprise team credits zeroed: team=${team.id} members=${team.members.length}`);
+      }
+    }
 
     await prisma.user.update({
       where: { id: user.id },

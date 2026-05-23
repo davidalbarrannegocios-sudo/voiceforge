@@ -57,7 +57,7 @@ export async function POST(req: Request) {
           ...distributions.map((d) =>
             prisma.user.update({
               where: { id: d.userId },
-              data: { credits: { increment: d.credits } },
+              data: { credits: d.credits },
             })
           ),
           // Reset creditsLastDistributed so next manual distribution diffs correctly
