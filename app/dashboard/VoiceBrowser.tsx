@@ -104,17 +104,23 @@ function formatCount(n: number): string {
 
 function VoiceAvatar({ name, coverImage, size = "md" }: { name: string; coverImage?: string; size?: "sm" | "md" }) {
   const [imgFailed, setImgFailed] = useState(false);
+
+  // Reset error state whenever the URL changes
+  useEffect(() => { setImgFailed(false); }, [coverImage]);
+
   const initial = name[0]?.toUpperCase() ?? "?";
   const cls = size === "md" ? "w-11 h-11" : "w-9 h-9";
   const fontSize = size === "md" ? 15 : 13;
+  const showImage = !!coverImage && coverImage.trim() !== "" && !imgFailed;
 
-  if (coverImage && !imgFailed) {
+  if (showImage) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={coverImage}
         alt=""
-        className={`${cls} rounded-full object-cover flex-shrink-0`}
+        className={`${cls} flex-shrink-0`}
+        style={{ borderRadius: "50%", objectFit: "cover" }}
         onError={() => setImgFailed(true)}
       />
     );

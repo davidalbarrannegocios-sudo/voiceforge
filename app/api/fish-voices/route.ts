@@ -38,5 +38,20 @@ export async function GET(req: Request) {
   }
 
   const data = await res.json();
+
+  // Normalize cover_image: Fish Audio may return relative paths — make them absolute
+  const FISH_CDN = "https://files.fish.audio";
+  if (Array.isArray(data.items)) {
+    data.items = data.items.map((item: Record<string, unknown>) => ({
+      ...item,
+      cover_image:
+        typeof item.cover_image === "string" && item.cover_image
+          ? item.cover_image.startsWith("http")
+            ? item.cover_image
+            : `${FISH_CDN}/${item.cover_image.replace(/^\//, "")}`
+          : null,
+    }));
+  }
+
   return NextResponse.json(data);
 }
