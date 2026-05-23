@@ -1613,11 +1613,16 @@ function BillingTab({
 
 /* ─── Translate Tab ───────────────────────────────────────── */
 const TRANSLATE_LANGS = [
-  { code: "en",  label: "Inglés",   flag: "🇬🇧" },
-  { code: "ja",  label: "Japonés",  flag: "🇯🇵" },
-  { code: "ko",  label: "Coreano",  flag: "🇰🇷" },
-  { code: "zh",  label: "Mandarín", flag: "🇨🇳" },
-  { code: "yue", label: "Cantonés", flag: "🇭🇰" },
+  { code: "en", label: "Inglés",    flag: "🇺🇸" },
+  { code: "zh", label: "Chino",     flag: "🇨🇳" },
+  { code: "de", label: "Alemán",    flag: "🇩🇪" },
+  { code: "ja", label: "Japonés",   flag: "🇯🇵" },
+  { code: "fr", label: "Francés",   flag: "🇫🇷" },
+  { code: "es", label: "Español",   flag: "🇪🇸" },
+  { code: "ko", label: "Coreano",   flag: "🇰🇷" },
+  { code: "ar", label: "Árabe",     flag: "🇸🇦" },
+  { code: "ru", label: "Ruso",      flag: "🇷🇺" },
+  { code: "pt", label: "Portugués", flag: "🇧🇷" },
 ];
 
 interface TranslateResult {
