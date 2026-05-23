@@ -165,7 +165,13 @@ export async function fishAudioGenerate({
     };
     if (referenceId) payload.reference_id = referenceId;
     if (prosody && (prosody.speed !== 1 || prosody.volume !== 1 || prosody.pitch !== 0)) {
-      payload.prosody = prosody;
+      payload.prosody = {
+        speed: prosody.speed,
+        volume: prosody.volume,
+        pitch: prosody.pitch !== undefined && prosody.pitch !== 0
+          ? `${prosody.pitch > 0 ? "+" : ""}${prosody.pitch}st`
+          : undefined,
+      };
     }
     return fetchChunk(apiKey, payload, i, chunks.length, signal);
   }, batchSize);
