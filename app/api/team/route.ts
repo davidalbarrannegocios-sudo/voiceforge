@@ -73,7 +73,7 @@ export async function DELETE() {
 
   const team = await prisma.team.findUnique({
     where: { ownerId: user.id },
-    include: { members: true },
+    include: { members: { include: { user: { select: { credits: true } } } } },
   });
   if (!team) return NextResponse.json({ error: "No tienes un equipo" }, { status: 404 });
 
@@ -83,6 +83,13 @@ export async function DELETE() {
     ...(totalToReturn > 0
       ? [prisma.user.update({ where: { id: user.id }, data: { credits: { increment: totalToReturn } } })]
       : []),
+    // Deduct distributed credits from each member (floor at 0)
+    ...team.members
+      .filter((m) => m.creditsLastDistributed > 0)
+      .map((m) => {
+        const deduct = Math.min(m.user.credits, m.creditsLastDistributed);
+        return prisma.user.update({ where: { id: m.userId }, data: { credits: { decrement: deduct } } });
+      }),
     prisma.team.delete({ where: { id: team.id } }),
   ]);
 
