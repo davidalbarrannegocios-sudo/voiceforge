@@ -372,6 +372,8 @@ function GenerateTab({
   const [volume, setVolume] = useState(1.0);
   const [pitch, setPitch] = useState(0.0);
   const [normalize, setNormalize] = useState(true);
+  const [previewing, setPreviewing] = useState<"idle" | "loading" | "playing">("idle");
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const [rightTab, setRightTab] = useState<"ajustes" | "historial">("ajustes");
   const { t } = useLang();
 
@@ -444,6 +446,44 @@ function GenerateTab({
       setFormError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handlePreview() {
+    if (previewing === "playing") {
+      previewAudioRef.current?.pause();
+      previewAudioRef.current = null;
+      setPreviewing("idle");
+      return;
+    }
+
+    setPreviewing("loading");
+    try {
+      const prosody = (speed !== 1 || volume !== 1 || pitch !== 0) ? { speed, volume, pitch } : undefined;
+      const res = await fetch("/api/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reference_id: selectedVoice?.referenceId ?? undefined, prosody }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setFormError(data.error ?? "Error al generar la pre-escucha");
+        setPreviewing("idle");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      previewAudioRef.current = audio;
+      setPreviewing("playing");
+      audio.onended = () => { setPreviewing("idle"); URL.revokeObjectURL(url); previewAudioRef.current = null; };
+      audio.onerror = () => { setPreviewing("idle"); URL.revokeObjectURL(url); previewAudioRef.current = null; };
+      audio.play();
+    } catch {
+      setFormError("Error al generar la pre-escucha");
+      setPreviewing("idle");
     }
   }
 
@@ -604,6 +644,32 @@ function GenerateTab({
                     <p className="text-xs" style={{ color: "#8888a8" }}>{selectedVoice?.isCloned ? t.generate.clonedVoice : t.generate.systemVoice}</p>
                   </div>
                   <span className="text-xs flex-shrink-0" style={{ color: "#8888a8" }}>→</span>
+                </button>
+              )}
+
+              {/* Preview button */}
+              {plan !== "free" && (
+                <button
+                  onClick={handlePreview}
+                  disabled={previewing === "loading"}
+                  className="mt-2 w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-all"
+                  style={{
+                    background: previewing === "playing" ? "rgba(239,68,68,0.1)" : "rgba(59,130,246,0.08)",
+                    border: `1px solid ${previewing === "playing" ? "rgba(239,68,68,0.3)" : "rgba(59,130,246,0.2)"}`,
+                    color: previewing === "playing" ? "#f87171" : previewing === "loading" ? "#8888a8" : "#93c5fd",
+                    cursor: previewing === "loading" ? "not-allowed" : "pointer",
+                    opacity: previewing === "loading" ? 0.6 : 1,
+                  }}
+                >
+                  {previewing === "loading" && (
+                    <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  )}
+                  {previewing === "idle" && "▶ Pre-escuchar"}
+                  {previewing === "loading" && "Generando..."}
+                  {previewing === "playing" && "⏹ Detener"}
                 </button>
               )}
             </div>
