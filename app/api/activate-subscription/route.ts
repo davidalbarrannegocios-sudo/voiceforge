@@ -67,7 +67,7 @@ export async function POST(req: Request) {
         where: { id: user.id },
         data: {
           plan: planKey,
-          credits: PLAN_CREDITS[planKey] ?? 0,
+          credits: { increment: PLAN_CREDITS[planKey] ?? 0 },
           stripeSubscriptionId: subscription.id,
           planExpiresAt: null,
         },

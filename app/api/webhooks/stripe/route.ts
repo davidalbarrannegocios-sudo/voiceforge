@@ -118,9 +118,10 @@ export async function POST(req: Request) {
   // ── invoice.paid ──────────────────────────────────────────
   if (event.type === "invoice.paid") {
     const invoice = event.data.object as Stripe.Invoice;
+    const billingReason = invoice.billing_reason;
 
-    // Skip first payment — handled by checkout.session.completed
-    if (invoice.billing_reason === "subscription_create") {
+    // Skip first payment — handled by checkout.session.completed / activate-subscription
+    if (billingReason === "subscription_create") {
       return NextResponse.json({ received: true });
     }
 
@@ -138,14 +139,20 @@ export async function POST(req: Request) {
     // Get updated period end from subscription
     const sub = await stripe.subscriptions.retrieve(subscriptionId);
     const periodEnd = new Date(sub.items.data[0].current_period_end * 1000);
-    const credits = PLAN_CREDITS[user.plan] ?? PLAN_CREDITS.free;
+    const planCredits = PLAN_CREDITS[user.plan] ?? PLAN_CREDITS.free;
+
+    // subscription_cycle = monthly renewal → reset to plan credits (don't accumulate)
+    // subscription_update = plan upgrade/downgrade → accumulate on top of remaining credits
+    const creditsUpdate = billingReason === "subscription_cycle"
+      ? { credits: planCredits }
+      : { credits: { increment: planCredits } };
 
     await prisma.user.update({
       where: { id: user.id },
-      data: { credits, planExpiresAt: periodEnd },
+      data: { ...creditsUpdate, planExpiresAt: periodEnd },
     });
 
-    console.log(`[webhook] credits renewed: user=${user.id} plan=${user.plan} credits=${credits}`);
+    console.log(`[webhook] credits updated: user=${user.id} plan=${user.plan} reason=${billingReason} credits=${planCredits}`);
   }
 
   // ── customer.subscription.deleted ────────────────────────
