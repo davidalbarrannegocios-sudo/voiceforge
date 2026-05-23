@@ -1864,7 +1864,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           <span className="flex-shrink-0 mt-0.5" style={{ color: "#3b82f6" }}>ℹ</span>
           <span>
             Se aplica un pequeño incremento del{" "}
-            <span className="font-semibold" style={{ color: "#93c5fd" }}>20%</span>{" "}
+            <span className="font-semibold" style={{ color: "#93c5fd" }}>{plan === "enterprise" ? "10%" : "20%"}</span>{" "}
             sobre el coste estándar para cubrir los costes de transcripción y traducción automática incluidos en el proceso.
           </span>
         </div>
