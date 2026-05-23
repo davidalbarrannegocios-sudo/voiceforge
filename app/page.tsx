@@ -738,6 +738,8 @@ export default function LandingPage() {
                 {[
                   { label: "Texto a voz", href: "/dashboard" },
                   { label: "Clonación de voz", href: "/dashboard" },
+                  { label: "Traducción de audio", href: "/dashboard" },
+                  { label: "Audio a Texto", href: "/dashboard" },
                   { label: "Precios", href: "/pricing" },
                 ].map(({ label, href }) => (
                   <li key={label}>
