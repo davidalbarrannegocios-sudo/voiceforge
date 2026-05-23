@@ -1,0 +1,21 @@
+// Voice IDs available on the free plan — keep in sync with VoiceBrowser.tsx
+export const FREE_VOICE_IDS = new Set([
+  "dfa5b230c8054f429e434f4a6e9bbdec",
+  "35199d5438854f5d9157c500479ab684",
+  "acc8237220d8470985ec9be6c4c480a9",
+  "a84bb566446e4eca8e631cd8dd41a5f5",
+  "bfed5c0810a347dbb62e8ccce7f59c48",
+  "17ed67335f0145c9a850fddecd3c40e0",
+  "24b0be469dae4902bb8f7736813a55f3",
+  "9ad11f55731145f4972f80557a89ce41",
+  "cd803cbf78a4454fa98b601abbf8966a",
+  "d047b6a8f24f4d56ba818b08dbd9d089",
+  "05100dcc9dfd4af49ea96dc5affbe5b1",
+  "40b173f0b3ad45e58f5cbbd615bfbe39",
+  "8b6d1f02193f4f4daabad86ad090da9d",
+  "0b2aa74c364a49789bcba051f2901a5c",
+  "f9488c0dd5b84b748fd51c6deda08846",
+  "d4ea43a56f5a42f1959ec7846a4fb59b",
+  "4cfbaba676d04b428cfbcb5b44b569d6",
+  "fb146e57407540f0be6863063d94bea5",
+]);

@@ -426,16 +426,17 @@ function SliderControl({
 function GenerateTab({
   voices,
   onGenerated,
-  initialVoice,
+  selectedVoice,
+  onVoiceChange,
   plan,
 }: {
   voices: Voice[];
   onGenerated: () => void;
-  initialVoice?: SelectedVoice | null;
+  selectedVoice: SelectedVoice | null;
+  onVoiceChange: (v: SelectedVoice | null) => void;
   plan: string;
 }) {
   const [text, setText] = useState("");
-  const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(initialVoice ?? null);
   const [showBrowser, setShowBrowser] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -811,7 +812,7 @@ function GenerateTab({
       {showBrowser && (
         <VoiceBrowser
           clonedVoices={clonedVoices}
-          onSelect={setSelectedVoice}
+          onSelect={onVoiceChange}
           onClose={() => setShowBrowser(false)}
           plan={plan}
         />
@@ -1625,16 +1626,17 @@ const TRANSLATE_STEPS = [
   { after: 18000, label: "Generando audio traducido..." },
 ];
 
-function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling }: {
+function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling, selectedVoice, onVoiceChange }: {
   onGenerated: () => void;
   voices: Voice[];
   plan: string;
   transcriptionUsed: number;
   onBilling: () => void;
+  selectedVoice: SelectedVoice | null;
+  onVoiceChange: (v: SelectedVoice | null) => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [targetLang, setTargetLang] = useState("en");
-  const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(null);
   const [showBrowser, setShowBrowser] = useState(false);
   const [loading, setLoading] = useState(false);
   const [stepLabel, setStepLabel] = useState<string | null>(null);
@@ -1899,7 +1901,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling 
       {showBrowser && (
         <VoiceBrowser
           clonedVoices={clonedVoices}
-          onSelect={setSelectedVoice}
+          onSelect={onVoiceChange}
           onClose={() => setShowBrowser(false)}
           plan={plan}
         />
@@ -2539,7 +2541,8 @@ export default function DashboardPage() {
           <GenerateTab
             voices={voices}
             onGenerated={fetchCredits}
-            initialVoice={selectedVoice}
+            selectedVoice={selectedVoice}
+            onVoiceChange={setSelectedVoice}
             plan={plan}
           />
         )}
@@ -2573,6 +2576,8 @@ export default function DashboardPage() {
             plan={plan}
             transcriptionUsed={transcriptionUsed}
             onBilling={() => setActiveTab("billing")}
+            selectedVoice={selectedVoice}
+            onVoiceChange={setSelectedVoice}
           />
         )}
         {activeTab === "transcribe" && (

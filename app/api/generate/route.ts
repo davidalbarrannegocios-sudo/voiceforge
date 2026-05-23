@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { fishAudioGenerate } from "@/lib/fishaudio";
 import { calculateCharCost } from "@/lib/utils";
+import { FREE_VOICE_IDS } from "@/lib/free-voice-ids";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -13,24 +14,6 @@ function getExpiresAt(plan: string): Date {
   if (plan === "starter")    return new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
   if (plan === "enterprise") return new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
   return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-}
-
-async function getRandomPublicVoiceId(): Promise<string | undefined> {
-  const apiKey = process.env.FISH_AUDIO_API_KEY;
-  if (!apiKey) return undefined;
-  try {
-    const res = await fetch(
-      "https://api.fish.audio/model?page_size=20&page_number=1&sort_by=task_count&language=es",
-      { headers: { Authorization: `Bearer ${apiKey}` } }
-    );
-    if (!res.ok) return undefined;
-    const data = await res.json();
-    const voices: { _id: string }[] = data.items ?? [];
-    if (voices.length === 0) return undefined;
-    return voices[Math.floor(Math.random() * voices.length)]._id;
-  } catch {
-    return undefined;
-  }
 }
 
 export async function POST(req: Request) {
@@ -64,10 +47,10 @@ export async function POST(req: Request) {
     const fromPlan  = Math.min(user.credits, charCost);
     const fromExtra = charCost - fromPlan;
 
-    // Free plan: ignore requested voice, use a random public voice
+    // Free plan: only allow voices from the free tier; ignore premium voice IDs
     let effectiveReferenceId: string | undefined = reference_id || undefined;
-    if (user.plan === "free") {
-      effectiveReferenceId = await getRandomPublicVoiceId();
+    if (user.plan === "free" && effectiveReferenceId && !FREE_VOICE_IDS.has(effectiveReferenceId)) {
+      effectiveReferenceId = undefined;
     }
 
     const expiresAt = getExpiresAt(user.plan);
