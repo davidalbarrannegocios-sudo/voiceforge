@@ -221,29 +221,79 @@ function HomeTab({
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 items-stretch">
-        {cards.map(({ key, Icon, title, desc }) => (
+        {cards.map(({ key, Icon, title, desc }, i) => (
           <button
             key={key}
             onClick={() => setActiveTab(key)}
             className="group relative overflow-hidden flex flex-col p-6 rounded-2xl border border-[#2a2a3e] hover:border-blue-700 text-left transition-all hover:-translate-y-0.5 h-full"
             style={{ background: "#12121a" }}
           >
-            <svg
-              className="absolute top-0 right-0 w-40 h-40 opacity-20 group-hover:opacity-30 transition-opacity duration-300"
-              viewBox="0 0 160 160"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M160 0 Q120 40 160 80" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
-              <path d="M160 0 Q100 50 160 100" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
-              <path d="M160 0 Q80 60 160 120" stroke="#2563eb" strokeWidth="1.5" fill="none"/>
-              <path d="M160 10 Q90 60 160 110" stroke="#2563eb" strokeWidth="1" fill="none"/>
-              <path d="M160 20 Q100 65 160 120" stroke="#3b82f6" strokeWidth="1" fill="none"/>
-              <path d="M160 0 Q110 70 160 140" stroke="#1d4ed8" strokeWidth="1.5" fill="none"/>
-              <path d="M160 10 Q120 75 160 150" stroke="#1d4ed8" strokeWidth="1" fill="none"/>
-              <path d="M140 0 Q100 55 150 120" stroke="#3b82f6" strokeWidth="1" fill="none"/>
-              <path d="M120 0 Q90 50 140 110" stroke="#2563eb" strokeWidth="0.8" fill="none"/>
-              <path d="M100 0 Q75 45 130 100" stroke="#1d4ed8" strokeWidth="0.8" fill="none"/>
+            <svg className="absolute top-0 right-0 w-40 h-40 opacity-20 group-hover:opacity-30 transition-opacity duration-300" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {i === 0 && <>
+                {/* Texto a Voz: ondas suaves desde esquina */}
+                <path d="M160 0 Q120 40 160 80" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q100 50 160 100" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q80 60 160 120" stroke="#2563eb" strokeWidth="1.5" fill="none"/>
+                <path d="M160 10 Q90 60 160 110" stroke="#2563eb" strokeWidth="1" fill="none"/>
+                <path d="M160 20 Q100 65 160 120" stroke="#3b82f6" strokeWidth="1" fill="none"/>
+                <path d="M160 0 Q110 70 160 140" stroke="#1d4ed8" strokeWidth="1.5" fill="none"/>
+                <path d="M160 10 Q120 75 160 150" stroke="#1d4ed8" strokeWidth="1" fill="none"/>
+                <path d="M140 0 Q100 55 150 120" stroke="#3b82f6" strokeWidth="1" fill="none"/>
+                <path d="M120 0 Q90 50 140 110" stroke="#2563eb" strokeWidth="0.8" fill="none"/>
+                <path d="M100 0 Q75 45 130 100" stroke="#1d4ed8" strokeWidth="0.8" fill="none"/>
+              </>}
+              {i === 1 && <>
+                {/* Mis Voces: ondas cerradas y apretadas */}
+                <path d="M160 0 Q145 20 160 40" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q140 30 160 60" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q135 40 160 80" stroke="#2563eb" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q130 50 160 100" stroke="#2563eb" strokeWidth="1" fill="none"/>
+                <path d="M160 0 Q125 60 160 120" stroke="#1d4ed8" strokeWidth="1" fill="none"/>
+                <path d="M160 0 Q120 70 160 140" stroke="#1d4ed8" strokeWidth="1.5" fill="none"/>
+                <path d="M150 0 Q135 35 155 70" stroke="#3b82f6" strokeWidth="1" fill="none"/>
+                <path d="M140 0 Q128 30 148 65" stroke="#2563eb" strokeWidth="0.8" fill="none"/>
+                <path d="M130 0 Q118 28 142 58" stroke="#1d4ed8" strokeWidth="0.8" fill="none"/>
+                <path d="M160 10 Q142 45 158 90" stroke="#3b82f6" strokeWidth="0.8" fill="none"/>
+              </>}
+              {i === 2 && <>
+                {/* Historial: ondas abiertas y espaciadas */}
+                <path d="M160 0 Q90 80 160 160" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q70 70 150 150" stroke="#2563eb" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q110 60 160 120" stroke="#3b82f6" strokeWidth="1" fill="none"/>
+                <path d="M160 20 Q95 85 155 150" stroke="#1d4ed8" strokeWidth="1" fill="none"/>
+                <path d="M140 0 Q70 65 135 145" stroke="#2563eb" strokeWidth="1" fill="none"/>
+                <path d="M120 0 Q55 60 120 135" stroke="#1d4ed8" strokeWidth="1" fill="none"/>
+                <path d="M160 40 Q100 90 155 145" stroke="#3b82f6" strokeWidth="0.8" fill="none"/>
+                <path d="M100 0 Q40 55 105 125" stroke="#2563eb" strokeWidth="0.8" fill="none"/>
+                <path d="M80 0 Q25 50 90 115" stroke="#1d4ed8" strokeWidth="0.8" fill="none"/>
+                <path d="M160 60 Q105 100 150 148" stroke="#3b82f6" strokeWidth="0.8" fill="none"/>
+              </>}
+              {i === 3 && <>
+                {/* Audio a Texto: diagonal pronunciada */}
+                <path d="M160 0 Q60 60 100 160" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q70 55 110 160" stroke="#2563eb" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q80 50 120 160" stroke="#1d4ed8" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q90 45 130 160" stroke="#3b82f6" strokeWidth="1" fill="none"/>
+                <path d="M160 0 Q100 40 140 160" stroke="#2563eb" strokeWidth="1" fill="none"/>
+                <path d="M160 10 Q65 65 105 160" stroke="#1d4ed8" strokeWidth="1" fill="none"/>
+                <path d="M160 20 Q75 65 115 160" stroke="#3b82f6" strokeWidth="0.8" fill="none"/>
+                <path d="M160 30 Q85 65 125 160" stroke="#2563eb" strokeWidth="0.8" fill="none"/>
+                <path d="M160 0 Q55 70 95 160" stroke="#1d4ed8" strokeWidth="0.8" fill="none"/>
+                <path d="M160 0 Q50 80 90 160" stroke="#3b82f6" strokeWidth="0.8" fill="none"/>
+              </>}
+              {i === 4 && <>
+                {/* Traducción: ondas cortas y densas */}
+                <path d="M160 0 Q148 12 160 24" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q144 16 160 32" stroke="#2563eb" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q140 20 160 40" stroke="#1d4ed8" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q135 25 160 50" stroke="#3b82f6" strokeWidth="1" fill="none"/>
+                <path d="M160 0 Q130 30 160 60" stroke="#2563eb" strokeWidth="1" fill="none"/>
+                <path d="M160 0 Q124 36 160 72" stroke="#1d4ed8" strokeWidth="1" fill="none"/>
+                <path d="M160 0 Q118 42 160 84" stroke="#3b82f6" strokeWidth="1" fill="none"/>
+                <path d="M155 0 Q140 20 158 42" stroke="#2563eb" strokeWidth="0.8" fill="none"/>
+                <path d="M150 0 Q133 22 154 46" stroke="#1d4ed8" strokeWidth="0.8" fill="none"/>
+                <path d="M145 0 Q126 24 150 50" stroke="#3b82f6" strokeWidth="0.8" fill="none"/>
+              </>}
             </svg>
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 flex-shrink-0"
