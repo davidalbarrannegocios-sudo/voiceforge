@@ -47,10 +47,14 @@ function Sidebar({
   credits,
   activeTab,
   setActiveTab,
+  onClose,
+  desktop = false,
 }: {
   credits: number | null;
   activeTab: Tab;
   setActiveTab: (t: Tab) => void;
+  onClose?: () => void;
+  desktop?: boolean;
 }) {
   const { openUserProfile } = useClerk();
   const { t } = useLang();
@@ -84,19 +88,17 @@ function Sidebar({
   function handleNav(key: Tab | "_account") {
     if (key === "_account") { openUserProfile(); return; }
     setActiveTab(key);
+    onClose?.();
   }
 
   return (
     <aside
+      className={desktop ? "hidden lg:flex" : "flex"}
       style={{
-        width: "240px",
-        flexShrink: 0,
+        width: "100%",
         height: "100vh",
-        position: "sticky",
-        top: 0,
-        display: "flex",
         flexDirection: "column",
-        borderRight: "1px solid #1e1e2e",
+        ...(desktop ? { width: "240px", flexShrink: 0, position: "sticky", top: 0, borderRight: "1px solid #1e1e2e" } : {}),
         background: "#0d0d17",
       }}
     >
@@ -559,7 +561,7 @@ function GenerateTab({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-    <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6" style={{ minHeight: "calc(100vh - 200px)" }}>
+    <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
 
       {/* ── LEFT: Editor ── */}
       <div className="flex flex-col rounded-2xl border overflow-hidden" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
@@ -596,7 +598,7 @@ function GenerateTab({
           disabled={submitting}
           rows={20}
           className="w-full px-6 py-5 text-sm text-gray-200 resize-none focus:outline-none disabled:opacity-60"
-          style={{ background: "#0d0d17", lineHeight: "1.75", minHeight: "400px" }}
+          style={{ background: "#0d0d17", lineHeight: "1.75", minHeight: "200px" }}
         />
 
         {/* Bottom bar */}
@@ -627,7 +629,7 @@ function GenerateTab({
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <span className="text-sm" style={{ color: "#8888a8" }}>
               {text.length.toLocaleString("es-ES")} {t.generate.characters}
               {text.length > 0 && (
@@ -639,7 +641,7 @@ function GenerateTab({
             <button
               onClick={handleGenerate}
               disabled={submitting || text.trim().length === 0}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none flex-shrink-0"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
               style={{
                 background: "linear-gradient(135deg, #3b82f6, #2563eb)",
                 boxShadow: submitting ? "none" : "0 4px 15px rgba(59,130,246,0.3)",
@@ -1421,7 +1423,7 @@ function BillingTab({
       </div>
 
       {/* Plan cards */}
-      <div className="grid grid-cols-4 gap-4 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 w-full">
         {BILLING_PLANS.map((p) => {
           const isCurrent = plan === p.key;
           return (
@@ -2365,6 +2367,7 @@ export default function DashboardPage() {
   const [voices, setVoices] = useState<Voice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(null);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { t: tt, toggle: toggleLang } = useLang();
 
   const fetchCredits = useCallback(async () => {
@@ -2399,9 +2402,28 @@ export default function DashboardPage() {
   return (
     <div className="flex min-h-screen" style={{ background: "#0a0a0f" }}>
       {supportOpen && <SupportModal onClose={() => setSupportOpen(false)} />}
-      <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <main className="flex-1 overflow-auto relative" style={{ padding: "0" }}>
+      {/* Mobile drawer overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 lg:hidden"
+          style={{ background: "rgba(0,0,0,0.6)" }}
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Mobile drawer */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col lg:hidden transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+        style={{ width: "260px", background: "#0d0d17", borderRight: "1px solid #1e1e2e" }}
+      >
+        <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} onClose={() => setSidebarOpen(false)} />
+      </div>
+
+      {/* Desktop sidebar */}
+      <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} desktop />
+
+      <main className="flex-1 overflow-auto relative min-w-0" style={{ padding: "0" }}>
         {/* Topbar */}
         {(() => {
           const TAB_META: Record<Tab, { title: string; Icon: React.ElementType }> = {
@@ -2416,12 +2438,20 @@ export default function DashboardPage() {
           };
           const { title, Icon } = TAB_META[activeTab] ?? { title: "", Icon: Home };
           return (
-            <div style={{ height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", position: "sticky", top: 0, zIndex: 10, borderBottom: "1px solid #1a1a28", background: "#0a0a0f", flexShrink: 0 }}>
+            <div style={{ height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", position: "sticky", top: 0, zIndex: 10, borderBottom: "1px solid #1a1a28", background: "#0a0a0f", flexShrink: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                {/* Hamburger — mobile only */}
+                <button
+                  className="lg:hidden"
+                  onClick={() => setSidebarOpen(true)}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", cursor: "pointer", color: "#8888a8", flexShrink: 0 }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect y="2" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="7.25" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="12.5" width="16" height="1.5" rx="0.75" fill="currentColor"/></svg>
+                </button>
                 <Icon size={16} style={{ color: "#4a4a65" }} />
-                <span style={{ fontSize: "14px", fontWeight: 600, color: "#e5e7eb" }}>{title}</span>
+                <span className="hidden sm:inline" style={{ fontSize: "14px", fontWeight: 600, color: "#e5e7eb" }}>{title}</span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <button
                   onClick={toggleLang}
                   title="Español / English"
@@ -2446,7 +2476,7 @@ export default function DashboardPage() {
           );
         })()}
         {/* Page content */}
-        <div style={{ padding: "24px" }}>
+        <div className="p-4 md:p-6">
         {successPlan && (
           <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
             <Check size={18} className="text-green-400 flex-shrink-0" />
