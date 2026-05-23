@@ -2539,7 +2539,7 @@ export default function DashboardPage() {
           );
         })()}
         {/* Page content */}
-        <div className="p-4 md:p-6">
+        <div className="p-4">
         {successPlan && (
           <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
             <Check size={18} className="text-green-400 flex-shrink-0" />

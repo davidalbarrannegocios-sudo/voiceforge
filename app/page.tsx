@@ -201,7 +201,7 @@ export default function LandingPage() {
         className="fixed top-0 left-0 right-0 z-50 border-b"
         style={{ background: "rgba(10,10,15,0.9)", backdropFilter: "blur(12px)", borderColor: "#2a2a3e" }}
       >
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-screen-2xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Image src="/elitelabs.png" alt="Elite Labs" width={32} height={32} style={{ height: "32px", width: "auto", objectFit: "contain", imageRendering: "-webkit-optimize-contrast" }} className="rounded-lg" />
             <span className="font-bold text-white text-lg">Elite Labs</span>
@@ -246,8 +246,8 @@ export default function LandingPage() {
       <main>
 
         {/* ── Hero ───────────────────────────────────────────────── */}
-        <section className="pt-32 pb-20 px-6">
-          <div className="max-w-7xl mx-auto">
+        <section className="pt-32 pb-20 px-4">
+          <div className="max-w-screen-2xl mx-auto">
             {/* Text */}
             <div className="text-center mb-12">
               <div
@@ -396,8 +396,8 @@ export default function LandingPage() {
         </section>
 
         {/* ── Use Cases ──────────────────────────────────────────── */}
-        <section className="py-20 px-6">
-          <div className="max-w-7xl mx-auto">
+        <section className="py-20 px-4">
+          <div className="max-w-screen-2xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold mb-3">Para cada caso de uso</h2>
               <p className="text-gray-400">Genera audio profesional para cualquier proyecto</p>
@@ -440,8 +440,8 @@ export default function LandingPage() {
         </section>
 
         {/* ── Features ───────────────────────────────────────────── */}
-        <section className="py-20 px-6">
-          <div className="max-w-7xl mx-auto">
+        <section className="py-20 px-4">
+          <div className="max-w-screen-2xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
 
               {/* Left */}
@@ -615,7 +615,7 @@ export default function LandingPage() {
             />
           </div>
 
-          <div className="max-w-7xl mx-auto text-center relative">
+          <div className="max-w-screen-2xl mx-auto text-center relative">
             {/* Floating avatars */}
             <div className="relative flex justify-center gap-3 mb-10">
               {STAT_AVATARS.map((av, i) => (
@@ -645,8 +645,8 @@ export default function LandingPage() {
         </section>
 
         {/* ── FAQ ────────────────────────────────────────────────── */}
-        <section className="py-20 px-6">
-          <div className="max-w-3xl mx-auto">
+        <section className="py-20 px-4">
+          <div className="max-w-screen-2xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-12">Preguntas frecuentes</h2>
             <div className="space-y-3">
               {FAQ_ITEMS.map((item, i) => (
@@ -662,8 +662,8 @@ export default function LandingPage() {
         </section>
 
         {/* ── CTA ────────────────────────────────────────────────── */}
-        <section className="py-20 px-6">
-          <div className="max-w-7xl mx-auto">
+        <section className="py-20 px-4">
+          <div className="max-w-screen-2xl mx-auto">
             <div
               className="rounded-2xl p-12 border relative overflow-hidden text-center"
               style={{
@@ -708,7 +708,7 @@ export default function LandingPage() {
 
       {/* ── Footer ─────────────────────────────────────────────── */}
       <footer className="border-t" style={{ borderColor: "#2a2a3e", background: "#0a0a0f" }}>
-        <div className="max-w-7xl mx-auto px-6 pt-14 pb-8">
+        <div className="max-w-screen-2xl mx-auto px-4 pt-14 pb-8">
 
           {/* Top: brand + link columns */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
