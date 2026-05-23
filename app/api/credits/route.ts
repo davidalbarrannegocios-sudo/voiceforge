@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 import { cookies } from "next/headers";
+import { getEffectivePlan } from "@/lib/plan";
 
 function generateReferralCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -60,6 +61,7 @@ export async function GET() {
       characters: user.credits,
       extraCredits: user.extraCredits,
       plan: user.plan,
+      effectivePlan: user.plan, // new users can't be team members yet
       planExpiresAt: user.planExpiresAt?.toISOString() ?? null,
       transcriptionUsed: user.transcriptionUsed,
       ...renewal,
@@ -89,12 +91,16 @@ export async function GET() {
     }
   }
 
-  const renewal = await computeRenewal(user);
+  const [renewal, effectivePlan] = await Promise.all([
+    computeRenewal(user),
+    getEffectivePlan(user.id, user.plan),
+  ]);
 
   return NextResponse.json({
     characters: user.credits,
     extraCredits: user.extraCredits,
     plan: user.plan,
+    effectivePlan,
     planExpiresAt: user.planExpiresAt?.toISOString() ?? null,
     transcriptionUsed: user.transcriptionUsed,
     ...renewal,

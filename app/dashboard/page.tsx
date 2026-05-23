@@ -2769,6 +2769,7 @@ export default function DashboardPage() {
   const [credits, setCredits] = useState<number | null>(null);
   const [extraCredits, setExtraCredits] = useState<number>(0);
   const [plan, setPlan] = useState<string>("free");
+  const [effectivePlan, setEffectivePlan] = useState<string>("free");
   const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
   const [transcriptionUsed, setTranscriptionUsed] = useState<number>(0);
   const [memberInfo, setMemberInfo] = useState<{ percentage: number; creditsLastDistributed: number; teamName: string } | null>(null);
@@ -2787,6 +2788,7 @@ export default function DashboardPage() {
     setCredits(data.characters);
     if (typeof data.extraCredits === "number") setExtraCredits(data.extraCredits);
     if (data.plan) setPlan(data.plan);
+    if (data.effectivePlan) setEffectivePlan(data.effectivePlan);
     if ("planExpiresAt" in data) setPlanExpiresAt(data.planExpiresAt);
     if (typeof data.transcriptionUsed === "number") setTranscriptionUsed(data.transcriptionUsed);
     if ("nextRenewalDate" in data) setNextRenewalDate(data.nextRenewalDate);
@@ -2925,7 +2927,7 @@ export default function DashboardPage() {
             onGenerated={fetchCredits}
             selectedVoice={selectedVoice}
             onVoiceChange={setSelectedVoice}
-            plan={plan}
+            plan={effectivePlan}
           />
         )}
         {activeTab === "voices" && (
@@ -2933,10 +2935,10 @@ export default function DashboardPage() {
             voices={voices}
             onRefresh={fetchVoices}
             onUseVoice={handleUseVoice}
-            plan={plan}
+            plan={effectivePlan}
           />
         )}
-        {activeTab === "history" && <HistoryTab plan={plan} />}
+        {activeTab === "history" && <HistoryTab plan={effectivePlan} />}
         {activeTab === "billing" && (
           <BillingTab
             credits={credits}
@@ -2955,7 +2957,7 @@ export default function DashboardPage() {
           <TranslateTab
             onGenerated={fetchCredits}
             voices={voices}
-            plan={plan}
+            plan={effectivePlan}
             transcriptionUsed={transcriptionUsed}
             onBilling={() => setActiveTab("billing")}
             selectedVoice={translateVoice}
@@ -2965,7 +2967,7 @@ export default function DashboardPage() {
         {activeTab === "transcribe" && (
           <TranscribeTab
             onTranscribed={fetchCredits}
-            plan={plan}
+            plan={effectivePlan}
             transcriptionUsed={transcriptionUsed}
             onBilling={() => setActiveTab("billing")}
           />

@@ -4,6 +4,7 @@ import * as deepl from "deepl-node";
 import { prisma } from "@/lib/prisma";
 import { fishAudioGenerate } from "@/lib/fishaudio";
 import { calculateCharCost } from "@/lib/utils";
+import { getEffectivePlan } from "@/lib/plan";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -45,8 +46,10 @@ export async function POST(req: Request) {
   const user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
   if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
+  const effectivePlan = await getEffectivePlan(user.id, user.plan);
+
   // Free plan limit check
-  if (user.plan === "free" && user.transcriptionUsed >= FREE_TRANSCRIPTION_LIMIT) {
+  if (effectivePlan === "free" && user.transcriptionUsed >= FREE_TRANSCRIPTION_LIMIT) {
     return NextResponse.json(
       { error: "Has usado tus 2 transcripciones/traducciones gratuitas. Suscríbete a cualquier plan de pago para uso ilimitado." },
       { status: 403 }
@@ -95,7 +98,7 @@ export async function POST(req: Request) {
   }
 
   // ── Credit check & deduction (enterprise: x1.1, others: x1.2) ──
-  const translateMultiplier = user.plan === "enterprise" ? 1.1 : 1.2;
+  const translateMultiplier = effectivePlan === "enterprise" ? 1.1 : 1.2;
   const charCost = Math.ceil(calculateCharCost(translatedText.length) * translateMultiplier);
   if (user.credits < charCost) {
     return NextResponse.json(
@@ -108,7 +111,7 @@ export async function POST(req: Request) {
     where: { id: user.id },
     data: {
       credits: { decrement: charCost },
-      ...(user.plan === "free" && { transcriptionUsed: { increment: 1 } }),
+      ...(effectivePlan === "free" && { transcriptionUsed: { increment: 1 } }),
     },
   });
 

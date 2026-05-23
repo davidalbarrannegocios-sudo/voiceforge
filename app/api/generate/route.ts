@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { fishAudioGenerate } from "@/lib/fishaudio";
 import { calculateCharCost } from "@/lib/utils";
 import { FREE_VOICE_IDS } from "@/lib/free-voice-ids";
+import { getEffectivePlan } from "@/lib/plan";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -33,6 +34,8 @@ export async function POST(req: Request) {
     const user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
     if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
+    const effectivePlan = await getEffectivePlan(user.id, user.plan);
+
     const charCost = calculateCharCost(trimmed.length);
     const totalAvailable = user.credits + user.extraCredits;
 
@@ -49,11 +52,11 @@ export async function POST(req: Request) {
 
     // Free plan: only allow voices from the free tier; ignore premium voice IDs
     let effectiveReferenceId: string | undefined = reference_id || undefined;
-    if (user.plan === "free" && effectiveReferenceId && !FREE_VOICE_IDS.has(effectiveReferenceId)) {
+    if (effectivePlan === "free" && effectiveReferenceId && !FREE_VOICE_IDS.has(effectiveReferenceId)) {
       effectiveReferenceId = undefined;
     }
 
-    const expiresAt = getExpiresAt(user.plan);
+    const expiresAt = getExpiresAt(effectivePlan);
 
     const [, job] = await prisma.$transaction([
       prisma.user.update({

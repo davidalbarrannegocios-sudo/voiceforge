@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { fishAudioClone } from "@/lib/fishaudio";
 import { PLAN_VOICE_SLOTS } from "@/lib/stripe";
+import { getEffectivePlan } from "@/lib/plan";
 
 const CLONE_COST = 10;
 
@@ -24,8 +25,10 @@ export async function POST(req: Request) {
   });
   if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
+  const effectivePlan = await getEffectivePlan(user.id, user.plan);
+
   // Slot limit check (-1 = unlimited)
-  const slotLimit = PLAN_VOICE_SLOTS[user.plan] ?? 0;
+  const slotLimit = PLAN_VOICE_SLOTS[effectivePlan] ?? 0;
   if (slotLimit === 0) {
     return NextResponse.json(
       { error: "La clonación de voz no está disponible en el plan gratuito. Actualiza tu plan para clonar voces." },

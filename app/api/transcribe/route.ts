@@ -2,6 +2,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calculateCharCost } from "@/lib/utils";
+import { getEffectivePlan } from "@/lib/plan";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -26,8 +27,10 @@ export async function POST(req: Request) {
   const user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
   if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
+  const effectivePlan = await getEffectivePlan(user.id, user.plan);
+
   // Free plan limit check
-  if (user.plan === "free" && user.transcriptionUsed >= FREE_TRANSCRIPTION_LIMIT) {
+  if (effectivePlan === "free" && user.transcriptionUsed >= FREE_TRANSCRIPTION_LIMIT) {
     return NextResponse.json(
       { error: "Has usado tus 2 transcripciones/traducciones gratuitas. Suscríbete a cualquier plan de pago para uso ilimitado." },
       { status: 403 }
@@ -71,7 +74,7 @@ export async function POST(req: Request) {
     where: { id: user.id },
     data: {
       credits: { decrement: charCost },
-      ...(user.plan === "free" && { transcriptionUsed: { increment: 1 } }),
+      ...(effectivePlan === "free" && { transcriptionUsed: { increment: 1 } }),
     },
   });
 
