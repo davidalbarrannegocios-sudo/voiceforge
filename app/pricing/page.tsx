@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { Check } from "lucide-react";
+import { PaymentModal, type BillingPlan } from "@/app/dashboard/PaymentModal";
 
 type Plan = {
   key: string;
@@ -113,32 +115,38 @@ const PLANS: Plan[] = [
 ];
 
 export default function PricingPage() {
+  return (
+    <Suspense>
+      <PricingContent />
+    </Suspense>
+  );
+}
+
+function PricingContent() {
   const { isSignedIn } = useUser();
   const router = useRouter();
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const searchParams = useSearchParams();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+  const [activePlan, setActivePlan] = useState<BillingPlan | null>(null);
 
-  async function handleSelect(plan: Plan) {
+  useEffect(() => {
+    const planKey = searchParams.get("plan");
+    if (planKey && isSignedIn) {
+      const found = PLANS.find((p) => p.key === planKey);
+      if (found && !found.free) setActivePlan(found);
+    }
+  }, [isSignedIn, searchParams]);
+
+  function handleSelect(plan: Plan) {
     if (plan.free) {
       router.push("/sign-up");
       return;
     }
     if (!isSignedIn) {
-      router.push(`/sign-up?redirect_url=/pricing`);
+      router.push(`/sign-in?redirect_url=/pricing?plan=${plan.key}`);
       return;
     }
-    setLoadingPlan(plan.key);
-    try {
-      const res = await fetch("/api/create-checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: plan.key, billing }),
-      });
-      const data = await res.json();
-      if (data.checkoutUrl) window.location.href = data.checkoutUrl;
-    } finally {
-      setLoadingPlan(null);
-    }
+    setActivePlan(plan);
   }
 
   function annualMonthly(price: number) {
@@ -256,18 +264,17 @@ export default function PricingPage() {
 
               <button
                 onClick={() => handleSelect(plan)}
-                disabled={loadingPlan === plan.key}
                 style={
                   plan.key === "enterprise"
-                    ? { width: "100%", padding: "11px", borderRadius: "10px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#10b981,#059669)", color: "#fff", fontSize: "14px", fontWeight: 600, marginBottom: "22px", boxShadow: "0 4px 14px rgba(16,185,129,0.3)", opacity: loadingPlan === plan.key ? 0.7 : 1 }
+                    ? { width: "100%", padding: "11px", borderRadius: "10px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#10b981,#059669)", color: "#fff", fontSize: "14px", fontWeight: 600, marginBottom: "22px", boxShadow: "0 4px 14px rgba(16,185,129,0.3)" }
                     : plan.popular
-                    ? { width: "100%", padding: "11px", borderRadius: "10px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "14px", fontWeight: 600, marginBottom: "22px", boxShadow: "0 4px 14px rgba(59,130,246,0.35)", opacity: loadingPlan === plan.key ? 0.7 : 1 }
+                    ? { width: "100%", padding: "11px", borderRadius: "10px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "14px", fontWeight: 600, marginBottom: "22px", boxShadow: "0 4px 14px rgba(59,130,246,0.35)" }
                     : plan.free
                     ? { width: "100%", padding: "11px", borderRadius: "10px", border: "1px solid #2a2a3e", cursor: "pointer", background: "transparent", color: "#6b7280", fontSize: "14px", fontWeight: 600, marginBottom: "22px" }
-                    : { width: "100%", padding: "11px", borderRadius: "10px", border: "1px solid #2a2a3e", cursor: "pointer", background: "transparent", color: "#d1d5db", fontSize: "14px", fontWeight: 600, marginBottom: "22px", opacity: loadingPlan === plan.key ? 0.7 : 1 }
+                    : { width: "100%", padding: "11px", borderRadius: "10px", border: "1px solid #2a2a3e", cursor: "pointer", background: "transparent", color: "#d1d5db", fontSize: "14px", fontWeight: 600, marginBottom: "22px" }
                 }
               >
-                {loadingPlan === plan.key ? "Cargando..." : plan.cta}
+                {plan.cta}
               </button>
 
               <div style={{ height: "1px", background: plan.key === "enterprise" ? "rgba(16,185,129,0.2)" : plan.popular ? "rgba(59,130,246,0.2)" : "#1a1a28", marginBottom: "18px" }} />
@@ -351,6 +358,18 @@ export default function PricingPage() {
           </div>
         </div>
       </main>
+
+      {activePlan && (
+        <PaymentModal
+          plan={activePlan}
+          billing={billing}
+          onClose={() => setActivePlan(null)}
+          onSuccess={() => {
+            setActivePlan(null);
+            router.push("/dashboard");
+          }}
+        />
+      )}
     </div>
   );
 }
