@@ -27,6 +27,14 @@ interface ClonedVoice {
   fishAudioModelId?: string;
 }
 
+interface FavoriteVoice {
+  id: string;
+  voiceId: string;
+  voiceName: string;
+  coverImage: string | null;
+  createdAt: string;
+}
+
 export { FREE_VOICE_IDS };
 
 function isPremiumVoice(id: string) {
@@ -195,6 +203,18 @@ function UpgradePrompt({ onClose }: { onClose: () => void }) {
   );
 }
 
+function HeartIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24"
+      fill={filled ? "#ef4444" : "none"}
+      stroke={filled ? "#ef4444" : "#555570"}
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    >
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </svg>
+  );
+}
+
 function VoiceRow({
   voice,
   previewingId,
@@ -203,6 +223,8 @@ function VoiceRow({
   onUse,
   isLocked,
   isPremium,
+  isFavorite,
+  onToggleFavorite,
 }: {
   voice: FishVoice;
   previewingId: string | null;
@@ -211,6 +233,8 @@ function VoiceRow({
   onUse: (voice: FishVoice) => void;
   isLocked: boolean;
   isPremium: boolean;
+  isFavorite: boolean;
+  onToggleFavorite: (voice: FishVoice) => void;
 }) {
   const g = getGender(voice.tags);
   const age = getAge(voice.tags);
@@ -295,6 +319,14 @@ function VoiceRow({
       {/* Actions */}
       <div className="flex items-center gap-2 flex-shrink-0">
         <button
+          onClick={() => onToggleFavorite(voice)}
+          className="flex items-center justify-center w-7 h-7 rounded-lg transition-all flex-shrink-0"
+          style={{ background: "transparent" }}
+          title={isFavorite ? "Quitar de favoritos" : "Añadir a favoritos"}
+        >
+          <HeartIcon filled={isFavorite} />
+        </button>
+        <button
           onClick={() => onPreview(voice._id)}
           disabled={isPreviewLoading}
           className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60"
@@ -335,7 +367,7 @@ export function VoiceBrowser({
   onClose: () => void;
   plan?: string;
 }) {
-  const [tab, setTab] = useState<"recent" | "explore" | "cloned">("explore");
+  const [tab, setTab] = useState<"recent" | "explore" | "favorites" | "cloned">("explore");
   const [language, setLanguage] = useState("es");
   const [gender, setGender] = useState<"" | "male" | "female">("");
   const [tier, setTier] = useState<"all" | "free" | "premium">("all");
@@ -343,6 +375,8 @@ export function VoiceBrowser({
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [publicVoices, setPublicVoices] = useState<FishVoice[]>([]);
   const [recentVoices, setRecentVoices] = useState<FishVoice[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [favoriteVoices, setFavoriteVoices] = useState<FavoriteVoice[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -357,6 +391,59 @@ export function VoiceBrowser({
   useEffect(() => {
     setRecentVoices(loadRecentVoices());
   }, []);
+
+  // Load favorites from API
+  useEffect(() => {
+    fetch("/api/favorites")
+      .then((r) => r.json())
+      .then((data: FavoriteVoice[]) => {
+        if (Array.isArray(data)) {
+          setFavoriteVoices(data);
+          setFavoriteIds(new Set(data.map((f) => f.voiceId)));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  async function toggleFavorite(voice: FishVoice) {
+    const wasFav = favoriteIds.has(voice._id);
+    // Optimistic update
+    if (wasFav) {
+      setFavoriteIds((prev) => { const s = new Set(prev); s.delete(voice._id); return s; });
+      setFavoriteVoices((prev) => prev.filter((f) => f.voiceId !== voice._id));
+    } else {
+      setFavoriteIds((prev) => new Set(prev).add(voice._id));
+      setFavoriteVoices((prev) => [{
+        id: `temp-${voice._id}`,
+        voiceId: voice._id,
+        voiceName: voice.title,
+        coverImage: voice.cover_image || null,
+        createdAt: new Date().toISOString(),
+      }, ...prev]);
+    }
+    try {
+      await fetch("/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voiceId: voice._id, voiceName: voice.title, coverImage: voice.cover_image }),
+      });
+    } catch {
+      // Revert on error
+      if (wasFav) {
+        setFavoriteIds((prev) => new Set(prev).add(voice._id));
+        setFavoriteVoices((prev) => [{
+          id: `temp-${voice._id}`,
+          voiceId: voice._id,
+          voiceName: voice.title,
+          coverImage: voice.cover_image || null,
+          createdAt: new Date().toISOString(),
+        }, ...prev]);
+      } else {
+        setFavoriteIds((prev) => { const s = new Set(prev); s.delete(voice._id); return s; });
+        setFavoriteVoices((prev) => prev.filter((f) => f.voiceId !== voice._id));
+      }
+    }
+  }
 
   useEffect(() => {
     const t = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 400);
@@ -443,6 +530,7 @@ export function VoiceBrowser({
   const TABS = [
     { key: "recent" as const, label: "Recientemente usadas" },
     { key: "explore" as const, label: "Explorar" },
+    { key: "favorites" as const, label: `Favoritos${favoriteVoices.length > 0 ? ` (${favoriteVoices.length})` : ""}` },
     { key: "cloned" as const, label: `Mis voces clonadas (${clonedVoices.length})` },
   ];
 
@@ -593,6 +681,8 @@ export function VoiceBrowser({
                         onUse={handleVoiceClick}
                         isPremium={isPremium}
                         isLocked={isLocked}
+                        isFavorite={favoriteIds.has(voice._id)}
+                        onToggleFavorite={toggleFavorite}
                       />
                     );
                   })}
@@ -664,6 +754,57 @@ export function VoiceBrowser({
                         onUse={handleVoiceClick}
                         isPremium={isPremium}
                         isLocked={isLocked}
+                        isFavorite={favoriteIds.has(voice._id)}
+                        onToggleFavorite={toggleFavorite}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Favorites tab ── */}
+          {tab === "favorites" && (
+            <div className="px-6 py-4">
+              {favoriteVoices.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-24" style={{ color: "#555570" }}>
+                  <HeartIcon filled={false} />
+                  <p className="font-medium mb-1 text-sm mt-4">No tienes voces favoritas</p>
+                  <p className="text-xs mb-4">Haz clic en el corazón de cualquier voz para guardarla aquí</p>
+                  <button
+                    onClick={() => setTab("explore")}
+                    className="px-4 py-2 rounded-lg text-xs font-semibold text-white"
+                    style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+                  >
+                    Explorar voces
+                  </button>
+                </div>
+              ) : (
+                <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #1a1a2a", background: "#0a0a12" }}>
+                  {favoriteVoices.map((fav) => {
+                    const favVoice: FishVoice = {
+                      _id: fav.voiceId,
+                      title: fav.voiceName,
+                      cover_image: fav.coverImage ?? "",
+                      languages: [],
+                      tags: [],
+                      task_count: 0,
+                    };
+                    const isPremium = isPremiumVoice(fav.voiceId);
+                    const isLocked = isPremium && !userCanUsePremium;
+                    return (
+                      <VoiceRow
+                        key={fav.id}
+                        voice={favVoice}
+                        previewingId={previewingId}
+                        previewLoadingId={previewLoadingId}
+                        onPreview={handlePreview}
+                        onUse={handleVoiceClick}
+                        isPremium={isPremium}
+                        isLocked={isLocked}
+                        isFavorite={true}
+                        onToggleFavorite={toggleFavorite}
                       />
                     );
                   })}

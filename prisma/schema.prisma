@@ -34,6 +34,7 @@ model User {
   referralReceived     Referral?     @relation("referred")
   supportTickets       SupportTicket[]
   creditPacks          CreditPack[]
+  favoriteVoices       FavoriteVoice[]
 }
 
 model Job {
@@ -106,6 +107,18 @@ model CreditPack {
   expiresAt             DateTime
   stripePaymentIntentId String?  @unique
   createdAt             DateTime @default(now())
+}
+
+model FavoriteVoice {
+  id         String   @id @default(cuid())
+  userId     String
+  voiceId    String
+  voiceName  String
+  coverImage String?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, voiceId])
 }
 
 model Referral {
