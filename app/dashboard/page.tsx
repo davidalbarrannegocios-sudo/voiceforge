@@ -1356,7 +1356,7 @@ function BillingTab({
   const badge = PLAN_BADGE[plan] ?? PLAN_BADGE.free;
 
   const renewalDateLabel = nextRenewalDate
-    ? new Date(nextRenewalDate).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })
+    ? new Date(nextRenewalDate).toLocaleDateString("es-ES", { timeZone: "UTC", day: "numeric", month: "long", year: "numeric" })
     : null;
   const renewalSoon = daysUntilRenewal !== null && daysUntilRenewal <= 2;
 
