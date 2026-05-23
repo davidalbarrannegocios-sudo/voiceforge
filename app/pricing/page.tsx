@@ -159,7 +159,7 @@ function PricingContent() {
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0f" }}>
       <header style={{ borderBottom: "1px solid #1a1a28", padding: "0 24px", height: "60px", display: "flex", alignItems: "center" }}>
-        <div style={{ maxWidth: "1100px", width: "100%", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ maxWidth: "1280px", width: "100%", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none" }}>
             <Image src="/elitelabs.png" alt="Elite Labs" width={28} height={28} className="rounded-lg" />
             <span style={{ fontWeight: 700, fontSize: "15px", color: "#fff" }}>Elite Labs</span>
@@ -170,7 +170,7 @@ function PricingContent() {
         </div>
       </header>
 
-      <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "64px 24px 80px" }}>
+      <main style={{ maxWidth: "1280px", margin: "0 auto", padding: "64px 32px 80px" }}>
         {/* Hero */}
         <div style={{ textAlign: "center", marginBottom: "40px" }}>
           <h1 style={{ fontSize: "42px", fontWeight: 800, color: "#fff", marginBottom: "12px", lineHeight: 1.1 }}>
@@ -292,7 +292,7 @@ function PricingContent() {
         </div>
 
         {/* Competitor comparison */}
-        <div style={{ maxWidth: "740px", margin: "0 auto 64px" }}>
+        <div style={{ maxWidth: "900px", margin: "0 auto 64px" }}>
           <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#fff", marginBottom: "6px", textAlign: "center" }}>
             Comparativa con la competencia
           </h2>
@@ -339,7 +339,7 @@ function PricingContent() {
         </div>
 
         {/* FAQ */}
-        <div style={{ maxWidth: "600px", margin: "0 auto" }}>
+        <div style={{ maxWidth: "740px", margin: "0 auto" }}>
           <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#fff", marginBottom: "24px", textAlign: "center" }}>
             Preguntas frecuentes
           </h2>
