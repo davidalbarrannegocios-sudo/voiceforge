@@ -61,21 +61,52 @@ function getGender(tags: string[]): "male" | "female" | null {
   return null;
 }
 
+const GENDER_TAG_SET = new Set([
+  "male", "man", "masculine", "masculino", "hombre",
+  "female", "woman", "feminine", "femenino", "mujer",
+]);
+
 const LANGS = [
-  { code: "es", label: "ES" },
-  { code: "en", label: "EN" },
-  { code: "pt", label: "PT" },
-  { code: "fr", label: "FR" },
-  { code: "zh", label: "ZH" },
-  { code: "ja", label: "JA" },
+  { code: "es", label: "Español" },
+  { code: "en", label: "English" },
+  { code: "pt", label: "Português" },
+  { code: "fr", label: "Français" },
+  { code: "zh", label: "中文" },
+  { code: "ja", label: "日本語" },
 ];
 
-const cardStyle = { background: "#12121a", borderColor: "#2a2a3e" };
-const avatarGradient = { background: "linear-gradient(135deg, #3b82f6, #2563eb)" };
+const RECENT_KEY = "vf_recent_voices";
+const MAX_RECENT = 12;
 
-function VoiceAvatar({ name, coverImage }: { name: string; coverImage?: string }) {
+function saveRecentVoice(voice: FishVoice) {
+  try {
+    const stored = localStorage.getItem(RECENT_KEY);
+    const list: FishVoice[] = stored ? JSON.parse(stored) : [];
+    const updated = [voice, ...list.filter((v) => v._id !== voice._id)].slice(0, MAX_RECENT);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(updated));
+  } catch { /* ignore */ }
+}
+
+function loadRecentVoices(): FishVoice[] {
+  try {
+    const stored = localStorage.getItem(RECENT_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch { return []; }
+}
+
+function formatCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+  return String(n);
+}
+
+/* ── Sub-components ─────────────────────────────────────────── */
+
+function VoiceAvatar({ name, coverImage, size = "md" }: { name: string; coverImage?: string; size?: "sm" | "md" }) {
   const [imgFailed, setImgFailed] = useState(false);
   const initial = name[0]?.toUpperCase() ?? "?";
+  const cls = size === "md" ? "w-11 h-11" : "w-9 h-9";
+  const fontSize = size === "md" ? 15 : 13;
 
   if (coverImage && !imgFailed) {
     return (
@@ -83,82 +114,43 @@ function VoiceAvatar({ name, coverImage }: { name: string; coverImage?: string }
       <img
         src={coverImage}
         alt=""
-        className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
+        className={`${cls} rounded-full object-cover flex-shrink-0`}
         onError={() => setImgFailed(true)}
       />
     );
   }
-
   return (
     <div
-      className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-      style={avatarGradient}
+      className={`${cls} rounded-full flex items-center justify-center text-white font-bold flex-shrink-0`}
+      style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", fontSize }}
     >
       {initial}
     </div>
   );
 }
 
-function FilterBtn({
+function TierPill({
   active,
   onClick,
+  amber,
   children,
-  color = "purple",
 }: {
   active: boolean;
   onClick: () => void;
+  amber?: boolean;
   children: React.ReactNode;
-  color?: "purple" | "blue" | "amber";
 }) {
-  const styles =
-    color === "purple"
-      ? active
-        ? { background: "rgba(59,130,246,0.25)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.5)" }
-        : { background: "#12121a", color: "#8888a8", border: "1px solid #2a2a3e" }
-      : color === "blue"
-      ? active
-        ? { background: "rgba(59,130,246,0.2)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.35)" }
-        : { background: "#12121a", color: "#8888a8", border: "1px solid #2a2a3e" }
-      : active
+  const style = amber
+    ? active
       ? { background: "rgba(245,158,11,0.2)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.4)" }
-      : { background: "#12121a", color: "#8888a8", border: "1px solid #2a2a3e" };
+      : { background: "transparent", color: "#6b6b88", border: "1px solid #2a2a3e" }
+    : active
+    ? { background: "rgba(59,130,246,0.2)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
+    : { background: "transparent", color: "#6b6b88", border: "1px solid #2a2a3e" };
 
   return (
-    <button
-      onClick={onClick}
-      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-      style={styles}
-    >
+    <button onClick={onClick} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" style={style}>
       {children}
-    </button>
-  );
-}
-
-function PreviewBtn({
-  id,
-  previewingId,
-  loadingId,
-  onPreview,
-}: {
-  id: string;
-  previewingId: string | null;
-  loadingId: string | null;
-  onPreview: (id: string) => void;
-}) {
-  const isPreviewing = previewingId === id;
-  const isLoading = loadingId === id;
-  return (
-    <button
-      onClick={() => onPreview(id)}
-      disabled={isLoading}
-      className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60"
-      style={{
-        background: isPreviewing ? "rgba(59,130,246,0.3)" : "rgba(59,130,246,0.1)",
-        color: "#93c5fd",
-        border: "1px solid rgba(59,130,246,0.2)",
-      }}
-    >
-      {isLoading ? "···" : isPreviewing ? "⏹ Stop" : "▶ Vista previa"}
     </button>
   );
 }
@@ -168,14 +160,11 @@ function UpgradePrompt({ onClose }: { onClose: () => void }) {
   return (
     <div
       className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl"
-      style={{ background: "rgba(0,0,0,0.7)" }}
+      style={{ background: "rgba(0,0,0,0.75)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div
-        className="rounded-2xl p-6 w-72 text-center border mx-4"
-        style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}
-      >
-        <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(245,158,11,0.15)" }}>
+      <div className="rounded-2xl p-6 w-72 text-center border" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+        <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(245,158,11,0.12)" }}>
           <span className="text-2xl">🔒</span>
         </div>
         <h3 className="text-white font-bold text-base mb-1">Voz Premium</h3>
@@ -185,14 +174,14 @@ function UpgradePrompt({ onClose }: { onClose: () => void }) {
         <div className="flex gap-2">
           <button
             onClick={onClose}
-            className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
+            className="flex-1 py-2 rounded-lg text-sm font-medium"
             style={{ background: "#12121a", color: "#8888a8", border: "1px solid #2a2a3e" }}
           >
             Cancelar
           </button>
           <button
             onClick={() => router.push("/pricing")}
-            className="flex-1 py-2 rounded-lg text-sm font-semibold text-white transition-all"
+            className="flex-1 py-2 rounded-lg text-sm font-semibold text-white"
             style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
           >
             Ver planes
@@ -202,6 +191,118 @@ function UpgradePrompt({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
+
+function VoiceRow({
+  voice,
+  previewingId,
+  previewLoadingId,
+  onPreview,
+  onUse,
+  isLocked,
+  isPremium,
+}: {
+  voice: FishVoice;
+  previewingId: string | null;
+  previewLoadingId: string | null;
+  onPreview: (id: string) => void;
+  onUse: (voice: FishVoice) => void;
+  isLocked: boolean;
+  isPremium: boolean;
+}) {
+  const g = getGender(voice.tags);
+  const isPreviewing = previewingId === voice._id;
+  const isPreviewLoading = previewLoadingId === voice._id;
+  const extraTags = voice.tags
+    .filter((t) => !GENDER_TAG_SET.has(t.toLowerCase()))
+    .slice(0, 2);
+
+  return (
+    <div
+      className="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all"
+      style={{
+        background: "#0d0d17",
+        borderColor: isLocked ? "#1e1e2e" : "#1e1e2e",
+      }}
+    >
+      {/* Avatar */}
+      <VoiceAvatar name={voice.title} coverImage={voice.cover_image} />
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <span className="text-sm font-semibold text-white truncate">{voice.title}</span>
+          {isPremium && (
+            <span
+              className="px-1.5 py-0.5 rounded text-xs font-semibold flex-shrink-0"
+              style={{ background: "rgba(245,158,11,0.12)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.25)" }}
+            >
+              Starter+
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {voice.languages.slice(0, 2).map((l) => (
+            <span
+              key={l}
+              className="px-1.5 py-0.5 rounded text-xs"
+              style={{ background: "rgba(59,130,246,0.12)", color: "#93c5fd" }}
+            >
+              {l.toUpperCase()}
+            </span>
+          ))}
+          {g && (
+            <span className="px-1.5 py-0.5 rounded text-xs" style={{ background: "rgba(255,255,255,0.04)", color: "#6b6b88" }}>
+              {g === "male" ? "Masculino" : "Femenino"}
+            </span>
+          )}
+          {extraTags.map((tag) => (
+            <span key={tag} className="text-xs" style={{ color: "#444460" }}>
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="flex items-center gap-1 flex-shrink-0" style={{ color: "#444460" }}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+        </svg>
+        <span className="text-xs">{formatCount(voice.task_count)}</span>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <button
+          onClick={() => onPreview(voice._id)}
+          disabled={isPreviewLoading}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60"
+          style={{
+            background: isPreviewing ? "rgba(59,130,246,0.25)" : "rgba(59,130,246,0.08)",
+            color: "#93c5fd",
+            border: "1px solid rgba(59,130,246,0.2)",
+          }}
+        >
+          {isPreviewLoading ? "···" : isPreviewing ? "⏹" : "▶"}
+          <span className="hidden sm:inline">{isPreviewLoading ? "" : isPreviewing ? "Stop" : "Preview"}</span>
+        </button>
+        <button
+          onClick={() => onUse(voice)}
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+          style={
+            isLocked
+              ? { background: "#12121a", color: "#3a3a52", border: "1px solid #1e1e2e" }
+              : { background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff" }
+          }
+        >
+          Usar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Main component ─────────────────────────────────────────── */
 
 export function VoiceBrowser({
   clonedVoices,
@@ -214,13 +315,14 @@ export function VoiceBrowser({
   onClose: () => void;
   plan?: string;
 }) {
-  const [tab, setTab] = useState<"public" | "cloned">("public");
+  const [tab, setTab] = useState<"recent" | "explore" | "cloned">("explore");
   const [language, setLanguage] = useState("es");
   const [gender, setGender] = useState<"" | "male" | "female">("");
   const [tier, setTier] = useState<"all" | "free" | "premium">("all");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [publicVoices, setPublicVoices] = useState<FishVoice[]>([]);
+  const [recentVoices, setRecentVoices] = useState<FishVoice[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -231,6 +333,11 @@ export function VoiceBrowser({
 
   const userCanUsePremium = canUsePremium(plan);
 
+  // Load recently used from localStorage
+  useEffect(() => {
+    setRecentVoices(loadRecentVoices());
+  }, []);
+
   useEffect(() => {
     const t = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 400);
     return () => clearTimeout(t);
@@ -239,7 +346,7 @@ export function VoiceBrowser({
   useEffect(() => { setPage(1); }, [language, gender]);
 
   const fetchVoices = useCallback(async () => {
-    if (tab !== "public") return;
+    if (tab !== "explore") return;
     setLoading(true);
     try {
       const p = new URLSearchParams({ page: String(page), language });
@@ -295,6 +402,7 @@ export function VoiceBrowser({
       setShowUpgrade(true);
       return;
     }
+    saveRecentVoice(voice);
     handleSelect({ referenceId: voice._id, name: voice.title, isCloned: false });
   }
 
@@ -304,165 +412,168 @@ export function VoiceBrowser({
     return true;
   });
 
+  const filteredRecent = recentVoices.filter((v) => {
+    if (tier === "free") return !isPremiumVoice(v._id);
+    if (tier === "premium") return isPremiumVoice(v._id);
+    return true;
+  });
+
   const totalPages = Math.ceil(total / 20);
+
+  const TABS = [
+    { key: "recent" as const, label: "Recientemente usadas" },
+    { key: "explore" as const, label: "Explorar" },
+    { key: "cloned" as const, label: `Mis voces clonadas (${clonedVoices.length})` },
+  ];
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.75)" }}
+      style={{ background: "rgba(0,0,0,0.8)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="w-full max-w-4xl flex flex-col rounded-2xl border relative"
-        style={{ background: "#0d0d17", borderColor: "#2a2a3e", height: "85vh" }}
+        className="w-[90vw] max-w-5xl flex flex-col rounded-2xl border relative"
+        style={{ background: "#0a0a12", borderColor: "#1e1e2e", height: "88vh" }}
       >
         {showUpgrade && <UpgradePrompt onClose={() => setShowUpgrade(false)} />}
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "#2a2a3e" }}>
-          <h2 className="text-lg font-bold text-white">Seleccionar voz</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none transition-colors">×</button>
+        <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "#1e1e2e" }}>
+          <h2 className="text-base font-bold text-white">Seleccionar voz</h2>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+            style={{ color: "#6b6b88", background: "transparent" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#1e1e2e")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b px-6 flex-shrink-0" style={{ borderColor: "#2a2a3e" }}>
-          {([["public", "Voces del sistema"], ["cloned", `Mis voces clonadas (${clonedVoices.length})`]] as const).map(([t, label]) => (
+        <div className="flex border-b px-6 flex-shrink-0" style={{ borderColor: "#1e1e2e" }}>
+          {TABS.map(({ key, label }) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
-              className="py-3 px-4 text-sm font-medium transition-colors border-b-2 -mb-px mr-1"
-              style={tab === t ? { color: "#93c5fd", borderColor: "#3b82f6" } : { color: "#8888a8", borderColor: "transparent" }}
+              key={key}
+              onClick={() => setTab(key)}
+              className="py-3 px-1 mr-6 text-sm font-medium transition-colors border-b-2 -mb-px"
+              style={
+                tab === key
+                  ? { color: "#e2e2f0", borderColor: "#3b82f6" }
+                  : { color: "#555570", borderColor: "transparent" }
+              }
             >
               {label}
             </button>
           ))}
         </div>
 
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
-          {tab === "public" ? (
-            <>
-              {/* Language filters */}
-              <div className="flex flex-wrap gap-2 mb-2">
-                {LANGS.map(({ code, label }) => (
-                  <FilterBtn key={code} active={language === code} onClick={() => setLanguage(code)}>
-                    {label}
-                  </FilterBtn>
-                ))}
-                <div className="w-px mx-1" style={{ background: "#2a2a3e" }} />
-                <FilterBtn active={gender === ""} onClick={() => setGender("")} color="blue">Todos</FilterBtn>
-                <FilterBtn active={gender === "male"} onClick={() => setGender("male")} color="blue">♂ Hombre</FilterBtn>
-                <FilterBtn active={gender === "female"} onClick={() => setGender("female")} color="blue">♀ Mujer</FilterBtn>
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto">
+          {/* ── Explore tab ── */}
+          {tab === "explore" && (
+            <div className="px-6 py-4">
+              {/* Search + dropdowns row */}
+              <div className="flex gap-3 mb-4">
+                {/* Search */}
+                <div className="flex-1 relative">
+                  <svg
+                    className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                    width="15" height="15" viewBox="0 0 24 24" fill="none"
+                    stroke="#555570" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  >
+                    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Buscar voces..."
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-gray-200 focus:outline-none"
+                    style={{ background: "#0d0d17", border: "1px solid #1e1e2e" }}
+                  />
+                </div>
+
+                {/* Language dropdown */}
+                <select
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer focus:outline-none"
+                  style={{ background: "#0d0d17", border: "1px solid #1e1e2e", color: "#c0c0d8", minWidth: "120px" }}
+                >
+                  {LANGS.map(({ code, label }) => (
+                    <option key={code} value={code}>{label}</option>
+                  ))}
+                </select>
+
+                {/* Gender dropdown */}
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value as "" | "male" | "female")}
+                  className="px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer focus:outline-none"
+                  style={{ background: "#0d0d17", border: "1px solid #1e1e2e", color: "#c0c0d8", minWidth: "120px" }}
+                >
+                  <option value="">Todos</option>
+                  <option value="male">Masculino</option>
+                  <option value="female">Femenino</option>
+                </select>
               </div>
 
-              {/* Tier filters */}
-              <div className="flex flex-wrap gap-2 mb-3">
-                <FilterBtn active={tier === "all"} onClick={() => setTier("all")} color="blue">Todas</FilterBtn>
-                <FilterBtn active={tier === "free"} onClick={() => setTier("free")} color="blue">Gratis</FilterBtn>
-                <FilterBtn active={tier === "premium"} onClick={() => setTier("premium")} color="amber">
-                  ✦ Premium
-                </FilterBtn>
-                {!userCanUsePremium && (
-                  <span className="px-2.5 py-1.5 rounded-lg text-xs" style={{ color: "#8888a8" }}>
-                    Las voces premium requieren plan Starter+
-                  </span>
+              {/* Tier pills */}
+              <div className="flex items-center gap-2 mb-4">
+                <TierPill active={tier === "all"} onClick={() => setTier("all")}>Todas</TierPill>
+                <TierPill active={tier === "free"} onClick={() => setTier("free")}>Gratis</TierPill>
+                <TierPill active={tier === "premium"} onClick={() => setTier("premium")} amber>✦ Premium</TierPill>
+                {!userCanUsePremium && tier === "premium" && (
+                  <span className="text-xs ml-1" style={{ color: "#444460" }}>Requiere plan Starter+</span>
                 )}
               </div>
 
-              {/* Search */}
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por nombre..."
-                className="w-full rounded-lg px-3 py-2 text-sm text-gray-200 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
-              />
-
-              {/* Default voice card */}
+              {/* Default voice row */}
               <button
                 onClick={() => handleSelect(null)}
-                className="w-full mb-4 p-3 rounded-xl border text-left flex items-center gap-3 hover:border-blue-500/60 transition-all"
-                style={cardStyle}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border mb-2 transition-all text-left"
+                style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1e1e2e")}
               >
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0" style={{ background: "#1a1a2e" }}>🎙️</div>
-                <div>
-                  <p className="text-sm font-medium text-white">Voz por defecto</p>
-                  <p className="text-xs" style={{ color: "#8888a8" }}>Se generará una voz estándar</p>
+                <div className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#12121a" }}>🎙️</div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white">Voz por defecto</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Se generará una voz estándar</p>
                 </div>
-                <span className="ml-auto text-xs" style={{ color: "#93c5fd" }}>Seleccionar →</span>
+                <span className="text-xs flex-shrink-0" style={{ color: "#3b82f6" }}>Seleccionar →</span>
               </button>
 
-              {/* Grid */}
+              {/* Voice list */}
               {loading ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="h-40 rounded-xl animate-pulse" style={{ background: "#12121a" }} />
+                <div className="space-y-2 mt-2">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: "#0d0d17" }} />
                   ))}
                 </div>
               ) : filteredVoices.length === 0 ? (
-                <p className="text-center py-12 text-sm" style={{ color: "#8888a8" }}>No se encontraron voces</p>
+                <p className="text-center py-16 text-sm" style={{ color: "#555570" }}>No se encontraron voces</p>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="space-y-1.5 mt-2">
                   {filteredVoices.map((voice) => {
-                    const g = getGender(voice.tags);
                     const isPremium = isPremiumVoice(voice._id);
                     const isLocked = isPremium && !userCanUsePremium;
                     return (
-                      <div
+                      <VoiceRow
                         key={voice._id}
-                        className="p-3 rounded-xl border flex flex-col relative overflow-hidden"
-                        style={{
-                          ...cardStyle,
-                          ...(isLocked ? { borderColor: "rgba(245,158,11,0.2)" } : {}),
-                        }}
-                      >
-                        {/* Premium badge */}
-                        {isPremium && (
-                          <div
-                            className="absolute top-2 right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-semibold"
-                            style={{ background: "rgba(245,158,11,0.15)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.3)" }}
-                          >
-                            Starter+
-                          </div>
-                        )}
-
-                        <div className="flex items-center gap-2 mb-2">
-                          <VoiceAvatar name={voice.title} coverImage={voice.cover_image} />
-                          <div className="flex-1 min-w-0 pr-12">
-                            <p className="text-xs font-semibold text-white truncate">{voice.title}</p>
-                            <p className="text-xs" style={{ color: "#8888a8" }}>{voice.task_count.toLocaleString()} usos</p>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-1 mb-3">
-                          {voice.languages.slice(0, 2).map((l) => (
-                            <span key={l} className="px-1.5 py-0.5 rounded text-xs" style={{ background: "rgba(59,130,246,0.15)", color: "#93c5fd" }}>
-                              {l.toUpperCase()}
-                            </span>
-                          ))}
-                          {g && (
-                            <span className="px-1.5 py-0.5 rounded text-xs" style={{ background: "rgba(59,130,246,0.1)", color: "#93c5fd" }}>
-                              {g === "male" ? "♂" : "♀"}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex gap-1.5 mt-auto">
-                          <PreviewBtn id={voice._id} previewingId={previewingId} loadingId={previewLoadingId} onPreview={handlePreview} />
-                          <button
-                            onClick={() => handleVoiceClick(voice)}
-                            className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                            style={
-                              isLocked
-                                ? { background: "#1e1e2e", color: "#4a4a65", border: "1px solid #2a2a3e" }
-                                : { background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff" }
-                            }
-                          >
-                            Usar
-                          </button>
-                        </div>
-                      </div>
+                        voice={voice}
+                        previewingId={previewingId}
+                        previewLoadingId={previewLoadingId}
+                        onPreview={handlePreview}
+                        onUse={handleVoiceClick}
+                        isPremium={isPremium}
+                        isLocked={isLocked}
+                      />
                     );
                   })}
                 </div>
@@ -470,85 +581,144 @@ export function VoiceBrowser({
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-3 mt-6">
+                <div className="flex items-center justify-center gap-3 mt-6 pb-2">
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page === 1}
                     className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
-                    style={{ background: "#12121a", color: "#d1d5db", border: "1px solid #2a2a3e" }}
+                    style={{ background: "#0d0d17", color: "#c0c0d8", border: "1px solid #1e1e2e" }}
                   >
                     ← Anterior
                   </button>
-                  <span className="text-sm" style={{ color: "#8888a8" }}>{page} / {totalPages}</span>
+                  <span className="text-sm" style={{ color: "#555570" }}>{page} / {totalPages}</span>
                   <button
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
                     className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
-                    style={{ background: "#12121a", color: "#d1d5db", border: "1px solid #2a2a3e" }}
+                    style={{ background: "#0d0d17", color: "#c0c0d8", border: "1px solid #1e1e2e" }}
                   >
                     Siguiente →
                   </button>
                 </div>
               )}
-            </>
-          ) : (
-            <>
+            </div>
+          )}
+
+          {/* ── Recent tab ── */}
+          {tab === "recent" && (
+            <div className="px-6 py-4">
+              {/* Tier pills */}
+              <div className="flex items-center gap-2 mb-4">
+                <TierPill active={tier === "all"} onClick={() => setTier("all")}>Todas</TierPill>
+                <TierPill active={tier === "free"} onClick={() => setTier("free")}>Gratis</TierPill>
+                <TierPill active={tier === "premium"} onClick={() => setTier("premium")} amber>✦ Premium</TierPill>
+              </div>
+
+              {filteredRecent.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-24" style={{ color: "#555570" }}>
+                  <svg className="mb-4" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  <p className="font-medium mb-1 text-sm">Aún no has usado ninguna voz</p>
+                  <p className="text-xs mb-4">Las voces que uses aparecerán aquí</p>
+                  <button
+                    onClick={() => setTab("explore")}
+                    className="px-4 py-2 rounded-lg text-xs font-semibold text-white"
+                    style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+                  >
+                    Explorar voces
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {filteredRecent.map((voice) => {
+                    const isPremium = isPremiumVoice(voice._id);
+                    const isLocked = isPremium && !userCanUsePremium;
+                    return (
+                      <VoiceRow
+                        key={voice._id}
+                        voice={voice}
+                        previewingId={previewingId}
+                        previewLoadingId={previewLoadingId}
+                        onPreview={handlePreview}
+                        onUse={handleVoiceClick}
+                        isPremium={isPremium}
+                        isLocked={isLocked}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Cloned tab ── */}
+          {tab === "cloned" && (
+            <div className="px-6 py-4">
               {/* Default option */}
               <button
                 onClick={() => handleSelect(null)}
-                className="w-full mb-4 p-3 rounded-xl border text-left flex items-center gap-3 hover:border-blue-500/60 transition-all"
-                style={cardStyle}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border mb-3 transition-all text-left"
+                style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1e1e2e")}
               >
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0" style={{ background: "#1a1a2e" }}>🎙️</div>
-                <div>
-                  <p className="text-sm font-medium text-white">Voz por defecto</p>
-                  <p className="text-xs" style={{ color: "#8888a8" }}>Se generará una voz estándar</p>
+                <div className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#12121a" }}>🎙️</div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white">Voz por defecto</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Se generará una voz estándar</p>
                 </div>
-                <span className="ml-auto text-xs" style={{ color: "#93c5fd" }}>Seleccionar →</span>
+                <span className="text-xs flex-shrink-0" style={{ color: "#3b82f6" }}>Seleccionar →</span>
               </button>
 
               {clonedVoices.length === 0 ? (
-                <div className="text-center py-16" style={{ color: "#8888a8" }}>
-                  <div className="text-4xl mb-3">🎤</div>
-                  <p className="font-medium mb-1">No tienes voces clonadas</p>
-                  <p className="text-sm">Ve a &quot;Mis voces&quot; para clonar una</p>
+                <div className="flex flex-col items-center justify-center py-20" style={{ color: "#555570" }}>
+                  <span className="text-4xl mb-3">🎤</span>
+                  <p className="font-medium mb-1 text-sm">No tienes voces clonadas</p>
+                  <p className="text-xs">Ve a &quot;Mis voces&quot; para clonar una</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="space-y-1.5">
                   {clonedVoices.map((voice) => {
                     const modelId = voice.fishAudioModelId;
                     const isPreviewing = previewingId === modelId;
                     const isPreviewLoading = previewLoadingId === modelId;
                     return (
-                      <div key={voice.id} className="p-3 rounded-xl border flex flex-col" style={cardStyle}>
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}>
-                            {voice.name[0]?.toUpperCase()}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-white truncate">{voice.name}</p>
-                            <p className="text-xs" style={{ color: "#8888a8" }}>Voz clonada</p>
-                          </div>
+                      <div
+                        key={voice.id}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl border"
+                        style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
+                      >
+                        <div
+                          className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-sm"
+                          style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+                        >
+                          {voice.name[0]?.toUpperCase()}
                         </div>
-                        <div className="flex gap-1.5 mt-auto">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-white truncate">{voice.name}</p>
+                          <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Voz clonada</p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           {modelId && (
                             <button
                               onClick={() => handlePreview(modelId)}
                               disabled={isPreviewLoading}
-                              className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60"
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60"
                               style={{
-                                background: isPreviewing ? "rgba(59,130,246,0.3)" : "rgba(59,130,246,0.1)",
+                                background: isPreviewing ? "rgba(59,130,246,0.25)" : "rgba(59,130,246,0.08)",
                                 color: "#93c5fd",
                                 border: "1px solid rgba(59,130,246,0.2)",
                               }}
                             >
-                              {isPreviewLoading ? "···" : isPreviewing ? "⏹ Stop" : "▶ Vista previa"}
+                              {isPreviewLoading ? "···" : isPreviewing ? "⏹" : "▶"}
+                              <span className="hidden sm:inline">{isPreviewLoading ? "" : isPreviewing ? "Stop" : "Preview"}</span>
                             </button>
                           )}
                           <button
                             onClick={() => modelId && handleSelect({ referenceId: modelId, name: voice.name, isCloned: true })}
                             disabled={!modelId}
-                            className="flex-1 py-1.5 rounded-lg text-xs font-semibold text-white disabled:opacity-50"
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white disabled:opacity-50"
                             style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
                           >
                             Usar
@@ -559,7 +729,7 @@ export function VoiceBrowser({
                   })}
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>
