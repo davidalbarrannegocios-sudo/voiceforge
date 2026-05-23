@@ -251,8 +251,8 @@ function HomeTab({
             >
               <Icon size={20} style={{ color: "#93c5fd" }} />
             </div>
-            <h3 className="font-semibold text-white mb-1">{title}</h3>
-            <p className="text-sm mt-auto" style={{ color: "#8888a8" }}>{desc}</p>
+            <h3 className="font-semibold text-white">{title}</h3>
+            <p className="text-sm mt-1" style={{ color: "#8888a8" }}>{desc}</p>
           </button>
         ))}
       </div>
