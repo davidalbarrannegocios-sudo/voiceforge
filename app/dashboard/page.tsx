@@ -223,9 +223,26 @@ function HomeTab({
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className="group p-6 rounded-2xl border border-[#2a2a3e] hover:border-blue-700 text-left transition-all hover:-translate-y-0.5"
+            className="group relative overflow-hidden p-6 rounded-2xl border border-[#2a2a3e] hover:border-blue-700 text-left transition-all hover:-translate-y-0.5"
             style={{ background: "#12121a" }}
           >
+            <svg
+              className="absolute top-0 right-0 w-40 h-40 opacity-20 group-hover:opacity-30 transition-opacity duration-300"
+              viewBox="0 0 160 160"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M160 0 Q120 40 160 80" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
+              <path d="M160 0 Q100 50 160 100" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
+              <path d="M160 0 Q80 60 160 120" stroke="#2563eb" strokeWidth="1.5" fill="none"/>
+              <path d="M160 10 Q90 60 160 110" stroke="#2563eb" strokeWidth="1" fill="none"/>
+              <path d="M160 20 Q100 65 160 120" stroke="#3b82f6" strokeWidth="1" fill="none"/>
+              <path d="M160 0 Q110 70 160 140" stroke="#1d4ed8" strokeWidth="1.5" fill="none"/>
+              <path d="M160 10 Q120 75 160 150" stroke="#1d4ed8" strokeWidth="1" fill="none"/>
+              <path d="M140 0 Q100 55 150 120" stroke="#3b82f6" strokeWidth="1" fill="none"/>
+              <path d="M120 0 Q90 50 140 110" stroke="#2563eb" strokeWidth="0.8" fill="none"/>
+              <path d="M100 0 Q75 45 130 100" stroke="#1d4ed8" strokeWidth="0.8" fill="none"/>
+            </svg>
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
               style={{ background: "rgba(59,130,246,0.15)" }}
