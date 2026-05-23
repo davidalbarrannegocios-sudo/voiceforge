@@ -220,12 +220,12 @@ function HomeTab({
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 items-stretch">
         {cards.map(({ key, Icon, title, desc }) => (
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className="group relative overflow-hidden p-6 rounded-2xl border border-[#2a2a3e] hover:border-blue-700 text-left transition-all hover:-translate-y-0.5"
+            className="group relative overflow-hidden flex flex-col p-6 rounded-2xl border border-[#2a2a3e] hover:border-blue-700 text-left transition-all hover:-translate-y-0.5 h-full"
             style={{ background: "#12121a" }}
           >
             <svg
@@ -246,13 +246,13 @@ function HomeTab({
               <path d="M100 0 Q75 45 130 100" stroke="#1d4ed8" strokeWidth="0.8" fill="none"/>
             </svg>
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
+              className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 flex-shrink-0"
               style={{ background: "rgba(59,130,246,0.15)" }}
             >
               <Icon size={20} style={{ color: "#93c5fd" }} />
             </div>
             <h3 className="font-semibold text-white mb-1">{title}</h3>
-            <p className="text-sm" style={{ color: "#8888a8" }}>{desc}</p>
+            <p className="text-sm mt-auto" style={{ color: "#8888a8" }}>{desc}</p>
           </button>
         ))}
       </div>
