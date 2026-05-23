@@ -236,7 +236,7 @@ function VoiceRow({
               className="px-1.5 py-0.5 rounded text-xs font-semibold flex-shrink-0"
               style={{ background: "rgba(245,158,11,0.12)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.25)" }}
             >
-              Starter+
+              ✦
             </span>
           )}
         </div>
