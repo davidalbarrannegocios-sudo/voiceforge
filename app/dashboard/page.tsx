@@ -165,9 +165,18 @@ function Sidebar({
       <div style={{ borderTop: "1px solid #1a1a28", padding: "16px 20px 20px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
           <span style={{ fontSize: "11px", color: "#3a3a52", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>{t.nav.characters}</span>
-          <Link href="/pricing" style={{ fontSize: "11px", fontWeight: 700, color: "#3b82f6", textDecoration: "none" }}>
+          <button
+            onClick={() => {
+              setActiveTab("billing");
+              onClose?.();
+              setTimeout(() => {
+                document.getElementById("creditos-extra")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }, 80);
+            }}
+            style={{ fontSize: "11px", fontWeight: 700, color: "#3b82f6", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+          >
             {t.nav.buy}
-          </Link>
+          </button>
         </div>
         <p style={{ fontSize: "20px", fontWeight: 800, color: "#fff", marginBottom: "8px" }}>
           {credits !== null ? credits.toLocaleString("es-ES") : "—"}
@@ -1531,7 +1540,7 @@ function BillingTab({
       </div>
 
       {/* ── Extra credits section ── */}
-      <div style={{ marginTop: "44px", marginBottom: "16px" }}>
+      <div id="creditos-extra" style={{ marginTop: "44px", marginBottom: "16px" }}>
         <p style={{ fontSize: "16px", fontWeight: 700, color: "#e5e7eb", marginBottom: "3px" }}>Créditos extra</p>
         <p style={{ fontSize: "13px", color: "#3a3a52" }}>Compra créditos adicionales a tu plan. Válidos 3 meses, pago único.</p>
       </div>
