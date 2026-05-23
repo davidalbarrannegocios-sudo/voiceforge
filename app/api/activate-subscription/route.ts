@@ -65,6 +65,8 @@ export async function POST(req: Request) {
     // Update DB immediately if active (webhook also fires, idempotent)
     if (subscription.status === "active") {
       const periodEnd = new Date(subscription.items.data[0].current_period_end * 1000);
+      const interval = subscription.items.data[0].plan.interval;
+      const billingInterval = interval === "year" ? "annual" : "monthly";
       await prisma.user.update({
         where: { id: user.id },
         data: {
@@ -72,9 +74,11 @@ export async function POST(req: Request) {
           credits: { increment: PLAN_CREDITS[planKey] ?? 0 },
           stripeSubscriptionId: subscription.id,
           planExpiresAt: periodEnd,
+          billingInterval,
+          creditsRenewedAt: new Date(),
         },
       });
-      console.log("[activate-subscription] Plan actualizado en DB:", planKey, "periodEnd:", periodEnd);
+      console.log("[activate-subscription] Plan actualizado en DB:", planKey, "periodEnd:", periodEnd, "interval:", billingInterval);
     }
 
     return NextResponse.json({ success: true, subscriptionId: subscription.id, status: subscription.status });

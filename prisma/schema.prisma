@@ -19,6 +19,8 @@ model User {
   planExpiresAt        DateTime?
   stripeCustomerId     String?       @unique
   stripeSubscriptionId String?       @unique
+  billingInterval      String        @default("monthly")
+  creditsRenewedAt     DateTime?
   transcriptionUsed    Int           @default(0)
   referralCode         String?       @unique
   referredBy           String?

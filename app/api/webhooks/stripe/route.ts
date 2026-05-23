@@ -93,7 +93,9 @@ export async function POST(req: Request) {
       console.log("[webhook] sub.items.data[0]:", JSON.stringify(sub.items.data[0]?.current_period_end));
       const periodEnd = new Date(sub.items.data[0].current_period_end * 1000);
       const credits = PLAN_CREDITS[planKey] ?? 0;
-      console.log("[webhook] periodEnd:", periodEnd, "credits:", credits);
+      const interval = sub.items.data[0].plan.interval;
+      const billingInterval = interval === "year" ? "annual" : "monthly";
+      console.log("[webhook] periodEnd:", periodEnd, "credits:", credits, "interval:", billingInterval);
 
       console.log("[webhook] Actualizando usuario en DB...");
       await prisma.user.update({
@@ -104,6 +106,8 @@ export async function POST(req: Request) {
           stripeSubscriptionId: subscriptionId,
           stripeCustomerId: typeof session.customer === "string" ? session.customer : undefined,
           credits,
+          billingInterval,
+          creditsRenewedAt: new Date(),
         },
       });
 
