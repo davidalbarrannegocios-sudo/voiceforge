@@ -35,7 +35,7 @@ interface Generation {
   expiresAt: string | null;
 }
 
-type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral" | "translate" | "transcribe";
+type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral" | "translate" | "transcribe" | "team";
 
 /* ─── Sidebar ─────────────────────────────────────────────── */
 type NavSection = {
@@ -49,15 +49,26 @@ function Sidebar({
   setActiveTab,
   onClose,
   desktop = false,
+  plan,
 }: {
   credits: number | null;
   activeTab: Tab;
   setActiveTab: (t: Tab) => void;
   onClose?: () => void;
   desktop?: boolean;
+  plan?: string;
 }) {
   const { openUserProfile } = useClerk();
   const { t } = useLang();
+
+  const platformItems: { key: Tab | "_account"; label: string; Icon: React.ElementType }[] = [
+    { key: "billing",   label: t.nav.billing,   Icon: CreditCard },
+    { key: "referral",  label: t.nav.referrals, Icon: Gift },
+    { key: "_account",  label: t.nav.account,   Icon: User },
+  ];
+  if (plan === "enterprise") {
+    platformItems.unshift({ key: "team", label: "Equipo", Icon: Users });
+  }
 
   const sections: NavSection[] = [
     {
@@ -77,11 +88,7 @@ function Sidebar({
     },
     {
       label: t.nav.platform,
-      items: [
-        { key: "billing",   label: t.nav.billing,   Icon: CreditCard },
-        { key: "referral",  label: t.nav.referrals, Icon: Gift },
-        { key: "_account",  label: t.nav.account,   Icon: User },
-      ],
+      items: platformItems,
     },
   ];
 
@@ -2378,6 +2385,337 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
   );
 }
 
+/* ─── TeamTab ─────────────────────────────────────────────── */
+interface TeamMemberData {
+  id: string;
+  userId: string;
+  email: string;
+  name: string | null;
+  percentage: number;
+  createdAt: string;
+}
+
+interface TeamData {
+  id: string;
+  name: string;
+  ownerId: string;
+  members: TeamMemberData[];
+}
+
+const ENTERPRISE_CREDITS = 5_000_000;
+
+function TeamTab({ credits }: { credits: number | null }) {
+  const [team, setTeam] = useState<TeamData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [teamName, setTeamName] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviting, setInviting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [percentages, setPercentages] = useState<Record<string, number>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/team")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.team) {
+          setTeam(data.team);
+          const p: Record<string, number> = {};
+          data.team.members.forEach((m: TeamMemberData) => { p[m.id] = m.percentage; });
+          setPercentages(p);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  function flash(type: "error" | "success", msg: string) {
+    if (type === "error") { setError(msg); setSuccess(null); }
+    else { setSuccess(msg); setError(null); }
+    setTimeout(() => { setError(null); setSuccess(null); }, 4000);
+  }
+
+  async function handleCreate() {
+    if (!teamName.trim()) return;
+    setCreating(true);
+    try {
+      const res = await fetch("/api/team", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: teamName.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { flash("error", data.error); return; }
+      setTeam(data.team);
+      setPercentages({});
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function handleInvite() {
+    if (!inviteEmail.trim()) return;
+    setInviting(true);
+    try {
+      const res = await fetch("/api/team/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: inviteEmail.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { flash("error", data.error); return; }
+      setTeam((t) => t ? { ...t, members: [...t.members, data.member] } : t);
+      setPercentages((p) => ({ ...p, [data.member.id]: 0 }));
+      setInviteEmail("");
+      flash("success", "Miembro añadido al equipo");
+    } finally {
+      setInviting(false);
+    }
+  }
+
+  async function handleRemove(memberId: string) {
+    const res = await fetch(`/api/team/members/${memberId}`, { method: "DELETE" });
+    const data = await res.json();
+    if (!res.ok) { flash("error", data.error); return; }
+    setTeam((t) => t ? { ...t, members: t.members.filter((m) => m.id !== memberId) } : t);
+    setPercentages((p) => { const c = { ...p }; delete c[memberId]; return c; });
+  }
+
+  async function handleSaveDistribution() {
+    if (!team) return;
+    setSaving(true);
+    try {
+      const distributions = team.members.map((m) => ({
+        memberId: m.id,
+        percentage: percentages[m.id] ?? 0,
+      }));
+      const res = await fetch("/api/team/distribute", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ distributions }),
+      });
+      const data = await res.json();
+      if (!res.ok) { flash("error", data.error); return; }
+      setTeam(data.team);
+      flash("success", "Distribución guardada");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const totalAssigned = Object.values(percentages).reduce((sum, p) => sum + (p || 0), 0);
+  const ownerPercent = 100 - totalAssigned;
+  const ownerCredits = Math.floor(ENTERPRISE_CREDITS * ownerPercent / 100);
+
+  const cardStyle = { background: "#0d0d17", borderColor: "#2a2a3e" };
+
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto py-10 flex justify-center">
+        <div className="w-5 h-5 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (!team) {
+    return (
+      <div className="max-w-lg mx-auto py-10 space-y-6">
+        <div className="rounded-2xl border p-8 text-center space-y-3" style={cardStyle}>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto" style={{ background: "rgba(59,130,246,0.1)" }}>
+            <Users size={26} style={{ color: "#3b82f6" }} />
+          </div>
+          <h2 className="text-lg font-bold text-white">Crear tu equipo</h2>
+          <p className="text-sm" style={{ color: "#8888a8" }}>
+            Crea un equipo para distribuir caracteres mensuales entre tus miembros automáticamente cada mes.
+          </p>
+        </div>
+        <div className="rounded-2xl border p-6 space-y-4" style={cardStyle}>
+          <label className="block text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>
+            Nombre del equipo
+          </label>
+          <input
+            type="text"
+            value={teamName}
+            onChange={(e) => setTeamName(e.target.value)}
+            placeholder="Ej. Equipo de Marketing"
+            className="w-full px-4 py-2.5 rounded-xl text-sm text-gray-200 focus:outline-none"
+            style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
+            onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+          />
+          {error && <p className="text-sm" style={{ color: "#f87171" }}>{error}</p>}
+          <button
+            onClick={handleCreate}
+            disabled={creating || !teamName.trim()}
+            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
+            style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+          >
+            {creating ? "Creando..." : "Crear equipo"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto py-6 space-y-5">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(59,130,246,0.12)" }}>
+          <Users size={18} style={{ color: "#3b82f6" }} />
+        </div>
+        <div>
+          <h2 className="text-base font-bold text-white">{team.name}</h2>
+          <p className="text-xs" style={{ color: "#555570" }}>{team.members.length} miembro{team.members.length !== 1 ? "s" : ""}</p>
+        </div>
+      </div>
+
+      {/* Credits summary */}
+      <div className="rounded-2xl border p-5 space-y-3" style={cardStyle}>
+        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>
+          Resumen de créditos este mes
+        </p>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-xl p-3 text-center" style={{ background: "#12121a", border: "1px solid #1e1e2e" }}>
+            <p className="text-xs mb-1" style={{ color: "#555570" }}>Total equipo</p>
+            <p className="text-sm font-bold text-white">{ENTERPRISE_CREDITS.toLocaleString("es-ES")}</p>
+          </div>
+          <div className="rounded-xl p-3 text-center" style={{ background: "#12121a", border: "1px solid #1e1e2e" }}>
+            <p className="text-xs mb-1" style={{ color: "#555570" }}>Tu parte ({ownerPercent}%)</p>
+            <p className="text-sm font-bold" style={{ color: "#93c5fd" }}>{ownerCredits.toLocaleString("es-ES")}</p>
+          </div>
+          <div className="rounded-xl p-3 text-center" style={{ background: "#12121a", border: "1px solid #1e1e2e" }}>
+            <p className="text-xs mb-1" style={{ color: "#555570" }}>Distribuidos</p>
+            <p className="text-sm font-bold" style={{ color: totalAssigned > 100 ? "#f87171" : "#4ade80" }}>{totalAssigned}%</p>
+          </div>
+        </div>
+        {totalAssigned > 100 && (
+          <p className="text-xs font-medium text-center" style={{ color: "#f87171" }}>
+            Los porcentajes superan el 100%. Ajústalos antes de guardar.
+          </p>
+        )}
+      </div>
+
+      {/* Members */}
+      <div className="rounded-2xl border p-5 space-y-4" style={cardStyle}>
+        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>
+          Miembros y distribución
+        </p>
+
+        {team.members.length === 0 ? (
+          <p className="text-sm text-center py-6" style={{ color: "#555570" }}>
+            Aún no hay miembros. Invita a alguien abajo.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {team.members.map((member) => {
+              const pct = percentages[member.id] ?? 0;
+              const chars = Math.floor(ENTERPRISE_CREDITS * pct / 100);
+              return (
+                <div key={member.id} className="rounded-xl p-4 space-y-3" style={{ background: "#12121a", border: "1px solid #1e1e2e" }}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                        style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}>
+                        {(member.name ?? member.email)[0].toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{member.name ?? member.email}</p>
+                        <p className="text-xs truncate" style={{ color: "#555570" }}>{member.email}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleRemove(member.id)}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ml-2"
+                      style={{ color: "#555570", background: "transparent" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "#555570")}
+                      title="Eliminar miembro"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={pct}
+                      onChange={(e) => setPercentages((p) => ({ ...p, [member.id]: Number(e.target.value) }))}
+                      className="flex-1"
+                    />
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={pct}
+                        onChange={(e) => setPercentages((p) => ({ ...p, [member.id]: Math.min(100, Math.max(0, Number(e.target.value))) }))}
+                        className="w-14 px-2 py-1 rounded-lg text-sm text-center text-white focus:outline-none"
+                        style={{ background: "#0a0a12", border: "1px solid #2a2a3e" }}
+                      />
+                      <span className="text-xs" style={{ color: "#555570" }}>%</span>
+                    </div>
+                  </div>
+                  <p className="text-xs" style={{ color: "#555570" }}>
+                    {chars.toLocaleString("es-ES")} caracteres / mes
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {error && <p className="text-sm px-1" style={{ color: "#f87171" }}>{error}</p>}
+        {success && <p className="text-sm px-1" style={{ color: "#4ade80" }}>{success}</p>}
+
+        {team.members.length > 0 && (
+          <button
+            onClick={handleSaveDistribution}
+            disabled={saving || totalAssigned > 100}
+            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50 transition-all"
+            style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+          >
+            {saving ? "Guardando..." : "Guardar distribución"}
+          </button>
+        )}
+      </div>
+
+      {/* Invite */}
+      <div className="rounded-2xl border p-5 space-y-3" style={cardStyle}>
+        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>
+          Invitar miembro
+        </p>
+        <p className="text-xs" style={{ color: "#555570" }}>
+          El usuario debe tener cuenta activa en Elite Labs.
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="email"
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            placeholder="email@ejemplo.com"
+            className="flex-1 px-3 py-2.5 rounded-xl text-sm text-gray-200 focus:outline-none"
+            style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
+            onKeyDown={(e) => e.key === "Enter" && handleInvite()}
+          />
+          <button
+            onClick={handleInvite}
+            disabled={inviting || !inviteEmail.trim()}
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50 flex-shrink-0"
+            style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+          >
+            {inviting ? "..." : "Invitar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Dashboard ──────────────────────────────────────── */
 export default function DashboardPage() {
   const { user } = useUser();
@@ -2446,11 +2784,11 @@ export default function DashboardPage() {
         className={`fixed inset-y-0 left-0 z-50 flex flex-col lg:hidden transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
         style={{ width: "260px", background: "#0d0d17", borderRight: "1px solid #1e1e2e" }}
       >
-        <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} onClose={() => setSidebarOpen(false)} />
+        <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} onClose={() => setSidebarOpen(false)} plan={plan} />
       </div>
 
       {/* Desktop sidebar */}
-      <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} desktop />
+      <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} desktop plan={plan} />
 
       <main className="flex-1 overflow-auto relative min-w-0" style={{ padding: "0" }}>
         {/* Topbar */}
@@ -2464,6 +2802,7 @@ export default function DashboardPage() {
             billing:    { title: tt.tabs.billing,    Icon: CreditCard },
             voices:     { title: tt.tabs.voices,     Icon: Mic2 },
             referral:   { title: tt.tabs.referral,   Icon: Gift },
+            team:       { title: "Equipo",            Icon: Users },
           };
           const { title, Icon } = TAB_META[activeTab] ?? { title: "", Icon: Home };
           return (
@@ -2577,6 +2916,7 @@ export default function DashboardPage() {
             onBilling={() => setActiveTab("billing")}
           />
         )}
+        {activeTab === "team" && <TeamTab credits={credits} />}
         </div>{/* end page content */}
       </main>
     </div>

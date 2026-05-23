@@ -15,7 +15,6 @@ export async function POST(req: Request) {
   const now = new Date();
   const twentyEightDaysAgo = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
 
-  // Users with active annual subscriptions not yet renewed this month
   const users = await prisma.user.findMany({
     where: {
       billingInterval: "annual",
@@ -28,16 +27,46 @@ export async function POST(req: Request) {
     },
   });
 
+  // Fetch teams for enterprise users so we can distribute credits to members
+  const enterpriseIds = users.filter((u) => u.plan === "enterprise").map((u) => u.id);
+  const teams = await prisma.team.findMany({
+    where: { ownerId: { in: enterpriseIds } },
+    include: { members: { where: { percentage: { gt: 0 } } } },
+  });
+  const teamsMap = new Map(teams.map((t) => [t.ownerId, t]));
+
   const results = await Promise.allSettled(
-    users.map((user) =>
-      prisma.user.update({
+    users.map(async (user) => {
+      const planCredits = PLAN_CREDITS[user.plan] ?? 0;
+      const team = teamsMap.get(user.id);
+
+      if (user.plan === "enterprise" && team && team.members.length > 0) {
+        const distributions = team.members.map((m) => ({
+          userId: m.userId,
+          credits: Math.floor(planCredits * m.percentage / 100),
+        }));
+        const totalDistributed = distributions.reduce((sum, d) => sum + d.credits, 0);
+        const ownerCredits = planCredits - totalDistributed;
+
+        return prisma.$transaction([
+          prisma.user.update({
+            where: { id: user.id },
+            data: { credits: ownerCredits, creditsRenewedAt: now },
+          }),
+          ...distributions.map((d) =>
+            prisma.user.update({
+              where: { id: d.userId },
+              data: { credits: { increment: d.credits } },
+            })
+          ),
+        ]);
+      }
+
+      return prisma.user.update({
         where: { id: user.id },
-        data: {
-          credits: PLAN_CREDITS[user.plan] ?? 0,
-          creditsRenewedAt: now,
-        },
-      })
-    )
+        data: { credits: planCredits, creditsRenewedAt: now },
+      });
+    })
   );
 
   const succeeded = results.filter((r) => r.status === "fulfilled").length;

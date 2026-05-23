@@ -35,6 +35,8 @@ model User {
   supportTickets       SupportTicket[]
   creditPacks          CreditPack[]
   favoriteVoices       FavoriteVoice[]
+  teamOwned            Team?           @relation("TeamOwner")
+  teamMember           TeamMember?
 }
 
 model Job {
@@ -119,6 +121,27 @@ model FavoriteVoice {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, voiceId])
+}
+
+model Team {
+  id        String       @id @default(cuid())
+  name      String
+  ownerId   String       @unique
+  owner     User         @relation("TeamOwner", fields: [ownerId], references: [id])
+  members   TeamMember[]
+  createdAt DateTime     @default(now())
+}
+
+model TeamMember {
+  id         String   @id @default(cuid())
+  teamId     String
+  userId     String   @unique
+  email      String
+  name       String?
+  percentage Int      @default(0)
+  team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
 }
 
 model Referral {
