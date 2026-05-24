@@ -631,16 +631,24 @@ export function VoiceBrowser({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [communityVoices, setCommunityVoices] = useState<CommunityVoice[]>([]);
   const [communityLoading, setCommunityLoading] = useState(false);
+  const [communitySearch, setCommunitySearch] = useState("");
+  const [communitySearchDebounced, setCommunitySearchDebounced] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setCommunitySearchDebounced(communitySearch), 300);
+    return () => clearTimeout(t);
+  }, [communitySearch]);
 
   useEffect(() => {
     if (tab !== "cloned") return;
     setCommunityLoading(true);
-    fetch("/api/voices/public")
+    const q = communitySearchDebounced ? `?search=${encodeURIComponent(communitySearchDebounced)}` : "";
+    fetch(`/api/voices/public${q}`)
       .then((r) => r.json())
       .then((data) => setCommunityVoices(Array.isArray(data) ? data : []))
       .catch(() => setCommunityVoices([]))
       .finally(() => setCommunityLoading(false));
-  }, [tab]);
+  }, [tab, communitySearchDebounced]);
 
   const userCanUsePremium = canUsePremium(plan);
   const activeFilterCount =
@@ -1340,6 +1348,25 @@ export function VoiceBrowser({
                     <Globe size={13} style={{ color: "#4a4a65" }} />
                     <span className="text-xs font-semibold" style={{ color: "#4a4a65" }}>Voces de la comunidad</span>
                   </div>
+
+                  {/* Search input */}
+                  <div className="mb-2">
+                    <div className="relative">
+                      <svg className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a4a65" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                      <input
+                        type="text"
+                        value={communitySearch}
+                        onChange={(e) => setCommunitySearch(e.target.value)}
+                        placeholder="Buscar por nombre o ID..."
+                        className="w-full rounded-lg pl-8 pr-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/30"
+                        style={{ background: "#0a0a12", border: "1px solid #1e1e2e", color: "#d1d5db" }}
+                      />
+                    </div>
+                    {communitySearch.length > 15 && !communitySearch.includes(" ") && (
+                      <p className="text-xs mt-1.5 pl-1" style={{ color: "#4a4a65" }}>Buscando por ID de voz...</p>
+                    )}
+                  </div>
+
                   {communityLoading ? (
                     <div className="space-y-1.5">
                       {[1, 2].map((i) => (
@@ -1347,42 +1374,66 @@ export function VoiceBrowser({
                       ))}
                     </div>
                   ) : communityVoices.length === 0 ? (
-                    <p className="text-xs text-center py-6" style={{ color: "#3a3a52" }}>No hay voces públicas aún</p>
+                    <p className="text-xs text-center py-6" style={{ color: "#3a3a52" }}>
+                      {communitySearch ? "Sin resultados" : "No hay voces públicas aún"}
+                    </p>
                   ) : (
                     <div className="space-y-1.5">
-                      {communityVoices.map((voice) => (
-                        <div
-                          key={voice.id}
-                          className="flex items-center gap-3 px-4 py-3 rounded-xl border"
-                          style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
-                        >
-                          <div
-                            className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-sm"
-                            style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
-                          >
-                            {voice.name[0]?.toUpperCase()}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <p className="text-sm font-semibold text-white truncate">{voice.name}</p>
-                              <span className="text-sm leading-none flex-shrink-0">{LANG_FLAGS[voice.language] ?? "🌐"}</span>
-                              {voice.gender && (
-                                <span className="text-xs flex-shrink-0" style={{ color: "#3a3a52" }}>
-                                  {voice.gender === "masculine" ? "♂" : voice.gender === "feminine" ? "♀" : ""}
-                                </span>
-                              )}
+                      {(() => {
+                        const exactMatch = communitySearch
+                          ? communityVoices.find((v) => v.fishAudioModelId === communitySearch)
+                          : null;
+                        const sorted = exactMatch
+                          ? [exactMatch, ...communityVoices.filter((v) => v.fishAudioModelId !== communitySearch)]
+                          : communityVoices;
+                        return sorted.map((voice) => {
+                          const isExact = exactMatch?.fishAudioModelId === voice.fishAudioModelId && !!communitySearch;
+                          return (
+                            <div
+                              key={voice.id}
+                              className="flex items-center gap-3 px-4 py-3 rounded-xl border"
+                              style={{
+                                background: isExact ? "rgba(124,58,237,0.06)" : "#0d0d17",
+                                borderColor: isExact ? "rgba(124,58,237,0.3)" : "#1e1e2e",
+                              }}
+                            >
+                              <div
+                                className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-sm"
+                                style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
+                              >
+                                {voice.name[0]?.toUpperCase()}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <p className="text-sm font-semibold text-white truncate">{voice.name}</p>
+                                  <span className="text-sm leading-none flex-shrink-0">{LANG_FLAGS[voice.language] ?? "🌐"}</span>
+                                  {voice.gender && (
+                                    <span className="text-xs flex-shrink-0" style={{ color: "#3a3a52" }}>
+                                      {voice.gender === "masculine" ? "♂" : voice.gender === "feminine" ? "♀" : ""}
+                                    </span>
+                                  )}
+                                  {isExact && (
+                                    <span
+                                      className="text-xs px-1.5 py-0.5 rounded-full font-medium leading-none flex-shrink-0"
+                                      style={{ background: "rgba(124,58,237,0.2)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.3)" }}
+                                    >
+                                      Coincidencia por ID
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs mt-0.5" style={{ color: "#555570" }}>por {voice.creatorName}</p>
+                              </div>
+                              <button
+                                onClick={() => handleSelect({ referenceId: voice.fishAudioModelId, name: voice.name, isCloned: true })}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white flex-shrink-0"
+                                style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
+                              >
+                                Usar
+                              </button>
                             </div>
-                            <p className="text-xs mt-0.5" style={{ color: "#555570" }}>por {voice.creatorName}</p>
-                          </div>
-                          <button
-                            onClick={() => handleSelect({ referenceId: voice.fishAudioModelId, name: voice.name, isCloned: true })}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white flex-shrink-0"
-                            style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
-                          >
-                            Usar
-                          </button>
-                        </div>
-                      ))}
+                          );
+                        });
+                      })()}
                     </div>
                   )}
                 </div>
