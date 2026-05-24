@@ -451,63 +451,62 @@ function statusBadge(status: string) {
 }
 
 /* ─── Slider + numeric input control ─────────────────────── */
-function SliderControl({
-  label, value, onChange, min, max, step, decimals, marks, defaultValue,
+function CompactSlider({
+  label, value, onChange, min, max, step, decimals, defaultValue,
 }: {
   label: string; value: number; onChange: (v: number) => void;
-  min: number; max: number; step: number; decimals: number;
-  marks: [string, string, string]; defaultValue: number;
+  min: number; max: number; step: number; decimals: number; defaultValue: number;
 }) {
   const [inputText, setInputText] = useState(value.toFixed(decimals));
   const isDefault = value === defaultValue;
 
-  // Keep input text in sync when slider moves
-  useEffect(() => {
-    setInputText(value.toFixed(decimals));
-  }, [value, decimals]);
+  useEffect(() => { setInputText(value.toFixed(decimals)); }, [value, decimals]);
 
   function commitInput(raw: string) {
     const parsed = parseFloat(raw);
     const clamped = isNaN(parsed) ? value : Math.min(max, Math.max(min, parsed));
-    const rounded = Math.round(clamped / step) * step;
-    onChange(parseFloat(rounded.toFixed(decimals)));
-    setInputText(parseFloat(rounded.toFixed(decimals)).toFixed(decimals));
+    const rounded = parseFloat((Math.round(clamped / step) * step).toFixed(decimals));
+    onChange(rounded);
+    setInputText(rounded.toFixed(decimals));
   }
 
+  const pct = ((value - min) / (max - min)) * 100;
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm text-gray-300">{label}</span>
+    <div
+      className="flex items-center gap-3 px-3.5"
+      style={{ background: "#12121a", borderRadius: "10px", height: "40px" }}
+    >
+      <span className="text-xs font-medium flex-shrink-0 w-20" style={{ color: "#8888a8" }}>{label}</span>
+      <div className="flex-1 relative flex items-center" style={{ height: "4px" }}>
+        <div className="w-full h-full rounded-full" style={{ background: "#2a2a3e" }} />
+        <div
+          className="absolute left-0 h-full rounded-full"
+          style={{ width: `${pct}%`, background: "linear-gradient(90deg, #3b82f6, #2563eb)" }}
+        />
         <input
-          type="number"
-          min={min}
-          max={max}
-          step={step}
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          onBlur={(e) => commitInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && commitInput((e.target as HTMLInputElement).value)}
-          className="text-xs font-mono text-right rounded px-1.5 py-0.5 w-16 outline-none"
-          style={{
-            color: !isDefault ? "#93c5fd" : "#8888a8",
-            background: !isDefault ? "rgba(59,130,246,0.12)" : "#1a1a28",
-            border: "1px solid #2a2a3e",
-          }}
+          type="range"
+          min={min} max={max} step={step} value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
+          className="absolute inset-0 w-full opacity-0 cursor-pointer"
+          style={{ height: "100%", margin: 0 }}
         />
       </div>
       <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="w-full h-1 rounded-full appearance-none cursor-pointer"
-        style={{ accentColor: "#3b82f6", background: "#2a2a3e" }}
+        type="number"
+        min={min} max={max} step={step}
+        value={inputText}
+        onChange={(e) => setInputText(e.target.value)}
+        onBlur={(e) => commitInput(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && commitInput((e.target as HTMLInputElement).value)}
+        className="text-xs font-mono text-right rounded-md outline-none flex-shrink-0"
+        style={{
+          width: "46px", padding: "2px 6px",
+          color: !isDefault ? "#93c5fd" : "#6b6b88",
+          background: !isDefault ? "rgba(59,130,246,0.12)" : "transparent",
+          border: "1px solid transparent",
+        }}
       />
-      <div className="flex justify-between mt-1 text-xs" style={{ color: "#555570" }}>
-        {marks.map((m) => <span key={m}>{m}</span>)}
-      </div>
     </div>
   );
 }
@@ -900,82 +899,46 @@ function GenerateTab({
 
             {/* Audio controls */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>{t.generate.audioControls}</p>
-              <div className="space-y-5">
-                <SliderControl
-                  label={t.generate.speed}
-                  value={speed}
-                  onChange={setSpeed}
-                  min={0.5} max={1.5} step={0.01} decimals={2}
-                  marks={["0.50", "1.00", "1.50"]}
-                  defaultValue={1}
-                />
-                <SliderControl
-                  label={t.generate.volume}
-                  value={volume}
-                  onChange={setVolume}
-                  min={0} max={2} step={0.01} decimals={2}
-                  marks={["0.00", "1.00", "2.00"]}
-                  defaultValue={1}
-                />
+              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555570" }}>{t.generate.audioControls}</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <CompactSlider label={t.generate.speed} value={speed} onChange={setSpeed} min={0.5} max={1.5} step={0.01} decimals={2} defaultValue={1} />
+                <CompactSlider label={t.generate.volume} value={volume} onChange={setVolume} min={0} max={2} step={0.01} decimals={2} defaultValue={1} />
                 {selectedModel === "speech-1.5" && (
                   <>
-                    <SliderControl
-                      label="Temperatura"
-                      value={temperature}
-                      onChange={setTemperature}
-                      min={0} max={1} step={0.1} decimals={1}
-                      marks={["0.0", "0.5", "1.0"]}
-                      defaultValue={0.9}
-                    />
-                    <SliderControl
-                      label="Top P"
-                      value={topP}
-                      onChange={setTopP}
-                      min={0} max={1} step={0.1} decimals={1}
-                      marks={["0.0", "0.5", "1.0"]}
-                      defaultValue={0.9}
-                    />
+                    <CompactSlider label="Temperatura" value={temperature} onChange={setTemperature} min={0} max={1} step={0.1} decimals={1} defaultValue={0.9} />
+                    <CompactSlider label="Top P" value={topP} onChange={setTopP} min={0} max={1} step={0.1} decimals={1} defaultValue={0.9} />
                   </>
                 )}
-                <SliderControl
-                  label={t.generate.pitch}
-                  value={pitch}
-                  onChange={setPitch}
-                  min={-6} max={6} step={0.1} decimals={1}
-                  marks={["Grave", "Normal", "Agudo"]}
-                  defaultValue={0}
-                />
-              </div>
-            </div>
+                <CompactSlider label={t.generate.pitch} value={pitch} onChange={setPitch} min={-6} max={6} step={0.1} decimals={1} defaultValue={0} />
 
-            {/* Normalization toggle */}
-            <div className="border-t pt-5" style={{ borderColor: "#2a2a3e" }}>
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  {selectedModel === "speech-1.5" ? (
-                    <>
-                      <p className="text-sm text-gray-300">Normalización de texto</p>
-                      <p className="text-xs mt-0.5" style={{ color: "#8888a8" }}>Normaliza números y abreviaturas</p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-sm text-gray-300">Normalización de volumen</p>
-                      <p className="text-xs mt-0.5" style={{ color: "#8888a8" }}>Iguala el volumen del audio</p>
-                    </>
-                  )}
-                </div>
-                <button
-                  onClick={() => setNormalize((v) => !v)}
-                  className="relative w-11 h-6 rounded-full transition-colors flex-shrink-0"
-                  style={{ background: normalize ? "#3b82f6" : "#2a2a3e" }}
-                  aria-pressed={normalize}
+                {/* Normalization row */}
+                <div
+                  className="flex items-center justify-between px-3.5 flex-shrink-0"
+                  style={{ background: "#12121a", borderRadius: "10px", height: "40px" }}
                 >
-                  <span
-                    className="absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-200"
-                    style={{ left: normalize ? "calc(100% - 1.25rem)" : "4px" }}
-                  />
-                </button>
+                  <span className="text-xs font-medium" style={{ color: "#8888a8" }}>
+                    {selectedModel === "speech-1.5" ? "Norm. texto" : "Normalización"}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    {(["No", "Sí"] as const).map((opt) => {
+                      const active = opt === "Sí" ? normalize : !normalize;
+                      return (
+                        <button
+                          key={opt}
+                          onClick={() => setNormalize(opt === "Sí")}
+                          className="text-xs font-medium px-2.5 py-1 rounded-md transition-all"
+                          style={{
+                            background: active ? "rgba(59,130,246,0.18)" : "transparent",
+                            color: active ? "#93c5fd" : "#444460",
+                            border: active ? "1px solid rgba(59,130,246,0.3)" : "1px solid transparent",
+                          }}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
 
