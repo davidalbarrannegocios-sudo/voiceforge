@@ -537,6 +537,8 @@ function GenerateTab({
   const [temperature, setTemperature] = useState(0.9);
   const [topP, setTopP] = useState(0.9);
   const [selectedModel, setSelectedModel] = useState("speech-1.6");
+  const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
+  const modelDropdownRef = useRef<HTMLDivElement>(null);
   const [previewing, setPreviewing] = useState<"idle" | "loading" | "playing">("idle");
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const [rightTab, setRightTab] = useState<"ajustes" | "historial">("ajustes");
@@ -557,6 +559,17 @@ function GenerateTab({
     const id = setInterval(() => setElapsed((s) => s + 1), 1000);
     return () => clearInterval(id);
   }, [submitting]);
+
+  useEffect(() => {
+    if (!modelDropdownOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (modelDropdownRef.current && !modelDropdownRef.current.contains(e.target as Node)) {
+        setModelDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [modelDropdownOpen]);
 
   useEffect(() => {
     fetch("/api/jobs")
@@ -817,29 +830,71 @@ function GenerateTab({
             {/* Model selector */}
             <div className="border-t pt-5" style={{ borderColor: "#2a2a3e" }}>
               <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#555570" }}>Modelo</p>
-              <div className="space-y-2">
-                {([
-                  { value: "speech-1.6", label: "Elite Labs E2 Pro", badge: "El más nuevo", badgeColor: "#3b82f6" },
-                  { value: "speech-1.5", label: "Elite Labs E1",     badge: "Heredado",     badgeColor: "#6b6b88" },
-                ] as const).map(({ value, label, badge, badgeColor }) => (
-                  <button
-                    key={value}
-                    onClick={() => setSelectedModel(value)}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all text-left"
-                    style={{
-                      background: selectedModel === value ? "rgba(59,130,246,0.1)" : "#12121a",
-                      border: `1px solid ${selectedModel === value ? "rgba(59,130,246,0.4)" : "#2a2a3e"}`,
-                    }}
-                  >
-                    <span className="font-medium" style={{ color: selectedModel === value ? "#e2e2f0" : "#8888a8" }}>{label}</span>
-                    <span
-                      className="text-xs font-semibold px-1.5 py-0.5 rounded flex-shrink-0"
-                      style={{ background: `${badgeColor}22`, color: badgeColor, border: `1px solid ${badgeColor}44` }}
-                    >
-                      {badge}
+              <div className="relative" ref={modelDropdownRef}>
+                {/* Trigger */}
+                <button
+                  onClick={() => setModelDropdownOpen((o) => !o)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 text-sm transition-all"
+                  style={{ background: "#0d0d17", border: "1px solid #2a2a3e", borderRadius: "10px", color: "#e2e2f0" }}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-medium truncate">
+                      {selectedModel === "speech-1.6" ? "Elite Labs E2 Pro" : "Elite Labs E1"}
                     </span>
-                  </button>
-                ))}
+                    {selectedModel === "speech-1.6" && (
+                      <span className="text-xs font-semibold px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: "#3b82f622", color: "#3b82f6", border: "1px solid #3b82f644" }}>
+                        El más nuevo
+                      </span>
+                    )}
+                  </div>
+                  <svg
+                    width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    className="flex-shrink-0 transition-transform"
+                    style={{ color: "#555570", transform: modelDropdownOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+
+                {/* Menu */}
+                {modelDropdownOpen && (
+                  <div
+                    className="absolute left-0 right-0 z-20 mt-1 py-1"
+                    style={{ background: "#0d0d17", border: "1px solid #2a2a3e", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}
+                  >
+                    {([
+                      { value: "speech-1.6", label: "Elite Labs E2 Pro", sub: "Nuestro modelo insignia", badge: "El más nuevo", badgeColor: "#3b82f6" },
+                      { value: "speech-1.5", label: "Elite Labs E1",     sub: "Heredado",                badge: null,           badgeColor: "" },
+                    ] as const).map(({ value, label, sub, badge, badgeColor }) => (
+                      <button
+                        key={value}
+                        onClick={() => { setSelectedModel(value); setModelDropdownOpen(false); }}
+                        className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-left transition-colors"
+                        style={{ background: "transparent", color: selectedModel === value ? "#e2e2f0" : "#8888a8" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                      >
+                        <div className="flex flex-col min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{label}</span>
+                            {badge && (
+                              <span className="text-xs font-semibold px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: `${badgeColor}22`, color: badgeColor, border: `1px solid ${badgeColor}44` }}>
+                                {badge}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs mt-0.5" style={{ color: "#444460" }}>{sub}</span>
+                        </div>
+                        {selectedModel === value && (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 ml-2">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
