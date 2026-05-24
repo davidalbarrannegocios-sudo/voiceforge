@@ -192,6 +192,18 @@ input[type="range"]::-moz-range-thumb {
   color: #fff !important;
 }
 
+/* "Don't have an account" link en gris claro */
+.cl-footerActionLink,
+.cl-footerActionText,
+.cl-footer,
+.cl-footerAction {
+  color: #aaa !important;
+}
+
+.cl-footerActionLink:hover {
+  color: #fff !important;
+}
+
 /* Separador "or" en gris claro */
 .cl-dividerLine {
   background: #999 !important;
