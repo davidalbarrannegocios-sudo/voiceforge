@@ -10,7 +10,7 @@ export const PLAN_CREDITS: Record<string, number> = {
 
 // -1 = unlimited
 export const PLAN_VOICE_SLOTS: Record<string, number> = {
-  free:       0,
+  free:       1,
   starter:    3,
   pro:        10,
   elite:      20,

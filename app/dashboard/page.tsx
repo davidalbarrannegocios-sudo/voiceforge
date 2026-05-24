@@ -1342,7 +1342,7 @@ function HistoryTab({ plan }: { plan: string }) {
 }
 
 /* ─── Plan limits (mirrored from lib/stripe.ts for client use) ── */
-const VOICE_SLOT_LIMITS: Record<string, number> = { free: 0, starter: 3, pro: 10, elite: 20, enterprise: Infinity };
+const VOICE_SLOT_LIMITS: Record<string, number> = { free: 1, starter: 3, pro: 10, elite: 20, enterprise: Infinity };
 
 /* ─── Billing Tab ────────────────────────────────────────── */
 const BILLING_PLANS = [
