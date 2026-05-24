@@ -60,7 +60,7 @@ export async function POST(req: Request) {
     try {
       const result = await resend.emails.send({
         from: "Elite Labs <noreply@elitelabs.es>",
-        to: "albarranjimenezd@gmail.com", // TODO: change to invitee.email once elitelabs.es domain is verified in Resend
+        to: invitee.email,
         subject: `Te han añadido al equipo "${team.name}" en Elite Labs`,
         html: `
           <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; color: #e5e7eb; background: #0a0a0f; padding: 32px; border-radius: 12px;">
