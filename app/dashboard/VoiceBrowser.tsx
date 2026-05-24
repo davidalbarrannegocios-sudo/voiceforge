@@ -94,7 +94,29 @@ const MAX_RECENT = 12;
 const EMPTY_FILTERS: AdvancedFilters = { genders: [], ages: [], useCases: [], qualities: [] };
 
 const FEATURED_VOICE_IDS: string[] = [
-  // Añadir IDs de voces destacadas aquí
+  "dfa5b230c8054f429e434f4a6e9bbdec",
+  "35199d5438854f5d9157c500479ab684",
+  "43e1948b1a544700bd88250916cd31e8",
+  "bfed5c0810a347dbb62e8ccce7f59c48",
+  "53042fcee6b84e138e72db017d9e50a6",
+  "05100dcc9dfd4af49ea96dc5affbe5b1",
+  "8b6d1f02193f4f4daabad86ad090da9d",
+  "cc19dc88556b4dc4ac2b0da91680b162",
+  "0b2aa74c364a49789bcba051f2901a5c",
+  "d4ea43a56f5a42f1959ec7846a4fb59b",
+  "f82e642854d84fa08b78bff5fd29ad1e",
+  "5e95c590cfcb46ab927a9ec7b35a88c7",
+  "e0229f9c45e543219c4a10d9f3803337",
+  "22550e2d849b44e18c7df57f61e666f9",
+  "48158c12018e495ab4bc2a9cbd2eff8e",
+  "c87656721dda48a7906f990f036ce76f",
+  "def180b161a3498db94025d5124fcb2a",
+  "70e38f80bf714e2e90401efb95fd422e",
+  "a1070fc5bc824bb79dfa0007c00dfd0f",
+  "7c76e349434d4f1e97078d924acea65f",
+  "3f56a67897df4d218eac6494ff88337f",
+  "9ea79fe31584435abe88b02e7aed4e6e",
+  "5063c91739b64e83bd59182d33d03ad2",
 ];
 
 const USE_CASE_TAGS: Record<string, string[]> = {
