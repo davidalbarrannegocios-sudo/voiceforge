@@ -534,6 +534,8 @@ function GenerateTab({
   const [volume, setVolume] = useState(1.0);
   const [pitch, setPitch] = useState(0.0);
   const [normalize, setNormalize] = useState(true);
+  const [temperature, setTemperature] = useState(0.9);
+  const [topP, setTopP] = useState(0.9);
   const [selectedModel, setSelectedModel] = useState("speech-1.6");
   const [previewing, setPreviewing] = useState<"idle" | "loading" | "playing">("idle");
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -587,6 +589,7 @@ function GenerateTab({
           prosody,
           normalize,
           model: selectedModel,
+          ...(selectedModel === "speech-1.5" && { temperature, topP }),
         }),
       });
       const data = await res.json();
@@ -861,6 +864,26 @@ function GenerateTab({
                   marks={["0.00", "1.00", "2.00"]}
                   defaultValue={1}
                 />
+                {selectedModel === "speech-1.5" && (
+                  <>
+                    <SliderControl
+                      label="Temperatura"
+                      value={temperature}
+                      onChange={setTemperature}
+                      min={0} max={1} step={0.1} decimals={1}
+                      marks={["0.0", "0.5", "1.0"]}
+                      defaultValue={0.9}
+                    />
+                    <SliderControl
+                      label="Top P"
+                      value={topP}
+                      onChange={setTopP}
+                      min={0} max={1} step={0.1} decimals={1}
+                      marks={["0.0", "0.5", "1.0"]}
+                      defaultValue={0.9}
+                    />
+                  </>
+                )}
                 <SliderControl
                   label={t.generate.pitch}
                   value={pitch}
@@ -876,8 +899,17 @@ function GenerateTab({
             <div className="border-t pt-5" style={{ borderColor: "#2a2a3e" }}>
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm text-gray-300">Normalización de volumen</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#8888a8" }}>Iguala el volumen del audio</p>
+                  {selectedModel === "speech-1.5" ? (
+                    <>
+                      <p className="text-sm text-gray-300">Normalización de texto</p>
+                      <p className="text-xs mt-0.5" style={{ color: "#8888a8" }}>Normaliza números y abreviaturas</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-300">Normalización de volumen</p>
+                      <p className="text-xs mt-0.5" style={{ color: "#8888a8" }}>Iguala el volumen del audio</p>
+                    </>
+                  )}
                 </div>
                 <button
                   onClick={() => setNormalize((v) => !v)}
@@ -893,9 +925,9 @@ function GenerateTab({
               </div>
             </div>
 
-            {(speed !== 1 || volume !== 1 || pitch !== 0) && (
+            {(speed !== 1 || volume !== 1 || pitch !== 0 || (selectedModel === "speech-1.5" && (temperature !== 0.9 || topP !== 0.9))) && (
               <button
-                onClick={() => { setSpeed(1); setVolume(1); setPitch(0); }}
+                onClick={() => { setSpeed(1); setVolume(1); setPitch(0); setTemperature(0.9); setTopP(0.9); }}
                 className="text-xs transition-colors"
                 style={{ color: "#8888a8" }}
               >

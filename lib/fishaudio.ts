@@ -140,6 +140,8 @@ export async function fishAudioGenerate({
   signal,
   prosody,
   model = "speech-1.6",
+  temperature,
+  topP,
 }: {
   text: string;
   referenceId?: string;
@@ -147,6 +149,8 @@ export async function fishAudioGenerate({
   signal?: AbortSignal;
   prosody?: { speed?: number; volume?: number; pitch?: number };
   model?: string;
+  temperature?: number;
+  topP?: number;
 }): Promise<GenerateResult> {
   const apiKey = getApiKey();
   const chunks = splitTextIntoChunks(text);
@@ -169,6 +173,10 @@ export async function fishAudioGenerate({
       chunk_length: 200,
     };
     if (referenceId) payload.reference_id = referenceId;
+    if (model === "speech-1.5") {
+      if (temperature !== undefined) payload.temperature = temperature;
+      if (topP !== undefined) payload.top_p = topP;
+    }
     if (prosody && (prosody.speed !== 1 || prosody.volume !== 1 || prosody.pitch !== 0)) {
       payload.prosody = {
         speed: prosody.speed,
