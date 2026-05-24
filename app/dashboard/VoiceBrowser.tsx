@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { FREE_VOICE_IDS } from "@/lib/free-voice-ids";
 
@@ -708,66 +708,140 @@ export function VoiceBrowser({
     return () => clearTimeout(t);
   }, [search]);
 
-  useEffect(() => { setPage(1); }, [language]);
-
-  // When tier/language/search reset, clear the accumulated tier buffer
   useEffect(() => {
+    if (tab !== "explore") return;
+
+    // Reset accumulation buffer and page when filter params change
     tierRawRef.current = [];
     tierFishPageRef.current = 1;
     tierHasMoreRef.current = true;
     setPage(1);
-  }, [tier, language, debouncedSearch]);
+    setPublicVoices([]);
 
-  const fetchVoices = useCallback(async () => {
-    if (tab !== "explore") return;
-    setLoading(true);
-    const hasAppliedFilters = Object.values(appliedFilters).some((arr) => arr.length > 0);
-    const needsAccumulation = tier !== "all" || hasAppliedFilters;
-    try {
-      if (needsAccumulation) {
-        // Progressive accumulation: keep fetching Fish Audio pages until we have
-        // enough voices that match both tier and advanced tag filters.
-        const MAX_PAGES = 20;
-        const targetCount = page * 20;
-        const matchesCriteria = (v: FishVoice) => {
-          if (tier === "free" && isPremiumVoice(v._id)) return false;
-          if (tier === "premium" && !isPremiumVoice(v._id)) return false;
-          return matchesAdvancedFilters(v, appliedFilters);
-        };
-        while (tierHasMoreRef.current && tierFishPageRef.current <= MAX_PAGES) {
-          if (tierRawRef.current.filter(matchesCriteria).length >= targetCount) break;
+    const controller = new AbortController();
+    const { signal } = controller;
 
-          const p = new URLSearchParams({ page: String(tierFishPageRef.current), language });
+    async function run() {
+      setLoading(true);
+      const hasAppliedFilters = Object.values(appliedFilters).some((arr) => arr.length > 0);
+      const needsAccumulation = tier !== "all" || hasAppliedFilters;
+      try {
+        if (needsAccumulation) {
+          const MAX_PAGES = 20;
+          const targetCount = 20; // always page 1 after reset
+          const matchesCriteria = (v: FishVoice) => {
+            if (tier === "free" && isPremiumVoice(v._id)) return false;
+            if (tier === "premium" && !isPremiumVoice(v._id)) return false;
+            return matchesAdvancedFilters(v, appliedFilters);
+          };
+          while (tierHasMoreRef.current && tierFishPageRef.current <= MAX_PAGES) {
+            if (tierRawRef.current.filter(matchesCriteria).length >= targetCount) break;
+
+            const p = new URLSearchParams({ page: String(tierFishPageRef.current), language });
+            if (debouncedSearch) p.set("search", debouncedSearch);
+            const res = await fetch(`/api/fish-voices?${p}`, { signal });
+            if (signal.aborted) return;
+            const data = await res.json();
+            const items: FishVoice[] = data.items ?? [];
+            const fishTotal: number = data.total ?? 0;
+
+            if (items.length === 0) { tierHasMoreRef.current = false; break; }
+            tierRawRef.current = [...tierRawRef.current, ...items];
+            tierFishPageRef.current += 1;
+            if (tierRawRef.current.length >= fishTotal) { tierHasMoreRef.current = false; break; }
+          }
+
+          if (signal.aborted) return;
+          const filtered = tierRawRef.current.filter(matchesCriteria);
+          const canLoadMore = tierHasMoreRef.current && tierFishPageRef.current <= MAX_PAGES;
+          setTotal(canLoadMore ? filtered.length + 20 : filtered.length);
+          setPublicVoices([...tierRawRef.current]);
+        } else {
+          const p = new URLSearchParams({ page: String(1), language });
           if (debouncedSearch) p.set("search", debouncedSearch);
-          const res = await fetch(`/api/fish-voices?${p}`);
+          const res = await fetch(`/api/fish-voices?${p}`, { signal });
+          if (signal.aborted) return;
           const data = await res.json();
-          const items: FishVoice[] = data.items ?? [];
-          const fishTotal: number = data.total ?? 0;
-
-          if (items.length === 0) { tierHasMoreRef.current = false; break; }
-          tierRawRef.current = [...tierRawRef.current, ...items];
-          tierFishPageRef.current += 1;
-          if (tierRawRef.current.length >= fishTotal) { tierHasMoreRef.current = false; break; }
+          setPublicVoices(data.items ?? []);
+          setTotal(data.total ?? 0);
         }
-
-        const filtered = tierRawRef.current.filter(matchesCriteria);
-        const canLoadMore = tierHasMoreRef.current && tierFishPageRef.current <= MAX_PAGES;
-        setTotal(canLoadMore ? filtered.length + 20 : filtered.length);
-        setPublicVoices([...tierRawRef.current]);
-      } else {
-        const p = new URLSearchParams({ page: String(page), language });
-        if (debouncedSearch) p.set("search", debouncedSearch);
-        const res = await fetch(`/api/fish-voices?${p}`);
-        const data = await res.json();
-        setPublicVoices(data.items ?? []);
-        setTotal(data.total ?? 0);
+      } catch (e) {
+        if ((e as Error)?.name === "AbortError") return;
+        throw e;
+      } finally {
+        if (!signal.aborted) setLoading(false);
       }
-    } finally {
-      setLoading(false);
     }
-  }, [tab, language, debouncedSearch, page, tier, appliedFilters]);
 
-  useEffect(() => { fetchVoices(); }, [fetchVoices]);
+    run();
+    return () => { controller.abort(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, tier, language, debouncedSearch, appliedFilters]);
+
+  // Separate effect for page navigation (no buffer reset — just slices into existing data)
+  useEffect(() => {
+    if (tab !== "explore" || page === 1) return;
+
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    async function run() {
+      setLoading(true);
+      const hasAppliedFilters = Object.values(appliedFilters).some((arr) => arr.length > 0);
+      const needsAccumulation = tier !== "all" || hasAppliedFilters;
+      try {
+        if (needsAccumulation) {
+          const MAX_PAGES = 20;
+          const targetCount = page * 20;
+          const matchesCriteria = (v: FishVoice) => {
+            if (tier === "free" && isPremiumVoice(v._id)) return false;
+            if (tier === "premium" && !isPremiumVoice(v._id)) return false;
+            return matchesAdvancedFilters(v, appliedFilters);
+          };
+          while (tierHasMoreRef.current && tierFishPageRef.current <= MAX_PAGES) {
+            if (tierRawRef.current.filter(matchesCriteria).length >= targetCount) break;
+
+            const p = new URLSearchParams({ page: String(tierFishPageRef.current), language });
+            if (debouncedSearch) p.set("search", debouncedSearch);
+            const res = await fetch(`/api/fish-voices?${p}`, { signal });
+            if (signal.aborted) return;
+            const data = await res.json();
+            const items: FishVoice[] = data.items ?? [];
+            const fishTotal: number = data.total ?? 0;
+
+            if (items.length === 0) { tierHasMoreRef.current = false; break; }
+            tierRawRef.current = [...tierRawRef.current, ...items];
+            tierFishPageRef.current += 1;
+            if (tierRawRef.current.length >= fishTotal) { tierHasMoreRef.current = false; break; }
+          }
+
+          if (signal.aborted) return;
+          const filtered = tierRawRef.current.filter(matchesCriteria);
+          const canLoadMore = tierHasMoreRef.current && tierFishPageRef.current <= MAX_PAGES;
+          setTotal(canLoadMore ? filtered.length + 20 : filtered.length);
+          setPublicVoices([...tierRawRef.current]);
+        } else {
+          const p = new URLSearchParams({ page: String(page), language });
+          if (debouncedSearch) p.set("search", debouncedSearch);
+          const res = await fetch(`/api/fish-voices?${p}`, { signal });
+          if (signal.aborted) return;
+          const data = await res.json();
+          setPublicVoices(data.items ?? []);
+          setTotal(data.total ?? 0);
+        }
+      } catch (e) {
+        if ((e as Error)?.name === "AbortError") return;
+        throw e;
+      } finally {
+        if (!signal.aborted) setLoading(false);
+      }
+    }
+
+    run();
+    return () => { controller.abort(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
   useEffect(() => () => { audioRef.current?.pause(); }, []);
 
   async function handlePreview(id: string) {
