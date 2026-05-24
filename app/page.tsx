@@ -495,16 +495,27 @@ export default function LandingPage() {
           <div className="max-w-5xl mx-auto px-4 mb-10">
             <div className="flex items-end justify-between gap-10">
               {/* Left: title */}
-              <h1 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight text-white">
-                La IA más realista{" "}
-                <span style={{
-                  background: "linear-gradient(135deg,#3b82f6,#2563eb,#93c5fd)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}>
-                  habla
-                </span>
+              <h1 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight">
+                {(["Genera.", "Clona.", "Domina."] as const).map((word, i) => (
+                  <span
+                    key={word}
+                    style={{
+                      color: word === "Clona." ? "#3b82f6" : "#ffffff",
+                      display: "inline-block",
+                      marginRight: "0.35em",
+                      animation: `heroWordIn 0.5s ease-out both`,
+                      animationDelay: `${i * 100}ms`,
+                    }}
+                  >
+                    {word}
+                  </span>
+                ))}
+                <style>{`
+                  @keyframes heroWordIn {
+                    from { opacity: 0; transform: translateY(12px); }
+                    to   { opacity: 1; transform: translateY(0); }
+                  }
+                `}</style>
               </h1>
 
               {/* Right: subtitle */}
