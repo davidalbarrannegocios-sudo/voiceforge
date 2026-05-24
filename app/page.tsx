@@ -322,13 +322,13 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Inner light card */}
+              {/* Inner dark card */}
               <div
                 style={{
-                  background: "#ffffff",
+                  background: "#0d0d17",
+                  border: "1px solid #1e1e2e",
                   borderRadius: "16px",
                   overflow: "hidden",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
                 }}
               >
                 <div className="flex" style={{ minHeight: "240px" }}>
@@ -336,12 +336,12 @@ export default function LandingPage() {
                   {/* Left: voice list ~280px */}
                   <div
                     className="flex-shrink-0 flex flex-col"
-                    style={{ width: "280px", background: "#f9fafb", borderRight: "1px solid #f3f4f6" }}
+                    style={{ width: "280px", background: "#0d0d17", borderRight: "1px solid #1e1e2e" }}
                   >
                     <div className="flex-1 overflow-y-auto" style={{ padding: "8px" }}>
                       {demoVoices.length === 0
                         ? Array.from({ length: 5 }).map((_, i) => (
-                            <div key={i} className="animate-pulse rounded-xl mb-0.5" style={{ height: "44px", background: "#f3f4f6" }} />
+                            <div key={i} className="animate-pulse rounded-xl mb-0.5" style={{ height: "44px", background: "#1a1a2e" }} />
                           ))
                         : demoVoices.map((voice) => {
                             const active = selectedVoice === voice._id;
@@ -356,7 +356,7 @@ export default function LandingPage() {
                                 style={{
                                   height: "44px",
                                   padding: "0 10px",
-                                  background: active ? "#f3f4f6" : "transparent",
+                                  background: active ? "#1a1a2e" : "transparent",
                                 }}
                               >
                                 {proxiedSrc ? (
@@ -386,7 +386,7 @@ export default function LandingPage() {
                                 </div>
                                 <span
                                   className="truncate font-medium"
-                                  style={{ fontSize: "13px", color: active ? "#111827" : "#6b7280" }}
+                                  style={{ fontSize: "13px", color: active ? "#e5e7eb" : "#555570" }}
                                 >
                                   {voice.title}
                                 </span>
@@ -395,11 +395,11 @@ export default function LandingPage() {
                           })}
                     </div>
                     {/* 2M+ footer */}
-                    <div style={{ padding: "10px 18px", borderTop: "1px solid #f3f4f6", flexShrink: 0 }}>
+                    <div style={{ padding: "10px 18px", borderTop: "1px solid #1e1e2e", flexShrink: 0 }}>
                       <Link
                         href="/dashboard"
-                        className="transition-colors hover:text-blue-600"
-                        style={{ fontSize: "12px", color: "#9ca3af" }}
+                        className="transition-colors hover:text-blue-400"
+                        style={{ fontSize: "12px", color: "#555570" }}
                       >
                         2.000.000+ voces <span style={{ color: "#3b82f6" }}>↗</span>
                       </Link>
@@ -407,17 +407,17 @@ export default function LandingPage() {
                   </div>
 
                   {/* Right: textarea + footer */}
-                  <div className="flex-1 flex flex-col min-w-0" style={{ background: "#ffffff" }}>
+                  <div className="flex-1 flex flex-col min-w-0" style={{ background: "#0d0d17" }}>
                     <textarea
                       value={demoText}
                       onChange={(e) => setDemoText(e.target.value.slice(0, 30000))}
                       placeholder="Introduce tu propio texto"
-                      className="w-full outline-none resize-none leading-relaxed"
+                      className="w-full outline-none resize-none leading-relaxed placeholder-[#555570]"
                       style={{
                         flex: 1,
                         padding: "20px 22px",
                         fontSize: "14px",
-                        color: "#374151",
+                        color: "#e5e7eb",
                         background: "transparent",
                       }}
                     />
@@ -431,16 +431,16 @@ export default function LandingPage() {
                     {/* Card footer */}
                     <div
                       className="flex items-center gap-3 flex-shrink-0"
-                      style={{ padding: "12px 22px", borderTop: "1px solid #f3f4f6" }}
+                      style={{ padding: "12px 22px", borderTop: "1px solid #1e1e2e" }}
                     >
-                      <span className="flex-1" style={{ fontSize: "12px", color: "#9ca3af" }}>
+                      <span className="flex-1" style={{ fontSize: "12px", color: "#555570" }}>
                         {demoText.length}/30000 characters
                       </span>
                       <button
                         onClick={handleGenerateDemo}
                         disabled={demoLoading || !demoText.trim()}
                         className="flex items-center gap-1.5 font-semibold text-white transition-all hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
-                        style={{ fontSize: "13px", padding: "9px 18px", borderRadius: "8px", background: "#111827" }}
+                        style={{ fontSize: "13px", padding: "9px 18px", borderRadius: "8px", background: "#111", border: "1px solid #2a2a3e" }}
                       >
                         {demoLoading ? (
                           <>
