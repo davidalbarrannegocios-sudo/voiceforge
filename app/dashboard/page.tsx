@@ -499,10 +499,10 @@ function CompactSlider({
         onChange={(e) => setInputText(e.target.value)}
         onBlur={(e) => commitInput(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && commitInput((e.target as HTMLInputElement).value)}
-        className="text-xs font-mono text-right rounded-md outline-none flex-shrink-0"
+        className="text-xs font-mono text-right rounded-md outline-none flex-shrink-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         style={{
-          width: "46px", padding: "2px 6px",
-          color: !isDefault ? "#93c5fd" : "#6b6b88",
+          width: "48px", minWidth: "48px", padding: "2px 4px",
+          color: !isDefault ? "#93c5fd" : "#e5e7eb",
           background: !isDefault ? "rgba(59,130,246,0.12)" : "transparent",
           border: "1px solid transparent",
         }}
