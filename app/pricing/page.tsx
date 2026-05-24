@@ -156,6 +156,9 @@ function PricingContent() {
     return Math.round(annualMonthly(price) * 12);
   }
 
+  const freePlan = PLANS[0];
+  const paidPlans = PLANS.slice(1);
+
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0f" }}>
       <header style={{ borderBottom: "1px solid #1a1a28", padding: "0 16px", height: "60px", display: "flex", alignItems: "center" }}>
@@ -170,22 +173,20 @@ function PricingContent() {
         </div>
       </header>
 
-      <main style={{ maxWidth: "1536px", margin: "0 auto", padding: "64px 16px 80px" }}>
+      <main style={{ maxWidth: "1400px", margin: "0 auto", padding: "56px 24px 80px" }}>
+
         {/* Hero */}
-        <div style={{ textAlign: "center", marginBottom: "40px" }}>
-          <h1 style={{ fontSize: "42px", fontWeight: 800, color: "#fff", marginBottom: "12px", lineHeight: 1.1 }}>
+        <div style={{ textAlign: "center", marginBottom: "32px" }}>
+          <h1 style={{ fontSize: "40px", fontWeight: 800, color: "#fff", marginBottom: "10px", lineHeight: 1.1 }}>
             Elige tu plan
           </h1>
-          <p style={{ fontSize: "16px", color: "#4a4a65", marginBottom: "6px" }}>
-            Cancela cuando quieras. Los caracteres se renuevan cada período.
-          </p>
-          <p style={{ fontSize: "13px", color: "#2e2e48" }}>
-            Los caracteres se descuentan exactamente según el texto generado
+          <p style={{ fontSize: "15px", color: "#4a4a65" }}>
+            Cancela cuando quieras · Los caracteres se renuevan cada período
           </p>
         </div>
 
         {/* Monthly / Annual toggle */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: "40px" }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "32px" }}>
           <div style={{ display: "inline-flex", background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: "10px", padding: "3px", gap: "2px" }}>
             <button
               onClick={() => setBilling("monthly")}
@@ -198,181 +199,207 @@ function PricingContent() {
               style={{ padding: "8px 24px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: 600, background: billing === "annual" ? "#1a1a2e" : "transparent", color: billing === "annual" ? "#e5e7eb" : "#4a4a65", display: "flex", alignItems: "center", gap: "8px", transition: "all 0.15s" }}
             >
               Anual
-              <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e", letterSpacing: "0.03em" }}>
-                −17%
-              </span>
+              <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e" }}>−17%</span>
             </button>
           </div>
         </div>
 
-        {/* Plans grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "14px", marginBottom: "72px" }}>
-          {PLANS.map((plan) => (
-            <div
-              key={plan.key}
-              style={{
-                position: "relative",
-                borderRadius: "16px",
-                padding: "28px 22px",
-                display: "flex",
-                flexDirection: "column",
-                border: plan.key === "enterprise" ? "1px solid #10b981" : plan.popular ? "1px solid #3b82f6" : plan.free ? "1px solid #2a2a3e" : "1px solid #1e1e2e",
-                background: plan.key === "enterprise" ? "rgba(16,185,129,0.07)" : plan.popular ? "rgba(30,58,138,0.18)" : plan.free ? "#111118" : "#0d0d17",
-              }}
+        {/* Plans — free card left + paid plans right */}
+        <div style={{ display: "flex", gap: "10px", marginBottom: "60px", alignItems: "start" }}>
+
+          {/* Free / Nivel gratuito — narrower card */}
+          <div style={{
+            width: "196px",
+            flexShrink: 0,
+            borderRadius: "16px",
+            padding: "22px 18px",
+            border: "1px solid #2a2a3e",
+            background: "#0d0d17",
+            display: "flex",
+            flexDirection: "column",
+          }}>
+            <p style={{ fontSize: "10px", fontWeight: 700, color: "#555570", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "14px" }}>
+              Nivel gratuito
+            </p>
+            <p style={{ fontSize: "15px", fontWeight: 700, color: "#9ca3af", marginBottom: "6px" }}>Gratis</p>
+            <p style={{ fontSize: "12px", color: "#3a3a52", marginBottom: "18px", lineHeight: 1.45 }}>
+              {freePlan.description}
+            </p>
+            <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px", display: "flex", flexDirection: "column", gap: "8px" }}>
+              {freePlan.features.map((f) => (
+                <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "7px", fontSize: "12px", color: "#4a4a65" }}>
+                  <Check size={11} style={{ color: "#3a3a52", flexShrink: 0, marginTop: "2px" }} />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => handleSelect(freePlan)}
+              style={{ width: "100%", padding: "10px", borderRadius: "9px", border: "1px solid #2a2a3e", background: "transparent", color: "#6b7280", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}
             >
-              {plan.popular && (
-                <div style={{ position: "absolute", top: "-11px", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "10px", fontWeight: 700, padding: "3px 12px", borderRadius: "999px", whiteSpace: "nowrap", letterSpacing: "0.1em" }}>
-                  MÁS POPULAR
-                </div>
-              )}
-              {plan.key === "enterprise" && (
-                <div style={{ position: "absolute", top: "-11px", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#10b981,#059669)", color: "#fff", fontSize: "10px", fontWeight: 700, padding: "3px 12px", borderRadius: "999px", whiteSpace: "nowrap", letterSpacing: "0.1em" }}>
-                  PROFESIONAL
-                </div>
-              )}
+              Empezar gratis
+            </button>
+          </div>
 
-              <p style={{ fontSize: "17px", fontWeight: 700, color: plan.free ? "#9ca3af" : "#fff", marginBottom: "4px" }}>
-                {plan.name}
-              </p>
-              <p style={{ fontSize: "12px", color: "#2e2e48", marginBottom: "20px" }}>{plan.description}</p>
+          {/* Paid plans — equal columns, same height */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "10px", flex: 1, alignItems: "stretch" }}>
+            {paidPlans.map((plan) => (
+              <div
+                key={plan.key}
+                style={{
+                  borderRadius: "16px",
+                  padding: "24px 20px",
+                  border: plan.key === "enterprise" ? "1px solid #10b981" : plan.popular ? "1px solid rgba(59,130,246,0.55)" : "1px solid #1e1e2e",
+                  background: plan.key === "enterprise" ? "rgba(16,185,129,0.06)" : plan.popular ? "rgba(30,58,138,0.22)" : "#0d0d17",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                {/* Name + inline badge */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px" }}>
+                  <span style={{ fontSize: "16px", fontWeight: 700, color: "#fff" }}>{plan.name}</span>
+                  {plan.popular && (
+                    <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", background: "rgba(59,130,246,0.2)", color: "#93c5fd" }}>
+                      Popular
+                    </span>
+                  )}
+                  {plan.key === "enterprise" && (
+                    <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", background: "rgba(16,185,129,0.2)", color: "#4ade80" }}>
+                      Equipos
+                    </span>
+                  )}
+                </div>
 
-              {plan.free ? (
-                <>
-                  <p style={{ fontSize: "36px", fontWeight: 800, color: "#6b7280", lineHeight: 1, marginBottom: "6px" }}>Gratis</p>
-                  <p style={{ fontSize: "13px", color: "#3a3a52", marginBottom: "22px" }}>
-                    {plan.characters.toLocaleString("es-ES")} caracteres al registrarte
-                  </p>
-                </>
-              ) : (
-                <>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginBottom: "2px" }}>
-                    <span style={{ fontSize: "36px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
+                {/* Price block */}
+                <div style={{ marginBottom: "20px" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "3px" }}>
+                    <span style={{ fontSize: "52px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
                       ${billing === "annual" ? annualMonthly(plan.price) : plan.price}
                     </span>
-                    <span style={{ fontSize: "13px", color: "#3a3a52" }}>/mes</span>
+                    <span style={{ fontSize: "12px", color: "#3a3a52", marginLeft: "2px" }}>/mes</span>
                   </div>
-                  {billing === "annual" ? (
-                    <p style={{ fontSize: "12px", color: "#22c55e", marginBottom: "4px" }}>
-                      Facturado ${annualTotal(plan.price)}/año
+                  {billing === "annual" && (
+                    <p style={{ fontSize: "11px", color: "#22c55e", marginTop: "3px" }}>
+                      ${annualTotal(plan.price)} facturado anualmente
                     </p>
-                  ) : null}
-                  <p style={{ fontSize: "13px", color: "#3a3a52", marginBottom: "22px" }}>
+                  )}
+                  <p style={{ fontSize: "12px", color: "#3a3a52", marginTop: "4px" }}>
                     {plan.characters.toLocaleString("es-ES")} caracteres/mes
                   </p>
-                </>
-              )}
-
-              <button
-                onClick={() => handleSelect(plan)}
-                style={
-                  plan.key === "enterprise"
-                    ? { width: "100%", padding: "11px", borderRadius: "10px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#10b981,#059669)", color: "#fff", fontSize: "14px", fontWeight: 600, marginBottom: "22px", boxShadow: "0 4px 14px rgba(16,185,129,0.3)" }
-                    : plan.popular
-                    ? { width: "100%", padding: "11px", borderRadius: "10px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "14px", fontWeight: 600, marginBottom: "22px", boxShadow: "0 4px 14px rgba(59,130,246,0.35)" }
-                    : plan.free
-                    ? { width: "100%", padding: "11px", borderRadius: "10px", border: "1px solid #2a2a3e", cursor: "pointer", background: "transparent", color: "#6b7280", fontSize: "14px", fontWeight: 600, marginBottom: "22px" }
-                    : { width: "100%", padding: "11px", borderRadius: "10px", border: "1px solid #2a2a3e", cursor: "pointer", background: "transparent", color: "#d1d5db", fontSize: "14px", fontWeight: 600, marginBottom: "22px" }
-                }
-              >
-                {plan.cta}
-              </button>
-
-              <div style={{ height: "1px", background: plan.key === "enterprise" ? "rgba(16,185,129,0.2)" : plan.popular ? "rgba(59,130,246,0.2)" : "#1a1a28", marginBottom: "18px" }} />
-
-              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
-                {plan.features.map((f) => (
-                  <li key={f} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: plan.free ? "#4a4a65" : "#6b6b88" }}>
-                    <Check size={13} style={{ color: plan.key === "enterprise" ? "#10b981" : plan.free ? "#4a4a65" : "#3b82f6", flexShrink: 0 }} />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-
-              {plan.key === "enterprise" && (
-                <div style={{ marginTop: "16px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "10px", padding: "14px" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#fff" }}>
-                      <Users size={14} style={{ color: "#fff", flexShrink: 0 }} /> Seats
-                    </span>
-                    <span style={{ fontSize: "12px", color: "#555570", textDecoration: "line-through" }}>$5/seat/mes</span>
-                  </div>
-                  <div style={{ textAlign: "center" }}>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.35)", borderRadius: "8px", padding: "4px 12px", fontSize: "12px", fontWeight: 700, color: "#4ade80" }}>
-                      EliteLabs lo patrocina · GRATIS
-                    </span>
-                  </div>
                 </div>
-              )}
-            </div>
-          ))}
+
+                {/* CTA */}
+                <button
+                  onClick={() => handleSelect(plan)}
+                  style={
+                    plan.key === "enterprise"
+                      ? { width: "100%", padding: "11px", borderRadius: "9px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#10b981,#059669)", color: "#fff", fontSize: "13px", fontWeight: 600, marginBottom: "18px" }
+                      : plan.popular
+                      ? { width: "100%", padding: "11px", borderRadius: "9px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "13px", fontWeight: 600, marginBottom: "18px" }
+                      : { width: "100%", padding: "11px", borderRadius: "9px", border: "1px solid #2a2a3e", cursor: "pointer", background: "#111118", color: "#e5e7eb", fontSize: "13px", fontWeight: 600, marginBottom: "18px" }
+                  }
+                >
+                  {plan.cta}
+                </button>
+
+                {/* Features */}
+                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "9px", flex: 1 }}>
+                  {plan.features.map((f) => (
+                    <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "13px", color: "#6b6b88" }}>
+                      <Check size={12} style={{ color: plan.key === "enterprise" ? "#10b981" : "#3b82f6", flexShrink: 0, marginTop: "2px" }} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Enterprise seats */}
+                {plan.key === "enterprise" && (
+                  <div style={{ marginTop: "16px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "10px", padding: "12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#fff" }}>
+                        <Users size={13} style={{ color: "#fff", flexShrink: 0 }} /> Seats
+                      </span>
+                      <span style={{ fontSize: "11px", color: "#555570", textDecoration: "line-through" }}>$5/seat/mes</span>
+                    </div>
+                    <div style={{ textAlign: "center" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.35)", borderRadius: "8px", padding: "3px 10px", fontSize: "11px", fontWeight: 700, color: "#4ade80" }}>
+                        EliteLabs lo patrocina · GRATIS
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Competitor comparison */}
-        <div style={{ maxWidth: "1536px", margin: "0 auto 64px" }}>
-          <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#fff", marginBottom: "6px", textAlign: "center" }}>
+        <div style={{ marginBottom: "56px" }}>
+          <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "4px", textAlign: "center" }}>
             Comparativa con la competencia
           </h2>
-          <p style={{ fontSize: "13px", color: "#2e2e48", textAlign: "center", marginBottom: "28px" }}>
+          <p style={{ fontSize: "13px", color: "#2e2e48", textAlign: "center", marginBottom: "20px" }}>
             Caracteres incluidos por precio mensual similar
           </p>
-          <div style={{ borderRadius: "16px", border: "1px solid #1a1a28", overflow: "hidden" }}>
+          <div style={{ borderRadius: "14px", border: "1px solid #1a1a28", overflow: "hidden" }}>
             <table style={{ width: "100%", fontSize: "13px", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#0d0d17", borderBottom: "1px solid #1a1a28" }}>
-                  <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "#3a3a52" }}>Plataforma</th>
-                  <th style={{ padding: "12px 10px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$7/mes</th>
-                  <th style={{ padding: "12px 10px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$13/mes</th>
-                  <th style={{ padding: "12px 10px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$25/mes</th>
-                  <th style={{ padding: "12px 10px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$110/mes</th>
+                  <th style={{ textAlign: "left", padding: "11px 16px", fontWeight: 600, color: "#3a3a52" }}>Plataforma</th>
+                  <th style={{ padding: "11px 10px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$7/mes</th>
+                  <th style={{ padding: "11px 10px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$13/mes</th>
+                  <th style={{ padding: "11px 10px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$25/mes</th>
+                  <th style={{ padding: "11px 10px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$110/mes</th>
                 </tr>
               </thead>
               <tbody>
                 {[
-                  { name: "ElevenLabs", cols: ["30.000 chars",    "121.000 chars",  "~200.000 chars",   "~2.200.000 chars"] },
-                  { name: "Minimax",    cols: ["100.000 chars",   "330.000 chars",  "~540.000 chars",   "~1.800.000 chars"] },
-                  { name: "Fish Audio", cols: ["~117.000 chars",  "~217.000 chars", "~417.000 chars",   "~1.800.000 chars"] },
+                  { name: "ElevenLabs", cols: ["30.000 chars",   "121.000 chars",  "~200.000 chars",  "~2.200.000 chars"] },
+                  { name: "Minimax",    cols: ["100.000 chars",  "330.000 chars",  "~540.000 chars",  "~1.800.000 chars"] },
+                  { name: "Fish Audio", cols: ["~117.000 chars", "~217.000 chars", "~417.000 chars",  "~1.800.000 chars"] },
                 ].map((row) => (
                   <tr key={row.name} style={{ borderBottom: "1px solid #1a1a28" }}>
-                    <td style={{ padding: "12px 16px", color: "#4a4a65", fontWeight: 500 }}>{row.name}</td>
+                    <td style={{ padding: "11px 16px", color: "#4a4a65", fontWeight: 500 }}>{row.name}</td>
                     {row.cols.map((c, i) => (
-                      <td key={i} style={{ padding: "12px 10px", textAlign: "center", color: "#2e2e48" }}>{c}</td>
+                      <td key={i} style={{ padding: "11px 10px", textAlign: "center", color: "#2e2e48" }}>{c}</td>
                     ))}
                   </tr>
                 ))}
                 <tr style={{ background: "rgba(59,130,246,0.08)", borderTop: "1px solid rgba(59,130,246,0.2)" }}>
-                  <td style={{ padding: "12px 16px", fontWeight: 700, color: "#93c5fd" }}>⭐ Elite Labs</td>
+                  <td style={{ padding: "11px 16px", fontWeight: 700, color: "#93c5fd" }}>⭐ Elite Labs</td>
                   {["200.000 chars", "500.000 chars", "1.000.000 chars", "5.000.000 chars"].map((c) => (
-                    <td key={c} style={{ padding: "12px 10px", textAlign: "center", fontWeight: 600, color: "#93c5fd" }}>{c}</td>
+                    <td key={c} style={{ padding: "11px 10px", textAlign: "center", fontWeight: 600, color: "#93c5fd" }}>{c}</td>
                   ))}
                 </tr>
               </tbody>
             </table>
           </div>
-          <p style={{ marginTop: "16px", textAlign: "center", fontSize: "13px", fontWeight: 600, color: "#93c5fd" }}>
+          <p style={{ marginTop: "12px", textAlign: "center", fontSize: "13px", fontWeight: 600, color: "#93c5fd" }}>
             Hasta 6× más caracteres que la competencia al mismo precio.{" "}
             <span style={{ color: "#3a3a52", fontWeight: 400 }}>Sin límite por generación.</span>
           </p>
         </div>
 
         {/* FAQ */}
-        <div style={{ maxWidth: "1536px", margin: "0 auto" }}>
-          <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#fff", marginBottom: "24px", textAlign: "center" }}>
+        <div>
+          <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "20px", textAlign: "center" }}>
             Preguntas frecuentes
           </h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {[
               { q: "¿Puedo cancelar en cualquier momento?", a: "Sí. Puedes cancelar desde el portal de facturación. Seguirás teniendo acceso hasta el final del período pagado." },
               { q: "¿Qué pasa con mis caracteres al final del mes?", a: "Los caracteres no utilizados no se acumulan. Cada mes se renuevan al total de tu plan." },
               { q: "¿Puedo cambiar de plan?", a: "Sí, puedes hacer upgrade o downgrade en cualquier momento desde el portal de facturación." },
               { q: "¿Qué formatos acepta la clonación?", a: "WAV, MP3 y M4A. Recomendamos entre 10 y 30 segundos de audio limpio sin ruido." },
             ].map((faq) => (
-              <div key={faq.q} style={{ padding: "16px 20px", borderRadius: "12px", border: "1px solid #1a1a28", background: "#0d0d17" }}>
-                <p style={{ fontWeight: 600, color: "#e5e7eb", marginBottom: "4px", fontSize: "14px" }}>{faq.q}</p>
-                <p style={{ fontSize: "13px", color: "#3a3a52" }}>{faq.a}</p>
+              <div key={faq.q} style={{ padding: "14px 18px", borderRadius: "10px", border: "1px solid #1a1a28", background: "#0d0d17" }}>
+                <p style={{ fontWeight: 600, color: "#e5e7eb", marginBottom: "3px", fontSize: "13px" }}>{faq.q}</p>
+                <p style={{ fontSize: "12px", color: "#3a3a52" }}>{faq.a}</p>
               </div>
             ))}
           </div>
         </div>
+
       </main>
 
       {activePlan && (
