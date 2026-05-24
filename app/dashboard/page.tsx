@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, UserButton, useClerk } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, Share2, MoreVertical, AudioWaveform, Lock } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, getAge, LANG_FLAGS, formatCount } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
@@ -1165,6 +1165,17 @@ function VoiceCard({
 }) {
   const [hovered, setHovered] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    const idToCopy = voice.fishAudioModelId ?? voice.id;
+    navigator.clipboard.writeText(idToCopy).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }
+
+  const genderLabel = voice.gender === "masculine" ? "Masculino" : voice.gender === "feminine" ? "Femenino" : "Indefinido";
   const menuRef = useRef<HTMLDivElement>(null);
   const ps = previewState[voice.id] ?? "idle";
   const isDeleting = deletingId === voice.id;
@@ -1204,10 +1215,10 @@ function VoiceCard({
 
       {/* Bottom row: clips · actions (on hover) */}
       <div className="flex items-center justify-between" style={{ paddingLeft: "52px" }}>
-        {/* Clips count */}
+        {/* Gender */}
         <div className="flex items-center gap-1 text-xs" style={{ color: "#3a3a52" }}>
-          <Lock size={9} />
-          <span>{voice.clipCount ?? 0} Clips de audio</span>
+          <User size={9} />
+          <span>{genderLabel}</span>
         </div>
 
         {/* Hover actions */}
@@ -1215,15 +1226,16 @@ function VoiceCard({
           className="flex items-center gap-1.5"
           style={{ opacity: hovered ? 1 : 0, transition: "opacity 150ms ease", pointerEvents: hovered ? "auto" : "none" }}
         >
-          {/* Share */}
+          {/* Copy ID */}
           <button
+            onClick={handleCopy}
             className="p-1.5 rounded-lg transition-colors"
-            style={{ color: "#4a4a65" }}
-            title="Compartir"
-            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#9ca3af")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#4a4a65")}
+            style={{ color: copied ? "#4ade80" : "#4a4a65" }}
+            title="Copiar ID de voz"
+            onMouseEnter={(e) => { if (!copied) (e.currentTarget as HTMLButtonElement).style.color = "#9ca3af"; }}
+            onMouseLeave={(e) => { if (!copied) (e.currentTarget as HTMLButtonElement).style.color = "#4a4a65"; }}
           >
-            <Share2 size={13} />
+            {copied ? <Check size={13} /> : <Copy size={13} />}
           </button>
 
           {/* Three-dot menu */}
