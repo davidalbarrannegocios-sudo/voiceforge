@@ -1267,102 +1267,73 @@ function VoicesTab({
           <p className="text-sm">Sin resultados para &ldquo;{search}&rdquo;</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {filtered.map((voice) => {
             const ps = previewState[voice.id] ?? "idle";
             const isDeleting = deletingId === voice.id;
             return (
               <div
                 key={voice.id}
-                className="group rounded-xl border overflow-hidden transition-colors"
-                style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#2a2a3e")}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1e1e2e")}
+                className="rounded-xl border px-3 flex items-center gap-3 transition-colors"
+                style={{ background: "#0d0d17", borderColor: "#1e1e2e", height: "72px" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#111120")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#0d0d17")}
               >
-                <div className="p-4 flex gap-3">
-                  {/* Thumbnail */}
-                  <div
-                    className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center"
-                    style={{ background: "#1a1a2e" }}
-                  >
-                    <Mic size={22} style={{ color: "#2a2a5e" }} />
+                {/* Avatar */}
+                <div className="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: "#1a1a2e" }}>
+                  <Mic size={16} style={{ color: "#2a2a5e" }} />
+                </div>
+
+                {/* Name + meta */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <span className="font-semibold text-white text-sm truncate">{voice.name}</span>
+                    {voice.language && <span className="text-xs leading-none flex-shrink-0">{LANG_FLAGS[voice.language] ?? "🌐"}</span>}
+                    {voice.gender && <span className="text-xs flex-shrink-0" style={{ color: "#3a3a52" }}>{voice.gender === "masculine" ? "♂" : "♀"}</span>}
                   </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    {/* Name row */}
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className="font-semibold text-white text-sm truncate">{voice.name}</span>
-                      {voice.language && (
-                        <span className="text-sm leading-none flex-shrink-0">{LANG_FLAGS[voice.language] ?? "🌐"}</span>
-                      )}
-                      {voice.gender && (
-                        <span className="text-xs flex-shrink-0" style={{ color: "#4a4a65" }}>
-                          {voice.gender === "masculine" ? "♂" : "♀"}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Clip count + date */}
-                    <div className="flex items-center gap-2 text-xs" style={{ color: "#4a4a65" }}>
-                      <span className="flex items-center gap-1">
-                        <Mic2 size={10} />
-                        {voice.clipCount ?? 0} clips
-                      </span>
-                      {voice.createdAt && (
-                        <>
-                          <span>·</span>
-                          <span>{formatDate(voice.createdAt)}</span>
-                        </>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-1 text-xs" style={{ color: "#3a3a52" }}>
+                    <Mic2 size={9} />
+                    <span>{voice.clipCount ?? 0} clips</span>
+                    {voice.createdAt && <><span>·</span><span>{formatDate(voice.createdAt)}</span></>}
                   </div>
                 </div>
 
-                {/* Action bar — visible on hover */}
-                <div
-                  className="border-t px-3 py-2.5 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-                  style={{ borderColor: "#1e1e2e", background: "#0a0a14" }}
-                >
+                {/* Actions — always visible */}
+                <div className="flex items-center gap-1.5 flex-shrink-0">
                   <button
                     onClick={() => handlePreview(voice)}
                     disabled={!voice.fishAudioModelId}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40"
-                    style={{ background: "rgba(255,255,255,0.05)", color: "#9ca3af", border: "1px solid rgba(255,255,255,0.08)" }}
+                    className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40"
+                    style={{ background: "rgba(255,255,255,0.04)", color: "#6b7280", border: "1px solid rgba(255,255,255,0.07)" }}
+                    title="Escuchar"
                   >
                     {ps === "loading" ? (
                       <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                    ) : ps === "playing" ? (
-                      <Pause size={11} />
-                    ) : (
-                      <Play size={11} />
-                    )}
-                    {ps === "playing" ? "Detener" : "Escuchar"}
+                    ) : ps === "playing" ? <Pause size={11} /> : <Play size={11} />}
+                    <span className="hidden sm:inline">{ps === "playing" ? "Parar" : "Escuchar"}</span>
                   </button>
 
                   <button
                     onClick={() => onUseVoice({ referenceId: voice.fishAudioModelId ?? "", name: voice.name, isCloned: true })}
                     disabled={!voice.fishAudioModelId}
-                    className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
+                    className="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
                     style={{ background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}
                   >
-                    Usar voz
+                    Usar
                   </button>
 
                   <button
                     onClick={() => handleDelete(voice.id)}
                     disabled={isDeleting}
                     className="p-1.5 rounded-lg transition-colors disabled:opacity-40"
-                    style={{ color: "#4a4a65" }}
+                    style={{ color: "#3a3a52" }}
                     title="Eliminar"
                     onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#f87171")}
-                    onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#4a4a65")}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#3a3a52")}
                   >
-                    {isDeleting ? (
-                      <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                    ) : (
-                      <Trash2 size={14} />
-                    )}
+                    {isDeleting
+                      ? <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                      : <Trash2 size={14} />}
                   </button>
                 </div>
               </div>
