@@ -93,6 +93,10 @@ const MAX_RECENT = 12;
 
 const EMPTY_FILTERS: AdvancedFilters = { genders: [], ages: [], useCases: [], qualities: [] };
 
+const FEATURED_VOICE_IDS: string[] = [
+  // Añadir IDs de voces destacadas aquí
+];
+
 const USE_CASE_TAGS: Record<string, string[]> = {
   "Conversacional": ["conversational", "conversation", "chat", "dialogue", "natural"],
   "Narración": ["narration", "narrator", "storytelling", "audiobook", "narrative"],
@@ -711,6 +715,15 @@ export function VoiceBrowser({
     return matchesAdvancedFilters(v, filters);
   });
 
+  const hasActiveFilters = Object.values(filters).some((arr) => arr.length > 0);
+  const applyFeatured = page === 1 && !debouncedSearch && !hasActiveFilters && FEATURED_VOICE_IDS.length > 0;
+  const displayedVoices = applyFeatured
+    ? [
+        ...FEATURED_VOICE_IDS.map((id) => filteredVoices.find((v) => v._id === id)).filter((v): v is FishVoice => v !== undefined),
+        ...filteredVoices.filter((v) => !FEATURED_VOICE_IDS.includes(v._id)),
+      ]
+    : filteredVoices;
+
   const filteredRecent = recentVoices.filter((v) => {
     if (tier === "free") return !isPremiumVoice(v._id);
     if (tier === "premium") return isPremiumVoice(v._id);
@@ -880,11 +893,11 @@ export function VoiceBrowser({
                       <div key={i} className="h-[72px] animate-pulse" style={{ background: i % 2 === 0 ? "#0d0d17" : "#0b0b15", borderBottom: "1px solid #111118" }} />
                     ))}
                   </div>
-                ) : filteredVoices.length === 0 ? (
+                ) : displayedVoices.length === 0 ? (
                   <p className="text-center py-16 text-sm" style={{ color: "#555570" }}>No se encontraron voces</p>
                 ) : (
                   <div className="rounded-xl overflow-hidden mt-2" style={{ border: "1px solid #1a1a2a", background: "#0a0a12" }}>
-                    {filteredVoices.map((voice) => {
+                    {displayedVoices.map((voice) => {
                       const isPremium = isPremiumVoice(voice._id);
                       const isLocked = isPremium && !userCanUsePremium;
                       return (
