@@ -1862,16 +1862,18 @@ function BillingTab({
 
       {/* ── Monthly / Annual toggle ── */}
       <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px" }}>
-        <div style={{ display: "inline-flex", background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: "10px", padding: "3px", gap: "2px" }}>
+        <div style={{ position: "relative", display: "inline-grid", gridTemplateColumns: "1fr 1fr", background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: "10px", padding: "3px" }}>
+          {/* Sliding pill */}
+          <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#1a1a2e", borderRadius: "7px", pointerEvents: "none", transition: "transform 0.2s ease", transform: `translateX(${billing === "annual" ? "100%" : "0%"})` }} />
           <button
             onClick={() => setBilling("monthly")}
-            style={{ padding: "7px 22px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, background: billing === "monthly" ? "#1a1a2e" : "transparent", color: billing === "monthly" ? "#e5e7eb" : "#4a4a65", transition: "all 0.15s" }}
+            style={{ position: "relative", zIndex: 1, padding: "7px 22px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, background: "transparent", color: billing === "monthly" ? "#e5e7eb" : "#4a4a65", transition: "color 0.2s ease" }}
           >
             Mensual
           </button>
           <button
             onClick={() => setBilling("annual")}
-            style={{ padding: "7px 22px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, background: billing === "annual" ? "#1a1a2e" : "transparent", color: billing === "annual" ? "#e5e7eb" : "#4a4a65", display: "flex", alignItems: "center", gap: "7px", transition: "all 0.15s" }}
+            style={{ position: "relative", zIndex: 1, padding: "7px 22px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, background: "transparent", color: billing === "annual" ? "#e5e7eb" : "#4a4a65", display: "flex", alignItems: "center", justifyContent: "center", gap: "7px", transition: "color 0.2s ease" }}
           >
             Anual
             <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e", letterSpacing: "0.03em" }}>
