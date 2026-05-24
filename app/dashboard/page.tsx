@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, UserButton, useClerk } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, Lock, HelpCircle, Languages } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, Lock, HelpCircle, Languages, Trash2 } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, getAge, LANG_FLAGS, formatCount } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
@@ -1375,6 +1375,11 @@ function HistoryTab({ plan }: { plan: string }) {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   const fetchHistory = useCallback(async (p: number) => {
     setLoading(true);
@@ -1390,13 +1395,90 @@ function HistoryTab({ plan }: { plan: string }) {
 
   useEffect(() => { fetchHistory(page); }, [page, fetchHistory]);
 
+  function showToast(msg: string, ok = true) {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 3000);
+  }
+
+  async function handleDelete(ids: string[]) {
+    setDeletingIds((prev) => { const s = new Set(prev); ids.forEach((id) => s.add(id)); return s; });
+    const results = await Promise.allSettled(
+      ids.map((id) => fetch(`/api/history/${id}`, { method: "DELETE" }).then((r) => r.json()))
+    );
+    const succeeded = ids.filter((_, i) => {
+      const r = results[i];
+      return r.status === "fulfilled" && (r as PromiseFulfilledResult<{ success?: boolean }>).value?.success;
+    });
+    const failed = ids.length - succeeded.length;
+
+    if (succeeded.length > 0) {
+      setRemovingIds((prev) => { const s = new Set(prev); succeeded.forEach((id) => s.add(id)); return s; });
+      setTimeout(() => {
+        setGenerations((prev) => prev.filter((g) => !succeeded.includes(g.id)));
+        setRemovingIds((prev) => { const s = new Set(prev); succeeded.forEach((id) => s.delete(id)); return s; });
+        setSelected((prev) => { const s = new Set(prev); succeeded.forEach((id) => s.delete(id)); return s; });
+      }, 300);
+      showToast(succeeded.length === 1 ? "Narración eliminada" : `${succeeded.length} narraciones eliminadas`);
+    }
+    if (failed > 0) showToast(`${failed} error${failed > 1 ? "es" : ""} al eliminar`, false);
+
+    setDeletingIds((prev) => { const s = new Set(prev); ids.forEach((id) => s.delete(id)); return s; });
+    setConfirmId(null);
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const s = new Set(prev);
+      s.has(id) ? s.delete(id) : s.add(id);
+      return s;
+    });
+  }
+
+  const selectableIds = generations.filter((g) => !removingIds.has(g.id)).map((g) => g.id);
+  const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selected.has(id));
+
   return (
-    <div>
+    <div className="relative">
+      {/* Toast */}
+      {toast && (
+        <div
+          className="fixed top-5 right-5 z-50 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-xl"
+          style={{
+            background: toast.ok ? "rgba(74,222,128,0.15)" : "rgba(239,68,68,0.15)",
+            border: `1px solid ${toast.ok ? "rgba(74,222,128,0.3)" : "rgba(239,68,68,0.3)"}`,
+            color: toast.ok ? "#4ade80" : "#f87171",
+          }}
+        >
+          {toast.msg}
+        </div>
+      )}
+
       {/* Free plan banner */}
       {plan === "free" && (
         <div className="mb-5 p-3 rounded-xl flex items-start gap-3 text-sm" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", color: "#fbbf24" }}>
           <span style={{ flexShrink: 0, marginTop: "1px" }}>⚠️</span>
           <span>Tus audios expiran a las <strong>72 horas</strong>. Suscríbete para guardarlos hasta 30 días.</span>
+        </div>
+      )}
+
+      {/* Bulk delete bar */}
+      {selected.size > 0 && (
+        <div className="mb-4 px-4 py-2.5 rounded-xl flex items-center justify-between gap-3" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}>
+          <span className="text-sm" style={{ color: "#f87171" }}>{selected.size} seleccionada{selected.size > 1 ? "s" : ""}</span>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setSelected(new Set())} className="text-xs px-3 py-1.5 rounded-lg transition-colors" style={{ color: "#6b7280", background: "transparent", border: "1px solid #2a2a3e" }}>
+              Cancelar
+            </button>
+            <button
+              onClick={() => handleDelete([...selected])}
+              disabled={deletingIds.size > 0}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-semibold transition-all disabled:opacity-50"
+              style={{ background: "rgba(239,68,68,0.2)", color: "#f87171", border: "1px solid rgba(239,68,68,0.35)" }}
+            >
+              <Trash2 size={11} />
+              Eliminar seleccionadas ({selected.size})
+            </button>
+          </div>
         </div>
       )}
 
@@ -1415,13 +1497,49 @@ function HistoryTab({ plan }: { plan: string }) {
         </div>
       ) : (
         <>
+          {/* Select all row */}
+          <div className="flex items-center gap-2 mb-2 px-1">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={() => setSelected(allSelected ? new Set() : new Set(selectableIds))}
+              className="rounded"
+              style={{ accentColor: "#3b82f6", width: "14px", height: "14px", cursor: "pointer" }}
+            />
+            <span className="text-xs" style={{ color: "#4a4a65" }}>Seleccionar todo</span>
+          </div>
+
           <div className="space-y-3">
             {generations.map((gen) => {
               const expiry = formatExpiry(gen.expiresAt ?? null);
               const isExpired = expiry?.expired || !gen.audioUrl;
+              const isRemoving = removingIds.has(gen.id);
+              const isDeleting = deletingIds.has(gen.id);
+              const isConfirming = confirmId === gen.id;
+              const isSelected = selected.has(gen.id);
+
               return (
-                <div key={gen.id} className="p-4 rounded-xl border" style={{ background: "#12121a", borderColor: isExpired ? "#1e1e2e" : "#2a2a3e" }}>
-                  <div className="flex items-start justify-between gap-4">
+                <div
+                  key={gen.id}
+                  className="rounded-xl border"
+                  style={{
+                    background: isSelected ? "rgba(59,130,246,0.05)" : "#12121a",
+                    borderColor: isSelected ? "rgba(59,130,246,0.3)" : isExpired ? "#1e1e2e" : "#2a2a3e",
+                    opacity: isRemoving ? 0 : 1,
+                    transition: "opacity 300ms ease-out",
+                  }}
+                >
+                  <div className="p-4 flex items-start gap-3">
+                    {/* Checkbox */}
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelect(gen.id)}
+                      className="mt-0.5 rounded flex-shrink-0"
+                      style={{ accentColor: "#3b82f6", width: "14px", height: "14px", cursor: "pointer" }}
+                    />
+
+                    {/* Content */}
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm truncate ${isExpired ? "text-gray-600" : "text-gray-300"}`}>{gen.text}</p>
                       <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 flex-wrap">
@@ -1440,6 +1558,8 @@ function HistoryTab({ plan }: { plan: string }) {
                         )}
                       </div>
                     </div>
+
+                    {/* Actions */}
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {isExpired ? (
                         <span className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "#12121a", color: "#4a4a65", border: "1px solid #1e1e2e" }}>
@@ -1459,10 +1579,48 @@ function HistoryTab({ plan }: { plan: string }) {
                           {playingId === gen.id ? "Reproduciendo" : "Reproducir"}
                         </button>
                       )}
+
+                      {/* Trash button */}
+                      <button
+                        onClick={() => setConfirmId(isConfirming ? null : gen.id)}
+                        disabled={isDeleting}
+                        className="p-1.5 rounded-lg transition-all disabled:opacity-40"
+                        style={{
+                          background: isConfirming ? "rgba(239,68,68,0.15)" : "transparent",
+                          color: isConfirming ? "#f87171" : "#3a3a52",
+                          border: `1px solid ${isConfirming ? "rgba(239,68,68,0.3)" : "transparent"}`,
+                        }}
+                        title="Eliminar narración"
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   </div>
+
+                  {/* Inline confirm */}
+                  {isConfirming && (
+                    <div className="px-4 pb-3 flex items-center gap-3">
+                      <span className="text-xs flex-1" style={{ color: "#f87171" }}>¿Eliminar esta narración?</span>
+                      <button
+                        onClick={() => setConfirmId(null)}
+                        className="text-xs px-3 py-1.5 rounded-lg transition-colors"
+                        style={{ color: "#6b7280", background: "transparent", border: "1px solid #2a2a3e" }}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={() => handleDelete([gen.id])}
+                        disabled={isDeleting}
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-semibold transition-all disabled:opacity-50"
+                        style={{ background: "rgba(239,68,68,0.2)", color: "#f87171", border: "1px solid rgba(239,68,68,0.35)" }}
+                      >
+                        {isDeleting ? "Eliminando..." : <><Trash2 size={11} /> Eliminar</>}
+                      </button>
+                    </div>
+                  )}
+
                   {!isExpired && playingId === gen.id && (
-                    <div className="mt-3">
+                    <div className="px-4 pb-4">
                       <AudioPlayer src={gen.audioUrl!} filename={`elitelabs-${gen.id}.mp3`} />
                     </div>
                   )}
