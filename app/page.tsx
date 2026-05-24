@@ -87,6 +87,12 @@ const NAV_PRODUCTS_RIGHT = [
   { title: "Estudio de voz",     desc: "Produce audio y ajusta cada detalle",              href: "/dashboard" },
 ];
 
+const NAV_EMPRESA = [
+  { title: "Sobre nosotros", desc: "Conoce nuestro equipo y misión",      href: "/about" },
+  { title: "Blog",           desc: "Artículos sobre IA y síntesis de voz", href: "/blog" },
+  { title: "Soporte",        desc: "Ayuda y contacto",                     href: "/support" },
+];
+
 /* ─── Waveform bars (use-case cards) ────────────────────────── */
 const WAVE_BARS: [number, number][] = [
   [4,15],[12,30],[20,45],[28,38],[36,22],[44,50],[52,32],[60,55],
@@ -133,7 +139,9 @@ function FaqItem({ item, open, onToggle }: { item: typeof FAQ_ITEMS[0]; open: bo
 export default function LandingPage() {
   const { isSignedIn, isLoaded } = useUser();
   const [productsOpen, setProductsOpen] = useState(false);
+  const [empresaOpen, setEmpresaOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [mobileEmpresaOpen, setMobileEmpresaOpen] = useState(false);
   const [demoVoices, setDemoVoices] = useState<DemoVoice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<string>("");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -293,8 +301,54 @@ export default function LandingPage() {
               </div>
             </div>
 
+            {/* Empresa — mega menu */}
+            <div
+              className="relative"
+              onMouseEnter={() => setEmpresaOpen(true)}
+              onMouseLeave={() => setEmpresaOpen(false)}
+            >
+              <button
+                onClick={() => setEmpresaOpen(!empresaOpen)}
+                className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg"
+              >
+                Empresa
+                <ChevronDown size={13} style={{ transition: "transform 0.15s ease", transform: empresaOpen ? "rotate(180deg)" : "none" }} />
+              </button>
+
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 6px)",
+                  left: "50%",
+                  transform: `translateX(-50%) translateY(${empresaOpen ? "0px" : "-6px"})`,
+                  opacity: empresaOpen ? 1 : 0,
+                  pointerEvents: empresaOpen ? "auto" : "none",
+                  transition: "opacity 150ms ease, transform 150ms ease",
+                  width: "240px",
+                  background: "#13131d",
+                  border: "1px solid #2a2a3e",
+                  borderRadius: "16px",
+                  padding: "10px",
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.8)",
+                  zIndex: 60,
+                }}
+              >
+                <p style={{ fontSize: "10px", fontWeight: 700, color: "#3a3a52", textTransform: "uppercase", letterSpacing: "0.1em", padding: "4px 12px 6px" }}>Empresa</p>
+                {NAV_EMPRESA.map((item) => (
+                  <Link
+                    key={item.title}
+                    href={item.href}
+                    className="hover:bg-white/5 rounded-xl transition-colors"
+                    style={{ display: "block", padding: "10px 12px", textDecoration: "none" }}
+                  >
+                    <p style={{ fontSize: "13px", fontWeight: 600, color: "#e5e7eb", marginBottom: "2px" }}>{item.title}</p>
+                    <p style={{ fontSize: "11px", color: "#6b7280", lineHeight: 1.4 }}>{item.desc}</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
             <Link href="/pricing" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg">Precios</Link>
-            <Link href="/blog" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg">Blog</Link>
           </nav>
 
           {/* Right: hamburger (mobile) + auth */}
@@ -372,8 +426,32 @@ export default function LandingPage() {
                 ))}
               </div>
             )}
+            {/* Empresa accordion */}
+            <button
+              onClick={() => setMobileEmpresaOpen(!mobileEmpresaOpen)}
+              className="w-full flex items-center justify-between px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors border-t"
+              style={{ background: "none", border: "none", borderTop: "1px solid #1e1e2e", cursor: "pointer" }}
+            >
+              <span>Empresa</span>
+              <ChevronDown size={14} style={{ transition: "transform 0.15s", transform: mobileEmpresaOpen ? "rotate(180deg)" : "none" }} />
+            </button>
+            {mobileEmpresaOpen && (
+              <div style={{ paddingLeft: "12px", paddingBottom: "8px", display: "flex", flexDirection: "column", gap: "1px" }}>
+                {NAV_EMPRESA.map((item) => (
+                  <Link
+                    key={item.title}
+                    href={item.href}
+                    onClick={() => { setMobileNavOpen(false); setMobileEmpresaOpen(false); }}
+                    className="hover:bg-white/5 rounded-lg transition-colors"
+                    style={{ display: "block", padding: "9px 14px", textDecoration: "none" }}
+                  >
+                    <p style={{ fontSize: "13px", fontWeight: 600, color: "#e5e7eb" }}>{item.title}</p>
+                    <p style={{ fontSize: "11px", color: "#6b7280" }}>{item.desc}</p>
+                  </Link>
+                ))}
+              </div>
+            )}
             <Link href="/pricing" onClick={() => setMobileNavOpen(false)} className="block px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors border-t" style={{ borderColor: "#1e1e2e" }}>Precios</Link>
-            <Link href="/blog" onClick={() => setMobileNavOpen(false)} className="block px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors border-t" style={{ borderColor: "#1e1e2e" }}>Blog</Link>
           </div>
         )}
       </header>
