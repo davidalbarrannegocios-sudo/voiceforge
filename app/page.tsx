@@ -73,6 +73,20 @@ const FAQ_ITEMS = [
   },
 ];
 
+/* ─── Mega menu products ─────────────────────────────────────── */
+const NAV_PRODUCTS_LEFT = [
+  { title: "Texto a voz",               desc: "Genera voz limpia a partir de guiones",          href: "/dashboard" },
+  { title: "Conversión de voz a texto", desc: "Transcribe audio a texto con precisión",          href: "/dashboard" },
+  { title: "Clonación de voz",          desc: "Crea una réplica de tu voz",                      href: "/dashboard" },
+  { title: "Traducción de audio",       desc: "Convierte audio a diferentes idiomas",             href: "/dashboard" },
+];
+const NAV_PRODUCTS_RIGHT = [
+  { title: "Cambiador de voz",   desc: "Transforma tu voz en tiempo real",                href: "/dashboard" },
+  { title: "Separación de audio",desc: "Extrae voces de audio con ruido o mezclado",      href: "/dashboard" },
+  { title: "Efectos de sonido",  desc: "Genera efectos de sonido cinematográficos",        href: "/dashboard" },
+  { title: "Estudio de voz",     desc: "Produce audio y ajusta cada detalle",              href: "/dashboard" },
+];
+
 /* ─── Waveform bars (use-case cards) ────────────────────────── */
 const WAVE_BARS: [number, number][] = [
   [4,15],[12,30],[20,45],[28,38],[36,22],[44,50],[52,32],[60,55],
@@ -118,6 +132,8 @@ function FaqItem({ item, open, onToggle }: { item: typeof FAQ_ITEMS[0]; open: bo
 
 export default function LandingPage() {
   const { isSignedIn, isLoaded } = useUser();
+  const [productsOpen, setProductsOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [demoVoices, setDemoVoices] = useState<DemoVoice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<string>("");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -210,20 +226,93 @@ export default function LandingPage() {
             <span className="font-bold text-white text-lg">Elite Labs</span>
           </Link>
 
-          {/* Center links */}
+          {/* Center links — desktop */}
           <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
-            {[
-              { label: "Productos", href: "/dashboard" },
-              { label: "Precios", href: "/pricing" },
-              { label: "Blog", href: "/blog" },
-            ].map(({ label, href }) => (
-              <Link key={label} href={href} className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg">
-                {label}
-              </Link>
-            ))}
+            {/* Productos — mega menu */}
+            <div
+              className="relative"
+              onMouseEnter={() => setProductsOpen(true)}
+              onMouseLeave={() => setProductsOpen(false)}
+            >
+              <button
+                onClick={() => setProductsOpen(!productsOpen)}
+                className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg"
+              >
+                Productos
+                <ChevronDown size={13} style={{ transition: "transform 0.15s ease", transform: productsOpen ? "rotate(180deg)" : "none" }} />
+              </button>
+
+              {/* Dropdown */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 6px)",
+                  left: "50%",
+                  transform: `translateX(-50%) translateY(${productsOpen ? "0px" : "-6px"})`,
+                  opacity: productsOpen ? 1 : 0,
+                  pointerEvents: productsOpen ? "auto" : "none",
+                  transition: "opacity 150ms ease, transform 150ms ease",
+                  width: "500px",
+                  background: "#13131d",
+                  border: "1px solid #2a2a3e",
+                  borderRadius: "16px",
+                  padding: "10px",
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.8)",
+                  zIndex: 60,
+                }}
+              >
+                <div style={{ display: "flex", gap: "4px" }}>
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    {NAV_PRODUCTS_LEFT.map((item) => (
+                      <Link
+                        key={item.title}
+                        href={item.href}
+                        className="hover:bg-white/5 rounded-xl transition-colors"
+                        style={{ display: "block", padding: "10px 12px", textDecoration: "none" }}
+                      >
+                        <p style={{ fontSize: "13px", fontWeight: 600, color: "#e5e7eb", marginBottom: "2px" }}>{item.title}</p>
+                        <p style={{ fontSize: "11px", color: "#6b7280", lineHeight: 1.4 }}>{item.desc}</p>
+                      </Link>
+                    ))}
+                  </div>
+                  <div style={{ width: "1px", background: "#1e1e2e", flexShrink: 0, margin: "8px 0" }} />
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    {NAV_PRODUCTS_RIGHT.map((item) => (
+                      <Link
+                        key={item.title}
+                        href={item.href}
+                        className="hover:bg-white/5 rounded-xl transition-colors"
+                        style={{ display: "block", padding: "10px 12px", textDecoration: "none" }}
+                      >
+                        <p style={{ fontSize: "13px", fontWeight: 600, color: "#e5e7eb", marginBottom: "2px" }}>{item.title}</p>
+                        <p style={{ fontSize: "11px", color: "#6b7280", lineHeight: 1.4 }}>{item.desc}</p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Link href="/pricing" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg">Precios</Link>
+            <Link href="/blog" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg">Blog</Link>
           </nav>
 
-          <nav className="flex items-center gap-3">
+          {/* Right: hamburger (mobile) + auth */}
+          <div className="flex items-center gap-3">
+            <button
+              className="md:hidden p-2"
+              onClick={() => setMobileNavOpen(!mobileNavOpen)}
+              aria-label="Abrir menú"
+              style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.6)" }}
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                {mobileNavOpen
+                  ? <path fillRule="evenodd" clipRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" />
+                  : <path fillRule="evenodd" clipRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" />
+                }
+              </svg>
+            </button>
+
             {isLoaded && isSignedIn ? (
               <>
                 <Link
@@ -252,8 +341,41 @@ export default function LandingPage() {
                 </SignUpButton>
               </>
             )}
-          </nav>
+          </div>
         </div>
+
+        {/* Mobile menu */}
+        {mobileNavOpen && (
+          <div className="md:hidden border-t" style={{ borderColor: "#1e1e2e", background: "#0a0a0f" }}>
+            {/* Productos accordion */}
+            <button
+              onClick={() => setProductsOpen(!productsOpen)}
+              className="w-full flex items-center justify-between px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors"
+              style={{ background: "none", border: "none", cursor: "pointer" }}
+            >
+              <span>Productos</span>
+              <ChevronDown size={14} style={{ transition: "transform 0.15s", transform: productsOpen ? "rotate(180deg)" : "none" }} />
+            </button>
+            {productsOpen && (
+              <div style={{ paddingLeft: "12px", paddingBottom: "8px", display: "flex", flexDirection: "column", gap: "1px" }}>
+                {[...NAV_PRODUCTS_LEFT, ...NAV_PRODUCTS_RIGHT].map((item) => (
+                  <Link
+                    key={item.title}
+                    href={item.href}
+                    onClick={() => { setMobileNavOpen(false); setProductsOpen(false); }}
+                    className="hover:bg-white/5 rounded-lg transition-colors"
+                    style={{ display: "block", padding: "9px 14px", textDecoration: "none" }}
+                  >
+                    <p style={{ fontSize: "13px", fontWeight: 600, color: "#e5e7eb" }}>{item.title}</p>
+                    <p style={{ fontSize: "11px", color: "#6b7280" }}>{item.desc}</p>
+                  </Link>
+                ))}
+              </div>
+            )}
+            <Link href="/pricing" onClick={() => setMobileNavOpen(false)} className="block px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors border-t" style={{ borderColor: "#1e1e2e" }}>Precios</Link>
+            <Link href="/blog" onClick={() => setMobileNavOpen(false)} className="block px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors border-t" style={{ borderColor: "#1e1e2e" }}>Blog</Link>
+          </div>
+        )}
       </header>
 
       <main>
