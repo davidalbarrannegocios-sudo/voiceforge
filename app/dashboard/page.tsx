@@ -973,19 +973,33 @@ function JobCard({ job }: { job: Job }) {
 /* ─── Clone Modal ─────────────────────────────────────────── */
 function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () => void }) {
   const [file, setFile] = useState<File | null>(null);
+  const [fileDuration, setFileDuration] = useState<number | null>(null);
   const [voiceName, setVoiceName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  function handleFile(f: File) {
+  async function handleFile(f: File) {
     const allowed = ["audio/wav", "audio/mpeg", "audio/mp4", "audio/x-m4a"];
     if (!allowed.includes(f.type)) {
       setError("Formato no soportado. Usa WAV, MP3 o M4A.");
       return;
     }
+    const duration = await new Promise<number>((resolve) => {
+      const url = URL.createObjectURL(f);
+      const audio = new Audio(url);
+      audio.addEventListener("loadedmetadata", () => { URL.revokeObjectURL(url); resolve(audio.duration); }, { once: true });
+      audio.addEventListener("error", () => { URL.revokeObjectURL(url); resolve(0); }, { once: true });
+    });
+    if (duration < 10) {
+      setError("El audio debe tener al menos 10 segundos de duración.");
+      setFile(null);
+      setFileDuration(null);
+      return;
+    }
     setFile(f);
+    setFileDuration(duration);
     setError(null);
   }
 
@@ -1029,7 +1043,10 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
           {file ? (
             <div>
               <p className="text-green-400 font-medium mb-1">{file.name}</p>
-              <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(0)} KB</p>
+              <p className="text-xs text-gray-500">
+                {(file.size / 1024).toFixed(0)} KB
+                {fileDuration !== null && ` · ${Math.floor(fileDuration)}s`}
+              </p>
             </div>
           ) : (
             <div>
