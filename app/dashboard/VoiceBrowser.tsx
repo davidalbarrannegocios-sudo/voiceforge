@@ -8,6 +8,12 @@ export interface SelectedVoice {
   referenceId: string;
   name: string;
   isCloned: boolean;
+  coverImage?: string;
+  description?: string;
+  tags?: string[];
+  languages?: string[];
+  taskCount?: number;
+  likeCount?: number;
 }
 
 interface FishVoice {
@@ -43,6 +49,8 @@ interface AdvancedFilters {
 }
 
 export { FREE_VOICE_IDS };
+export { getGender, getAge, LANG_FLAGS, formatCount };
+export { VoiceAvatar };
 
 function isPremiumVoice(id: string) {
   return !FREE_VOICE_IDS.has(id);
@@ -739,7 +747,17 @@ export function VoiceBrowser({
       return;
     }
     saveRecentVoice(voice);
-    handleSelect({ referenceId: voice._id, name: voice.title, isCloned: false });
+    handleSelect({
+      referenceId: voice._id,
+      name: voice.title,
+      isCloned: false,
+      coverImage: voice.cover_image || undefined,
+      description: voice.description,
+      tags: voice.tags,
+      languages: voice.languages,
+      taskCount: voice.task_count,
+      likeCount: voice.like_count,
+    });
   }
 
   const filteredVoices = publicVoices.filter((v) => {

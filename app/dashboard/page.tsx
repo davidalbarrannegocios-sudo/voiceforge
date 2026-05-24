@@ -7,7 +7,7 @@ import { useUser, UserButton, useClerk } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 import { Home, Mic, Mic2, Users, Clock, Check, Play, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, Lock, HelpCircle, Languages } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
-import { VoiceBrowser, SelectedVoice } from "./VoiceBrowser";
+import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, getAge, LANG_FLAGS, formatCount } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
 import { PaymentModal, type BillingPlan } from "./PaymentModal";
 import { SupportModal } from "./SupportModal";
@@ -784,10 +784,88 @@ function GenerateTab({
             {/* Voz */}
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#555570" }}>{t.generate.voiceLabel}</p>
-              <button
+              {selectedVoice && !selectedVoice.isCloned && selectedVoice.tags ? (() => {
+                const gender = getGender(selectedVoice.tags);
+                const age = getAge(selectedVoice.tags);
+                const pillStyle = { background: "rgba(255,255,255,0.05)", color: "#6b7280", border: "1px solid rgba(255,255,255,0.07)" };
+                return (
+                  <button
+                    onClick={() => setShowBrowser(true)}
+                    className="w-full text-left rounded-xl transition-all"
+                    style={{ background: "#12121a", border: "1px solid #2a2a3e", padding: "12px" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#2a2a3e")}
+                  >
+                    {/* Top row: avatar + name + arrow */}
+                    <div className="flex items-center gap-3 mb-2">
+                      <VoiceAvatar name={selectedVoice.name} coverImage={selectedVoice.coverImage} size="lg" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-sm font-bold text-white truncate">{selectedVoice.name}</span>
+                          {gender && (
+                            <span className="text-xs flex-shrink-0" style={{ color: "#555570" }}>
+                              · {gender === "male" ? "Masculino" : "Femenino"}
+                            </span>
+                          )}
+                        </div>
+                        {selectedVoice.description && (
+                          <p className="text-xs truncate mt-0.5" style={{ color: "#6b6b88" }}>{selectedVoice.description}</p>
+                        )}
+                      </div>
+                      <span className="text-xs flex-shrink-0" style={{ color: "#555570" }}>→</span>
+                    </div>
+
+                    {/* Pills row */}
+                    {((selectedVoice.languages?.length ?? 0) > 0 || gender || age) && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {selectedVoice.languages?.slice(0, 3).map((l) => {
+                          const code = l.toLowerCase();
+                          const flag = LANG_FLAGS[code] ?? "🌐";
+                          return (
+                            <span key={l} className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>
+                              <span>{flag}</span><span>{l.toUpperCase()}</span>
+                            </span>
+                          );
+                        })}
+                        {gender && (
+                          <span className="px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>
+                            {gender === "male" ? "Masculino" : "Femenino"}
+                          </span>
+                        )}
+                        {age && <span className="px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>{age}</span>}
+                      </div>
+                    )}
+
+                    {/* Stats row */}
+                    {((selectedVoice.taskCount ?? 0) > 0 || (selectedVoice.likeCount ?? 0) > 0) && (
+                      <div className="flex items-center gap-3" style={{ color: "#444460" }}>
+                        {(selectedVoice.taskCount ?? 0) > 0 && (
+                          <div className="flex items-center gap-1">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+                            </svg>
+                            <span className="text-xs">{formatCount(selectedVoice.taskCount!)}</span>
+                          </div>
+                        )}
+                        {(selectedVoice.likeCount ?? 0) > 0 && (
+                          <div className="flex items-center gap-1">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                            </svg>
+                            <span className="text-xs">{formatCount(selectedVoice.likeCount!)}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </button>
+                );
+              })() : (
+                <button
                   onClick={() => setShowBrowser(true)}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all hover:border-blue-500/60"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all"
                   style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#2a2a3e")}
                 >
                   <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(59,130,246,0.15)" }}>
                     <Mic size={13} style={{ color: "#93c5fd" }} />
@@ -798,6 +876,7 @@ function GenerateTab({
                   </div>
                   <span className="text-xs flex-shrink-0" style={{ color: "#8888a8" }}>→</span>
                 </button>
+              )}
 
               {/* Preview button */}
               {plan !== "free" && (
