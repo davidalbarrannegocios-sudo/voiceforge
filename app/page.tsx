@@ -138,10 +138,11 @@ function FaqItem({ item, open, onToggle }: { item: typeof FAQ_ITEMS[0]; open: bo
 
 export default function LandingPage() {
   const { isSignedIn, isLoaded } = useUser();
-  const [productsOpen, setProductsOpen] = useState(false);
-  const [empresaOpen, setEmpresaOpen] = useState(false);
+  const [activeNav, setActiveNav] = useState<"products" | "empresa" | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
   const [mobileEmpresaOpen, setMobileEmpresaOpen] = useState(false);
+  const navCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [demoVoices, setDemoVoices] = useState<DemoVoice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<string>("");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -155,6 +156,14 @@ export default function LandingPage() {
   const [featuresLoading, setFeaturesLoading] = useState(false);
   const [featuresPlaying, setFeaturesPlaying] = useState(false);
   const featuresAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  function openNav(which: "products" | "empresa") {
+    if (navCloseTimer.current) clearTimeout(navCloseTimer.current);
+    setActiveNav(which);
+  }
+  function closeNav() {
+    navCloseTimer.current = setTimeout(() => setActiveNav(null), 80);
+  }
 
   useEffect(() => {
     fetch("/api/public-voices?language=es&page_size=5")
@@ -239,15 +248,15 @@ export default function LandingPage() {
             {/* Productos — mega menu */}
             <div
               className="relative"
-              onMouseEnter={() => setProductsOpen(true)}
-              onMouseLeave={() => setProductsOpen(false)}
+              onMouseEnter={() => openNav("products")}
+              onMouseLeave={closeNav}
             >
               <button
-                onClick={() => setProductsOpen(!productsOpen)}
+                onClick={() => setActiveNav(activeNav === "products" ? null : "products")}
                 className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg"
               >
                 Productos
-                <ChevronDown size={13} style={{ transition: "transform 0.15s ease", transform: productsOpen ? "rotate(180deg)" : "none" }} />
+                <ChevronDown size={13} style={{ transition: "transform 0.15s ease", transform: activeNav === "products" ? "rotate(180deg)" : "none" }} />
               </button>
 
               {/* Dropdown */}
@@ -256,10 +265,10 @@ export default function LandingPage() {
                   position: "absolute",
                   top: "calc(100% + 6px)",
                   left: "50%",
-                  transform: `translateX(-50%) translateY(${productsOpen ? "0px" : "-6px"})`,
-                  opacity: productsOpen ? 1 : 0,
-                  pointerEvents: productsOpen ? "auto" : "none",
-                  transition: "opacity 150ms ease, transform 150ms ease",
+                  transform: `translateX(-50%) translateY(${activeNav === "products" ? "0px" : "4px"})`,
+                  opacity: activeNav === "products" ? 1 : 0,
+                  pointerEvents: activeNav === "products" ? "auto" : "none",
+                  transition: "opacity 150ms ease-out, transform 150ms ease-out",
                   width: "500px",
                   background: "#13131d",
                   border: "1px solid #2a2a3e",
@@ -304,15 +313,15 @@ export default function LandingPage() {
             {/* Empresa — mega menu */}
             <div
               className="relative"
-              onMouseEnter={() => setEmpresaOpen(true)}
-              onMouseLeave={() => setEmpresaOpen(false)}
+              onMouseEnter={() => openNav("empresa")}
+              onMouseLeave={closeNav}
             >
               <button
-                onClick={() => setEmpresaOpen(!empresaOpen)}
+                onClick={() => setActiveNav(activeNav === "empresa" ? null : "empresa")}
                 className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg"
               >
                 Empresa
-                <ChevronDown size={13} style={{ transition: "transform 0.15s ease", transform: empresaOpen ? "rotate(180deg)" : "none" }} />
+                <ChevronDown size={13} style={{ transition: "transform 0.15s ease", transform: activeNav === "empresa" ? "rotate(180deg)" : "none" }} />
               </button>
 
               <div
@@ -320,10 +329,10 @@ export default function LandingPage() {
                   position: "absolute",
                   top: "calc(100% + 6px)",
                   left: "50%",
-                  transform: `translateX(-50%) translateY(${empresaOpen ? "0px" : "-6px"})`,
-                  opacity: empresaOpen ? 1 : 0,
-                  pointerEvents: empresaOpen ? "auto" : "none",
-                  transition: "opacity 150ms ease, transform 150ms ease",
+                  transform: `translateX(-50%) translateY(${activeNav === "empresa" ? "0px" : "4px"})`,
+                  opacity: activeNav === "empresa" ? 1 : 0,
+                  pointerEvents: activeNav === "empresa" ? "auto" : "none",
+                  transition: "opacity 150ms ease-out, transform 150ms ease-out",
                   width: "240px",
                   background: "#13131d",
                   border: "1px solid #2a2a3e",
@@ -403,20 +412,20 @@ export default function LandingPage() {
           <div className="md:hidden border-t" style={{ borderColor: "#1e1e2e", background: "#0a0a0f" }}>
             {/* Productos accordion */}
             <button
-              onClick={() => setProductsOpen(!productsOpen)}
+              onClick={() => setMobileProductsOpen(!mobileProductsOpen)}
               className="w-full flex items-center justify-between px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors"
               style={{ background: "none", border: "none", cursor: "pointer" }}
             >
               <span>Productos</span>
-              <ChevronDown size={14} style={{ transition: "transform 0.15s", transform: productsOpen ? "rotate(180deg)" : "none" }} />
+              <ChevronDown size={14} style={{ transition: "transform 0.15s", transform: mobileProductsOpen ? "rotate(180deg)" : "none" }} />
             </button>
-            {productsOpen && (
+            {mobileProductsOpen && (
               <div style={{ paddingLeft: "12px", paddingBottom: "8px", display: "flex", flexDirection: "column", gap: "1px" }}>
                 {[...NAV_PRODUCTS_LEFT, ...NAV_PRODUCTS_RIGHT].map((item) => (
                   <Link
                     key={item.title}
                     href={item.href}
-                    onClick={() => { setMobileNavOpen(false); setProductsOpen(false); }}
+                    onClick={() => { setMobileNavOpen(false); setMobileProductsOpen(false); }}
                     className="hover:bg-white/5 rounded-lg transition-colors"
                     style={{ display: "block", padding: "9px 14px", textDecoration: "none" }}
                   >
