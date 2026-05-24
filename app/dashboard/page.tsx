@@ -24,6 +24,7 @@ interface Voice {
   isSystem: boolean;
   fishAudioModelId?: string;
   createdAt?: string;
+  clipCount?: number;
 }
 
 interface Generation {
@@ -1336,6 +1337,11 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
 }
 
 /* ─── Voices Tab ──────────────────────────────────────────── */
+const LANG_FLAGS: Record<string, string> = {
+  es: "🇪🇸", en: "🇬🇧", fr: "🇫🇷", de: "🇩🇪", it: "🇮🇹",
+  pt: "🇵🇹", ja: "🇯🇵", zh: "🇨🇳", ko: "🇰🇷", ar: "🇸🇦",
+};
+
 function VoicesTab({
   voices,
   onRefresh,
@@ -1351,8 +1357,16 @@ function VoicesTab({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [previewState, setPreviewState] = useState<Record<string, "idle" | "loading" | "playing">>({});
   const previewAudiosRef = useRef<Record<string, HTMLAudioElement>>({});
+  const [search, setSearch] = useState("");
 
-  const LANG_LABELS: Record<string, string> = { es: "ES", en: "EN", fr: "FR", de: "DE", it: "IT", pt: "PT", ja: "JA", zh: "ZH", ko: "KO", ar: "AR" };
+  const cloned = voices.filter((v) => !v.isSystem);
+  const slotLimit = VOICE_SLOT_LIMITS[plan] ?? 0;
+  const atLimit = slotLimit !== Infinity && cloned.length >= slotLimit;
+  const slotLabel = slotLimit === Infinity ? `${cloned.length} voces` : `${cloned.length}/${slotLimit} slots`;
+
+  const filtered = search.trim()
+    ? cloned.filter((v) => v.name.toLowerCase().includes(search.toLowerCase()))
+    : cloned;
 
   async function handlePreview(voice: Voice) {
     const state = previewState[voice.id] ?? "idle";
@@ -1378,11 +1392,6 @@ function VoicesTab({
     }
   }
 
-
-  const cloned = voices.filter((v) => !v.isSystem);
-  const slotLimit = VOICE_SLOT_LIMITS[plan] ?? 0;
-  const atLimit = slotLimit !== Infinity && cloned.length >= slotLimit;
-
   async function handleDelete(voiceId: string) {
     setDeletingId(voiceId);
     try {
@@ -1402,96 +1411,159 @@ function VoicesTab({
         />
       )}
 
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-lg font-bold text-white">Mis voces clonadas</h2>
-            <p className="text-xs mt-0.5" style={{ color: "#3a3a52" }}>
-              {slotLimit === Infinity ? `${cloned.length} / Ilimitadas` : `${cloned.length}/${slotLimit} slots utilizados`}
-            </p>
-          </div>
-          <button
-            onClick={() => !atLimit && setShowModal(true)}
-            disabled={atLimit}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-            style={atLimit ? { background: "#1a1a28", border: "1px solid #2a2a3e", color: "#3a3a52" } : { background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
-          >
-            {atLimit ? `Límite alcanzado (${cloned.length}/${slotLimit})` : "+ Clonar nueva voz"}
-          </button>
-        </div>
+      {/* Top tabs */}
+      <div className="flex gap-1 mb-5 border-b" style={{ borderColor: "#1e1e2e" }}>
+        <button
+          className="px-4 py-2.5 text-sm font-semibold relative"
+          style={{ color: "#e5e7eb" }}
+        >
+          Voz personalizada
+          <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t" style={{ background: "#3b82f6" }} />
+        </button>
+      </div>
 
-        {cloned.length === 0 ? (
-          <div className="text-center py-16" style={{ color: "#8888a8" }}>
-            <div className="flex justify-center mb-3">
-              <Mic size={40} style={{ color: "#8888a8" }} />
-            </div>
-            <p className="font-medium mb-1">No tienes voces clonadas</p>
-            <p className="text-sm">Clona una voz con 10 segundos de audio</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {cloned.map((voice) => (
-              <div key={voice.id} className="p-4 rounded-xl border" style={{ background: "#12121a", borderColor: "#2a2a3e" }}>
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className="font-medium text-white">{voice.name}</p>
-                    {voice.createdAt && (
-                      <p className="text-xs text-gray-500 mt-0.5">{formatDate(voice.createdAt)}</p>
-                    )}
-                    <div className="flex gap-1.5 mt-1.5 flex-wrap">
+      {/* Toolbar: slots · search · clone button */}
+      <div className="flex items-center gap-3 mb-6">
+        <span className="text-xs flex-shrink-0" style={{ color: "#4a4a65" }}>
+          {slotLabel}
+        </span>
+        <div className="flex-1 relative">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a4a65" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar voces..."
+            className="w-full rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/40"
+            style={{ background: "#0d0d17", border: "1px solid #1e1e2e", color: "#d1d5db" }}
+          />
+        </div>
+        <button
+          onClick={() => !atLimit && setShowModal(true)}
+          disabled={atLimit}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white flex-shrink-0 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
+        >
+          <span className="text-base leading-none">+</span>
+          Clonar nueva voz
+        </button>
+      </div>
+
+      {/* Grid */}
+      {cloned.length === 0 ? (
+        <div className="text-center py-20" style={{ color: "#8888a8" }}>
+          <Mic size={40} className="mx-auto mb-3 opacity-30" />
+          <p className="font-medium mb-1">No tienes voces clonadas</p>
+          <p className="text-sm opacity-60">Clona una voz con 10 segundos de audio</p>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16" style={{ color: "#8888a8" }}>
+          <p className="text-sm">Sin resultados para &ldquo;{search}&rdquo;</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filtered.map((voice) => {
+            const ps = previewState[voice.id] ?? "idle";
+            const isDeleting = deletingId === voice.id;
+            return (
+              <div
+                key={voice.id}
+                className="group rounded-xl border overflow-hidden transition-colors"
+                style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#2a2a3e")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1e1e2e")}
+              >
+                <div className="p-4 flex gap-3">
+                  {/* Thumbnail */}
+                  <div
+                    className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center"
+                    style={{ background: "#1a1a2e" }}
+                  >
+                    <Mic size={22} style={{ color: "#2a2a5e" }} />
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    {/* Name row */}
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="font-semibold text-white text-sm truncate">{voice.name}</span>
                       {voice.language && (
-                        <span className="px-1.5 py-0.5 rounded text-xs font-semibold" style={{ background: "rgba(59,130,246,0.12)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}>
-                          {LANG_LABELS[voice.language] ?? voice.language.toUpperCase()}
-                        </span>
+                        <span className="text-sm leading-none flex-shrink-0">{LANG_FLAGS[voice.language] ?? "🌐"}</span>
                       )}
                       {voice.gender && (
-                        <span className="px-1.5 py-0.5 rounded text-xs font-medium" style={{ background: "rgba(255,255,255,0.05)", color: "#8888a8", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <span className="text-xs flex-shrink-0" style={{ color: "#4a4a65" }}>
                           {voice.gender === "masculine" ? "♂" : "♀"}
                         </span>
                       )}
                     </div>
-                  </div>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(59,130,246,0.15)" }}>
-                    <Mic size={14} style={{ color: "#93c5fd" }} />
+
+                    {/* Clip count + date */}
+                    <div className="flex items-center gap-2 text-xs" style={{ color: "#4a4a65" }}>
+                      <span className="flex items-center gap-1">
+                        <Mic2 size={10} />
+                        {voice.clipCount ?? 0} clips
+                      </span>
+                      {voice.createdAt && (
+                        <>
+                          <span>·</span>
+                          <span>{formatDate(voice.createdAt)}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-2">
+
+                {/* Action bar — visible on hover */}
+                <div
+                  className="border-t px-3 py-2.5 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                  style={{ borderColor: "#1e1e2e", background: "#0a0a14" }}
+                >
                   <button
                     onClick={() => handlePreview(voice)}
                     disabled={!voice.fishAudioModelId}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-40 flex items-center justify-center gap-1"
-                    style={{ background: "rgba(255,255,255,0.05)", color: "#a0a0bf", border: "1px solid rgba(255,255,255,0.08)" }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40"
+                    style={{ background: "rgba(255,255,255,0.05)", color: "#9ca3af", border: "1px solid rgba(255,255,255,0.08)" }}
                   >
-                    {previewState[voice.id] === "loading" ? (
+                    {ps === "loading" ? (
                       <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                    ) : previewState[voice.id] === "playing" ? (
+                    ) : ps === "playing" ? (
                       <Pause size={11} />
                     ) : (
                       <Play size={11} />
                     )}
+                    {ps === "playing" ? "Detener" : "Escuchar"}
                   </button>
+
                   <button
                     onClick={() => onUseVoice({ referenceId: voice.fishAudioModelId ?? "", name: voice.name, isCloned: true })}
                     disabled={!voice.fishAudioModelId}
-                    className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
+                    className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
                     style={{ background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}
                   >
-                    Usar
+                    Usar voz
                   </button>
+
                   <button
                     onClick={() => handleDelete(voice.id)}
-                    disabled={deletingId === voice.id}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60"
-                    style={{ background: "rgba(239,68,68,0.1)", color: "#f87171", border: "1px solid rgba(239,68,68,0.2)" }}
+                    disabled={isDeleting}
+                    className="p-1.5 rounded-lg transition-colors disabled:opacity-40"
+                    style={{ color: "#4a4a65" }}
+                    title="Eliminar"
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#f87171")}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#4a4a65")}
                   >
-                    {deletingId === voice.id ? "..." : "Eliminar"}
+                    {isDeleting ? (
+                      <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                    ) : (
+                      <Trash2 size={14} />
+                    )}
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </>
   );
 }

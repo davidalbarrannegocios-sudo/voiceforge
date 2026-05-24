@@ -20,7 +20,20 @@ export async function GET() {
     },
   });
 
-  const clonedVoices = (user?.clonedVoices ?? []).map((v) => ({
+  const rawVoices = user?.clonedVoices ?? [];
+
+  // Clip counts per voice (grouped by Fish Audio model ID)
+  const modelIds = rawVoices.map((v) => v.referenceAudioUrl);
+  const counts = modelIds.length
+    ? await prisma.generation.groupBy({
+        by: ["voiceId"],
+        where: { userId: user!.id, voiceId: { in: modelIds } },
+        _count: { voiceId: true },
+      })
+    : [];
+  const countMap = Object.fromEntries(counts.map((c) => [c.voiceId, c._count.voiceId]));
+
+  const clonedVoices = rawVoices.map((v) => ({
     id: v.id,
     name: v.name,
     language: v.language,
@@ -28,6 +41,7 @@ export async function GET() {
     isSystem: false,
     fishAudioModelId: v.referenceAudioUrl,
     createdAt: v.createdAt,
+    clipCount: countMap[v.referenceAudioUrl] ?? 0,
   }));
 
   return NextResponse.json([...SYSTEM_VOICES, ...clonedVoices]);
