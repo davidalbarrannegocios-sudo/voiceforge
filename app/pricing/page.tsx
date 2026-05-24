@@ -249,8 +249,8 @@ function PricingContent() {
                 style={{
                   borderRadius: "16px",
                   padding: "24px 20px",
-                  border: plan.key === "enterprise" ? "1px solid #10b981" : plan.popular ? "1px solid rgba(59,130,246,0.55)" : "1px solid #1e1e2e",
-                  background: plan.key === "enterprise" ? "rgba(16,185,129,0.06)" : plan.popular ? "rgba(30,58,138,0.22)" : "#0d0d17",
+                  border: "1px solid #1e1e2e",
+                  background: "#0d0d17",
                   display: "flex",
                   flexDirection: "column",
                 }}
@@ -294,8 +294,7 @@ function PricingContent() {
                   style={
                     plan.key === "enterprise"
                       ? { width: "100%", padding: "11px", borderRadius: "9px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#10b981,#059669)", color: "#fff", fontSize: "13px", fontWeight: 600, marginBottom: "18px" }
-                      : plan.popular
-                      ? { width: "100%", padding: "11px", borderRadius: "9px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "13px", fontWeight: 600, marginBottom: "18px" }
+                      : { width: "100%", padding: "11px", borderRadius: "9px", border: "1px solid #2a2a3e", cursor: "pointer", background: "#111118", color: "#e5e7eb", fontSize: "13px", fontWeight: 600, marginBottom: "18px" }
                       : { width: "100%", padding: "11px", borderRadius: "9px", border: "1px solid #2a2a3e", cursor: "pointer", background: "#111118", color: "#e5e7eb", fontSize: "13px", fontWeight: 600, marginBottom: "18px" }
                   }
                 >
