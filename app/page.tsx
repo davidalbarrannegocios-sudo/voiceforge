@@ -110,9 +110,20 @@ function PlayIcon() {
   );
 }
 
-function FaqItem({ item, open, onToggle }: { item: typeof FAQ_ITEMS[0]; open: boolean; onToggle: () => void }) {
+function FaqItem({ item, open, onToggle, onOpen, onClose }: {
+  item: typeof FAQ_ITEMS[0];
+  open: boolean;
+  onToggle: () => void;
+  onOpen: () => void;
+  onClose: () => void;
+}) {
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ background: "#12121a", borderColor: "#2a2a3e" }}>
+    <div
+      className="rounded-xl border overflow-hidden"
+      style={{ background: "#12121a", borderColor: "#2a2a3e" }}
+      onMouseEnter={onOpen}
+      onMouseLeave={onClose}
+    >
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between px-5 py-4 text-left transition-colors"
@@ -121,15 +132,25 @@ function FaqItem({ item, open, onToggle }: { item: typeof FAQ_ITEMS[0]; open: bo
         <span className="font-medium pr-4 text-sm md:text-base">{item.q}</span>
         <ChevronDown
           size={18}
-          className="flex-shrink-0 transition-transform duration-200"
-          style={{ transform: open ? "rotate(180deg)" : "none", color: "#8888a8" }}
+          className="flex-shrink-0"
+          style={{
+            transform: open ? "rotate(180deg)" : "none",
+            transition: "transform 200ms ease-out",
+            color: "#8888a8",
+          }}
         />
       </button>
-      {open && (
+      <div
+        style={{
+          maxHeight: open ? "200px" : "0",
+          overflow: "hidden",
+          transition: "max-height 200ms ease-out",
+        }}
+      >
         <div className="px-5 pb-5 text-sm text-gray-400 leading-relaxed border-t" style={{ borderColor: "#2a2a3e" }}>
           {item.a}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -1029,6 +1050,8 @@ export default function LandingPage() {
                   item={item}
                   open={openFaq === i}
                   onToggle={() => setOpenFaq(openFaq === i ? null : i)}
+                  onOpen={() => setOpenFaq(i)}
+                  onClose={() => setOpenFaq(null)}
                 />
               ))}
             </div>
