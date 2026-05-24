@@ -156,8 +156,6 @@ function PricingContent() {
     return Math.round(annualMonthly(price) * 12);
   }
 
-  const freePlan = PLANS[0];
-  const paidPlans = PLANS.slice(1);
 
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0f" }}>
@@ -204,132 +202,108 @@ function PricingContent() {
           </div>
         </div>
 
-        {/* Plans — free card left + paid plans right */}
-        <div style={{ display: "flex", gap: "10px", marginBottom: "60px", alignItems: "start" }}>
-
-          {/* Free / Nivel gratuito — narrower card */}
-          <div style={{
-            width: "196px",
-            flexShrink: 0,
-            borderRadius: "16px",
-            padding: "22px 18px",
-            border: "1px solid #2a2a3e",
-            background: "#0d0d17",
-            display: "flex",
-            flexDirection: "column",
-          }}>
-            <p style={{ fontSize: "10px", fontWeight: 700, color: "#555570", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "14px" }}>
-              Nivel gratuito
-            </p>
-            <p style={{ fontSize: "15px", fontWeight: 700, color: "#9ca3af", marginBottom: "6px" }}>Gratis</p>
-            <p style={{ fontSize: "12px", color: "#3a3a52", marginBottom: "18px", lineHeight: 1.45 }}>
-              {freePlan.description}
-            </p>
-            <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px", display: "flex", flexDirection: "column", gap: "8px" }}>
-              {freePlan.features.map((f) => (
-                <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "7px", fontSize: "12px", color: "#4a4a65" }}>
-                  <Check size={11} style={{ color: "#3a3a52", flexShrink: 0, marginTop: "2px" }} />
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <button
-              onClick={() => handleSelect(freePlan)}
-              style={{ width: "100%", padding: "10px", borderRadius: "9px", border: "1px solid #2a2a3e", background: "transparent", color: "#6b7280", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}
+        {/* Plans — 5 col grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px", marginBottom: "60px" }}>
+          {PLANS.map((plan) => (
+            <div
+              key={plan.key}
+              style={{
+                borderRadius: "14px",
+                padding: "22px 16px",
+                border: "1px solid #1e1e2e",
+                background: "#0d0d17",
+                display: "flex",
+                flexDirection: "column",
+              }}
             >
-              Empezar gratis
-            </button>
-          </div>
-
-          {/* Paid plans — equal columns, same height */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "10px", flex: 1, alignItems: "stretch" }}>
-            {paidPlans.map((plan) => (
-              <div
-                key={plan.key}
-                style={{
-                  borderRadius: "16px",
-                  padding: "24px 20px",
-                  border: "1px solid #1e1e2e",
-                  background: "#0d0d17",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                {/* Name + inline badge */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px" }}>
-                  <span style={{ fontSize: "16px", fontWeight: 700, color: "#fff" }}>{plan.name}</span>
-                  {plan.popular && (
-                    <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", background: "rgba(59,130,246,0.2)", color: "#93c5fd" }}>
-                      Popular
-                    </span>
-                  )}
-                  {plan.key === "enterprise" && (
-                    <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", background: "rgba(16,185,129,0.2)", color: "#4ade80" }}>
-                      Equipos
-                    </span>
-                  )}
-                </div>
-
-                {/* Price block */}
-                <div style={{ marginBottom: "20px" }}>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: "3px" }}>
-                    <span style={{ fontSize: "52px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
-                      ${billing === "annual" ? annualMonthly(plan.price) : plan.price}
-                    </span>
-                    <span style={{ fontSize: "12px", color: "#3a3a52", marginLeft: "2px" }}>/mes</span>
-                  </div>
-                  {billing === "annual" && (
-                    <p style={{ fontSize: "11px", color: "#22c55e", marginTop: "3px" }}>
-                      ${annualTotal(plan.price)} facturado anualmente
-                    </p>
-                  )}
-                  <p style={{ fontSize: "12px", color: "#3a3a52", marginTop: "4px" }}>
-                    {plan.characters.toLocaleString("es-ES")} caracteres/mes
-                  </p>
-                </div>
-
-                {/* CTA */}
-                <button
-                  onClick={() => handleSelect(plan)}
-                  style={
-                    plan.key === "enterprise"
-                      ? { width: "100%", padding: "11px", borderRadius: "9px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#10b981,#059669)", color: "#fff", fontSize: "13px", fontWeight: 600, marginBottom: "18px" }
-                      : { width: "100%", padding: "11px", borderRadius: "9px", border: "1px solid #2a2a3e", cursor: "pointer", background: "#111118", color: "#e5e7eb", fontSize: "13px", fontWeight: 600, marginBottom: "18px" }
-                      : { width: "100%", padding: "11px", borderRadius: "9px", border: "1px solid #2a2a3e", cursor: "pointer", background: "#111118", color: "#e5e7eb", fontSize: "13px", fontWeight: 600, marginBottom: "18px" }
-                  }
-                >
-                  {plan.cta}
-                </button>
-
-                {/* Features */}
-                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "9px", flex: 1 }}>
-                  {plan.features.map((f) => (
-                    <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "13px", color: "#6b6b88" }}>
-                      <Check size={12} style={{ color: plan.key === "enterprise" ? "#10b981" : "#3b82f6", flexShrink: 0, marginTop: "2px" }} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-
-                {/* Enterprise seats */}
+              {/* Name + badge */}
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "6px", marginBottom: "4px" }}>
+                <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{plan.name}</span>
+                {plan.popular && (
+                  <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 7px", borderRadius: "999px", border: "1px solid rgba(59,130,246,0.45)", color: "#93c5fd", background: "transparent", whiteSpace: "nowrap", flexShrink: 0 }}>
+                    Popular
+                  </span>
+                )}
                 {plan.key === "enterprise" && (
-                  <div style={{ marginTop: "16px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "10px", padding: "12px" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                      <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#fff" }}>
-                        <Users size={13} style={{ color: "#fff", flexShrink: 0 }} /> Seats
+                  <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 7px", borderRadius: "999px", border: "1px solid rgba(16,185,129,0.45)", color: "#6ee7b7", background: "transparent", whiteSpace: "nowrap", flexShrink: 0 }}>
+                    Equipos
+                  </span>
+                )}
+              </div>
+
+              {/* Description */}
+              <p style={{ fontSize: "12px", color: "#4a4a65", marginBottom: "14px", lineHeight: 1.4 }}>
+                {plan.description}
+              </p>
+
+              {/* Price */}
+              <div style={{ marginBottom: "16px" }}>
+                {plan.free ? (
+                  <div>
+                    <span style={{ fontSize: "38px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>Gratis</span>
+                    <p style={{ fontSize: "11px", color: "transparent", marginTop: "3px", userSelect: "none" }}>·</p>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
+                      <span style={{ fontSize: "38px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
+                        ${billing === "annual" ? annualMonthly(plan.price) : plan.price}
                       </span>
-                      <span style={{ fontSize: "11px", color: "#555570", textDecoration: "line-through" }}>$5/seat/mes</span>
+                      <span style={{ fontSize: "12px", color: "#3a3a52", marginLeft: "2px" }}>/mes</span>
                     </div>
-                    <div style={{ textAlign: "center" }}>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.35)", borderRadius: "8px", padding: "3px 10px", fontSize: "11px", fontWeight: 700, color: "#4ade80" }}>
-                        EliteLabs lo patrocina · GRATIS
-                      </span>
-                    </div>
+                    {billing === "annual" ? (
+                      <p style={{ fontSize: "11px", color: "#3a3a52", marginTop: "3px" }}>
+                        ${annualTotal(plan.price)} facturado anualmente
+                      </p>
+                    ) : (
+                      <p style={{ fontSize: "11px", color: "transparent", marginTop: "3px", userSelect: "none" }}>·</p>
+                    )}
                   </div>
                 )}
               </div>
-            ))}
-          </div>
+
+              {/* CTA */}
+              <button
+                onClick={() => handleSelect(plan)}
+                style={
+                  plan.free
+                    ? { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #2a2a3e", cursor: "pointer", background: "transparent", color: "#6b7280", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
+                    : plan.popular
+                    ? { width: "100%", padding: "10px", borderRadius: "8px", border: "none", cursor: "pointer", background: "#2563eb", color: "#fff", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
+                    : { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #2a2a3e", cursor: "pointer", background: "#1a1a2e", color: "#e5e7eb", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
+                }
+              >
+                {plan.cta}
+              </button>
+
+              {/* Features */}
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "7px", flex: 1 }}>
+                {plan.features.map((f) => (
+                  <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "7px", fontSize: "12px", color: "#6b6b88" }}>
+                    <Check size={11} style={{ color: "#3a3a52", flexShrink: 0, marginTop: "2px" }} />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+
+              {/* Enterprise seats */}
+              {plan.key === "enterprise" && (
+                <div style={{ marginTop: "14px", background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "8px", padding: "10px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 700, color: "#fff" }}>
+                      <Users size={12} style={{ color: "#fff", flexShrink: 0 }} /> Seats
+                    </span>
+                    <span style={{ fontSize: "11px", color: "#555570", textDecoration: "line-through" }}>$5/seat/mes</span>
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: "6px", padding: "3px 8px", fontSize: "11px", fontWeight: 700, color: "#4ade80" }}>
+                      EliteLabs lo patrocina · GRATIS
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
 
         {/* Competitor comparison */}
