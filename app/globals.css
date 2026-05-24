@@ -166,22 +166,26 @@ input[type="range"]::-moz-range-thumb {
   color: #fff !important;
 }
 
-/* Botones de Google y Apple - fondo gris claro casi blanco */
+/* Botones de Google y Apple - sin fondo, borde gris, texto blanco */
 .cl-socialButtonsBlockButton {
-  background: #e8e8e8 !important;
-  border-color: #d0d0d0 !important;
-  color: #111 !important;
+  background: transparent !important;
+  border: 1px solid #555 !important;
+  color: #fff !important;
 }
 
 .cl-socialButtonsBlockButton:hover {
-  background: #f0f0f0 !important;
+  background: rgba(255,255,255,0.05) !important;
+  border-color: #888 !important;
 }
 
-/* Logo de Apple en negro */
-.cl-socialButtonsBlockButton__apple svg,
-.cl-socialButtonsBlockButton__apple path {
-  fill: #000 !important;
-  color: #000 !important;
+/* Texto del botón en blanco */
+.cl-socialButtonsBlockButtonText {
+  color: #fff !important;
+}
+
+/* Logo de Apple en blanco */
+.cl-socialButtonsBlockButton__apple svg path {
+  fill: #fff !important;
 }
 
 /* Separador "or" en gris claro */
