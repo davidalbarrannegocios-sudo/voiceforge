@@ -602,6 +602,7 @@ export function VoiceBrowser({
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [filters, setFilters] = useState<AdvancedFilters>(EMPTY_FILTERS);
+  const [featuredVoices, setFeaturedVoices] = useState<FishVoice[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const userCanUsePremium = canUsePremium(plan);
@@ -663,6 +664,20 @@ export function VoiceBrowser({
       }
     }
   }
+
+  // Fetch each featured voice individually so they're always available regardless of page
+  useEffect(() => {
+    if (FEATURED_VOICE_IDS.length === 0) return;
+    Promise.all(
+      FEATURED_VOICE_IDS.map((id) =>
+        fetch(`/api/fish-voice/${id}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null)
+      )
+    ).then((results) => {
+      setFeaturedVoices(results.filter((v): v is FishVoice => v !== null && Boolean(v._id)));
+    });
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 400);
@@ -738,10 +753,19 @@ export function VoiceBrowser({
   });
 
   const hasActiveFilters = Object.values(filters).some((arr) => arr.length > 0);
-  const applyFeatured = page === 1 && !debouncedSearch && !hasActiveFilters && FEATURED_VOICE_IDS.length > 0;
+  const applyFeatured = page === 1 && !debouncedSearch && !hasActiveFilters && featuredVoices.length > 0;
   const displayedVoices = applyFeatured
     ? [
-        ...FEATURED_VOICE_IDS.map((id) => filteredVoices.find((v) => v._id === id)).filter((v): v is FishVoice => v !== undefined),
+        // Featured voices in FEATURED_VOICE_IDS order, filtered by current tier
+        ...FEATURED_VOICE_IDS
+          .map((id) => featuredVoices.find((v) => v._id === id))
+          .filter((v): v is FishVoice => v !== undefined)
+          .filter((v) => {
+            if (tier === "free" && isPremiumVoice(v._id)) return false;
+            if (tier === "premium" && !isPremiumVoice(v._id)) return false;
+            return true;
+          }),
+        // Rest of current page excluding any already shown as featured
         ...filteredVoices.filter((v) => !FEATURED_VOICE_IDS.includes(v._id)),
       ]
     : filteredVoices;
