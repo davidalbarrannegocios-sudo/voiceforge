@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, UserButton, useClerk } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2 } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, Share2, MoreVertical, AudioWaveform, Lock } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, getAge, LANG_FLAGS, formatCount } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
@@ -1147,6 +1147,150 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
   );
 }
 
+/* ─── Voice Card ─────────────────────────────────────────── */
+function VoiceCard({
+  voice,
+  previewState,
+  deletingId,
+  onPreview,
+  onUse,
+  onDelete,
+}: {
+  voice: Voice;
+  previewState: Record<string, "idle" | "loading" | "playing">;
+  deletingId: string | null;
+  onPreview: (v: Voice) => void;
+  onUse: (v: Voice) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const ps = previewState[voice.id] ?? "idle";
+  const isDeleting = deletingId === voice.id;
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [menuOpen]);
+
+  return (
+    <div
+      className="rounded-xl border p-3 transition-colors"
+      style={{ background: hovered ? "#111120" : "#0d0d17", borderColor: hovered ? "#252535" : "#1e1e2e" }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => { setHovered(false); setMenuOpen(false); }}
+    >
+      {/* Top row: avatar · name+date */}
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: "#1a1a2e" }}>
+          <Mic size={16} style={{ color: "#2a2a5e" }} />
+        </div>
+        <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1 min-w-0">
+            <span className="font-semibold text-white text-sm truncate">{voice.name}</span>
+            {voice.language && <span className="text-xs leading-none flex-shrink-0">{LANG_FLAGS[voice.language] ?? "🌐"}</span>}
+            {voice.gender && <span className="text-xs flex-shrink-0" style={{ color: "#3a3a52" }}>{voice.gender === "masculine" ? "♂" : "♀"}</span>}
+          </div>
+          {voice.createdAt && (
+            <span className="text-xs flex-shrink-0" style={{ color: "#3a3a52" }}>{formatDate(voice.createdAt)}</span>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom row: clips · actions (on hover) */}
+      <div className="flex items-center justify-between" style={{ paddingLeft: "52px" }}>
+        {/* Clips count */}
+        <div className="flex items-center gap-1 text-xs" style={{ color: "#3a3a52" }}>
+          <Lock size={9} />
+          <span>{voice.clipCount ?? 0} Clips de audio</span>
+        </div>
+
+        {/* Hover actions */}
+        <div
+          className="flex items-center gap-1.5"
+          style={{ opacity: hovered ? 1 : 0, transition: "opacity 150ms ease", pointerEvents: hovered ? "auto" : "none" }}
+        >
+          {/* Share */}
+          <button
+            className="p-1.5 rounded-lg transition-colors"
+            style={{ color: "#4a4a65" }}
+            title="Compartir"
+            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#9ca3af")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#4a4a65")}
+          >
+            <Share2 size={13} />
+          </button>
+
+          {/* Three-dot menu */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen((o) => !o)}
+              className="p-1.5 rounded-lg transition-colors"
+              style={{ color: menuOpen ? "#9ca3af" : "#4a4a65", background: menuOpen ? "rgba(255,255,255,0.06)" : "transparent" }}
+              title="Más opciones"
+            >
+              <MoreVertical size={13} />
+            </button>
+
+            {menuOpen && (
+              <div
+                className="absolute right-0 bottom-full mb-1.5 rounded-xl py-1 z-20 min-w-[150px]"
+                style={{ background: "#1a1a2e", border: "1px solid #2a2a3e", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
+              >
+                <button
+                  onClick={() => { onPreview(voice); setMenuOpen(false); }}
+                  disabled={!voice.fishAudioModelId}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors disabled:opacity-40"
+                  style={{ color: "#d1d5db" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  {ps === "loading" ? (
+                    <svg className="animate-spin h-3 w-3 flex-shrink-0" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                  ) : ps === "playing" ? (
+                    <Pause size={12} className="flex-shrink-0" />
+                  ) : (
+                    <Play size={12} className="flex-shrink-0" />
+                  )}
+                  {ps === "playing" ? "Detener preview" : "Escuchar preview"}
+                </button>
+                <div style={{ height: "1px", background: "#2a2a3e", margin: "2px 0" }} />
+                <button
+                  onClick={() => { onDelete(voice.id); setMenuOpen(false); }}
+                  disabled={isDeleting}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors disabled:opacity-40"
+                  style={{ color: "#f87171" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(239,68,68,0.08)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  <Trash2 size={12} className="flex-shrink-0" />
+                  Eliminar
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Use pill */}
+          <button
+            onClick={() => onUse(voice)}
+            disabled={!voice.fishAudioModelId}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors disabled:opacity-40"
+            style={{ background: "#ffffff", color: "#0a0a0f" }}
+          >
+            <AudioWaveform size={11} />
+            Usar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Voices Tab ──────────────────────────────────────────── */
 function VoicesTab({
   voices,
@@ -1268,77 +1412,17 @@ function VoicesTab({
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          {filtered.map((voice) => {
-            const ps = previewState[voice.id] ?? "idle";
-            const isDeleting = deletingId === voice.id;
-            return (
-              <div
-                key={voice.id}
-                className="rounded-xl border px-3 flex items-center gap-3 transition-colors"
-                style={{ background: "#0d0d17", borderColor: "#1e1e2e", height: "72px" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "#111120")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "#0d0d17")}
-              >
-                {/* Avatar */}
-                <div className="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: "#1a1a2e" }}>
-                  <Mic size={16} style={{ color: "#2a2a5e" }} />
-                </div>
-
-                {/* Name + meta */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1 mb-0.5">
-                    <span className="font-semibold text-white text-sm truncate">{voice.name}</span>
-                    {voice.language && <span className="text-xs leading-none flex-shrink-0">{LANG_FLAGS[voice.language] ?? "🌐"}</span>}
-                    {voice.gender && <span className="text-xs flex-shrink-0" style={{ color: "#3a3a52" }}>{voice.gender === "masculine" ? "♂" : "♀"}</span>}
-                  </div>
-                  <div className="flex items-center gap-1 text-xs" style={{ color: "#3a3a52" }}>
-                    <Mic2 size={9} />
-                    <span>{voice.clipCount ?? 0} clips</span>
-                    {voice.createdAt && <><span>·</span><span>{formatDate(voice.createdAt)}</span></>}
-                  </div>
-                </div>
-
-                {/* Actions — always visible */}
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <button
-                    onClick={() => handlePreview(voice)}
-                    disabled={!voice.fishAudioModelId}
-                    className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40"
-                    style={{ background: "rgba(255,255,255,0.04)", color: "#6b7280", border: "1px solid rgba(255,255,255,0.07)" }}
-                    title="Escuchar"
-                  >
-                    {ps === "loading" ? (
-                      <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                    ) : ps === "playing" ? <Pause size={11} /> : <Play size={11} />}
-                    <span className="hidden sm:inline">{ps === "playing" ? "Parar" : "Escuchar"}</span>
-                  </button>
-
-                  <button
-                    onClick={() => onUseVoice({ referenceId: voice.fishAudioModelId ?? "", name: voice.name, isCloned: true })}
-                    disabled={!voice.fishAudioModelId}
-                    className="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
-                    style={{ background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}
-                  >
-                    Usar
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(voice.id)}
-                    disabled={isDeleting}
-                    className="p-1.5 rounded-lg transition-colors disabled:opacity-40"
-                    style={{ color: "#3a3a52" }}
-                    title="Eliminar"
-                    onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#f87171")}
-                    onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#3a3a52")}
-                  >
-                    {isDeleting
-                      ? <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                      : <Trash2 size={14} />}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+          {filtered.map((voice) => (
+            <VoiceCard
+              key={voice.id}
+              voice={voice}
+              previewState={previewState}
+              deletingId={deletingId}
+              onPreview={handlePreview}
+              onUse={(v) => onUseVoice({ referenceId: v.fishAudioModelId ?? "", name: v.name, isCloned: true })}
+              onDelete={handleDelete}
+            />
+          ))}
         </div>
       )}
     </>
