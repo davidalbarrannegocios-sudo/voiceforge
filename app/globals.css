@@ -159,11 +159,11 @@ input[type="range"]::-moz-range-thumb {
   color: #e5e7eb !important;
 }
 
-/* Badge Last Used */
-.cl-badge[data-localization-key="badge__lastUsed"],
+/* Badge Last Used - texto azul y borde azul */
 .cl-badge {
-  background: #3b82f6 !important;
-  color: #fff !important;
+  color: #3b82f6 !important;
+  background: transparent !important;
+  border: 1px solid #3b82f6 !important;
 }
 
 /* Botones de Google y Apple - sin fondo, borde gris, texto blanco */
@@ -184,8 +184,12 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* Logo de Apple en blanco */
-.cl-socialButtonsBlockButton__apple svg path {
+.cl-socialButtonsBlockButton__apple svg,
+.cl-socialButtonsBlockButton__apple svg path,
+.cl-socialButtonsBlockButton__apple svg rect,
+.cl-socialButtonsBlockButton__apple svg * {
   fill: #fff !important;
+  color: #fff !important;
 }
 
 /* Separador "or" en gris claro */
