@@ -145,6 +145,13 @@ model TeamMember {
   createdAt              DateTime @default(now())
 }
 
+model VoicePreview {
+  id        String   @id @default(cuid())
+  voiceId   String   @unique
+  audioUrl  String
+  createdAt DateTime @default(now())
+}
+
 model Referral {
   id          String    @id @default(cuid())
   referrerId  String

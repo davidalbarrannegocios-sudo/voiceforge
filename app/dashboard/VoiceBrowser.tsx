@@ -714,11 +714,7 @@ export function VoiceBrowser({
     setPreviewingId(null);
     setPreviewLoadingId(id);
     try {
-      const res = await fetch("/api/preview-voice", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reference_id: id }),
-      });
+      const res = await fetch(`/api/voice-preview/${id}`);
       if (!res.ok) return;
       const { audioUrl } = await res.json();
       const audio = new Audio(audioUrl);
