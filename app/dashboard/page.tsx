@@ -656,11 +656,11 @@ function GenerateTab({
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-    <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
+    <div style={{ height: "calc(100vh - 88px)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+    <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6" style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
 
       {/* ── LEFT: Editor ── */}
-      <div className="flex flex-col rounded-2xl border overflow-hidden" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+      <div className="flex flex-col rounded-2xl border overflow-hidden" style={{ background: "#0d0d17", borderColor: "#2a2a3e", minHeight: 0 }}>
         {/* Voice header */}
         <div className="flex items-center gap-3 px-6 py-4 border-b" style={{ borderColor: "#2a2a3e" }}>
           <div
@@ -681,9 +681,8 @@ function GenerateTab({
           onChange={(e) => setText(e.target.value)}
           placeholder={t.generate.placeholder}
           disabled={submitting}
-          rows={20}
           className="w-full px-6 py-5 text-sm text-gray-200 resize-none focus:outline-none disabled:opacity-60"
-          style={{ background: "#0d0d17", lineHeight: "1.75", minHeight: "200px" }}
+          style={{ background: "#0d0d17", lineHeight: "1.75", minHeight: "200px", flex: 1 }}
         />
 
         {/* Bottom bar */}
@@ -749,9 +748,9 @@ function GenerateTab({
       </div>
 
       {/* ── RIGHT: Settings panel ── */}
-      <div className="rounded-2xl border overflow-hidden h-full" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+      <div className="rounded-2xl border flex flex-col" style={{ background: "#0d0d17", borderColor: "#2a2a3e", overflow: "hidden", minHeight: 0 }}>
         {/* Tabs */}
-        <div className="flex border-b" style={{ borderColor: "#2a2a3e" }}>
+        <div className="flex border-b flex-shrink-0" style={{ borderColor: "#2a2a3e" }}>
           {(["ajustes", "historial"] as const).map((tab) => (
             <button
               key={tab}
@@ -769,7 +768,7 @@ function GenerateTab({
         </div>
 
         {rightTab === "ajustes" && (
-          <div className="p-5 space-y-6">
+          <div className="p-5 space-y-6 overflow-y-auto flex-1">
             {/* Voz */}
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#555570" }}>{t.generate.voiceLabel}</p>
@@ -938,7 +937,7 @@ function GenerateTab({
         )}
 
         {rightTab === "historial" && (
-          <div className="p-4">
+          <div className="p-4 overflow-y-auto flex-1">
             {!jobsLoaded ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
