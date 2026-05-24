@@ -817,8 +817,8 @@ function GenerateTab({
               <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#555570" }}>Modelo</p>
               <div className="space-y-2">
                 {([
-                  { value: "speech-1.6", label: "Fish Audio S2 Pro", badge: "El más nuevo", badgeColor: "#3b82f6" },
-                  { value: "speech-1.5", label: "Fish Audio S1",     badge: "Heredado",     badgeColor: "#6b6b88" },
+                  { value: "speech-1.6", label: "Elite Labs E2 Pro", badge: "El más nuevo", badgeColor: "#3b82f6" },
+                  { value: "speech-1.5", label: "Elite Labs E1",     badge: "Heredado",     badgeColor: "#6b6b88" },
                 ] as const).map(({ value, label, badge, badgeColor }) => (
                   <button
                     key={value}
