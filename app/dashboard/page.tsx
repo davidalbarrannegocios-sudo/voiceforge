@@ -1050,7 +1050,7 @@ function GenerateTab({
             ) : (
               <div className="space-y-2 overflow-y-auto max-h-[560px]">
                 {jobs.map((job) => (
-                  <JobCard key={job.id} job={job} />
+                  <JobCard key={job.id} job={job} onDelete={(id) => setJobs((prev) => prev.filter((j) => j.id !== id))} />
                 ))}
               </div>
             )}
@@ -1072,19 +1072,63 @@ function GenerateTab({
 }
 
 /* ─── Job Card ─────────────────────────────────────────────── */
-function JobCard({ job }: { job: Job }) {
+function JobCard({ job, onDelete }: { job: Job; onDelete?: (id: string) => void }) {
   const [showPlayer, setShowPlayer] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [confirm, setConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [removing, setRemoving] = useState(false);
 
   const voiceName = job.voiceName ?? "Voz por defecto";
 
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      await fetch(`/api/jobs/${job.id}`, { method: "DELETE" });
+    } catch { /* non-fatal */ }
+    setRemoving(true);
+    setTimeout(() => onDelete?.(job.id), 320);
+  }
+
   return (
-    <div className="rounded-xl border p-4" style={{ background: "#12121a", borderColor: "#2a2a3e" }}>
+    <div
+      className="rounded-xl border p-4"
+      style={{ background: "#12121a", borderColor: "#2a2a3e", opacity: removing ? 0 : 1, transition: "opacity 300ms ease-out" }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => { setHovered(false); setConfirm(false); }}
+    >
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex-1 min-w-0">
           <p className="text-sm text-gray-200 line-clamp-2 leading-snug">{job.text}</p>
         </div>
-        {statusBadge(job.status)}
+        <div className="flex items-center gap-2 shrink-0">
+          {statusBadge(job.status)}
+          <button
+            onClick={() => setConfirm(true)}
+            style={{ opacity: hovered && !confirm ? 1 : 0, transition: "opacity 150ms", color: "#6b7280", pointerEvents: hovered && !confirm ? "auto" : "none" }}
+            className="hover:text-red-400 transition-colors"
+            title="Eliminar"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
       </div>
+
+      {confirm && (
+        <div className="mb-2 flex items-center gap-2 text-xs" style={{ color: "#8888a8" }}>
+          <span>¿Eliminar?</span>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="px-2 py-0.5 rounded text-red-400 border border-red-400/30 hover:bg-red-400/10 transition-colors disabled:opacity-50"
+          >
+            {deleting ? "..." : "Eliminar"}
+          </button>
+          <button onClick={() => setConfirm(false)} className="px-2 py-0.5 rounded hover:text-gray-200 transition-colors">
+            Cancelar
+          </button>
+        </div>
+      )}
 
       <div className="flex items-center gap-3 text-xs flex-wrap" style={{ color: "#8888a8" }}>
         <span className="flex items-center gap-1">
