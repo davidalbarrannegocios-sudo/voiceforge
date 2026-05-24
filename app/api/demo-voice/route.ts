@@ -9,12 +9,13 @@ const TEXTS: Record<string, string> = {
 };
 
 export async function POST(req: Request) {
-  const { voiceId, section = "hero" } = await req.json();
+  const { voiceId, section = "hero", text: customText } = await req.json();
   const prefix = section === "features" ? "features" : "sample";
+  const text = (typeof customText === "string" && customText.trim()) ? customText.trim() : (TEXTS[section] ?? TEXTS.hero);
+  const isCustomText = typeof customText === "string" && customText.trim().length > 0;
   const key = `demo/${prefix}-${voiceId ?? "default"}.mp3`;
-  const text = TEXTS[section] ?? TEXTS.hero;
 
-  if (await r2KeyExists(key)) {
+  if (!isCustomText && await r2KeyExists(key)) {
     return NextResponse.json({ audioUrl: getPublicUrl(key) });
   }
 

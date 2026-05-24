@@ -123,6 +123,8 @@ export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [demoAudioUrl, setDemoAudioUrl] = useState<string | null>(null);
   const [demoLoading, setDemoLoading] = useState(false);
+  const [demoTab, setDemoTab] = useState<"tts" | "other">("tts");
+  const [demoText, setDemoText] = useState("Hola, soy una voz generada con inteligencia artificial por Elite Labs. La calidad es excepcional y el resultado suena completamente natural.");
 
   // Features card state
   const [featuresAudioUrl, setFeaturesAudioUrl] = useState<string | null>(null);
@@ -142,13 +144,14 @@ export default function LandingPage() {
   }, []);
 
   async function handleGenerateDemo() {
+    if (!demoText.trim()) return;
     setDemoLoading(true);
     setDemoAudioUrl(null);
     try {
       const res = await fetch("/api/demo-voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ voiceId: selectedVoice, section: "hero" }),
+        body: JSON.stringify({ voiceId: selectedVoice, section: "hero", text: demoText }),
       });
       const data = await res.json();
       if (data.audioUrl) setDemoAudioUrl(data.audioUrl);
@@ -247,8 +250,9 @@ export default function LandingPage() {
 
         {/* ── Hero ───────────────────────────────────────────────── */}
         <section className="pt-32 pb-20 px-4">
+
+          {/* Heading — narrow */}
           <div className="max-w-screen-2xl mx-auto px-4 sm:px-24">
-            {/* Text */}
             <div className="text-center mb-12">
               <div
                 className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full mb-8 border"
@@ -274,88 +278,141 @@ export default function LandingPage() {
                 Clonación de voz, biblioteca de voces, narraciones y mucho más
               </p>
             </div>
+          </div>
 
-            {/* Demo widget */}
+          {/* Demo widget — wider */}
+          <div className="max-w-screen-2xl mx-auto px-4 sm:px-10">
+
+            {/* Tabs */}
+            <div className="flex items-end gap-1 mb-0 border-b" style={{ borderColor: "#2a2a3e" }}>
+              {(["tts", "clone", "stt"] as const).map((key) => {
+                const labels = { tts: "Texto a voz", clone: "Clonación de voz", stt: "De voz a texto" };
+                const active = demoTab === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      if (key === "tts") { setDemoTab("tts"); }
+                      else { window.location.href = "/dashboard"; }
+                    }}
+                    className="px-5 py-2.5 text-sm font-medium transition-all rounded-t-lg -mb-px"
+                    style={
+                      active
+                        ? { background: "#12121a", color: "#e2e2f0", border: "1px solid #2a2a3e", borderBottom: "1px solid #12121a" }
+                        : { background: "transparent", color: "#555570", border: "1px solid transparent", borderBottom: "none" }
+                    }
+                  >
+                    {labels[key]}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Widget */}
             <div
-              className="rounded-2xl border overflow-hidden shadow-2xl"
+              className="rounded-b-2xl rounded-tr-2xl border-x border-b overflow-hidden shadow-2xl"
               style={{ background: "#12121a", borderColor: "#2a2a3e", boxShadow: "0 25px 60px rgba(0,0,0,0.5)" }}
             >
-              <div className="flex flex-col md:flex-row" style={{ minHeight: "300px" }}>
+              <div className="flex flex-col md:flex-row" style={{ minHeight: "360px" }}>
 
                 {/* Left: voice list */}
                 <div
-                  className="md:w-56 flex-shrink-0 border-b md:border-b-0 md:border-r p-4"
+                  className="md:w-64 flex-shrink-0 border-b md:border-b-0 md:border-r flex flex-col"
                   style={{ borderColor: "#2a2a3e", background: "#0d0d17" }}
                 >
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-1">Voces</p>
-                  <div className="space-y-0.5">
-                    {demoVoices.length === 0
-                      ? Array.from({ length: 5 }).map((_, i) => (
-                          <div key={i} className="h-10 rounded-lg animate-pulse mx-1" style={{ background: "#1a1a2e" }} />
-                        ))
-                      : demoVoices.map((voice) => {
-                          const active = selectedVoice === voice._id;
-                          return (
-                            <button
-                              key={voice._id}
-                              onClick={() => { setSelectedVoice(voice._id); setDemoAudioUrl(null); }}
-                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-left"
-                              style={active
-                                ? { background: "rgba(59,130,246,0.15)", color: "#93c5fd" }
-                                : { color: "#9ca3af" }
-                              }
-                            >
-                              {voice.cover_image ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={voice.cover_image}
-                                  alt=""
-                                  className="w-7 h-7 rounded-full object-cover flex-shrink-0"
-                                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                                />
-                              ) : (
+                  <div className="flex-1 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-3 px-1" style={{ color: "#555570" }}>Voces</p>
+                    <div className="space-y-0.5">
+                      {demoVoices.length === 0
+                        ? Array.from({ length: 5 }).map((_, i) => (
+                            <div key={i} className="h-11 rounded-xl animate-pulse mx-1" style={{ background: "#1a1a2e" }} />
+                          ))
+                        : demoVoices.map((voice) => {
+                            const active = selectedVoice === voice._id;
+                            const proxiedSrc = voice.cover_image
+                              ? `/api/voice-image?url=${encodeURIComponent(voice.cover_image)}`
+                              : "";
+                            return (
+                              <button
+                                key={voice._id}
+                                onClick={() => { setSelectedVoice(voice._id); setDemoAudioUrl(null); }}
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all text-left"
+                                style={
+                                  active
+                                    ? { background: "rgba(30,58,138,0.5)", color: "#ffffff" }
+                                    : { color: "#9ca3af" }
+                                }
+                              >
+                                {proxiedSrc ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={proxiedSrc}
+                                    alt=""
+                                    className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                                    onError={(e) => {
+                                      const t = e.currentTarget;
+                                      t.style.display = "none";
+                                      const fallback = t.nextElementSibling as HTMLElement | null;
+                                      if (fallback) fallback.style.display = "flex";
+                                    }}
+                                  />
+                                ) : null}
                                 <div
-                                  className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                                  style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
+                                  className="w-8 h-8 rounded-full items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                                  style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", display: proxiedSrc ? "none" : "flex" }}
                                 >
                                   {voice.title[0]?.toUpperCase()}
                                 </div>
-                              )}
-                              <span className="truncate font-medium">{voice.title}</span>
-                              {active && (
-                                <span
-                                  className="ml-auto w-1.5 h-1.5 rounded-full flex-shrink-0"
-                                  style={{ background: "#3b82f6" }}
-                                />
-                              )}
-                            </button>
-                          );
-                        })}
+                                <span className="truncate font-medium">{voice.title}</span>
+                                {active && (
+                                  <span className="ml-auto w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#60a5fa" }} />
+                                )}
+                              </button>
+                            );
+                          })}
+                    </div>
+                  </div>
+                  {/* Voice count footer */}
+                  <div className="px-5 py-3 border-t flex-shrink-0" style={{ borderColor: "#1e1e2e" }}>
+                    <Link href="/dashboard" className="text-xs transition-colors hover:text-blue-400" style={{ color: "#555570" }}>
+                      2.000.000+ voces <span style={{ color: "#3b82f6" }}>↗</span>
+                    </Link>
                   </div>
                 </div>
 
-                {/* Right: text + button */}
-                <div className="flex-1 p-6 flex flex-col">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Texto</p>
-                  <div
-                    className="flex-1 rounded-xl p-4 text-sm text-gray-300 leading-relaxed mb-5"
-                    style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }}
-                  >
-                    Hola, soy una voz generada con inteligencia artificial por Elite Labs. La calidad es excepcional y el resultado suena completamente natural.
+                {/* Right: textarea + controls */}
+                <div className="flex-1 flex flex-col">
+                  {/* Text area */}
+                  <div className="flex-1 p-5">
+                    <textarea
+                      value={demoText}
+                      onChange={(e) => setDemoText(e.target.value.slice(0, 30000))}
+                      placeholder="Introduce tu propio texto"
+                      className="w-full h-full resize-none bg-transparent text-sm text-gray-300 leading-relaxed outline-none placeholder-gray-600"
+                      style={{ minHeight: "200px" }}
+                    />
                   </div>
 
-                  {demoAudioUrl && (
-                    <div className="mb-3">
-                      <AudioPlayer src={demoAudioUrl} filename="elitelabs-demo.mp3" />
-                    </div>
-                  )}
+                  {/* Bottom controls */}
+                  <div
+                    className="px-5 py-4 border-t flex flex-wrap items-center gap-3"
+                    style={{ borderColor: "#2a2a3e" }}
+                  >
+                    <span className="text-xs flex-1 min-w-0" style={{ color: "#555570" }}>
+                      {demoText.length}/30000 characters
+                    </span>
 
-                  <div className="flex gap-2">
+                    {demoAudioUrl && (
+                      <div className="w-full sm:w-auto sm:flex-1 min-w-[180px]">
+                        <AudioPlayer src={demoAudioUrl} filename="elitelabs-demo.mp3" />
+                      </div>
+                    )}
+
                     <button
                       onClick={handleGenerateDemo}
-                      disabled={demoLoading}
-                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
-                      style={{ background: "#0d0d17", border: "1px solid #3b82f6", color: "#93c5fd" }}
+                      disabled={demoLoading || !demoText.trim()}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex-shrink-0"
+                      style={{ background: "#111118", border: "1px solid #3a3a52" }}
                     >
                       {demoLoading ? (
                         <>
@@ -366,14 +423,14 @@ export default function LandingPage() {
                           Generando...
                         </>
                       ) : (
-                        <><PlayIcon /> Generar muestra</>
+                        <><PlayIcon /> Generar y reproducir</>
                       )}
                     </button>
 
                     {isLoaded && isSignedIn ? (
                       <Link
                         href="/dashboard"
-                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5 flex-shrink-0"
                         style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 20px rgba(59,130,246,0.35)" }}
                       >
                         Ir al Dashboard →
@@ -381,17 +438,25 @@ export default function LandingPage() {
                     ) : (
                       <SignUpButton mode="modal">
                         <button
-                          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5 flex-shrink-0"
                           style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 20px rgba(59,130,246,0.35)" }}
                         >
-                          Ir al Dashboard →
+                          Empezar gratis →
                         </button>
                       </SignUpButton>
                     )}
                   </div>
                 </div>
+
               </div>
             </div>
+
+            {/* Powered by */}
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse flex-shrink-0" />
+              <span className="text-xs" style={{ color: "#555570" }}>Powered by Elite Labs E2 Pro</span>
+            </div>
+
           </div>
         </section>
 
