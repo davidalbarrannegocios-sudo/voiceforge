@@ -534,6 +534,7 @@ function GenerateTab({
   const [volume, setVolume] = useState(1.0);
   const [pitch, setPitch] = useState(0.0);
   const [normalize, setNormalize] = useState(true);
+  const [selectedModel, setSelectedModel] = useState("speech-1.6");
   const [previewing, setPreviewing] = useState<"idle" | "loading" | "playing">("idle");
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const [rightTab, setRightTab] = useState<"ajustes" | "historial">("ajustes");
@@ -585,6 +586,7 @@ function GenerateTab({
           voiceName: selectedVoice?.name ?? "Voz por defecto",
           prosody,
           normalize,
+          model: selectedModel,
         }),
       });
       const data = await res.json();
@@ -808,6 +810,35 @@ function GenerateTab({
                   {previewing === "playing" && "⏹ Detener"}
                 </button>
               )}
+            </div>
+
+            {/* Model selector */}
+            <div className="border-t pt-5" style={{ borderColor: "#2a2a3e" }}>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#555570" }}>Modelo</p>
+              <div className="space-y-2">
+                {([
+                  { value: "speech-1.6", label: "Fish Audio S2 Pro", badge: "El más nuevo", badgeColor: "#3b82f6" },
+                  { value: "speech-1.5", label: "Fish Audio S1",     badge: "Heredado",     badgeColor: "#6b6b88" },
+                ] as const).map(({ value, label, badge, badgeColor }) => (
+                  <button
+                    key={value}
+                    onClick={() => setSelectedModel(value)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all text-left"
+                    style={{
+                      background: selectedModel === value ? "rgba(59,130,246,0.1)" : "#12121a",
+                      border: `1px solid ${selectedModel === value ? "rgba(59,130,246,0.4)" : "#2a2a3e"}`,
+                    }}
+                  >
+                    <span className="font-medium" style={{ color: selectedModel === value ? "#e2e2f0" : "#8888a8" }}>{label}</span>
+                    <span
+                      className="text-xs font-semibold px-1.5 py-0.5 rounded flex-shrink-0"
+                      style={{ background: `${badgeColor}22`, color: badgeColor, border: `1px solid ${badgeColor}44` }}
+                    >
+                      {badge}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Audio controls */}

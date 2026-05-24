@@ -139,12 +139,14 @@ export async function fishAudioGenerate({
   userId,
   signal,
   prosody,
+  model = "speech-1.6",
 }: {
   text: string;
   referenceId?: string;
   userId: string;
   signal?: AbortSignal;
   prosody?: { speed?: number; volume?: number; pitch?: number };
+  model?: string;
 }): Promise<GenerateResult> {
   const apiKey = getApiKey();
   const chunks = splitTextIntoChunks(text);
@@ -159,7 +161,7 @@ export async function fishAudioGenerate({
   const audioBuffers = await processInBatches(chunks, (i) => {
     const payload: Record<string, unknown> = {
       text: chunks[i],
-      model: "speech-1.6",
+      model,
       format: "mp3",
       mp3_bitrate: 128,
       normalize: true,
