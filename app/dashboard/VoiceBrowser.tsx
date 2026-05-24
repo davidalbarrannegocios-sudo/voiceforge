@@ -130,10 +130,10 @@ const FEATURED_VOICE_IDS: string[] = [
 const USE_CASE_TAGS: Record<string, string[]> = {
   "Conversacional": ["conversational", "conversation", "chat", "dialogue", "natural"],
   "Narración": ["narration", "narrator", "storytelling", "audiobook", "narrative"],
-  "Personaje": ["character", "character voice", "gaming", "anime"],
+  "Personaje": ["character-voice", "character voice", "character", "gaming", "anime"],
   "Educativo": ["educational", "education", "tutorial", "learning", "lecture"],
   "Publicidad": ["advertising", "commercial", "promo", "promotion", "ad"],
-  "Redes Sociales": ["social media", "social", "tiktok", "youtube", "shorts"],
+  "Redes Sociales": ["social-media", "social media", "social", "tiktok", "youtube", "shorts"],
 };
 
 const QUALITY_TAGS: Record<string, string[]> = {
@@ -323,11 +323,13 @@ function FilterPanel({
   onChange,
   onReset,
   onClose,
+  onApply,
 }: {
   filters: AdvancedFilters;
   onChange: (f: AdvancedFilters) => void;
   onReset: () => void;
   onClose: () => void;
+  onApply: () => void;
 }) {
   function toggleItem(key: keyof AdvancedFilters, value: string) {
     const arr = filters[key] as string[];
@@ -430,7 +432,7 @@ function FilterPanel({
       {/* Apply button */}
       <div className="px-4 py-4 border-t flex-shrink-0" style={{ borderColor: "#1e1e2e" }}>
         <button
-          onClick={onClose}
+          onClick={onApply}
           className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
           style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
         >
@@ -614,6 +616,7 @@ export function VoiceBrowser({
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [filters, setFilters] = useState<AdvancedFilters>(EMPTY_FILTERS);
+  const [appliedFilters, setAppliedFilters] = useState<AdvancedFilters>(EMPTY_FILTERS);
   const [featuredVoices, setFeaturedVoices] = useState<FishVoice[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -677,6 +680,15 @@ export function VoiceBrowser({
     }
   }
 
+  function handleApplyFilters() {
+    tierRawRef.current = [];
+    tierFishPageRef.current = 1;
+    tierHasMoreRef.current = true;
+    setPage(1);
+    setAppliedFilters({ ...filters });
+    setShowFilterPanel(false);
+  }
+
   // Fetch each featured voice individually so they're always available regardless of page
   useEffect(() => {
     if (FEATURED_VOICE_IDS.length === 0) return;
@@ -709,17 +721,21 @@ export function VoiceBrowser({
   const fetchVoices = useCallback(async () => {
     if (tab !== "explore") return;
     setLoading(true);
+    const hasAppliedFilters = Object.values(appliedFilters).some((arr) => arr.length > 0);
+    const needsAccumulation = tier !== "all" || hasAppliedFilters;
     try {
-      if (tier !== "all") {
-        // Progressive accumulation: fetch more Fish Audio pages until we have
-        // enough filtered voices to fill the current virtual page (page * 20).
-        const MAX_PAGES = 15;
+      if (needsAccumulation) {
+        // Progressive accumulation: keep fetching Fish Audio pages until we have
+        // enough voices that match both tier and advanced tag filters.
+        const MAX_PAGES = 20;
         const targetCount = page * 20;
+        const matchesCriteria = (v: FishVoice) => {
+          if (tier === "free" && isPremiumVoice(v._id)) return false;
+          if (tier === "premium" && !isPremiumVoice(v._id)) return false;
+          return matchesAdvancedFilters(v, appliedFilters);
+        };
         while (tierHasMoreRef.current && tierFishPageRef.current <= MAX_PAGES) {
-          const alreadyFiltered = tierRawRef.current.filter((v) =>
-            tier === "free" ? !isPremiumVoice(v._id) : isPremiumVoice(v._id)
-          ).length;
-          if (alreadyFiltered >= targetCount) break;
+          if (tierRawRef.current.filter(matchesCriteria).length >= targetCount) break;
 
           const p = new URLSearchParams({ page: String(tierFishPageRef.current), language });
           if (debouncedSearch) p.set("search", debouncedSearch);
@@ -734,9 +750,7 @@ export function VoiceBrowser({
           if (tierRawRef.current.length >= fishTotal) { tierHasMoreRef.current = false; break; }
         }
 
-        const filtered = tierRawRef.current.filter((v) =>
-          tier === "free" ? !isPremiumVoice(v._id) : isPremiumVoice(v._id)
-        );
+        const filtered = tierRawRef.current.filter(matchesCriteria);
         const canLoadMore = tierHasMoreRef.current && tierFishPageRef.current <= MAX_PAGES;
         setTotal(canLoadMore ? filtered.length + 20 : filtered.length);
         setPublicVoices([...tierRawRef.current]);
@@ -751,7 +765,7 @@ export function VoiceBrowser({
     } finally {
       setLoading(false);
     }
-  }, [tab, language, debouncedSearch, page, tier]);
+  }, [tab, language, debouncedSearch, page, tier, appliedFilters]);
 
   useEffect(() => { fetchVoices(); }, [fetchVoices]);
   useEffect(() => () => { audioRef.current?.pause(); }, []);
@@ -807,10 +821,10 @@ export function VoiceBrowser({
   const filteredVoices = publicVoices.filter((v) => {
     if (tier === "free" && isPremiumVoice(v._id)) return false;
     if (tier === "premium" && !isPremiumVoice(v._id)) return false;
-    return matchesAdvancedFilters(v, filters);
+    return matchesAdvancedFilters(v, appliedFilters);
   });
 
-  const hasActiveFilters = Object.values(filters).some((arr) => arr.length > 0);
+  const hasActiveFilters = Object.values(appliedFilters).some((arr) => arr.length > 0);
 
   // When tier is filtered, paginate the accumulated filteredVoices client-side
   const pageSlice = tier !== "all"
@@ -1235,6 +1249,7 @@ export function VoiceBrowser({
               onChange={setFilters}
               onReset={() => setFilters(EMPTY_FILTERS)}
               onClose={() => setShowFilterPanel(false)}
+              onApply={handleApplyFilters}
             />
           )}
         </div>
