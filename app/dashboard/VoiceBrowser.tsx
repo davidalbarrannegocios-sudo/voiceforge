@@ -605,6 +605,10 @@ export function VoiceBrowser({
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  // Refs for progressive accumulation when a tier filter is active
+  const tierRawRef = useRef<FishVoice[]>([]); // accumulated raw voices
+  const tierFishPageRef = useRef(1);          // next Fish Audio page to fetch
+  const tierHasMoreRef = useRef(true);        // whether more Fish Audio pages exist
   const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
   const [previewingId, setPreviewingId] = useState<string | null>(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
@@ -693,36 +697,48 @@ export function VoiceBrowser({
   }, [search]);
 
   useEffect(() => { setPage(1); }, [language]);
-  useEffect(() => { setPage(1); }, [tier]);
+
+  // When tier/language/search reset, clear the accumulated tier buffer
+  useEffect(() => {
+    tierRawRef.current = [];
+    tierFishPageRef.current = 1;
+    tierHasMoreRef.current = true;
+    setPage(1);
+  }, [tier, language, debouncedSearch]);
 
   const fetchVoices = useCallback(async () => {
     if (tab !== "explore") return;
     setLoading(true);
     try {
       if (tier !== "all") {
-        // Accumulate Fish Audio pages until ≥20 voices pass the tier filter
-        const accumulated: FishVoice[] = [];
-        let fishPage = 1;
-        let fishTotal = 0;
-        const MAX_PAGES = 10;
-        while (fishPage <= MAX_PAGES) {
-          const p = new URLSearchParams({ page: String(fishPage), language });
+        // Progressive accumulation: fetch more Fish Audio pages until we have
+        // enough filtered voices to fill the current virtual page (page * 20).
+        const targetCount = page * 20;
+        while (tierHasMoreRef.current) {
+          const alreadyFiltered = tierRawRef.current.filter((v) =>
+            tier === "free" ? !isPremiumVoice(v._id) : isPremiumVoice(v._id)
+          ).length;
+          if (alreadyFiltered >= targetCount) break;
+
+          const p = new URLSearchParams({ page: String(tierFishPageRef.current), language });
           if (debouncedSearch) p.set("search", debouncedSearch);
           const res = await fetch(`/api/fish-voices?${p}`);
           const data = await res.json();
           const items: FishVoice[] = data.items ?? [];
-          fishTotal = data.total ?? 0;
-          accumulated.push(...items);
-          if (items.length === 0) break;
-          const matchCount = accumulated.filter((v) =>
-            tier === "free" ? !isPremiumVoice(v._id) : isPremiumVoice(v._id)
-          ).length;
-          if (matchCount >= 20) break;
-          if (accumulated.length >= fishTotal) break;
-          fishPage++;
+          const fishTotal: number = data.total ?? 0;
+
+          if (items.length === 0) { tierHasMoreRef.current = false; break; }
+          tierRawRef.current = [...tierRawRef.current, ...items];
+          tierFishPageRef.current += 1;
+          if (tierRawRef.current.length >= fishTotal) { tierHasMoreRef.current = false; break; }
         }
-        setPublicVoices(accumulated);
-        setTotal(fishTotal);
+
+        const filtered = tierRawRef.current.filter((v) =>
+          tier === "free" ? !isPremiumVoice(v._id) : isPremiumVoice(v._id)
+        );
+        // Expose total as filtered count + 20 if more pages remain (so paginator shows Next)
+        setTotal(tierHasMoreRef.current ? filtered.length + 20 : filtered.length);
+        setPublicVoices([...tierRawRef.current]);
       } else {
         const p = new URLSearchParams({ page: String(page), language });
         if (debouncedSearch) p.set("search", debouncedSearch);
@@ -794,7 +810,13 @@ export function VoiceBrowser({
   });
 
   const hasActiveFilters = Object.values(filters).some((arr) => arr.length > 0);
-  const applyFeatured = page === 1 && !debouncedSearch && !hasActiveFilters && featuredVoices.length > 0;
+
+  // When tier is filtered, paginate the accumulated filteredVoices client-side
+  const pageSlice = tier !== "all"
+    ? filteredVoices.slice((page - 1) * 20, page * 20)
+    : filteredVoices;
+
+  const applyFeatured = page === 1 && !debouncedSearch && !hasActiveFilters && tier === "all" && featuredVoices.length > 0;
   const displayedVoices = applyFeatured
     ? [
         // Featured voices in FEATURED_VOICE_IDS order, filtered by current tier
@@ -807,9 +829,9 @@ export function VoiceBrowser({
             return true;
           }),
         // Rest of current page excluding any already shown as featured
-        ...filteredVoices.filter((v) => !FEATURED_VOICE_IDS.includes(v._id)),
+        ...pageSlice.filter((v) => !FEATURED_VOICE_IDS.includes(v._id)),
       ]
-    : filteredVoices;
+    : pageSlice;
 
   const filteredRecent = recentVoices.filter((v) => {
     if (tier === "free") return !isPremiumVoice(v._id);
@@ -1005,8 +1027,8 @@ export function VoiceBrowser({
                   </div>
                 )}
 
-                {/* Pagination — hidden when tier filter accumulates results internally */}
-                {totalPages > 1 && tier === "all" && (
+                {/* Pagination */}
+                {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-3 mt-6 pb-2">
                     <button
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
