@@ -205,15 +205,25 @@ export default function LandingPage() {
         style={{ background: "rgba(10,10,15,0.9)", backdropFilter: "blur(12px)", borderColor: "#2a2a3e" }}
       >
         <div className="max-w-screen-2xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
             <Image src="/elitelabs.png" alt="Elite Labs" width={32} height={32} style={{ height: "32px", width: "auto", objectFit: "contain", imageRendering: "-webkit-optimize-contrast" }} className="rounded-lg" />
             <span className="font-bold text-white text-lg">Elite Labs</span>
           </Link>
 
+          {/* Center links */}
+          <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+            {[
+              { label: "Productos", href: "/dashboard" },
+              { label: "Precios", href: "/pricing" },
+              { label: "Blog", href: "/blog" },
+            ].map(({ label, href }) => (
+              <Link key={label} href={href} className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg">
+                {label}
+              </Link>
+            ))}
+          </nav>
+
           <nav className="flex items-center gap-3">
-            <Link href="/pricing" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5">
-              Precios
-            </Link>
             {isLoaded && isSignedIn ? (
               <>
                 <Link
@@ -253,14 +263,6 @@ export default function LandingPage() {
 
           {/* Heading */}
           <div className="max-w-5xl mx-auto px-4 mb-10">
-            <div
-              className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full mb-6 border"
-              style={{ background: "rgba(59,130,246,0.1)", borderColor: "rgba(59,130,246,0.3)", color: "#93c5fd" }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-              Síntesis de voz con IA avanzada
-            </div>
-
             <div className="flex items-end justify-between gap-10">
               {/* Left: title */}
               <h1 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight text-white">
