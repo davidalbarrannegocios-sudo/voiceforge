@@ -123,6 +123,7 @@ export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [demoAudioUrl, setDemoAudioUrl] = useState<string | null>(null);
   const [demoLoading, setDemoLoading] = useState(false);
+  const [demoTab, setDemoTab] = useState<"tts" | "clone" | "stt">("tts");
   const [demoText, setDemoText] = useState("Hola, soy una voz generada con inteligencia artificial por Elite Labs. La calidad es excepcional y el resultado suena completamente natural.");
 
   // Features card state
@@ -290,35 +291,58 @@ export default function LandingPage() {
                 boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
               }}
             >
-              {/* Tab pills */}
+              {/* Tab pills — animated sliding indicator */}
               <div className="flex justify-center mb-6">
                 <div
                   style={{
+                    position: "relative",
                     background: "rgba(255,255,255,0.07)",
                     borderRadius: "100px",
                     padding: "4px",
-                    display: "inline-flex",
-                    gap: "2px",
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr 1fr",
                   }}
                 >
-                  {[
-                    { key: "tts",   label: "Texto a voz" },
-                    { key: "clone", label: "Clonación de voz" },
-                    { key: "stt",   label: "De voz a texto" },
-                  ].map(({ key, label }) => (
-                    <button
-                      key={key}
-                      onClick={() => { if (key !== "tts") window.location.href = "/dashboard"; }}
-                      className="transition-all"
-                      style={
-                        key === "tts"
-                          ? { background: "#ffffff", color: "#111827", borderRadius: "100px", padding: "7px 20px", fontSize: "13px", fontWeight: 600 }
-                          : { background: "transparent", color: "rgba(255,255,255,0.4)", borderRadius: "100px", padding: "7px 20px", fontSize: "13px", fontWeight: 500, cursor: "pointer" }
-                      }
-                    >
-                      {label}
-                    </button>
-                  ))}
+                  {/* Sliding white pill */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "4px",
+                      left: "4px",
+                      width: "calc((100% - 8px) / 3)",
+                      height: "calc(100% - 8px)",
+                      background: "#ffffff",
+                      borderRadius: "100px",
+                      pointerEvents: "none",
+                      transition: "transform 0.2s ease",
+                      transform: `translateX(calc(${demoTab === "tts" ? 0 : demoTab === "clone" ? 1 : 2} * 100%))`,
+                    }}
+                  />
+                  {(["tts", "clone", "stt"] as const).map((key, i) => {
+                    const labels = ["Texto a voz", "Clonación de voz", "De voz a texto"];
+                    const active = demoTab === key;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setDemoTab(key)}
+                        style={{
+                          position: "relative",
+                          zIndex: 1,
+                          padding: "7px 20px",
+                          fontSize: "13px",
+                          fontWeight: active ? 600 : 500,
+                          color: active ? "#111827" : "rgba(255,255,255,0.4)",
+                          borderRadius: "100px",
+                          background: "transparent",
+                          transition: "color 0.2s ease",
+                          textAlign: "center",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {labels[i]}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -331,6 +355,37 @@ export default function LandingPage() {
                   overflow: "hidden",
                 }}
               >
+                {demoTab !== "tts" ? (
+                  /* Upsell overlay for locked tabs */
+                  <div
+                    className="flex flex-col items-center justify-center text-center"
+                    style={{ minHeight: "240px", padding: "48px 32px" }}
+                  >
+                    <div
+                      style={{
+                        width: "48px", height: "48px", borderRadius: "50%",
+                        background: "rgba(59,130,246,0.12)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "22px", marginBottom: "16px",
+                      }}
+                    >
+                      🔒
+                    </div>
+                    <p style={{ color: "#e5e7eb", fontSize: "15px", fontWeight: 600, marginBottom: "6px" }}>
+                      Función exclusiva para miembros
+                    </p>
+                    <p style={{ color: "#555570", fontSize: "13px", marginBottom: "20px", maxWidth: "300px" }}>
+                      Crea una cuenta gratis para acceder a esta función
+                    </p>
+                    <Link
+                      href="/sign-up"
+                      className="font-semibold text-white transition-all hover:opacity-80"
+                      style={{ fontSize: "13px", padding: "9px 22px", borderRadius: "8px", background: "#2563eb" }}
+                    >
+                      Empezar gratis →
+                    </Link>
+                  </div>
+                ) : (
                 <div className="flex" style={{ minHeight: "240px" }}>
 
                   {/* Left: voice list ~280px */}
@@ -458,6 +513,7 @@ export default function LandingPage() {
                   </div>
 
                 </div>
+                )}
               </div>
 
               {/* Bottom footer bar */}
