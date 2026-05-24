@@ -159,6 +159,7 @@ export async function fishAudioGenerate({
   const audioBuffers = await processInBatches(chunks, (i) => {
     const payload: Record<string, unknown> = {
       text: chunks[i],
+      model: "speech-1.6",
       format: "mp3",
       mp3_bitrate: 128,
       normalize: true,
