@@ -819,16 +819,10 @@ export function VoiceBrowser({
   const applyFeatured = page === 1 && !debouncedSearch && !hasActiveFilters && tier === "all" && featuredVoices.length > 0;
   const displayedVoices = applyFeatured
     ? [
-        // Featured voices in FEATURED_VOICE_IDS order, filtered by current tier
+        // applyFeatured requires tier === "all", so no tier filter needed here
         ...FEATURED_VOICE_IDS
           .map((id) => featuredVoices.find((v) => v._id === id))
-          .filter((v): v is FishVoice => v !== undefined)
-          .filter((v) => {
-            if (tier === "free" && isPremiumVoice(v._id)) return false;
-            if (tier === "premium" && !isPremiumVoice(v._id)) return false;
-            return true;
-          }),
-        // Rest of current page excluding any already shown as featured
+          .filter((v): v is FishVoice => v !== undefined),
         ...pageSlice.filter((v) => !FEATURED_VOICE_IDS.includes(v._id)),
       ]
     : pageSlice;
