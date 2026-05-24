@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, UserButton, useClerk } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, Lock, HelpCircle, Languages, Trash2 } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2 } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, getAge, LANG_FLAGS, formatCount } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
@@ -25,17 +25,6 @@ interface Voice {
   fishAudioModelId?: string;
   createdAt?: string;
   clipCount?: number;
-}
-
-interface Generation {
-  id: string;
-  text: string;
-  audioUrl: string | null;
-  creditsUsed: number;
-  durationSeconds: number;
-  voiceId: string;
-  createdAt: string;
-  expiresAt: string | null;
 }
 
 type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral" | "translate" | "transcribe" | "team";
@@ -405,54 +394,6 @@ function HomeTab({
   );
 }
 
-function formatExpiry(expiresAt: string | null): { label: string; expired: boolean } | null {
-  if (!expiresAt) return null;
-  const diffMs = new Date(expiresAt).getTime() - Date.now();
-  if (diffMs <= 0) return { label: "Audio expirado", expired: true };
-  const h = Math.floor(diffMs / (1000 * 60 * 60));
-  const d = Math.floor(h / 24);
-  if (d >= 1) return { label: `Expira en ${d} día${d === 1 ? "" : "s"}`, expired: false };
-  return { label: `Expira en ${h}h`, expired: false };
-}
-
-/* ─── Job types ───────────────────────────────────────────── */
-interface Job {
-  id: string;
-  status: string;
-  text: string;
-  voiceId: string;
-  voiceName?: string | null;
-  audioUrl?: string | null;
-  durationSeconds?: number | null;
-  error?: string | null;
-  creditsUsed: number;
-  createdAt: string;
-}
-
-function statusBadge(status: string) {
-  const map: Record<string, { label: string; color: string; bg: string }> = {
-    pending:    { label: "Pendiente",  color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
-    processing: { label: "Generando", color: "#93c5fd", bg: "rgba(59,130,246,0.12)" },
-    completed:  { label: "Listo",     color: "#4ade80", bg: "rgba(74,222,128,0.12)" },
-    failed:     { label: "Error",     color: "#f87171", bg: "rgba(239,68,68,0.12)"  },
-  };
-  const s = map[status] ?? { label: status, color: "#8888a8", bg: "#12121a" };
-  return (
-    <span
-      className="text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1"
-      style={{ color: s.color, background: s.bg }}
-    >
-      {(status === "pending" || status === "processing") && (
-        <svg className="animate-spin h-2.5 w-2.5" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-      )}
-      {s.label}
-    </span>
-  );
-}
-
 /* ─── Slider + numeric input control ─────────────────────── */
 function CompactSlider({
   label, value, onChange, min, max, step, decimals, defaultValue,
@@ -546,8 +487,6 @@ function GenerateTab({
   const [rightTab, setRightTab] = useState<"ajustes" | "historial">("ajustes");
   const { t } = useLang();
 
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [jobsLoaded, setJobsLoaded] = useState(false);
   const [elapsed, setElapsed] = useState(0);
 
   const charCost = calculateCharCost(text.length);
@@ -573,21 +512,6 @@ function GenerateTab({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [modelDropdownOpen]);
 
-  useEffect(() => {
-    fetch("/api/jobs")
-      .then((r) => r.json())
-      .then((data) => {
-        const fiveMinAgo = Date.now() - 5 * 60 * 1000;
-        const loaded = (data.jobs ?? []).map((j: Job) =>
-          j.status === "processing" && new Date(j.createdAt).getTime() < fiveMinAgo
-            ? { ...j, status: "failed", error: "Generación cancelada (página recargada)" }
-            : j
-        );
-        setJobs(loaded);
-        setJobsLoaded(true);
-      })
-      .catch(() => setJobsLoaded(true));
-  }, []);
 
   async function handleGenerate() {
     setFormError(null);
@@ -610,18 +534,7 @@ function GenerateTab({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al generar");
 
-      const newJob: Job = {
-        id: data.jobId,
-        status: "completed",
-        text: text.trim(),
-        voiceId: selectedVoice?.referenceId ?? "default",
-        voiceName: selectedVoice?.name ?? "Voz por defecto",
-        audioUrl: data.audioUrl,
-        durationSeconds: data.durationSeconds,
-        creditsUsed: data.charCost,
-        createdAt: new Date().toISOString(),
-      };
-      setJobs((cur) => [newJob, ...cur]);
+      window.dispatchEvent(new CustomEvent("audio-history-changed"));
       onGenerated();
       setText("");
       setRightTab("historial");
@@ -1056,108 +969,6 @@ function GenerateTab({
   );
 }
 
-/* ─── Job Card ─────────────────────────────────────────────── */
-function JobCard({ job, onDelete }: { job: Job; onDelete?: (id: string) => void }) {
-  const [showPlayer, setShowPlayer] = useState(false);
-  const [hovered, setHovered] = useState(false);
-  const [confirm, setConfirm] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [removing, setRemoving] = useState(false);
-
-  const voiceName = job.voiceName ?? "Voz por defecto";
-
-  async function handleDelete() {
-    setDeleting(true);
-    try {
-      await fetch(`/api/jobs/${job.id}`, { method: "DELETE" });
-    } catch { /* non-fatal */ }
-    setRemoving(true);
-    setTimeout(() => onDelete?.(job.id), 320);
-  }
-
-  return (
-    <div
-      className="rounded-xl border p-4"
-      style={{ background: "#12121a", borderColor: "#2a2a3e", opacity: removing ? 0 : 1, transition: "opacity 300ms ease-out" }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => { setHovered(false); setConfirm(false); }}
-    >
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-gray-200 line-clamp-2 leading-snug">{job.text}</p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {statusBadge(job.status)}
-          <button
-            onClick={() => setConfirm(true)}
-            style={{ opacity: hovered && !confirm ? 1 : 0, transition: "opacity 150ms", color: "#6b7280", pointerEvents: hovered && !confirm ? "auto" : "none" }}
-            className="hover:text-red-400 transition-colors"
-            title="Eliminar"
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
-      </div>
-
-      {confirm && (
-        <div className="mb-2 flex items-center gap-2 text-xs" style={{ color: "#8888a8" }}>
-          <span>¿Eliminar?</span>
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="px-2 py-0.5 rounded text-red-400 border border-red-400/30 hover:bg-red-400/10 transition-colors disabled:opacity-50"
-          >
-            {deleting ? "..." : "Eliminar"}
-          </button>
-          <button onClick={() => setConfirm(false)} className="px-2 py-0.5 rounded hover:text-gray-200 transition-colors">
-            Cancelar
-          </button>
-        </div>
-      )}
-
-      <div className="flex items-center gap-3 text-xs flex-wrap" style={{ color: "#8888a8" }}>
-        <span className="flex items-center gap-1">
-          <Mic size={10} />
-          {voiceName}
-        </span>
-        <span>·</span>
-        <span>{job.creditsUsed.toLocaleString("es-ES")} chars</span>
-        {job.durationSeconds && (
-          <>
-            <span>·</span>
-            <span>{job.durationSeconds.toFixed(1)}s</span>
-          </>
-        )}
-        <span>·</span>
-        <span>{formatDate(job.createdAt)}</span>
-      </div>
-
-      {job.status === "failed" && job.error && (
-        <p className="mt-2 text-xs rounded-lg p-2" style={{ background: "rgba(239,68,68,0.08)", color: "#f87171" }}>
-          {job.error}
-        </p>
-      )}
-
-      {job.status === "completed" && job.audioUrl && (
-        <div className="mt-3">
-          {showPlayer ? (
-            <AudioPlayer src={job.audioUrl} filename={`elitelabs-${job.id}.mp3`} />
-          ) : (
-            <button
-              onClick={() => setShowPlayer(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-              style={{ background: "rgba(59,130,246,0.12)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}
-            >
-              <Play size={11} />
-              Reproducir
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 /* ─── Clone Modal ─────────────────────────────────────────── */
 const CLONE_LANGUAGES = [
   { value: "es", label: "Español" },
@@ -1337,11 +1148,6 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
 }
 
 /* ─── Voices Tab ──────────────────────────────────────────── */
-const LANG_FLAGS: Record<string, string> = {
-  es: "🇪🇸", en: "🇬🇧", fr: "🇫🇷", de: "🇩🇪", it: "🇮🇹",
-  pt: "🇵🇹", ja: "🇯🇵", zh: "🇨🇳", ko: "🇰🇷", ar: "🇸🇦",
-};
-
 function VoicesTab({
   voices,
   onRefresh,
@@ -1640,7 +1446,6 @@ function BillingTab({
   credits,
   extraCredits,
   plan,
-  planExpiresAt,
   nextRenewalDate,
   daysUntilRenewal,
   onRefresh,
@@ -1648,7 +1453,6 @@ function BillingTab({
   credits: number | null;
   extraCredits: number;
   plan: string;
-  planExpiresAt: string | null;
   nextRenewalDate: string | null;
   daysUntilRenewal: number | null;
   onRefresh: () => void;
@@ -2255,14 +2059,6 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 }
 
 /* ─── Transcribe Tab ─────────────────────────────────────── */
-const TRANSCRIBE_LANGS = [
-  { code: "es", label: "Español",  flag: "🇪🇸" },
-  { code: "en", label: "Inglés",   flag: "🇬🇧" },
-  { code: "ja", label: "Japonés",  flag: "🇯🇵" },
-  { code: "ko", label: "Coreano",  flag: "🇰🇷" },
-  { code: "zh", label: "Mandarín", flag: "🇨🇳" },
-];
-
 interface TranscribeResult {
   transcribedText: string;
   charCost: number;
@@ -2727,7 +2523,7 @@ interface TeamData {
 
 const ENTERPRISE_CREDITS = 5_000_000;
 
-function TeamTab({ credits }: { credits: number | null }) {
+function TeamTab({ credits: _credits }: { credits: number | null }) {
   const [team, setTeam] = useState<TeamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [teamName, setTeamName] = useState("");
@@ -3293,7 +3089,6 @@ export default function DashboardPage() {
             credits={credits}
             extraCredits={extraCredits}
             plan={plan}
-            planExpiresAt={planExpiresAt}
             nextRenewalDate={nextRenewalDate}
             daysUntilRenewal={daysUntilRenewal}
             onRefresh={fetchCredits}

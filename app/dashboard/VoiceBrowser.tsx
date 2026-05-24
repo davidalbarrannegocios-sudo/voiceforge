@@ -72,7 +72,7 @@ const FEMALE_TAGS = new Set(["female", "woman", "feminine", "femenino", "mujer"]
 
 const LANG_FLAGS: Record<string, string> = {
   es: "🇪🇸", en: "🇺🇸", ja: "🇯🇵", zh: "🇨🇳",
-  fr: "🇫🇷", de: "🇩🇪", pt: "🇧🇷", ko: "🇰🇷", it: "🇮🇹",
+  fr: "🇫🇷", de: "🇩🇪", pt: "🇧🇷", ko: "🇰🇷", it: "🇮🇹", ar: "🇸🇦",
 };
 
 function getAge(tags: string[]): string | null {
