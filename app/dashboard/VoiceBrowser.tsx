@@ -713,8 +713,9 @@ export function VoiceBrowser({
       if (tier !== "all") {
         // Progressive accumulation: fetch more Fish Audio pages until we have
         // enough filtered voices to fill the current virtual page (page * 20).
+        const MAX_PAGES = 15;
         const targetCount = page * 20;
-        while (tierHasMoreRef.current) {
+        while (tierHasMoreRef.current && tierFishPageRef.current <= MAX_PAGES) {
           const alreadyFiltered = tierRawRef.current.filter((v) =>
             tier === "free" ? !isPremiumVoice(v._id) : isPremiumVoice(v._id)
           ).length;
@@ -736,8 +737,8 @@ export function VoiceBrowser({
         const filtered = tierRawRef.current.filter((v) =>
           tier === "free" ? !isPremiumVoice(v._id) : isPremiumVoice(v._id)
         );
-        // Expose total as filtered count + 20 if more pages remain (so paginator shows Next)
-        setTotal(tierHasMoreRef.current ? filtered.length + 20 : filtered.length);
+        const canLoadMore = tierHasMoreRef.current && tierFishPageRef.current <= MAX_PAGES;
+        setTotal(canLoadMore ? filtered.length + 20 : filtered.length);
         setPublicVoices([...tierRawRef.current]);
       } else {
         const p = new URLSearchParams({ page: String(page), language });
