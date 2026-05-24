@@ -1103,7 +1103,7 @@ function VoicesTab({
 
   const cloned = voices.filter((v) => !v.isSystem);
   const slotLimit = VOICE_SLOT_LIMITS[plan] ?? 0;
-  const atLimit = plan === "free" || (slotLimit !== Infinity && cloned.length >= slotLimit);
+  const atLimit = slotLimit !== Infinity && cloned.length >= slotLimit;
 
   async function handleDelete(voiceId: string) {
     setDeletingId(voiceId);
@@ -1128,40 +1128,21 @@ function VoicesTab({
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-lg font-bold text-white">Mis voces clonadas</h2>
-            {plan === "free" ? (
-              <p className="text-xs mt-0.5" style={{ color: "#2e2e48" }}>No disponible en el plan gratuito</p>
-            ) : (
-              <p className="text-xs mt-0.5" style={{ color: "#3a3a52" }}>
-                {slotLimit === Infinity ? `${cloned.length} / Ilimitadas` : `${cloned.length}/${slotLimit} slots utilizados`}
-              </p>
-            )}
+            <p className="text-xs mt-0.5" style={{ color: "#3a3a52" }}>
+              {slotLimit === Infinity ? `${cloned.length} / Ilimitadas` : `${cloned.length}/${slotLimit} slots utilizados`}
+            </p>
           </div>
-          {plan === "free" ? (
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold" style={{ background: "#0d0d17", border: "1px solid #1e1e2e", color: "#2e2e48" }}>
-              <Lock size={13} />
-              Clonar voz
-            </div>
-          ) : (
-            <button
-              onClick={() => !atLimit && setShowModal(true)}
-              disabled={atLimit}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              style={atLimit ? { background: "#1a1a28", border: "1px solid #2a2a3e", color: "#3a3a52" } : { background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
-            >
-              {atLimit ? `Límite alcanzado (${cloned.length}/${slotLimit})` : "+ Clonar nueva voz" }
-            </button>
-          )}
+          <button
+            onClick={() => !atLimit && setShowModal(true)}
+            disabled={atLimit}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            style={atLimit ? { background: "#1a1a28", border: "1px solid #2a2a3e", color: "#3a3a52" } : { background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+          >
+            {atLimit ? `Límite alcanzado (${cloned.length}/${slotLimit})` : "+ Clonar nueva voz"}
+          </button>
         </div>
 
-        {plan === "free" ? (
-          <div className="text-center py-16" style={{ color: "#2e2e48" }}>
-            <div className="flex justify-center mb-3">
-              <Lock size={40} style={{ color: "#2e2e48" }} />
-            </div>
-            <p className="font-medium mb-1">Clonación de voz bloqueada</p>
-            <p className="text-sm">Disponible desde el plan Starter ($7/mes)</p>
-          </div>
-        ) : cloned.length === 0 ? (
+        {cloned.length === 0 ? (
           <div className="text-center py-16" style={{ color: "#8888a8" }}>
             <div className="flex justify-center mb-3">
               <Mic size={40} style={{ color: "#8888a8" }} />
