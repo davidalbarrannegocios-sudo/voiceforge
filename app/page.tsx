@@ -279,147 +279,223 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Demo widget — compact */}
-          <div className="px-4" style={{ maxWidth: "860px", margin: "0 auto" }}>
+          {/* Demo widget — Fish Audio style */}
+          <div className="max-w-5xl mx-auto px-4">
             <div
-              className="overflow-hidden"
               style={{
-                background: "#13131c",
-                border: "1px solid #1e1e2e",
-                borderRadius: "16px",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-                maxHeight: "420px",
+                background: "linear-gradient(160deg,#0d1117 0%,#0f172a 60%,#0d1117 100%)",
+                borderRadius: "20px",
+                padding: "32px 40px 24px",
+                border: "1px solid rgba(255,255,255,0.06)",
+                boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
               }}
             >
-              <div className="flex" style={{ height: "100%" }}>
-
-                {/* Left: voice list — 180px */}
+              {/* Tab pills */}
+              <div className="flex justify-center mb-6">
                 <div
-                  className="flex-shrink-0 flex flex-col"
-                  style={{ width: "180px", borderRight: "1px solid #1e1e2e" }}
+                  style={{
+                    background: "rgba(255,255,255,0.07)",
+                    borderRadius: "100px",
+                    padding: "4px",
+                    display: "inline-flex",
+                    gap: "2px",
+                  }}
                 >
-                  <div className="flex-1 overflow-y-auto" style={{ padding: "8px 6px" }}>
-                    {demoVoices.length === 0
-                      ? Array.from({ length: 5 }).map((_, i) => (
-                          <div key={i} className="animate-pulse rounded-lg mx-1 mb-0.5" style={{ height: "36px", background: "#1a1a2a" }} />
-                        ))
-                      : demoVoices.map((voice) => {
-                          const active = selectedVoice === voice._id;
-                          const proxiedSrc = voice.cover_image
-                            ? `/api/voice-image?url=${encodeURIComponent(voice.cover_image)}`
-                            : "";
-                          return (
-                            <button
-                              key={voice._id}
-                              onClick={() => { setSelectedVoice(voice._id); setDemoAudioUrl(null); }}
-                              className="w-full flex items-center gap-2 rounded-lg transition-all text-left"
-                              style={{
-                                height: "36px",
-                                padding: "0 8px",
-                                background: active ? "rgba(30,58,138,0.45)" : "transparent",
-                                color: active ? "#e2e2f0" : "#8888a8",
-                              }}
-                            >
-                              {proxiedSrc ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={proxiedSrc}
-                                  alt=""
-                                  className="rounded-full object-cover flex-shrink-0"
-                                  style={{ width: "28px", height: "28px" }}
-                                  onError={(e) => {
-                                    const t = e.currentTarget;
-                                    t.style.display = "none";
-                                    const fb = t.nextElementSibling as HTMLElement | null;
-                                    if (fb) fb.style.display = "flex";
-                                  }}
-                                />
-                              ) : null}
-                              <div
-                                className="rounded-full items-center justify-center text-white font-bold flex-shrink-0"
+                  {[
+                    { key: "tts",   label: "Texto a voz" },
+                    { key: "clone", label: "Clonación de voz" },
+                    { key: "stt",   label: "De voz a texto" },
+                  ].map(({ key, label }) => (
+                    <button
+                      key={key}
+                      onClick={() => { if (key !== "tts") window.location.href = "/dashboard"; }}
+                      className="transition-all"
+                      style={
+                        key === "tts"
+                          ? { background: "#ffffff", color: "#111827", borderRadius: "100px", padding: "7px 20px", fontSize: "13px", fontWeight: 600 }
+                          : { background: "transparent", color: "rgba(255,255,255,0.4)", borderRadius: "100px", padding: "7px 20px", fontSize: "13px", fontWeight: 500, cursor: "pointer" }
+                      }
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Inner light card */}
+              <div
+                style={{
+                  background: "#ffffff",
+                  borderRadius: "16px",
+                  overflow: "hidden",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
+                }}
+              >
+                <div className="flex" style={{ minHeight: "240px" }}>
+
+                  {/* Left: voice list ~280px */}
+                  <div
+                    className="flex-shrink-0 flex flex-col"
+                    style={{ width: "280px", background: "#f9fafb", borderRight: "1px solid #f3f4f6" }}
+                  >
+                    <div className="flex-1 overflow-y-auto" style={{ padding: "8px" }}>
+                      {demoVoices.length === 0
+                        ? Array.from({ length: 5 }).map((_, i) => (
+                            <div key={i} className="animate-pulse rounded-xl mb-0.5" style={{ height: "44px", background: "#f3f4f6" }} />
+                          ))
+                        : demoVoices.map((voice) => {
+                            const active = selectedVoice === voice._id;
+                            const proxiedSrc = voice.cover_image
+                              ? `/api/voice-image?url=${encodeURIComponent(voice.cover_image)}`
+                              : "";
+                            return (
+                              <button
+                                key={voice._id}
+                                onClick={() => { setSelectedVoice(voice._id); setDemoAudioUrl(null); }}
+                                className="w-full flex items-center gap-2.5 rounded-xl transition-all text-left"
                                 style={{
-                                  width: "28px", height: "28px", fontSize: "11px",
-                                  background: "linear-gradient(135deg,#3b82f6,#2563eb)",
-                                  display: proxiedSrc ? "none" : "flex",
+                                  height: "44px",
+                                  padding: "0 10px",
+                                  background: active ? "#f3f4f6" : "transparent",
                                 }}
                               >
-                                {voice.title[0]?.toUpperCase()}
-                              </div>
-                              <span className="truncate" style={{ fontSize: "13px" }}>{voice.title}</span>
-                            </button>
-                          );
-                        })}
+                                {proxiedSrc ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={proxiedSrc}
+                                    alt=""
+                                    className="rounded-full object-cover flex-shrink-0"
+                                    style={{ width: "30px", height: "30px" }}
+                                    onError={(e) => {
+                                      const t = e.currentTarget;
+                                      t.style.display = "none";
+                                      const fb = t.nextElementSibling as HTMLElement | null;
+                                      if (fb) fb.style.display = "flex";
+                                    }}
+                                  />
+                                ) : null}
+                                <div
+                                  className="rounded-full items-center justify-center text-white font-bold flex-shrink-0"
+                                  style={{
+                                    width: "30px", height: "30px", fontSize: "12px",
+                                    background: "linear-gradient(135deg,#3b82f6,#2563eb)",
+                                    display: proxiedSrc ? "none" : "flex",
+                                  }}
+                                >
+                                  {voice.title[0]?.toUpperCase()}
+                                </div>
+                                <span
+                                  className="truncate font-medium"
+                                  style={{ fontSize: "13px", color: active ? "#111827" : "#6b7280" }}
+                                >
+                                  {voice.title}
+                                </span>
+                              </button>
+                            );
+                          })}
+                    </div>
+                    {/* 2M+ footer */}
+                    <div style={{ padding: "10px 18px", borderTop: "1px solid #f3f4f6", flexShrink: 0 }}>
+                      <Link
+                        href="/dashboard"
+                        className="transition-colors hover:text-blue-600"
+                        style={{ fontSize: "12px", color: "#9ca3af" }}
+                      >
+                        2.000.000+ voces <span style={{ color: "#3b82f6" }}>↗</span>
+                      </Link>
+                    </div>
                   </div>
-                  {/* 2M+ footer */}
-                  <div style={{ padding: "8px 14px", borderTop: "1px solid #1e1e2e", flexShrink: 0 }}>
+
+                  {/* Right: textarea + footer */}
+                  <div className="flex-1 flex flex-col min-w-0" style={{ background: "#ffffff" }}>
+                    <textarea
+                      value={demoText}
+                      onChange={(e) => setDemoText(e.target.value.slice(0, 30000))}
+                      placeholder="Introduce tu propio texto"
+                      className="w-full outline-none resize-none leading-relaxed"
+                      style={{
+                        flex: 1,
+                        padding: "20px 22px",
+                        fontSize: "14px",
+                        color: "#374151",
+                        background: "transparent",
+                      }}
+                    />
+
+                    {demoAudioUrl && (
+                      <div style={{ padding: "0 22px 12px" }}>
+                        <AudioPlayer src={demoAudioUrl} filename="elitelabs-demo.mp3" />
+                      </div>
+                    )}
+
+                    {/* Card footer */}
+                    <div
+                      className="flex items-center gap-3 flex-shrink-0"
+                      style={{ padding: "12px 22px", borderTop: "1px solid #f3f4f6" }}
+                    >
+                      <span className="flex-1" style={{ fontSize: "12px", color: "#9ca3af" }}>
+                        {demoText.length}/30000 characters
+                      </span>
+                      <button
+                        onClick={handleGenerateDemo}
+                        disabled={demoLoading || !demoText.trim()}
+                        className="flex items-center gap-1.5 font-semibold text-white transition-all hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                        style={{ fontSize: "13px", padding: "9px 18px", borderRadius: "8px", background: "#111827" }}
+                      >
+                        {demoLoading ? (
+                          <>
+                            <svg className="animate-spin" style={{ width: "12px", height: "12px" }} fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                            Generando...
+                          </>
+                        ) : (
+                          <><PlayIcon /> Generar y reproducir</>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Bottom footer bar */}
+              <div className="flex items-center justify-between" style={{ paddingTop: "18px" }}>
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse flex-shrink-0" />
+                  <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>
+                    Powered by Elite Labs E2 Pro
+                  </span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span
+                    className="hidden sm:inline"
+                    style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.08em", fontWeight: 600 }}
+                  >
+                    EMPIEZA GRATIS HOY
+                  </span>
+                  {isLoaded && isSignedIn ? (
                     <Link
                       href="/dashboard"
-                      className="transition-colors hover:text-blue-400"
-                      style={{ fontSize: "11px", color: "#555570" }}
+                      className="font-semibold text-white transition-all hover:opacity-80 flex-shrink-0"
+                      style={{ fontSize: "13px", padding: "8px 18px", borderRadius: "8px", background: "#2563eb" }}
                     >
-                      2M+ voces <span style={{ color: "#3b82f6" }}>↗</span>
+                      Ir al Dashboard →
                     </Link>
-                  </div>
-                </div>
-
-                {/* Right: textarea + footer */}
-                <div className="flex-1 flex flex-col min-w-0">
-                  <textarea
-                    value={demoText}
-                    onChange={(e) => setDemoText(e.target.value.slice(0, 30000))}
-                    placeholder="Introduce tu propio texto"
-                    className="w-full outline-none bg-transparent text-gray-300 leading-relaxed resize-none"
-                    style={{
-                      height: "140px",
-                      padding: "16px 18px",
-                      fontSize: "13px",
-                      color: "#c0c0d8",
-                    }}
-                  />
-
-                  {demoAudioUrl && (
-                    <div style={{ padding: "0 18px 10px" }}>
-                      <AudioPlayer src={demoAudioUrl} filename="elitelabs-demo.mp3" />
-                    </div>
+                  ) : (
+                    <SignUpButton mode="modal">
+                      <button
+                        className="font-semibold text-white transition-all hover:opacity-80 flex-shrink-0"
+                        style={{ fontSize: "13px", padding: "8px 18px", borderRadius: "8px", background: "#2563eb" }}
+                      >
+                        Empezar gratis →
+                      </button>
+                    </SignUpButton>
                   )}
-
-                  {/* Footer */}
-                  <div
-                    className="flex items-center gap-3 flex-shrink-0"
-                    style={{ padding: "10px 18px", borderTop: "1px solid #1e1e2e" }}
-                  >
-                    <span className="flex-1" style={{ fontSize: "11px", color: "#555570" }}>
-                      {demoText.length}/30000 characters
-                    </span>
-
-                    <button
-                      onClick={handleGenerateDemo}
-                      disabled={demoLoading || !demoText.trim()}
-                      className="flex items-center gap-1.5 font-medium text-white transition-all hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
-                      style={{
-                        fontSize: "13px",
-                        padding: "8px 16px",
-                        borderRadius: "8px",
-                        background: "#0f0f18",
-                        border: "1px solid #2a2a3e",
-                      }}
-                    >
-                      {demoLoading ? (
-                        <>
-                          <svg className="animate-spin" style={{ width: "12px", height: "12px" }} fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                          </svg>
-                          Generando...
-                        </>
-                      ) : (
-                        <><PlayIcon /> Generar y reproducir</>
-                      )}
-                    </button>
-                  </div>
                 </div>
-
               </div>
+
             </div>
           </div>
         </section>
