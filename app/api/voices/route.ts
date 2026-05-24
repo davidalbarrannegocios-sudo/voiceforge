@@ -23,7 +23,8 @@ export async function GET() {
   const clonedVoices = (user?.clonedVoices ?? []).map((v) => ({
     id: v.id,
     name: v.name,
-    language: "es",
+    language: v.language,
+    gender: v.gender,
     isSystem: false,
     fishAudioModelId: v.referenceAudioUrl,
     createdAt: v.createdAt,

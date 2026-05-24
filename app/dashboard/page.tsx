@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, UserButton, useClerk } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, Lock, HelpCircle, Languages, Trash2 } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, Lock, HelpCircle, Languages, Trash2 } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, getAge, LANG_FLAGS, formatCount } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
@@ -19,6 +19,7 @@ interface Voice {
   id: string;
   name: string;
   language: string;
+  gender?: string;
   isSystem: boolean;
   fishAudioModelId?: string;
   createdAt?: string;
@@ -1174,10 +1175,25 @@ function JobCard({ job, onDelete }: { job: Job; onDelete?: (id: string) => void 
 }
 
 /* ─── Clone Modal ─────────────────────────────────────────── */
+const CLONE_LANGUAGES = [
+  { value: "es", label: "Español" },
+  { value: "en", label: "Inglés" },
+  { value: "fr", label: "Francés" },
+  { value: "de", label: "Alemán" },
+  { value: "it", label: "Italiano" },
+  { value: "pt", label: "Portugués" },
+  { value: "ja", label: "Japonés" },
+  { value: "zh", label: "Chino" },
+  { value: "ko", label: "Coreano" },
+  { value: "ar", label: "Árabe" },
+];
+
 function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [fileDuration, setFileDuration] = useState<number | null>(null);
   const [voiceName, setVoiceName] = useState("");
+  const [language, setLanguage] = useState("es");
+  const [gender, setGender] = useState<"masculine" | "feminine">("masculine");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -1214,6 +1230,8 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
       const fd = new FormData();
       fd.append("audio", file);
       fd.append("voice_name", voiceName.trim());
+      fd.append("language", language);
+      fd.append("gender", gender);
       const res = await fetch("/api/clone", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al clonar");
@@ -1274,6 +1292,34 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
           />
         </div>
 
+        {/* Language + Gender row */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label className="text-sm font-medium text-gray-300 mb-2 block">Idioma</label>
+            <div className="relative">
+              <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#8888a8" }} />
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="w-full rounded-lg pl-8 pr-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none"
+                style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }}
+              >
+                {CLONE_LANGUAGES.map((l) => (
+                  <option key={l.value} value={l.value}>{l.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-300 mb-2 block">Género</label>
+            <div style={{ position: "relative", display: "grid", gridTemplateColumns: "1fr 1fr", background: "#0a0a0f", border: "1px solid #2a2a3e", borderRadius: "8px", padding: "3px" }}>
+              <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#1a1a2e", borderRadius: "5px", pointerEvents: "none", transition: "transform 0.2s ease", transform: `translateX(${gender === "feminine" ? "100%" : "0%"})` }} />
+              <button type="button" onClick={() => setGender("masculine")} style={{ position: "relative", zIndex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 600, background: "transparent", border: "none", cursor: "pointer", color: gender === "masculine" ? "#e5e7eb" : "#4a4a65", transition: "color 0.2s ease" }}>♂ Masc.</button>
+              <button type="button" onClick={() => setGender("feminine")} style={{ position: "relative", zIndex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 600, background: "transparent", border: "none", cursor: "pointer", color: gender === "feminine" ? "#e5e7eb" : "#4a4a65", transition: "color 0.2s ease" }}>♀ Fem.</button>
+            </div>
+          </div>
+        </div>
+
         <p className="text-xs text-gray-500 mb-4">La clonación es gratuita</p>
 
         {error && (
@@ -1320,6 +1366,35 @@ function VoicesTab({
 }) {
   const [showModal, setShowModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [previewState, setPreviewState] = useState<Record<string, "idle" | "loading" | "playing">>({});
+  const previewAudiosRef = useRef<Record<string, HTMLAudioElement>>({});
+
+  const LANG_LABELS: Record<string, string> = { es: "ES", en: "EN", fr: "FR", de: "DE", it: "IT", pt: "PT", ja: "JA", zh: "ZH", ko: "KO", ar: "AR" };
+
+  async function handlePreview(voice: Voice) {
+    const state = previewState[voice.id] ?? "idle";
+    if (state === "playing") {
+      previewAudiosRef.current[voice.id]?.pause();
+      setPreviewState((s) => ({ ...s, [voice.id]: "idle" }));
+      return;
+    }
+    if (state === "loading") return;
+    setPreviewState((s) => ({ ...s, [voice.id]: "loading" }));
+    try {
+      const res = await fetch(`/api/voices/${voice.id}/preview`, { method: "POST" });
+      if (!res.ok) throw new Error("Error");
+      const { url } = await res.json() as { url: string };
+      const audio = new Audio(url);
+      previewAudiosRef.current[voice.id] = audio;
+      audio.onended = () => setPreviewState((s) => ({ ...s, [voice.id]: "idle" }));
+      audio.onerror = () => setPreviewState((s) => ({ ...s, [voice.id]: "idle" }));
+      await audio.play();
+      setPreviewState((s) => ({ ...s, [voice.id]: "playing" }));
+    } catch {
+      setPreviewState((s) => ({ ...s, [voice.id]: "idle" }));
+    }
+  }
+
 
   const cloned = voices.filter((v) => !v.isSystem);
   const slotLimit = VOICE_SLOT_LIMITS[plan] ?? 0;
@@ -1380,12 +1455,38 @@ function VoicesTab({
                     {voice.createdAt && (
                       <p className="text-xs text-gray-500 mt-0.5">{formatDate(voice.createdAt)}</p>
                     )}
+                    <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                      {voice.language && (
+                        <span className="px-1.5 py-0.5 rounded text-xs font-semibold" style={{ background: "rgba(59,130,246,0.12)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}>
+                          {LANG_LABELS[voice.language] ?? voice.language.toUpperCase()}
+                        </span>
+                      )}
+                      {voice.gender && (
+                        <span className="px-1.5 py-0.5 rounded text-xs font-medium" style={{ background: "rgba(255,255,255,0.05)", color: "#8888a8", border: "1px solid rgba(255,255,255,0.08)" }}>
+                          {voice.gender === "masculine" ? "♂" : "♀"}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(59,130,246,0.15)" }}>
                     <Mic size={14} style={{ color: "#93c5fd" }} />
                   </div>
                 </div>
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => handlePreview(voice)}
+                    disabled={!voice.fishAudioModelId}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-40 flex items-center justify-center gap-1"
+                    style={{ background: "rgba(255,255,255,0.05)", color: "#a0a0bf", border: "1px solid rgba(255,255,255,0.08)" }}
+                  >
+                    {previewState[voice.id] === "loading" ? (
+                      <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                    ) : previewState[voice.id] === "playing" ? (
+                      <Pause size={11} />
+                    ) : (
+                      <Play size={11} />
+                    )}
+                  </button>
                   <button
                     onClick={() => onUseVoice({ referenceId: voice.fishAudioModelId ?? "", name: voice.name, isCloned: true })}
                     disabled={!voice.fishAudioModelId}

@@ -18,30 +18,23 @@ export async function DELETE(
     const user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id }, select: { id: true } });
     if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
-    const generation = await prisma.generation.findUnique({ where: { id }, select: { id: true, userId: true, audioUrl: true } });
-    if (!generation) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
-    if (generation.userId !== user.id) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    const job = await prisma.job.findUnique({ where: { id }, select: { id: true, userId: true, audioUrl: true } });
+    if (!job) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+    if (job.userId !== user.id) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-    if (generation.audioUrl) {
+    if (job.audioUrl) {
+      try { await deleteFromR2(keyFromPublicUrl(job.audioUrl)); } catch { /* non-fatal */ }
+      // Also remove any matching Generation record
       try {
-        await deleteFromR2(keyFromPublicUrl(generation.audioUrl));
-      } catch {
-        // R2 delete failure is non-fatal — still remove the DB record
-      }
-    }
-
-    await prisma.generation.delete({ where: { id } });
-
-    // Also remove the matching Job record so the sidebar stays in sync
-    if (generation.audioUrl) {
-      try {
-        await prisma.job.deleteMany({ where: { userId: user.id, audioUrl: generation.audioUrl } });
+        await prisma.generation.deleteMany({ where: { userId: user.id, audioUrl: job.audioUrl } });
       } catch { /* non-fatal */ }
     }
 
+    await prisma.job.delete({ where: { id } });
+
     return NextResponse.json({ success: true });
   } catch (e) {
-    console.error("[history/delete]", e);
+    console.error("[jobs/delete]", e);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

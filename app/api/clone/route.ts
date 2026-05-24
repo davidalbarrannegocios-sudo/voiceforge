@@ -14,6 +14,8 @@ export async function POST(req: Request) {
   const formData = await req.formData();
   const file = formData.get("audio") as File | null;
   const voiceName = formData.get("voice_name") as string | null;
+  const language = (formData.get("language") as string | null) ?? "es";
+  const gender = (formData.get("gender") as string | null) ?? "masculine";
 
   if (!file) return NextResponse.json({ error: "Audio requerido" }, { status: 400 });
   if (!voiceName || voiceName.trim().length === 0)
@@ -70,6 +72,8 @@ export async function POST(req: Request) {
         userId: user.id,
         name: voiceName.trim(),
         referenceAudioUrl: result.model_id,
+        language,
+        gender,
       },
     }),
   ]);

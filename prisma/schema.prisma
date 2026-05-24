@@ -76,6 +76,8 @@ model ClonedVoice {
   user              User     @relation(fields: [userId], references: [id])
   name              String
   referenceAudioUrl String
+  language          String   @default("es")
+  gender            String   @default("masculine")
   createdAt         DateTime @default(now())
 }
 
