@@ -693,21 +693,48 @@ export function VoiceBrowser({
   }, [search]);
 
   useEffect(() => { setPage(1); }, [language]);
+  useEffect(() => { setPage(1); }, [tier]);
 
   const fetchVoices = useCallback(async () => {
     if (tab !== "explore") return;
     setLoading(true);
     try {
-      const p = new URLSearchParams({ page: String(page), language });
-      if (debouncedSearch) p.set("search", debouncedSearch);
-      const res = await fetch(`/api/fish-voices?${p}`);
-      const data = await res.json();
-      setPublicVoices(data.items ?? []);
-      setTotal(data.total ?? 0);
+      if (tier !== "all") {
+        // Accumulate Fish Audio pages until ≥20 voices pass the tier filter
+        const accumulated: FishVoice[] = [];
+        let fishPage = 1;
+        let fishTotal = 0;
+        const MAX_PAGES = 10;
+        while (fishPage <= MAX_PAGES) {
+          const p = new URLSearchParams({ page: String(fishPage), language });
+          if (debouncedSearch) p.set("search", debouncedSearch);
+          const res = await fetch(`/api/fish-voices?${p}`);
+          const data = await res.json();
+          const items: FishVoice[] = data.items ?? [];
+          fishTotal = data.total ?? 0;
+          accumulated.push(...items);
+          if (items.length === 0) break;
+          const matchCount = accumulated.filter((v) =>
+            tier === "free" ? !isPremiumVoice(v._id) : isPremiumVoice(v._id)
+          ).length;
+          if (matchCount >= 20) break;
+          if (accumulated.length >= fishTotal) break;
+          fishPage++;
+        }
+        setPublicVoices(accumulated);
+        setTotal(fishTotal);
+      } else {
+        const p = new URLSearchParams({ page: String(page), language });
+        if (debouncedSearch) p.set("search", debouncedSearch);
+        const res = await fetch(`/api/fish-voices?${p}`);
+        const data = await res.json();
+        setPublicVoices(data.items ?? []);
+        setTotal(data.total ?? 0);
+      }
     } finally {
       setLoading(false);
     }
-  }, [tab, language, debouncedSearch, page]);
+  }, [tab, language, debouncedSearch, page, tier]);
 
   useEffect(() => { fetchVoices(); }, [fetchVoices]);
   useEffect(() => () => { audioRef.current?.pause(); }, []);
@@ -978,8 +1005,8 @@ export function VoiceBrowser({
                   </div>
                 )}
 
-                {/* Pagination */}
-                {totalPages > 1 && (
+                {/* Pagination — hidden when tier filter accumulates results internally */}
+                {totalPages > 1 && tier === "all" && (
                   <div className="flex items-center justify-center gap-3 mt-6 pb-2">
                     <button
                       onClick={() => setPage((p) => Math.max(1, p - 1))}

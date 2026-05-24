@@ -1508,9 +1508,9 @@ const BILLING_PLANS = [
     name: "Free",
     description: "Para explorar la plataforma",
     price: 0,
-    characters: 10_000,
+    characters: 5_000,
     popular: false,
-    features: ["10.000 caracteres/mes", "Voces del sistema", "Transcripciones (30 min/mes)", "Historial 7 días"],
+    features: ["5.000 caracteres/mes", "Voces del sistema", "Transcripciones (30 min/mes)", "Historial 7 días"],
   },
   {
     key: "starter",
