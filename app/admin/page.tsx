@@ -67,7 +67,7 @@ interface Generation {
 }
 
 interface UserDetail {
-  user: { id: string; email: string; credits: number; role: string; createdAt: string };
+  user: { id: string; email: string; credits: number; plan: string; role: string; createdAt: string };
   generations: Generation[];
 }
 
@@ -172,6 +172,8 @@ function UserDetailModal({
   const [refundingPayment, setRefundingPayment] = useState<string | null>(null);
   const [stripeSub, setStripeSub] = useState<StripeSubDetail | null>(null);
   const [stripeSubLoading, setStripeSubLoading] = useState(false);
+  const [planValue, setPlanValue] = useState("");
+  const [planLoading, setPlanLoading] = useState(false);
 
   const fetchDetail = useCallback(async () => {
     setLoading(true);
@@ -217,10 +219,31 @@ function UserDetailModal({
 
   useEffect(() => { fetchDetail(); }, [fetchDetail]);
   useEffect(() => { fetchStripeSub(); }, [fetchStripeSub]);
+  useEffect(() => { if (detail?.user.plan) setPlanValue(detail.user.plan); }, [detail]);
 
   useEffect(() => {
     if (modalTab === "pagos" && payments === null) fetchPayments();
   }, [modalTab, payments, fetchPayments]);
+
+  async function handleAssignPlan() {
+    if (!planValue || planValue === detail?.user.plan) return;
+    setPlanLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/plan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planValue }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast(`Plan actualizado a "${data.plan}". Créditos: ${data.credits.toLocaleString("es-ES")}`);
+      fetchDetail();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Error asignando plan", false);
+    } finally {
+      setPlanLoading(false);
+    }
+  }
 
   async function handleRefund(gen: Generation) {
     setRefunding(gen.id);
@@ -381,6 +404,31 @@ function UserDetailModal({
                   </div>
                 );
               })() : null}
+            </div>
+
+            {/* Cambiar plan */}
+            <div style={{ marginBottom: "1.5rem", padding: "1rem", borderRadius: "0.75rem", background: "#0a0a0f", border: "1px solid #2a2a3e" }}>
+              <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#555570", marginBottom: "0.75rem" }}>
+                Plan actual: <span style={{ color: "#e5e7eb" }}>{detail.user.plan}</span>
+              </p>
+              <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                <select
+                  value={planValue}
+                  onChange={(e) => setPlanValue(e.target.value)}
+                  style={{ ...input, width: "auto", minWidth: "140px" }}
+                >
+                  {["free", "starter", "pro", "elite", "enterprise"].map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleAssignPlan}
+                  disabled={planLoading || !planValue || planValue === detail.user.plan}
+                  style={btn("#3b82f6", { opacity: planLoading || planValue === detail.user.plan ? 0.5 : 1 })}
+                >
+                  {planLoading ? "Asignando..." : "Asignar plan"}
+                </button>
+              </div>
             </div>
 
             {/* Tabs */}
