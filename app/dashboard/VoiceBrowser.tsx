@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { Globe } from "lucide-react";
 import { FREE_VOICE_IDS } from "@/lib/free-voice-ids";
 
 export interface SelectedVoice {
@@ -39,6 +40,15 @@ interface FavoriteVoice {
   voiceName: string;
   coverImage: string | null;
   createdAt: string;
+}
+
+interface CommunityVoice {
+  id: string;
+  name: string;
+  language: string;
+  gender: string;
+  fishAudioModelId: string;
+  creatorName: string;
 }
 
 interface AdvancedFilters {
@@ -619,6 +629,18 @@ export function VoiceBrowser({
   const [appliedFilters, setAppliedFilters] = useState<AdvancedFilters>(EMPTY_FILTERS);
   const [featuredVoices, setFeaturedVoices] = useState<FishVoice[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [communityVoices, setCommunityVoices] = useState<CommunityVoice[]>([]);
+  const [communityLoading, setCommunityLoading] = useState(false);
+
+  useEffect(() => {
+    if (tab !== "cloned") return;
+    setCommunityLoading(true);
+    fetch("/api/voices/public")
+      .then((r) => r.json())
+      .then((data) => setCommunityVoices(Array.isArray(data) ? data : []))
+      .catch(() => setCommunityVoices([]))
+      .finally(() => setCommunityLoading(false));
+  }, [tab]);
 
   const userCanUsePremium = canUsePremium(plan);
   const activeFilterCount =
@@ -1311,6 +1333,59 @@ export function VoiceBrowser({
                     })}
                   </div>
                 )}
+
+                {/* Community voices */}
+                <div className="mt-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Globe size={13} style={{ color: "#4a4a65" }} />
+                    <span className="text-xs font-semibold" style={{ color: "#4a4a65" }}>Voces de la comunidad</span>
+                  </div>
+                  {communityLoading ? (
+                    <div className="space-y-1.5">
+                      {[1, 2].map((i) => (
+                        <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: "#0d0d17" }} />
+                      ))}
+                    </div>
+                  ) : communityVoices.length === 0 ? (
+                    <p className="text-xs text-center py-6" style={{ color: "#3a3a52" }}>No hay voces públicas aún</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {communityVoices.map((voice) => (
+                        <div
+                          key={voice.id}
+                          className="flex items-center gap-3 px-4 py-3 rounded-xl border"
+                          style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
+                        >
+                          <div
+                            className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-sm"
+                            style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
+                          >
+                            {voice.name[0]?.toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-semibold text-white truncate">{voice.name}</p>
+                              <span className="text-sm leading-none flex-shrink-0">{LANG_FLAGS[voice.language] ?? "🌐"}</span>
+                              {voice.gender && (
+                                <span className="text-xs flex-shrink-0" style={{ color: "#3a3a52" }}>
+                                  {voice.gender === "masculine" ? "♂" : voice.gender === "feminine" ? "♀" : ""}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs mt-0.5" style={{ color: "#555570" }}>por {voice.creatorName}</p>
+                          </div>
+                          <button
+                            onClick={() => handleSelect({ referenceId: voice.fishAudioModelId, name: voice.name, isCloned: true })}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white flex-shrink-0"
+                            style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
+                          >
+                            Usar
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 

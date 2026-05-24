@@ -25,6 +25,7 @@ interface Voice {
   fishAudioModelId?: string;
   createdAt?: string;
   clipCount?: number;
+  isPublic?: boolean;
 }
 
 type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral" | "translate" | "transcribe" | "team";
@@ -1155,6 +1156,7 @@ function VoiceCard({
   onPreview,
   onUse,
   onDelete,
+  onToggleVisibility,
 }: {
   voice: Voice;
   previewState: Record<string, "idle" | "loading" | "playing">;
@@ -1162,6 +1164,7 @@ function VoiceCard({
   onPreview: (v: Voice) => void;
   onUse: (v: Voice) => void;
   onDelete: (id: string) => void;
+  onToggleVisibility?: (id: string, isPublic: boolean) => void;
 }) {
   const [hovered, setHovered] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -1206,6 +1209,18 @@ function VoiceCard({
             <span className="font-semibold text-white text-sm truncate">{voice.name}</span>
             {voice.language && <span className="text-xs leading-none flex-shrink-0">{LANG_FLAGS[voice.language] ?? "🌐"}</span>}
             {voice.gender && <span className="text-xs flex-shrink-0" style={{ color: "#3a3a52" }}>{voice.gender === "masculine" ? "♂" : "♀"}</span>}
+            {voice.isPublic !== undefined && (
+              <span
+                className="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 font-medium leading-none"
+                style={{
+                  background: voice.isPublic ? "rgba(74,222,128,0.12)" : "rgba(107,114,128,0.1)",
+                  color: voice.isPublic ? "#4ade80" : "#4a4a65",
+                  border: `1px solid ${voice.isPublic ? "rgba(74,222,128,0.25)" : "rgba(107,114,128,0.15)"}`,
+                }}
+              >
+                {voice.isPublic ? "Pública" : "Privada"}
+              </span>
+            )}
           </div>
           {voice.createdAt && (
             <span className="text-xs flex-shrink-0" style={{ color: "#3a3a52" }}>{formatDate(voice.createdAt)}</span>
@@ -1271,6 +1286,21 @@ function VoiceCard({
                   )}
                   {ps === "playing" ? "Detener preview" : "Escuchar preview"}
                 </button>
+                {onToggleVisibility && (
+                  <>
+                    <div style={{ height: "1px", background: "#2a2a3e", margin: "2px 0" }} />
+                    <button
+                      onClick={() => { onToggleVisibility(voice.id, !voice.isPublic); setMenuOpen(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors"
+                      style={{ color: "#d1d5db" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <Globe size={12} className="flex-shrink-0" />
+                      {voice.isPublic ? "Hacer privada" : "Hacer pública"}
+                    </button>
+                  </>
+                )}
                 <div style={{ height: "1px", background: "#2a2a3e", margin: "2px 0" }} />
                 <button
                   onClick={() => { onDelete(voice.id); setMenuOpen(false); }}
@@ -1364,6 +1394,15 @@ function VoicesTab({
     }
   }
 
+  async function handleToggleVisibility(voiceId: string, isPublic: boolean) {
+    await fetch(`/api/voices/${voiceId}/visibility`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isPublic }),
+    });
+    onRefresh();
+  }
+
   return (
     <>
       {showModal && (
@@ -1433,6 +1472,7 @@ function VoicesTab({
               onPreview={handlePreview}
               onUse={(v) => onUseVoice({ referenceId: v.fishAudioModelId ?? "", name: v.name, isCloned: true })}
               onDelete={handleDelete}
+              onToggleVisibility={handleToggleVisibility}
             />
           ))}
         </div>

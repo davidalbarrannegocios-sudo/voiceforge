@@ -78,6 +78,7 @@ model ClonedVoice {
   referenceAudioUrl String
   language          String   @default("es")
   gender            String   @default("masculine")
+  isPublic          Boolean  @default(false)
   createdAt         DateTime @default(now())
 }
 

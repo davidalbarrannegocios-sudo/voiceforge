@@ -39,6 +39,7 @@ export async function GET() {
     language: v.language,
     gender: v.gender,
     isSystem: false,
+    isPublic: v.isPublic,
     fishAudioModelId: v.referenceAudioUrl,
     createdAt: v.createdAt,
     clipCount: countMap[v.referenceAudioUrl] ?? 0,
