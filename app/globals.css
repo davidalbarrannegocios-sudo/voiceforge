@@ -158,3 +158,9 @@ input[type="range"]::-moz-range-thumb {
 .cl-internal-1dauvpw {
   color: #e5e7eb !important;
 }
+
+.cl-badge[data-localization-key="badge__lastUsed"],
+.cl-badge {
+  background: #3b82f6 !important;
+  color: #fff !important;
+}
