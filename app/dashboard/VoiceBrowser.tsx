@@ -641,13 +641,15 @@ export function VoiceBrowser({
 
   useEffect(() => {
     if (tab !== "cloned") return;
+    const controller = new AbortController();
     setCommunityLoading(true);
     const q = communitySearchDebounced ? `?search=${encodeURIComponent(communitySearchDebounced)}` : "";
-    fetch(`/api/voices/public${q}`)
+    fetch(`/api/voices/public${q}`, { signal: controller.signal })
       .then((r) => r.json())
       .then((data) => setCommunityVoices(Array.isArray(data) ? data : []))
-      .catch(() => setCommunityVoices([]))
+      .catch((e) => { if (e.name !== "AbortError") setCommunityVoices([]); })
       .finally(() => setCommunityLoading(false));
+    return () => controller.abort();
   }, [tab, communitySearchDebounced]);
 
   const userCanUsePremium = canUsePremium(plan);
@@ -1373,21 +1375,35 @@ export function VoiceBrowser({
                         <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: "#0d0d17" }} />
                       ))}
                     </div>
-                  ) : communityVoices.length === 0 ? (
-                    <p className="text-xs text-center py-6" style={{ color: "#3a3a52" }}>
-                      {communitySearch ? "Sin resultados" : "No hay voces públicas aún"}
-                    </p>
-                  ) : (
+                  ) : (() => {
+                    // Client-side fallback filter — catches any server-side gaps
+                    const lower = communitySearchDebounced.toLowerCase();
+                    const filtered = lower
+                      ? communityVoices.filter(
+                          (v) =>
+                            v.name.toLowerCase().includes(lower) ||
+                            v.fishAudioModelId.toLowerCase().includes(lower)
+                        )
+                      : communityVoices;
+                    const exactMatch = communitySearchDebounced
+                      ? filtered.find((v) => v.fishAudioModelId.toLowerCase() === lower)
+                      : null;
+                    const sorted = exactMatch
+                      ? [exactMatch, ...filtered.filter((v) => v.fishAudioModelId !== exactMatch.fishAudioModelId)]
+                      : filtered;
+
+                    if (sorted.length === 0) {
+                      return (
+                        <p className="text-xs text-center py-6" style={{ color: "#3a3a52" }}>
+                          {communitySearchDebounced ? "Sin resultados" : "No hay voces públicas aún"}
+                        </p>
+                      );
+                    }
+                    return (
                     <div className="space-y-1.5">
                       {(() => {
-                        const exactMatch = communitySearch
-                          ? communityVoices.find((v) => v.fishAudioModelId === communitySearch)
-                          : null;
-                        const sorted = exactMatch
-                          ? [exactMatch, ...communityVoices.filter((v) => v.fishAudioModelId !== communitySearch)]
-                          : communityVoices;
                         return sorted.map((voice) => {
-                          const isExact = exactMatch?.fishAudioModelId === voice.fishAudioModelId && !!communitySearch;
+                          const isExact = exactMatch?.fishAudioModelId === voice.fishAudioModelId && !!communitySearchDebounced;
                           return (
                             <div
                               key={voice.id}
@@ -1435,7 +1451,8 @@ export function VoiceBrowser({
                         });
                       })()}
                     </div>
-                  )}
+                    );
+                  })()}
                 </div>
               </div>
             )}
