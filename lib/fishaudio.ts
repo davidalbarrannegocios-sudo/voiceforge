@@ -163,6 +163,26 @@ async function adjustSpeed(audioBuffer: Buffer, speed: number): Promise<Buffer> 
   }
 }
 
+export async function convertToMp3(inputBuffer: Buffer): Promise<Buffer> {
+  const id = randomUUID();
+  const inputPath = join(tmpdir(), `${id}_input`);
+  const outputPath = join(tmpdir(), `${id}_output.mp3`);
+  await writeFile(inputPath, inputBuffer);
+  try {
+    await new Promise<void>((resolve, reject) => {
+      execFile(
+        "ffmpeg",
+        ["-i", inputPath, "-acodec", "libmp3lame", "-ab", "128k", "-ar", "44100", "-y", outputPath],
+        (err) => (err ? reject(err) : resolve()),
+      );
+    });
+    return await readFile(outputPath);
+  } finally {
+    await unlink(inputPath).catch(() => {});
+    await unlink(outputPath).catch(() => {});
+  }
+}
+
 export interface GenerateResult {
   audio_url: string;
   duration_seconds: number;

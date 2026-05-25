@@ -2,7 +2,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import * as deepl from "deepl-node";
 import { prisma } from "@/lib/prisma";
-import { fishAudioGenerate, fishAudioClone } from "@/lib/fishaudio";
+import { fishAudioGenerate, fishAudioClone, convertToMp3 } from "@/lib/fishaudio";
 import { calculateCharCost } from "@/lib/utils";
 import { getEffectivePlan } from "@/lib/plan";
 
@@ -76,8 +76,11 @@ export async function POST(req: Request) {
     }
 
     // ── Step 1: Fish Audio ASR ────────────────────────────────
+    const rawBuffer = Buffer.from(await audioFile.arrayBuffer());
+    const mp3Buffer = await convertToMp3(rawBuffer);
+
     const asrForm = new FormData();
-    asrForm.append("audio", audioFile);
+    asrForm.append("audio", new Blob([new Uint8Array(mp3Buffer)], { type: "audio/mpeg" }), "audio.mp3");
     asrForm.append("language", "es");
     asrForm.append("ignore_timestamps", "true");
 

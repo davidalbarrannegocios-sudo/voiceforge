@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calculateCharCost } from "@/lib/utils";
 import { getEffectivePlan } from "@/lib/plan";
+import { convertToMp3 } from "@/lib/fishaudio";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -62,8 +63,11 @@ export async function POST(req: Request) {
   });
 
   try {
+    const rawBuffer = Buffer.from(await audioFile.arrayBuffer());
+    const mp3Buffer = await convertToMp3(rawBuffer);
+
     const asrForm = new FormData();
-    asrForm.append("audio", audioFile);
+    asrForm.append("audio", new Blob([new Uint8Array(mp3Buffer)], { type: "audio/mpeg" }), "audio.mp3");
     asrForm.append("language", language);
     asrForm.append("ignore_timestamps", "false");
     if (speakers !== "auto") {
