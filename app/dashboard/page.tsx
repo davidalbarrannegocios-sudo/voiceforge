@@ -4057,7 +4057,8 @@ export default function DashboardPage() {
   const { user } = useUser();
   const { openUserProfile } = useClerk();
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<Tab>("home");
+  const initialTab = (searchParams.get("tab") as Tab | null) ?? "home";
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [credits, setCredits] = useState<number | null>(null);
   const [extraCredits, setExtraCredits] = useState<number>(0);
   const [plan, setPlan] = useState<string>("free");
