@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, Info, LogOut } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, Info } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { UserMenu } from "@/components/UserMenu";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, formatCount } from "./VoiceBrowser";
@@ -36,7 +36,7 @@ type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral" |
 /* ─── Sidebar ─────────────────────────────────────────────── */
 type NavSection = {
   label?: string;
-  items: { key: Tab | "_account"; label: string; Icon: React.ElementType }[];
+  items: { key: Tab; label: string; Icon: React.ElementType }[];
 };
 
 function Sidebar({
@@ -56,7 +56,6 @@ function Sidebar({
   memberInfo?: { percentage: number; creditsLastDistributed: number; teamName: string } | null;
   collapsed?: boolean;
 }) {
-  const { openUserProfile, signOut } = useClerk();
   const { t } = useLang();
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -71,10 +70,9 @@ function Sidebar({
     }
   }
 
-  const platformItems: { key: Tab | "_account"; label: string; Icon: React.ElementType }[] = [
-    { key: "billing",   label: t.nav.billing,   Icon: CreditCard },
-    { key: "referral",  label: t.nav.referrals, Icon: Gift },
-    { key: "_account",  label: t.nav.account,   Icon: User },
+  const platformItems: { key: Tab; label: string; Icon: React.ElementType }[] = [
+    { key: "billing",  label: t.nav.billing,   Icon: CreditCard },
+    { key: "referral", label: t.nav.referrals, Icon: Gift },
   ];
   if (plan === "enterprise") {
     platformItems.unshift({ key: "team", label: "Equipo", Icon: Users });
@@ -102,8 +100,7 @@ function Sidebar({
     },
   ];
 
-  function handleNav(key: Tab | "_account") {
-    if (key === "_account") { openUserProfile(); return; }
+  function handleNav(key: Tab) {
     setActiveTab(key);
     onClose?.();
   }
@@ -153,7 +150,7 @@ function Sidebar({
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
               {section.items.map(({ key, label, Icon }) => {
-                const isActive = key !== "_account" && activeTab === key;
+                const isActive = activeTab === key;
                 return (
                   <button
                     key={key}
@@ -297,34 +294,6 @@ function Sidebar({
         </div>
       )}
 
-      {/* Sign out */}
-      <div style={{ padding: collapsed && desktop ? "8px 8px 16px" : "8px 12px 16px", flexShrink: 0 }}>
-        <button
-          onClick={() => signOut({ redirectUrl: "/" })}
-          title={collapsed && desktop ? "Cerrar sesión" : undefined}
-          style={{
-            width: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: collapsed && desktop ? "center" : "flex-start",
-            gap: collapsed && desktop ? 0 : "8px",
-            padding: collapsed && desktop ? "8px 0" : "8px 12px",
-            borderRadius: "8px",
-            border: "none",
-            background: "transparent",
-            cursor: "pointer",
-            fontSize: "13px",
-            fontWeight: 500,
-            color: "#7a3a3a",
-            transition: "background 0.15s, color 0.15s",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; e.currentTarget.style.color = "#f87171"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#7a3a3a"; }}
-        >
-          <LogOut size={15} style={{ flexShrink: 0 }} />
-          {!(collapsed && desktop) && "Cerrar sesión"}
-        </button>
-      </div>
     </aside>
   );
 }
