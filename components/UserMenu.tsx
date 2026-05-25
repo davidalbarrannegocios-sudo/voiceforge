@@ -84,11 +84,12 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
       )}
 
       {/* Dropdown */}
-      {open && (
-        <div
-          className="absolute right-0 top-full mt-2 w-72 rounded-xl shadow-2xl z-50 overflow-hidden"
-          style={{ background: "#0d0d17", border: "1px solid #1e1e2e" }}
-        >
+      <div
+        className={`absolute right-0 top-full mt-2 w-72 rounded-xl shadow-2xl z-50 overflow-hidden transition-all duration-200 ease-out ${
+          open ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-2 pointer-events-none"
+        }`}
+        style={{ background: "#0d0d17", border: "1px solid #1e1e2e" }}
+      >
           {/* User info + balance */}
           <div className="p-4" style={{ borderBottom: "1px solid #1e1e2e" }}>
             {/* Avatar + name */}
@@ -196,8 +197,7 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
               Cerrar sesión
             </button>
           </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
