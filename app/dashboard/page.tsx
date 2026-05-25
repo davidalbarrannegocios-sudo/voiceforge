@@ -2683,17 +2683,17 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
               {/* Speakers */}
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#9ca3af", marginBottom: 6 }}>Número de hablantes</label>
-                <select
+                <CustomSelect
+                  options={[
+                    { value: "auto", label: "Automático (detección por IA)" },
+                    { value: "1", label: "1 hablante" },
+                    { value: "2", label: "2 hablantes" },
+                    { value: "3", label: "3 hablantes" },
+                    { value: "4+", label: "4+ hablantes" },
+                  ]}
                   value={speakers}
-                  onChange={(e) => setSpeakers(e.target.value)}
-                  style={{ width: "100%", padding: "9px 12px", background: "#070710", border: "1px solid #1e1e2e", borderRadius: 8, color: "#d1d5db", fontSize: 13, outline: "none", cursor: "pointer" }}
-                >
-                  <option value="auto">Automático (detección por IA)</option>
-                  <option value="1">1 hablante</option>
-                  <option value="2">2 hablantes</option>
-                  <option value="3">3 hablantes</option>
-                  <option value="4">4+ hablantes</option>
-                </select>
+                  onChange={setSpeakers}
+                />
               </div>
 
               {/* Info */}
