@@ -1319,6 +1319,7 @@ interface HistoryGen {
   creditsUsed: number;
   durationSeconds: number | null;
   voiceId: string | null;
+  voiceName: string | null;
   createdAt: string;
   expiresAt: string | null;
 }
@@ -1492,7 +1493,7 @@ function HistoryTab({ plan }: { plan: string }) {
                           <span style={{ fontSize: 11, color: "#6b7280" }}>{fmtTime(gen.createdAt)}</span>
                           <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                             <VoiceAvatarGenerative seed={seed} size={20} />
-                            <span style={{ fontSize: 11, color: "#6b7280" }}>Voz</span>
+                            <span style={{ fontSize: 11, color: "#6b7280" }}>{gen.voiceName ?? "Voz"}</span>
                           </div>
                         </div>
 

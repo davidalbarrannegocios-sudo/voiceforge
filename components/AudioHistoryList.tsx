@@ -11,6 +11,7 @@ interface Generation {
   creditsUsed: number;
   durationSeconds: number;
   voiceId: string;
+  voiceName: string | null;
   createdAt: string;
   expiresAt: string | null;
 }
@@ -226,7 +227,7 @@ export default function AudioHistoryList({
                     const isDeleting = deletingIds.has(gen.id);
                     const isConfirming = confirmId === gen.id;
                     const isPlaying = playingId === gen.id;
-                    const vName = gen.voiceId ?? "Voz";
+                    const vName = gen.voiceName ?? "Voz";
 
                     return (
                       <div
