@@ -38,60 +38,68 @@ export function UserMenu({ used, total }: UserMenuProps = {}) {
   return (
     <div className="relative" ref={ref}>
       {/* Avatar trigger */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="relative flex-shrink-0 w-9 h-9"
-        aria-label="Menú de usuario"
-      >
-        {showRing ? (
-          <>
-            <svg
-              className="absolute inset-0 -rotate-90"
-              width="36"
-              height="36"
+      {showRing ? (
+        /* Ring mode — overflow-hidden would clip the SVG, so keep it open */
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="w-9 h-9 min-w-[36px] min-h-[36px] relative flex-shrink-0 flex items-center justify-center p-0 bg-transparent border-none cursor-pointer"
+          aria-label="Menú de usuario"
+        >
+          <svg
+            className="absolute inset-0 -rotate-90"
+            width="36"
+            height="36"
+          >
+            <circle cx="18" cy="18" r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="2" />
+            <circle
+              cx="18"
+              cy="18"
+              r={r}
+              fill="none"
+              stroke={ringColor}
+              strokeWidth="2"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              style={{ transition: "stroke-dashoffset 0.5s ease" }}
+            />
+          </svg>
+          {user?.imageUrl ? (
+            <img
+              src={user.imageUrl}
+              alt={user.fullName ?? "Avatar"}
+              className="absolute rounded-full object-cover"
+              style={{ top: 3, left: 3, width: "calc(100% - 6px)", height: "calc(100% - 6px)" }}
+            />
+          ) : (
+            <div
+              className="absolute rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm"
+              style={{ top: 3, left: 3, width: "calc(100% - 6px)", height: "calc(100% - 6px)" }}
             >
-              <circle cx="18" cy="18" r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="2" />
-              <circle
-                cx="18"
-                cy="18"
-                r={r}
-                fill="none"
-                stroke={ringColor}
-                strokeWidth="2"
-                strokeDasharray={circumference}
-                strokeDashoffset={strokeDashoffset}
-                strokeLinecap="round"
-                style={{ transition: "stroke-dashoffset 0.5s ease" }}
-              />
-            </svg>
-            {user?.imageUrl ? (
-              <img
-                src={user.imageUrl}
-                alt={user.fullName ?? "Avatar"}
-                className="absolute rounded-full object-cover"
-                style={{ top: 3, left: 3, width: "calc(100% - 6px)", height: "calc(100% - 6px)" }}
-              />
-            ) : (
-              <div
-                className="absolute rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm"
-                style={{ top: 3, left: 3, width: "calc(100% - 6px)", height: "calc(100% - 6px)" }}
-              >
-                {initial}
-              </div>
-            )}
-          </>
-        ) : user?.imageUrl ? (
-          <img
-            src={user.imageUrl}
-            alt={user.fullName ?? "Avatar"}
-            className="w-9 h-9 rounded-full object-cover ring-2 ring-transparent hover:ring-blue-500 transition-all"
-          />
-        ) : (
-          <div className="w-9 h-9 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white font-bold text-sm transition-colors ring-2 ring-transparent hover:ring-blue-400">
-            {initial}
-          </div>
-        )}
-      </button>
+              {initial}
+            </div>
+          )}
+        </button>
+      ) : (
+        /* No-ring mode — overflow-hidden clips avatar to exact circle */
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-full overflow-hidden relative flex-shrink-0 flex items-center justify-center p-0 bg-transparent border-none cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
+          aria-label="Menú de usuario"
+        >
+          {user?.imageUrl ? (
+            <img
+              src={user.imageUrl}
+              alt={user.fullName ?? "Avatar"}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
+              {initial}
+            </div>
+          )}
+        </button>
+      )}
 
       {/* Dropdown */}
       {open && (

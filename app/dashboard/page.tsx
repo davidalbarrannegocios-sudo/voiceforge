@@ -4256,16 +4256,16 @@ export default function DashboardPage() {
                 <button
                   onClick={toggleLang}
                   title="Español / English"
-                  className="w-9 h-9 flex items-center justify-center rounded-full border border-white/10 bg-transparent text-[#4a4a65] transition-colors hover:text-[#93c5fd] hover:border-blue-500 cursor-pointer"
+                  className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-full border border-white/10 bg-transparent text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
                 >
-                  <Languages size={15} />
+                  <Languages size={16} />
                 </button>
                 <button
                   onClick={() => setSupportOpen(true)}
                   title="Soporte"
-                  className="w-9 h-9 flex items-center justify-center rounded-full border border-white/10 bg-transparent text-[#4a4a65] transition-colors hover:text-[#93c5fd] hover:border-blue-500 cursor-pointer"
+                  className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-full border border-white/10 bg-transparent text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
                 >
-                  <HelpCircle size={15} />
+                  <HelpCircle size={16} />
                 </button>
                 <UserMenu
                   used={credits !== null ? Math.max(0, (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 5_000) + extraCredits - credits) : undefined}
