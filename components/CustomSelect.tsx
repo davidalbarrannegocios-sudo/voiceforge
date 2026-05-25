@@ -22,8 +22,11 @@ export function CustomSelect({ options, value, onChange, placeholder, className,
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [openUp, setOpenUp] = useState(false);
+  const [panelRect, setPanelRect] = useState<DOMRect | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const selected = options.find((o) => o.value === value);
+
+  const MAX_H = 200;
 
   function close() {
     setClosing(true);
@@ -34,10 +37,31 @@ export function CustomSelect({ options, value, onChange, placeholder, className,
     if (open) { close(); return; }
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
-      setOpenUp(rect.bottom + 256 > window.innerHeight);
+      const spaceBelow = window.innerHeight - rect.bottom;
+      setOpenUp(spaceBelow < MAX_H + 12);
+      setPanelRect(rect);
     }
     setOpen(true);
   }
+
+  // Reposition on scroll / resize while open
+  useEffect(() => {
+    if (!open) return;
+    function reposition() {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        setOpenUp(spaceBelow < MAX_H + 12);
+        setPanelRect(rect);
+      }
+    }
+    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("resize", reposition);
+    return () => {
+      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("resize", reposition);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -55,9 +79,24 @@ export function CustomSelect({ options, value, onChange, placeholder, className,
     };
   }, [open]);
 
-  const panelPos: CSSProperties = openUp
-    ? { bottom: "calc(100% + 6px)", transformOrigin: "bottom" }
-    : { top: "calc(100% + 6px)", transformOrigin: "top" };
+  // Fixed-position panel breaks out of any overflow:hidden ancestor (e.g. modals)
+  const panelStyle: CSSProperties = panelRect
+    ? openUp
+      ? {
+          position: "fixed",
+          left: panelRect.left,
+          width: panelRect.width,
+          bottom: window.innerHeight - panelRect.top + 6,
+          transformOrigin: "bottom",
+        }
+      : {
+          position: "fixed",
+          left: panelRect.left,
+          width: panelRect.width,
+          top: panelRect.bottom + 6,
+          transformOrigin: "top",
+        }
+    : {};
 
   return (
     <div className={`relative ${className ?? ""}`} style={style} ref={containerRef}>
@@ -87,24 +126,21 @@ export function CustomSelect({ options, value, onChange, placeholder, className,
         />
       </button>
 
-      {open && (
+      {open && panelRect && (
         <div
           style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
+            ...panelStyle,
             background: "#1a1a2e",
             border: "1px solid #2a2a3e",
             borderRadius: "12px",
             boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
-            zIndex: 9999,
-            maxHeight: "240px",
+            zIndex: 99999,
+            maxHeight: `${MAX_H}px`,
             overflowY: "auto",
             padding: "4px 0",
             scrollbarWidth: "thin",
-            scrollbarColor: "#3b82f6 transparent",
+            scrollbarColor: "rgba(255,255,255,0.2) transparent",
             animation: `${closing ? "csClose" : "csOpen"} ${closing ? "160ms ease-in" : "180ms ease-out"} forwards`,
-            ...panelPos,
           }}
         >
           {options.map((opt) => {
