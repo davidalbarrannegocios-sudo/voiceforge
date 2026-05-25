@@ -337,7 +337,7 @@ function HomeTab({
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className="group relative overflow-hidden flex flex-col p-6 rounded-2xl border border-[#2a2a3e] hover:border-blue-700 text-left transition-all hover:-translate-y-0.5 h-full"
+            className="group relative overflow-hidden flex flex-col p-4 sm:p-6 rounded-2xl border border-[#2a2a3e] hover:border-blue-700 text-left transition-all hover:-translate-y-0.5 h-full"
             style={{ background: "#12121a" }}
           >
             <svg className="absolute top-0 right-0 w-40 h-40 opacity-20 group-hover:opacity-30 transition-opacity duration-300" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -614,13 +614,13 @@ function GenerateTab({
   const voiceGender = selectedVoice?.tags ? getGender(selectedVoice.tags) : null;
 
   return (
-    <div style={{ height: "calc(100vh - 88px)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+    <div className="flex flex-col" style={{ minHeight: "calc(100vh - 88px)", overflow: "auto" }}>
 
       {/* ── Unified two-column container ── */}
-      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "row", background: "#0d0f14", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", overflow: "hidden" }}>
+      <div className="flex flex-col lg:flex-row" style={{ flex: 1, minHeight: 0, background: "#0d0f14", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", overflow: "hidden" }}>
 
         {/* ── LEFT COLUMN ── */}
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", borderRight: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="flex-1 min-w-0 flex flex-col min-h-64 lg:min-h-0 border-b lg:border-b-0" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
 
           {/* Left header: avatar + voice name → opens browser */}
           <button
@@ -691,7 +691,7 @@ function GenerateTab({
         </div>
 
         {/* ── RIGHT COLUMN ── */}
-        <div style={{ width: "288px", flexShrink: 0, display: "flex", flexDirection: "column" }}>
+        <div className="w-full lg:w-72 flex-shrink-0 flex flex-col">
 
           {/* Sliding pill tab toggle */}
           <div style={{ padding: "12px", flexShrink: 0 }}>
@@ -1491,7 +1491,7 @@ function HistoryTab({ plan }: { plan: string }) {
                 </div>
 
                 {/* 2-col card grid */}
-                <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 flex-1">
                   {items.map((gen) => {
                     const isRemoving = removingIds.has(gen.id);
                     const isPlaying = playingId === gen.id;

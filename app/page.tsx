@@ -492,11 +492,11 @@ export default function LandingPage() {
       <main>
 
         {/* ── Hero ───────────────────────────────────────────────── */}
-        <section className="pt-32 pb-20 px-4">
+        <section className="pt-20 md:pt-32 pb-20 px-4">
 
           {/* Heading */}
           <div className="max-w-5xl mx-auto px-4 mb-10">
-            <div className="flex items-end justify-between gap-10">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 md:gap-10">
               {/* Left: title */}
               <h1 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight">
                 {(["Genera.", "Clona.", "Domina."] as const).map((word, i) => (
@@ -522,7 +522,7 @@ export default function LandingPage() {
               </h1>
 
               {/* Right: subtitle */}
-              <p className="text-base leading-relaxed flex-shrink-0 max-w-xs pb-0.5" style={{ color: "#6b7280" }}>
+              <p className="hidden md:block text-base leading-relaxed flex-shrink-0 max-w-xs pb-0.5" style={{ color: "#6b7280" }}>
                 Clonación de voz, biblioteca de voces, narraciones y mucho más
               </p>
             </div>
@@ -531,10 +531,10 @@ export default function LandingPage() {
           {/* Demo widget — Fish Audio style */}
           <div className="max-w-5xl mx-auto px-4">
             <div
+              className="p-4 sm:p-6 md:px-10 md:pt-8 md:pb-6"
               style={{
                 background: "linear-gradient(160deg,#0d1117 0%,#0f172a 60%,#0d1117 100%)",
                 borderRadius: "20px",
-                padding: "32px 40px 24px",
                 border: "1px solid rgba(255,255,255,0.06)",
                 boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
               }}
@@ -634,12 +634,12 @@ export default function LandingPage() {
                     </Link>
                   </div>
                 ) : (
-                <div className="flex" style={{ minHeight: "240px" }}>
+                <div className="flex flex-col md:flex-row" style={{ minHeight: "240px" }}>
 
                   {/* Left: voice list ~280px */}
                   <div
-                    className="flex-shrink-0 flex flex-col"
-                    style={{ width: "280px", background: "#0d0d17", borderRight: "1px solid #1e1e2e" }}
+                    className="flex-shrink-0 flex flex-col w-full md:w-[280px] border-b md:border-b-0 md:border-r"
+                    style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
                   >
                     <div className="flex-1 overflow-y-auto" style={{ padding: "8px" }}>
                       {demoVoices.length === 0
@@ -823,7 +823,7 @@ export default function LandingPage() {
         {/* ── Features ───────────────────────────────────────────── */}
         <section className="py-20 px-4">
           <div className="max-w-5xl mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
 
               {/* Left */}
               <div>
