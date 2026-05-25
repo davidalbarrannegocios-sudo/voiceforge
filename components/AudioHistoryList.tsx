@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { AudioPlayer } from "@/app/dashboard/AudioPlayer";
-import { Clock, Trash2, Play, Download, RefreshCw, Share2, FileText } from "lucide-react";
+import { Clock, Trash2, Play, Pause, Download, RefreshCw, Share2, FileText } from "lucide-react";
 
 interface Generation {
   id: string;
@@ -63,6 +62,11 @@ function avatarColor(name: string): string {
   return colors[Math.abs(hash) % colors.length];
 }
 
+function fmtMSS(s: number) {
+  const m = Math.floor(s / 60);
+  return `${m}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
+}
+
 const HISTORY_EVENT = "audio-history-changed";
 
 export default function AudioHistoryList({
@@ -83,6 +87,8 @@ export default function AudioHistoryList({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const pageRef = useRef(page);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playTime, setPlayTime] = useState<{ current: number; duration: number }>({ current: 0, duration: 0 });
 
   useEffect(() => { pageRef.current = page; }, [page]);
 
@@ -147,6 +153,26 @@ export default function AudioHistoryList({
 
   const selectableIds = generations.filter((g) => !removingIds.has(g.id)).map((g) => g.id);
   const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selected.has(id));
+
+  function handlePlayToggle(gen: Generation) {
+    if (!gen.audioUrl) return;
+    if (playingId === gen.id) {
+      audioRef.current?.pause();
+      setPlayingId(null);
+      setPlayTime({ current: 0, duration: 0 });
+      return;
+    }
+    audioRef.current?.pause();
+    setPlayTime({ current: 0, duration: 0 });
+    const audio = new Audio(gen.audioUrl);
+    audioRef.current = audio;
+    audio.onloadedmetadata = () => setPlayTime((p) => ({ ...p, duration: audio.duration || 0 }));
+    audio.ontimeupdate = () => setPlayTime((p) => ({ ...p, current: audio.currentTime }));
+    audio.onended = () => { setPlayingId(null); setPlayTime({ current: 0, duration: 0 }); };
+    audio.onerror = () => { setPlayingId(null); setPlayTime({ current: 0, duration: 0 }); };
+    audio.play();
+    setPlayingId(gen.id);
+  }
 
   /* ── Compact (panel derecho TTS) ─────────────────────────── */
   if (compact) {
@@ -235,11 +261,14 @@ export default function AudioHistoryList({
                           ) : (
                             <>
                               <button
-                                onClick={() => setPlayingId(isPlaying ? null : gen.id)}
-                                style={{ display: "flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "9999px", background: isPlaying ? "rgba(59,130,246,0.2)" : "rgba(255,255,255,0.08)", border: "none", cursor: "pointer", fontSize: "11px", fontWeight: 500, color: isPlaying ? "#93c5fd" : "#e2e8f0" }}
+                                onClick={() => handlePlayToggle(gen)}
+                                style={{ display: "flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "9999px", background: isPlaying ? "rgba(59,130,246,0.15)" : "rgba(255,255,255,0.08)", border: isPlaying ? "1px solid #3b82f6" : "1px solid transparent", cursor: "pointer", fontSize: "11px", fontWeight: 500, color: isPlaying ? "#93c5fd" : "#e2e8f0", transition: "all 0.15s" }}
                               >
-                                <Play size={10} fill="currentColor" />
-                                {isPlaying ? "Pause" : "Jugar"}
+                                {isPlaying ? (
+                                  <><Pause size={10} /><span style={{ fontVariantNumeric: "tabular-nums" }}>{fmtMSS(playTime.current)}/{fmtMSS(playTime.duration)}</span></>
+                                ) : (
+                                  <><Play size={10} fill="currentColor" />Play</>
+                                )}
                               </button>
                               <a
                                 href={gen.audioUrl!}
@@ -281,12 +310,6 @@ export default function AudioHistoryList({
                           </div>
                         )}
 
-                        {/* Player */}
-                        {isPlaying && gen.audioUrl && (
-                          <div style={{ marginTop: "8px", paddingLeft: "32px" }}>
-                            <AudioPlayer src={gen.audioUrl} filename={`audio-${gen.id}.mp3`} />
-                          </div>
-                        )}
                       </div>
                     );
                   })}
@@ -372,8 +395,12 @@ export default function AudioHistoryList({
                       {isExpired ? (
                         <span className="px-2 py-1 rounded-lg text-xs font-medium" style={{ background: "#12121a", color: "#4a4a65", border: "1px solid #1e1e2e" }}>Audio expirado</span>
                       ) : (
-                        <button onClick={() => setPlayingId(playingId === gen.id ? null : gen.id)} className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium" style={{ background: playingId === gen.id ? "rgba(59,130,246,0.2)" : "#1a1a2e", color: playingId === gen.id ? "#93c5fd" : "#8888a8", border: `1px solid ${playingId === gen.id ? "rgba(59,130,246,0.3)" : "#2a2a3e"}` }}>
-                          <Play size={10} />{playingId === gen.id ? "Reproduciendo" : "Reproducir"}
+                        <button onClick={() => handlePlayToggle(gen)} className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium" style={{ background: playingId === gen.id ? "rgba(59,130,246,0.15)" : "#1a1a2e", color: playingId === gen.id ? "#93c5fd" : "#8888a8", border: `1px solid ${playingId === gen.id ? "#3b82f6" : "#2a2a3e"}`, transition: "all 0.15s" }}>
+                          {playingId === gen.id ? (
+                            <><Pause size={10} /><span style={{ fontVariantNumeric: "tabular-nums" }}>{fmtMSS(playTime.current)}/{fmtMSS(playTime.duration)}</span></>
+                          ) : (
+                            <><Play size={10} />Play</>
+                          )}
                         </button>
                       )}
                       <button onClick={() => setConfirmId(isConfirming ? null : gen.id)} disabled={isDeleting} className="p-1.5 rounded-lg disabled:opacity-40" style={{ background: isConfirming ? "rgba(239,68,68,0.15)" : "transparent", color: isConfirming ? "#f87171" : "#3a3a52", border: `1px solid ${isConfirming ? "rgba(239,68,68,0.3)" : "transparent"}` }} title="Eliminar">
@@ -388,11 +415,6 @@ export default function AudioHistoryList({
                       <button onClick={() => handleDelete([gen.id])} disabled={isDeleting} className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg font-semibold disabled:opacity-50" style={{ background: "rgba(239,68,68,0.2)", color: "#f87171", border: "1px solid rgba(239,68,68,0.35)" }}>
                         {isDeleting ? "..." : <><Trash2 size={10} /> Eliminar</>}
                       </button>
-                    </div>
-                  )}
-                  {!isExpired && playingId === gen.id && (
-                    <div className="px-3 pb-3">
-                      <AudioPlayer src={gen.audioUrl!} filename={`elitelabs-${gen.id}.mp3`} />
                     </div>
                   )}
                 </div>

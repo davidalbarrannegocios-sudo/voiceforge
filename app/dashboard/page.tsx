@@ -1333,6 +1333,7 @@ function HistoryTab({ plan }: { plan: string }) {
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [playingId, setPlayingId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playTime, setPlayTime] = useState<{ current: number; duration: number }>({ current: 0, duration: 0 });
   void plan;
 
   const fetchHistory = useCallback(async (p: number) => {
@@ -1384,17 +1385,27 @@ function HistoryTab({ plan }: { plan: string }) {
     else last.items.push(g);
   }
 
+  function fmtMSS(s: number) {
+    const m = Math.floor(s / 60);
+    return `${m}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
+  }
+
   function togglePlay(gen: HistoryGen) {
     if (!gen.audioUrl) return;
     if (playingId === gen.id) {
       audioRef.current?.pause();
       setPlayingId(null);
+      setPlayTime({ current: 0, duration: 0 });
       return;
     }
     audioRef.current?.pause();
+    setPlayTime({ current: 0, duration: 0 });
     const audio = new Audio(gen.audioUrl);
     audioRef.current = audio;
-    audio.onended = () => setPlayingId(null);
+    audio.onloadedmetadata = () => setPlayTime((p) => ({ ...p, duration: audio.duration || 0 }));
+    audio.ontimeupdate = () => setPlayTime((p) => ({ ...p, current: audio.currentTime }));
+    audio.onended = () => { setPlayingId(null); setPlayTime({ current: 0, duration: 0 }); };
+    audio.onerror = () => { setPlayingId(null); setPlayTime({ current: 0, duration: 0 }); };
     audio.play();
     setPlayingId(gen.id);
   }
@@ -1513,15 +1524,20 @@ function HistoryTab({ plan }: { plan: string }) {
                             disabled={!gen.audioUrl}
                             style={{
                               display: "flex", alignItems: "center", gap: 4,
-                              padding: "4px 9px", borderRadius: 20, border: "none",
-                              background: isPlaying ? "#3b82f6" : "#1a1a2e",
-                              color: isPlaying ? "#fff" : "#9ca3af",
+                              padding: "4px 9px", borderRadius: 20,
+                              background: isPlaying ? "rgba(59,130,246,0.15)" : "#1a1a2e",
+                              border: isPlaying ? "1px solid #3b82f6" : "1px solid transparent",
+                              color: isPlaying ? "#93c5fd" : "#9ca3af",
                               fontSize: 11, cursor: gen.audioUrl ? "pointer" : "not-allowed",
                               opacity: gen.audioUrl ? 1 : 0.4, flexShrink: 0,
+                              transition: "all 0.15s",
                             }}
                           >
-                            {isPlaying ? <Pause size={10} /> : <Play size={10} />}
-                            {isPlaying ? "Pausar" : "Reproducir"}
+                            {isPlaying ? (
+                              <><Pause size={10} /><span style={{ fontVariantNumeric: "tabular-nums" }}>{fmtMSS(playTime.current)}/{fmtMSS(playTime.duration)}</span></>
+                            ) : (
+                              <><Play size={10} />Play</>
+                            )}
                           </button>
 
                           <div style={{ flex: 1 }} />
