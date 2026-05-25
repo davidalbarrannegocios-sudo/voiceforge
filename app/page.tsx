@@ -187,15 +187,28 @@ export default function LandingPage() {
     navCloseTimer.current = setTimeout(() => setActiveNav(null), 80);
   }
 
+  const HOME_DEMO_VOICE_IDS = [
+    "dfa5b230c8054f429e434f4a6e9bbdec",
+    "35199d5438854f5d9157c500479ab684",
+    "43e1948b1a544700bd88250916cd31e8",
+    "bfed5c0810a347dbb62e8ccce7f59c48",
+    "53042fcee6b84e138e72db017d9e50a6",
+    "05100dcc9dfd4af49ea96dc5affbe5b1",
+  ];
+
   useEffect(() => {
-    fetch("/api/public-voices?language=es&page_size=5")
-      .then((r) => r.json())
-      .then((data) => {
-        const voices: DemoVoice[] = data.items ?? [];
-        setDemoVoices(voices);
-        if (voices.length > 0) setSelectedVoice(voices[0]._id);
-      })
-      .catch(() => {});
+    Promise.all(
+      HOME_DEMO_VOICE_IDS.map((id) =>
+        fetch(`/api/fish-voice/${id}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null)
+      )
+    ).then((results) => {
+      const voices: DemoVoice[] = results.filter((v): v is DemoVoice => v !== null && Boolean(v._id));
+      setDemoVoices(voices);
+      if (voices.length > 0) setSelectedVoice(voices[0]._id);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleGenerateDemo() {
@@ -646,9 +659,6 @@ export default function LandingPage() {
                           ))
                         : demoVoices.map((voice) => {
                             const active = selectedVoice === voice._id;
-                            const proxiedSrc = voice.cover_image
-                              ? `/api/voice-image?url=${encodeURIComponent(voice.cover_image)}`
-                              : "";
                             return (
                               <button
                                 key={voice._id}
