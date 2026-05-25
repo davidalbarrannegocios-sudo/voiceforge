@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, UserButton, useClerk } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, ChevronDown } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, getAge, LANG_FLAGS, formatCount } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
@@ -972,17 +972,103 @@ function GenerateTab({
 
 /* ─── Clone Modal ─────────────────────────────────────────── */
 const CLONE_LANGUAGES = [
-  { value: "es", label: "Español" },
-  { value: "en", label: "Inglés" },
-  { value: "fr", label: "Francés" },
-  { value: "de", label: "Alemán" },
-  { value: "it", label: "Italiano" },
-  { value: "pt", label: "Portugués" },
-  { value: "ja", label: "Japonés" },
-  { value: "zh", label: "Chino" },
-  { value: "ko", label: "Coreano" },
-  { value: "ar", label: "Árabe" },
+  { value: "es", label: "Español",   flag: "🇪🇸" },
+  { value: "en", label: "Inglés",    flag: "🇺🇸" },
+  { value: "fr", label: "Francés",   flag: "🇫🇷" },
+  { value: "de", label: "Alemán",    flag: "🇩🇪" },
+  { value: "it", label: "Italiano",  flag: "🇮🇹" },
+  { value: "pt", label: "Portugués", flag: "🇧🇷" },
+  { value: "ja", label: "Japonés",   flag: "🇯🇵" },
+  { value: "zh", label: "Chino",     flag: "🇨🇳" },
+  { value: "ko", label: "Coreano",   flag: "🇰🇷" },
+  { value: "ar", label: "Árabe",     flag: "🇸🇦" },
 ];
+
+function LangDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = CLONE_LANGUAGES.find((l) => l.value === value) ?? CLONE_LANGUAGES[0];
+
+  function close() {
+    setClosing(true);
+    setTimeout(() => { setOpen(false); setClosing(false); }, 160);
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) close();
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") close();
+    }
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => open ? close() : setOpen(true)}
+        className="w-full flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+        style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }}
+      >
+        <span className="text-base leading-none">{selected.flag}</span>
+        <span className="flex-1 text-left">{selected.label}</span>
+        <ChevronDown
+          size={14}
+          style={{
+            color: "#8888a8",
+            flexShrink: 0,
+            transition: "transform 180ms ease",
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+          }}
+        />
+      </button>
+
+      {open && (
+        <div
+          className="absolute left-0 right-0 top-full mt-1.5 rounded-xl py-1 z-50 overflow-hidden"
+          style={{
+            background: "#1a1a2e",
+            border: "1px solid #2a2a3e",
+            boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
+            transformOrigin: "top",
+            animation: closing
+              ? "langDropClose 160ms ease-in forwards"
+              : "langDropOpen 180ms ease-out forwards",
+          }}
+        >
+          <style>{`
+            @keyframes langDropOpen  { from { opacity:0; transform:scaleY(0.85); } to { opacity:1; transform:scaleY(1); } }
+            @keyframes langDropClose { from { opacity:1; transform:scaleY(1); } to { opacity:0; transform:scaleY(0.85); } }
+          `}</style>
+          {CLONE_LANGUAGES.map((l) => {
+            const isSelected = l.value === value;
+            return (
+              <button
+                key={l.value}
+                type="button"
+                onClick={() => { onChange(l.value); close(); }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors"
+                style={{ color: isSelected ? "#93c5fd" : "#d1d5db" }}
+                onMouseEnter={(e) => { if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = "rgba(59,130,246,0.08)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+              >
+                <span className="text-base leading-none w-5 flex-shrink-0">{l.flag}</span>
+                <span className="flex-1">{l.label}</span>
+                {isSelected && <Check size={12} style={{ color: "#93c5fd", flexShrink: 0 }} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () => void }) {
   const [file, setFile] = useState<File | null>(null);
@@ -1092,19 +1178,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
             <label className="text-sm font-medium text-gray-300 mb-2 block">Idioma</label>
-            <div className="relative">
-              <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#8888a8" }} />
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="w-full rounded-lg pl-8 pr-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none"
-                style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }}
-              >
-                {CLONE_LANGUAGES.map((l) => (
-                  <option key={l.value} value={l.value}>{l.label}</option>
-                ))}
-              </select>
-            </div>
+            <LangDropdown value={language} onChange={setLanguage} />
           </div>
           <div>
             <label className="text-sm font-medium text-gray-300 mb-2 block">Género</label>
