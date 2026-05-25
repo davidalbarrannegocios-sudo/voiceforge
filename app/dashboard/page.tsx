@@ -632,7 +632,7 @@ function GenerateTab({
           {/* Left header: avatar + voice name → opens browser */}
           <button
             onClick={() => setShowBrowser(true)}
-            style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", flexShrink: 0, width: "100%", textAlign: "left", background: "transparent", cursor: "pointer", borderWidth: "0 0 1px 0", borderStyle: "solid", borderColor: "rgba(255,255,255,0.08)" }}
+            style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 14px", flexShrink: 0, width: "100%", textAlign: "left", background: "transparent", cursor: "pointer", border: "none" }}
           >
             <VoiceAvatar name={selectedVoice?.name ?? "V"} coverImage={selectedVoice?.coverImage} size="sm" />
             <span style={{ fontSize: "14px", fontWeight: 600, color: "#e2e8f0" }}>{selectedVoice?.name ?? t.generate.defaultVoice}</span>
@@ -648,7 +648,7 @@ function GenerateTab({
           />
 
           {/* Left footer */}
-          <div style={{ flexShrink: 0, borderWidth: "1px 0 0 0", borderStyle: "solid", borderColor: "rgba(255,255,255,0.08)" }}>
+          <div style={{ flexShrink: 0 }}>
             {submitting && (
               <div style={{ padding: "10px 16px 0", display: "flex", flexDirection: "column", gap: "4px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
