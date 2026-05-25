@@ -37,6 +37,7 @@ model User {
   favoriteVoices       FavoriteVoice[]
   teamOwned            Team?           @relation("TeamOwner")
   teamMember           TeamMember?
+  transcriptionTasks   TranscriptionTask[]
 }
 
 model Job {
@@ -165,4 +166,19 @@ model Referral {
   rewardChars Int       @default(0)
   createdAt   DateTime  @default(now())
   rewardedAt  DateTime?
+}
+
+model TranscriptionTask {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+  fileName          String
+  status            String   @default("processing") // processing | completed | error
+  creditsUsed       Int      @default(0)
+  speakers          String   @default("auto")
+  durationSeconds   Float?
+  transcriptionText String?
+  errorMessage      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }

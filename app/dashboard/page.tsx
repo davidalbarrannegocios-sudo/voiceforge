@@ -2322,10 +2322,16 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 }
 
 /* ─── Transcribe Tab ─────────────────────────────────────── */
-interface TranscribeResult {
-  transcribedText: string;
-  charCost: number;
-  charsRemaining: number;
+interface TTask {
+  id: string;
+  fileName: string;
+  status: string;
+  creditsUsed: number;
+  speakers: string;
+  durationSeconds: number | null;
+  transcriptionText: string | null;
+  errorMessage: string | null;
+  createdAt: string;
 }
 
 function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
@@ -2334,220 +2340,447 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
   transcriptionUsed: number;
   onBilling: () => void;
 }) {
+  const [tasks, setTasks] = useState<TTask[]>([]);
+  const [loadingTasks, setLoadingTasks] = useState(true);
+  const [search, setSearch] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+  const [viewerTask, setViewerTask] = useState<TTask | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  // Create modal state
   const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<TranscribeResult | null>(null);
+  const [speakers, setSpeakers] = useState("auto");
   const [dragging, setDragging] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [fileDuration, setFileDuration] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Viewer copy
   const [copied, setCopied] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+
+  const FREE_LIMIT = 2;
+  const isFreeExhausted = plan === "free" && transcriptionUsed >= FREE_LIMIT;
+
+  const fetchTasks = useCallback(async () => {
+    setLoadingTasks(true);
+    try {
+      const res = await fetch("/api/transcription-tasks");
+      const data = await res.json() as { tasks: TTask[] };
+      setTasks(data.tasks ?? []);
+    } finally {
+      setLoadingTasks(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
   function handleFile(f: File) {
     const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
-    const ok = f.type.startsWith("audio/") || ["mp3", "wav", "m4a", "flac"].includes(ext);
-    if (!ok) { setError("Formato no soportado. Usa MP3, WAV, M4A o FLAC."); return; }
+    const ok = f.type.startsWith("audio/") || f.type.startsWith("video/") ||
+      ["mp3", "wav", "m4a", "flac", "mp4", "mov", "webm"].includes(ext);
+    if (!ok) { setCreateError("Formato no soportado. Usa MP3, WAV, M4A, FLAC o vídeo."); return; }
     setFile(f);
-    setError(null);
-    setResult(null);
+    setCreateError(null);
+    setFileDuration(null);
+    // Estimate duration client-side
+    const url = URL.createObjectURL(f);
+    const audio = new Audio(url);
+    audio.onloadedmetadata = () => {
+      setFileDuration(isFinite(audio.duration) ? audio.duration : null);
+      URL.revokeObjectURL(url);
+    };
+    audio.onerror = () => URL.revokeObjectURL(url);
   }
 
-  async function handleTranscribe() {
-    if (!file) return;
-    setLoading(true);
-    setError(null);
-    setResult(null);
+  async function handleCreate() {
+    if (!file || creating) return;
+    setCreating(true);
+    setCreateError(null);
     try {
       const fd = new FormData();
       fd.append("audio", file);
-      const res = await fetch("/api/transcribe", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error desconocido");
-      setResult(data);
+      fd.append("speakers", speakers);
+      fd.append("language", "es");
+      const res = await fetch("/api/transcription-tasks", { method: "POST", body: fd });
+      const data = await res.json() as { task?: TTask; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Error desconocido");
       onTranscribed();
+      setShowCreate(false);
+      setFile(null);
+      setSpeakers("auto");
+      setFileDuration(null);
+      await fetchTasks();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error desconocido");
+      setCreateError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
-      setLoading(false);
+      setCreating(false);
     }
   }
 
-  function handleCopy() {
-    if (!result?.transcribedText) return;
-    navigator.clipboard.writeText(result.transcribedText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  async function handleDelete(id: string) {
+    setRemovingId(id);
+    try {
+      await fetch(`/api/transcription-tasks/${id}`, { method: "DELETE" });
+      setTasks((prev) => prev.filter((t) => t.id !== id));
+    } finally {
+      setRemovingId(null);
+    }
   }
 
-  function handleDownload() {
-    if (!result?.transcribedText) return;
-    const blob = new Blob([result.transcribedText], { type: "text/plain;charset=utf-8" });
+  function handleDownload(task: TTask) {
+    if (!task.transcriptionText) return;
+    const blob = new Blob([task.transcriptionText], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "transcripcion-elitelabs.txt";
+    a.download = `${task.fileName.replace(/\.[^.]+$/, "")}-transcripcion.txt`;
     a.click();
     URL.revokeObjectURL(url);
   }
 
-  const FREE_LIMIT = 2;
-  const isFreeExhausted = plan === "free" && transcriptionUsed >= FREE_LIMIT;
-  const freeRemaining = Math.max(0, FREE_LIMIT - transcriptionUsed);
+  function fmtRelative(iso: string) {
+    const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (diff < 60) return "hace un momento";
+    if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`;
+    if (diff < 86400) return `hace ${Math.floor(diff / 3600)} h`;
+    return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+  }
+
+  function fmtDur(s: number) {
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  }
+
+  const filtered = search.trim()
+    ? tasks.filter((t) => t.fileName.toLowerCase().includes(search.toLowerCase()))
+    : tasks;
+
+  const thStyle: React.CSSProperties = {
+    padding: "10px 16px", fontSize: 11, fontWeight: 600,
+    textTransform: "uppercase", letterSpacing: "0.06em",
+    color: "#555570", textAlign: "left", whiteSpace: "nowrap",
+  };
+  const tdStyle: React.CSSProperties = {
+    padding: "12px 16px", fontSize: 13, color: "#c9cad4", verticalAlign: "middle",
+  };
 
   return (
-    <div className="max-w-2xl">
-      <p className="text-sm mb-4" style={{ color: "#8888a8" }}>
-        Sube un archivo de audio y obtén la transcripción exacta usando reconocimiento de voz de Fish Audio.
-      </p>
-
-      {/* Free plan usage indicator */}
-      {plan === "free" && (
-        isFreeExhausted ? (
-          <div className="mb-6 p-4 rounded-xl flex items-center justify-between gap-4" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-            <p className="text-sm" style={{ color: "#f87171" }}>
-              Has agotado tus usos gratuitos. Actualiza tu plan para continuar.
-            </p>
-            <button
-              onClick={onBilling}
-              style={{ padding: "6px 14px", borderRadius: "8px", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0 }}
-            >
-              Ver planes
-            </button>
-          </div>
-        ) : (
-          <div className="mb-6 p-3 rounded-xl" style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)" }}>
-            <p className="text-xs" style={{ color: "#4a6fa8" }}>
-              Plan gratuito · <strong style={{ color: "#93c5fd" }}>{freeRemaining} de {FREE_LIMIT} usos restantes</strong> · Suscríbete para uso ilimitado
-            </p>
-          </div>
-        )
-      )}
-
-      <div className="space-y-4">
-
-        {/* Step 1 — File upload */}
-        <div className="rounded-2xl border p-6" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
-          <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>
-            1 · Archivo de audio
-          </p>
-          <div
-            onClick={() => inputRef.current?.click()}
-            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
-            className="rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-all"
-            style={{ borderColor: dragging ? "#3b82f6" : "#2a2a3e", background: dragging ? "rgba(59,130,246,0.05)" : "transparent" }}
-          >
-            <input
-              ref={inputRef}
-              type="file"
-              className="hidden"
-              accept=".mp3,.wav,.m4a,.flac,audio/*"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
-            />
-            {file ? (
-              <div>
-                <p className="font-medium mb-1" style={{ color: "#4ade80" }}>{file.name}</p>
-                <p className="text-xs" style={{ color: "#8888a8" }}>
-                  {(file.size / 1024 / 1024).toFixed(2)} MB ·{" "}
-                  <button
-                    onClick={(ev) => { ev.stopPropagation(); setFile(null); setResult(null); }}
-                    className="text-blue-400 hover:underline"
-                  >
-                    Cambiar
-                  </button>
-                </p>
-              </div>
-            ) : (
-              <>
-                <FileAudio size={28} className="mx-auto mb-3" style={{ color: "#8888a8" }} />
-                <p className="text-sm text-gray-400 mb-1">Arrastra tu audio aquí o haz clic</p>
-                <p className="text-xs" style={{ color: "#555570" }}>MP3, WAV, M4A, FLAC</p>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Cost info */}
-        <div
-          className="flex items-start gap-3 px-4 py-3 rounded-xl text-xs leading-relaxed"
-          style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)", color: "#8888a8" }}
-        >
-          <span className="flex-shrink-0 mt-0.5" style={{ color: "#3b82f6" }}>ℹ</span>
-          <span>
-            El coste se calcula según los caracteres transcritos al mismo precio que la generación de audio estándar.
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Header */}
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: "#fff", margin: 0 }}>Audio a Texto</h2>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", padding: "2px 7px", borderRadius: 4, background: "rgba(59,130,246,0.15)", color: "#60a5fa", border: "1px solid rgba(59,130,246,0.3)" }}>
+            BETA
           </span>
         </div>
+        <p style={{ fontSize: 13, color: "#6b7280", margin: 0 }}>
+          Transcribe audio y vídeo a texto usando reconocimiento de voz de alta precisión.
+        </p>
+      </div>
 
-        {/* Error */}
-        {error && (
-          <div className="p-4 rounded-xl text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
-            {error}
-          </div>
-        )}
+      {/* Free plan banner */}
+      {plan === "free" && (isFreeExhausted ? (
+        <div style={{ padding: "12px 16px", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+          <p style={{ fontSize: 13, color: "#f87171", margin: 0 }}>Has agotado tus usos gratuitos. Actualiza tu plan para continuar.</p>
+          <button onClick={onBilling} style={{ padding: "5px 12px", borderRadius: 7, background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0 }}>Ver planes</button>
+        </div>
+      ) : (
+        <div style={{ padding: "8px 14px", borderRadius: 8, background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)" }}>
+          <p style={{ fontSize: 12, color: "#4a6fa8", margin: 0 }}>
+            Plan gratuito · <strong style={{ color: "#93c5fd" }}>{Math.max(0, FREE_LIMIT - transcriptionUsed)} de {FREE_LIMIT} usos restantes</strong> · Suscríbete para uso ilimitado
+          </p>
+        </div>
+      ))}
 
-        {/* Submit */}
+      {/* Toolbar */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#4a4a65", pointerEvents: "none" }} />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por nombre de archivo..."
+            style={{ width: "100%", paddingLeft: 36, paddingRight: 12, paddingTop: 9, paddingBottom: 9, background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: 8, color: "#d1d5db", fontSize: 13, outline: "none", boxSizing: "border-box" }}
+          />
+        </div>
         <button
-          onClick={handleTranscribe}
-          disabled={!file || loading}
-          className="w-full py-3.5 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
-          style={{
-            background: "linear-gradient(135deg, #3b82f6, #2563eb)",
-            boxShadow: loading ? "none" : "0 4px 15px rgba(59,130,246,0.3)",
-          }}
+          onClick={() => { if (!isFreeExhausted) setShowCreate(true); else onBilling(); }}
+          style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 8, background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0, boxShadow: "0 2px 10px rgba(59,130,246,0.3)" }}
         >
-          {loading ? (
-            <>
-              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              Transcribiendo...
-            </>
-          ) : (
-            <><FileAudio size={15} /> Transcribir audio</>
-          )}
+          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> Crear tarea
         </button>
+        <button onClick={fetchTasks} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 8, background: "#0d0d17", border: "1px solid #1e1e2e", color: "#9ca3af", cursor: "pointer", flexShrink: 0 }} title="Actualizar">
+          <RefreshCw size={14} />
+        </button>
+      </div>
 
-        {/* Result */}
-        {result && (
-          <div className="rounded-2xl border p-6 space-y-4" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#4ade80" }} />
-              <p className="text-sm font-semibold text-white">Transcripción completada</p>
-              <span className="ml-auto text-xs px-2 py-0.5 rounded-full" style={{ color: "#8888a8", background: "#12121a", border: "1px solid #2a2a3e" }}>
-                {result.charCost.toLocaleString("es-ES")} créditos
-              </span>
+      {/* Table */}
+      <div style={{ background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: 12, overflow: "hidden" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ borderBottom: "1px solid #1a1a2e" }}>
+              <th style={thStyle}>Archivo</th>
+              <th style={thStyle}>Actualizado</th>
+              <th style={thStyle}>Estado</th>
+              <th style={thStyle}>Créditos</th>
+              <th style={thStyle}>Hablantes</th>
+              <th style={thStyle}>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loadingTasks ? (
+              [1, 2, 3].map((i) => (
+                <tr key={i}>
+                  {[1, 2, 3, 4, 5, 6].map((j) => (
+                    <td key={j} style={tdStyle}>
+                      <div style={{ height: 14, borderRadius: 4, background: "#1a1a2e", animation: "pulse 2s infinite", width: j === 1 ? "70%" : "40%" }} />
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td colSpan={6} style={{ ...tdStyle, textAlign: "center", padding: "48px 16px", color: "#4a4a65" }}>
+                  <FileAudio size={32} style={{ margin: "0 auto 10px", color: "#2a2a3e" }} />
+                  <p style={{ margin: 0, fontWeight: 500, color: "#555570" }}>{search ? "Sin resultados" : "No hay tareas aún"}</p>
+                  {!search && <p style={{ margin: "4px 0 0", fontSize: 12 }}>Haz click en &ldquo;Crear tarea&rdquo; para transcribir tu primer audio</p>}
+                </td>
+              </tr>
+            ) : (
+              filtered.map((task, idx) => {
+                const isRemoving = removingId === task.id;
+                const rowBg = idx % 2 === 0 ? "transparent" : "rgba(255,255,255,0.015)";
+                const statusBadge = task.status === "completed"
+                  ? { label: "Completado", bg: "rgba(74,222,128,0.12)", color: "#4ade80", border: "rgba(74,222,128,0.25)" }
+                  : task.status === "processing"
+                  ? { label: "Procesando", bg: "rgba(251,191,36,0.12)", color: "#fbbf24", border: "rgba(251,191,36,0.25)" }
+                  : { label: "Error", bg: "rgba(239,68,68,0.12)", color: "#f87171", border: "rgba(239,68,68,0.25)" };
+
+                return (
+                  <tr
+                    key={task.id}
+                    style={{ background: isRemoving ? "rgba(239,68,68,0.05)" : rowBg, borderBottom: "1px solid #111118", transition: "background 0.15s, opacity 0.3s", opacity: isRemoving ? 0.4 : 1 }}
+                    onMouseEnter={(e) => { if (!isRemoving) e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
+                    onMouseLeave={(e) => { if (!isRemoving) e.currentTarget.style.background = isRemoving ? "rgba(239,68,68,0.05)" : rowBg; }}
+                  >
+                    {/* File */}
+                    <td style={tdStyle}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 6, background: "#12121a", border: "1px solid #1e1e2e", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <FileAudio size={14} style={{ color: "#3b82f6" }} />
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: "#e5e7eb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>{task.fileName}</p>
+                          {task.durationSeconds && (
+                            <p style={{ margin: 0, fontSize: 11, color: "#555570" }}>{fmtDur(task.durationSeconds)}</p>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    {/* Updated */}
+                    <td style={{ ...tdStyle, color: "#6b7280", fontSize: 12 }}>{fmtRelative(task.createdAt)}</td>
+                    {/* Status */}
+                    <td style={tdStyle}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", borderRadius: 20, fontSize: 11, fontWeight: 600, background: statusBadge.bg, color: statusBadge.color, border: `1px solid ${statusBadge.border}` }}>
+                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "currentColor", flexShrink: 0 }} />
+                        {statusBadge.label}
+                      </span>
+                    </td>
+                    {/* Credits */}
+                    <td style={{ ...tdStyle, color: "#9ca3af" }}>
+                      {task.creditsUsed > 0 ? task.creditsUsed.toLocaleString("es-ES") : "—"}
+                    </td>
+                    {/* Speakers */}
+                    <td style={{ ...tdStyle, color: "#9ca3af" }}>
+                      {task.speakers === "auto" ? "Auto" : task.speakers}
+                    </td>
+                    {/* Action */}
+                    <td style={tdStyle}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        {task.status === "completed" && (
+                          <button
+                            onClick={() => setViewerTask(task)}
+                            style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 6, fontSize: 12, fontWeight: 500, background: "rgba(59,130,246,0.12)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.25)", cursor: "pointer" }}
+                          >
+                            <Type size={11} /> Abrir visor
+                          </button>
+                        )}
+                        {task.status === "error" && (
+                          <span style={{ fontSize: 11, color: "#f87171", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={task.errorMessage ?? ""}>
+                            {task.errorMessage ?? "Error"}
+                          </span>
+                        )}
+                        <button
+                          onClick={() => handleDelete(task.id)}
+                          disabled={isRemoving}
+                          style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 6, background: "transparent", border: "none", color: "#3a3a52", cursor: "pointer" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.background = "rgba(239,68,68,0.1)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#3a3a52"; e.currentTarget.style.background = "transparent"; }}
+                          title="Eliminar"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ── Create Modal ── */}
+      {showCreate && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) { setShowCreate(false); setFile(null); setCreateError(null); } }}
+        >
+          <div style={{ width: "100%", maxWidth: 480, background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: 16, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
+            {/* Modal header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: "1px solid #1a1a2e" }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#fff" }}>Crear tarea de transcripción</h3>
+                <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6b7280" }}>El audio se procesará y el resultado quedará guardado</p>
+              </div>
+              <button onClick={() => { setShowCreate(false); setFile(null); setCreateError(null); }} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", padding: 4 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
             </div>
 
-            <div className="rounded-xl p-4" style={{ background: "#12121a", border: "1px solid #2a2a3e" }}>
-              <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "#e5e7eb" }}>
-                {result.transcribedText}
+            <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+              {/* Drop zone */}
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
+                style={{ border: `2px dashed ${dragging ? "#3b82f6" : "#1e1e2e"}`, borderRadius: 12, padding: "28px 20px", textAlign: "center", cursor: "pointer", background: dragging ? "rgba(59,130,246,0.05)" : "#070710", transition: "all 0.15s" }}
+              >
+                <input ref={fileInputRef} type="file" className="hidden" accept=".mp3,.wav,.m4a,.flac,.mp4,.mov,.webm,audio/*,video/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+                {file ? (
+                  <div>
+                    <FileAudio size={24} style={{ color: "#3b82f6", margin: "0 auto 8px" }} />
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: "#e5e7eb" }}>{file.name}</p>
+                    <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b7280" }}>
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                      {fileDuration !== null && ` · ${fmtDur(fileDuration)}`}
+                      {" · "}<button onClick={(ev) => { ev.stopPropagation(); setFile(null); setFileDuration(null); }} style={{ background: "none", border: "none", color: "#3b82f6", cursor: "pointer", fontSize: 12, padding: 0 }}>Cambiar</button>
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <FileAudio size={28} style={{ color: "#3a3a52", margin: "0 auto 10px" }} />
+                    <p style={{ margin: 0, fontSize: 14, color: "#9ca3af" }}>Arrastra tu archivo aquí o haz clic para elegir</p>
+                    <p style={{ margin: "6px 0 0", fontSize: 12, color: "#4a4a65" }}>MP3, WAV, M4A, FLAC, MP4, MOV, WEBM</p>
+                  </>
+                )}
+              </div>
+
+              {/* Speakers */}
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#9ca3af", marginBottom: 6 }}>Número de hablantes</label>
+                <select
+                  value={speakers}
+                  onChange={(e) => setSpeakers(e.target.value)}
+                  style={{ width: "100%", padding: "9px 12px", background: "#070710", border: "1px solid #1e1e2e", borderRadius: 8, color: "#d1d5db", fontSize: 13, outline: "none", cursor: "pointer" }}
+                >
+                  <option value="auto">Automático (detección por IA)</option>
+                  <option value="1">1 hablante</option>
+                  <option value="2">2 hablantes</option>
+                  <option value="3">3 hablantes</option>
+                  <option value="4">4+ hablantes</option>
+                </select>
+              </div>
+
+              {/* Info */}
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 12px", borderRadius: 8, background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)" }}>
+                <span style={{ color: "#3b82f6", fontSize: 13, flexShrink: 0, marginTop: 1 }}>ℹ</span>
+                <p style={{ margin: 0, fontSize: 12, color: "#6b7280", lineHeight: 1.5 }}>
+                  Los créditos se calculan según los caracteres transcritos, al mismo precio que la generación de audio.
+                  {fileDuration !== null && ` Duración estimada: ${fmtDur(fileDuration)}.`}
+                </p>
+              </div>
+
+              {createError && (
+                <div style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", fontSize: 13 }}>
+                  {createError}
+                </div>
+              )}
+
+              {/* Actions */}
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={() => { setShowCreate(false); setFile(null); setCreateError(null); }} style={{ flex: 1, padding: "10px", borderRadius: 8, background: "transparent", border: "1px solid #1e1e2e", color: "#9ca3af", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleCreate}
+                  disabled={!file || creating}
+                  style={{ flex: 2, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px", borderRadius: 8, background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: 13, fontWeight: 600, border: "none", cursor: !file || creating ? "not-allowed" : "pointer", opacity: !file || creating ? 0.6 : 1, boxShadow: !file || creating ? "none" : "0 2px 10px rgba(59,130,246,0.3)" }}
+                >
+                  {creating ? (
+                    <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg> Transcribiendo...</>
+                  ) : (
+                    <><FileAudio size={14} /> Crear tarea</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Viewer Modal ── */}
+      {viewerTask && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setViewerTask(null); }}
+        >
+          <div style={{ width: "100%", maxWidth: 620, maxHeight: "85vh", display: "flex", flexDirection: "column", background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: 16, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", borderBottom: "1px solid #1a1a2e", flexShrink: 0 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: "#12121a", border: "1px solid #1e1e2e", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <FileAudio size={16} style={{ color: "#3b82f6" }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#e5e7eb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{viewerTask.fileName}</p>
+                <p style={{ margin: 0, fontSize: 11, color: "#555570" }}>
+                  {viewerTask.creditsUsed.toLocaleString("es-ES")} créditos · {fmtRelative(viewerTask.createdAt)}
+                </p>
+              </div>
+              <button onClick={() => setViewerTask(null)} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", padding: 4 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            {/* Text */}
+            <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
+              <p style={{ margin: 0, fontSize: 14, color: "#e5e7eb", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+                {viewerTask.transcriptionText}
               </p>
             </div>
 
-            <div className="flex gap-2">
+            {/* Actions */}
+            <div style={{ display: "flex", gap: 10, padding: "14px 20px", borderTop: "1px solid #1a1a2e", flexShrink: 0 }}>
               <button
-                onClick={handleCopy}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all hover:-translate-y-0.5"
-                style={{ background: copied ? "rgba(74,222,128,0.15)" : "#12121a", color: copied ? "#4ade80" : "#93c5fd", border: `1px solid ${copied ? "rgba(74,222,128,0.3)" : "rgba(59,130,246,0.3)"}` }}
+                onClick={() => { if (!viewerTask.transcriptionText) return; navigator.clipboard.writeText(viewerTask.transcriptionText); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: copied ? "rgba(74,222,128,0.15)" : "#12121a", color: copied ? "#4ade80" : "#93c5fd", border: `1px solid ${copied ? "rgba(74,222,128,0.3)" : "rgba(59,130,246,0.3)"}`, cursor: "pointer" }}
               >
-                <Copy size={13} />
-                {copied ? "¡Copiado!" : "Copiar texto"}
+                <Copy size={12} />{copied ? "¡Copiado!" : "Copiar texto"}
               </button>
               <button
-                onClick={handleDownload}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all hover:-translate-y-0.5"
-                style={{ background: "#12121a", color: "#8888a8", border: "1px solid #2a2a3e" }}
+                onClick={() => handleDownload(viewerTask)}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: "#12121a", color: "#9ca3af", border: "1px solid #1e1e2e", cursor: "pointer" }}
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                Descargar .txt
+                <Download size={12} /> Descargar .txt
               </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
