@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, UserButton, useClerk } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, getAge, formatCount } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
@@ -266,6 +266,39 @@ function Sidebar({
               </button>
             </>
           )}
+        </div>
+      )}
+
+      {/* Upgrade button — hidden for enterprise */}
+      {plan !== "enterprise" && (
+        <div style={{ padding: "0 12px 16px", flexShrink: 0 }}>
+          <button
+            onClick={() => { setActiveTab("billing"); onClose?.(); }}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "10px 14px",
+              borderRadius: "10px",
+              border: "1px solid rgba(255,255,255,0.08)",
+              cursor: "pointer",
+              position: "relative",
+              overflow: "hidden",
+              background: "#0a0a14",
+              backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.03) 4px, rgba(255,255,255,0.03) 8px)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(59,130,246,0.35)"; e.currentTarget.style.background = "#0d0d1e"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "#0a0a14"; }}
+          >
+            <div style={{ width: "24px", height: "24px", borderRadius: "6px", background: "rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Zap size={13} style={{ color: "#93c5fd" }} />
+            </div>
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "#c0c0d8", flex: 1, textAlign: "left" }}>Mejorar plan</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555570" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
         </div>
       )}
     </aside>
