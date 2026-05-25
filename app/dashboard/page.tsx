@@ -486,6 +486,7 @@ function GenerateTab({
   const modelDropdownRef = useRef<HTMLDivElement>(null);
   const [previewing, setPreviewing] = useState<"idle" | "loading" | "playing">("idle");
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [rightTab, setRightTab] = useState<"ajustes" | "historial">("ajustes");
   const { t } = useLang();
 
   const [elapsed, setElapsed] = useState(0);
@@ -538,6 +539,7 @@ function GenerateTab({
       window.dispatchEvent(new CustomEvent("audio-history-changed"));
       onGenerated();
       setText("");
+      setRightTab("historial");
     } catch (e: unknown) {
       setFormError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
@@ -584,38 +586,23 @@ function GenerateTab({
   }
 
   return (
-    <div style={{ height: "calc(100vh - 88px)", display: "flex", flexDirection: "column", gap: "12px", overflow: "hidden" }}>
+    <div style={{ height: "calc(100vh - 88px)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+    <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6" style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
 
-      {/* ── Unified editor widget ── */}
-      <div className="flex flex-col rounded-2xl border overflow-hidden" style={{ background: "#0d0d17", borderColor: "#2a2a3e", flex: 1, minHeight: 0 }}>
-
-        {/* Header: voice + change button */}
-        <div className="flex items-center gap-3 px-5 py-3 border-b flex-shrink-0" style={{ borderColor: "#2a2a3e" }}>
-          {selectedVoice?.coverImage ? (
-            <VoiceAvatar name={selectedVoice.name} coverImage={selectedVoice.coverImage} size="md" />
-          ) : (
-            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(59,130,246,0.15)" }}>
-              <Mic size={14} style={{ color: "#93c5fd" }} />
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white truncate leading-tight">
-              {selectedVoice?.name ?? t.generate.defaultVoice}
-            </p>
-            <p className="text-xs leading-tight" style={{ color: "#555570" }}>
-              {selectedVoice?.isCloned ? t.generate.clonedVoice : t.generate.systemVoice}
-            </p>
-          </div>
-          <button
-            onClick={() => setShowBrowser(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex-shrink-0"
-            style={{ background: "rgba(59,130,246,0.1)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(59,130,246,0.18)"; e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(59,130,246,0.1)"; e.currentTarget.style.borderColor = "rgba(59,130,246,0.2)"; }}
+      {/* ── LEFT: Editor ── */}
+      <div className="flex flex-col rounded-2xl border overflow-hidden" style={{ background: "#0d0d17", borderColor: "#2a2a3e", minHeight: 0 }}>
+        {/* Voice header */}
+        <div className="flex items-center gap-3 px-6 py-4 border-b" style={{ borderColor: "#2a2a3e" }}>
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ background: "rgba(59,130,246,0.15)" }}
           >
-            Cambiar voz
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
+            <Mic size={18} style={{ color: "#93c5fd" }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white truncate">{selectedVoice?.name ?? t.generate.defaultVoice}</p>
+            <p className="text-xs" style={{ color: "#8888a8" }}>{selectedVoice?.isCloned ? t.generate.clonedVoice : t.generate.systemVoice}</p>
+          </div>
         </div>
 
         {/* Textarea */}
@@ -624,182 +611,349 @@ function GenerateTab({
           onChange={(e) => setText(e.target.value)}
           placeholder={t.generate.placeholder}
           disabled={submitting}
-          className="w-full px-5 py-4 text-sm text-gray-200 resize-none focus:outline-none disabled:opacity-60"
-          style={{ background: "#0d0d17", lineHeight: "1.75", flex: 1, minHeight: 0 }}
+          className="w-full px-6 py-5 text-sm text-gray-200 resize-none focus:outline-none disabled:opacity-60"
+          style={{ background: "#0d0d17", lineHeight: "1.75", minHeight: "200px", flex: 1 }}
         />
 
-        {/* Controls bar */}
-        <div className="border-t px-5 py-3 flex-shrink-0 space-y-2" style={{ borderColor: "#2a2a3e", background: "#0a0a14" }}>
-          {/* Sliders */}
-          <div className="grid grid-cols-2 gap-2">
-            <CompactSlider label={t.generate.speed} value={speed} onChange={setSpeed} min={0.5} max={1.5} step={0.01} decimals={2} defaultValue={1} />
-            <CompactSlider label={t.generate.volume} value={volume} onChange={setVolume} min={0} max={2} step={0.01} decimals={2} defaultValue={1} />
-          </div>
-          {selectedModel === "speech-1.5" && (
-            <div className="grid grid-cols-2 gap-2">
-              <CompactSlider label="Temperatura" value={temperature} onChange={setTemperature} min={0} max={1} step={0.1} decimals={1} defaultValue={0.9} />
-              <CompactSlider label="Top P" value={topP} onChange={setTopP} min={0} max={1} step={0.1} decimals={1} defaultValue={0.9} />
-            </div>
-          )}
-          {/* Normalize + Model + Reset */}
-          <div className="flex items-center gap-2">
-            {/* Normalization */}
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              <span className="text-xs font-medium" style={{ color: "#555570" }}>
-                {selectedModel === "speech-1.5" ? "Norm." : "Norm."}
-              </span>
-              <div className="flex items-center gap-0.5">
-                {(["No", "Sí"] as const).map((opt) => {
-                  const active = opt === "Sí" ? normalize : !normalize;
-                  return (
-                    <button
-                      key={opt}
-                      onClick={() => setNormalize(opt === "Sí")}
-                      className="text-xs font-medium px-2 py-1 rounded-md transition-all"
-                      style={{
-                        background: active ? "rgba(59,130,246,0.18)" : "transparent",
-                        color: active ? "#93c5fd" : "#444460",
-                        border: active ? "1px solid rgba(59,130,246,0.3)" : "1px solid transparent",
-                      }}
-                    >
-                      {opt}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Separator */}
-            <div className="flex-1" />
-
-            {/* Model dropdown */}
-            <div className="relative flex-shrink-0" ref={modelDropdownRef}>
-              <button
-                onClick={() => setModelDropdownOpen((o) => !o)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs transition-all"
-                style={{ background: "#12121a", border: "1px solid #2a2a3e", borderRadius: "8px", color: "#c0c0d8" }}
-              >
-                <span className="font-medium">{selectedModel === "speech-1.6" ? "E2 Pro" : "E1"}</span>
-                {selectedModel === "speech-1.6" && (
-                  <span className="text-xs font-semibold px-1 py-0.5 rounded" style={{ background: "#3b82f622", color: "#3b82f6", fontSize: "9px" }}>NEW</span>
-                )}
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#555570", transform: modelDropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 180ms" }}>
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-              {modelDropdownOpen && (
-                <div className="absolute bottom-full right-0 mb-1 z-20 py-1 min-w-[180px]" style={{ background: "#12121a", border: "1px solid #2a2a3e", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
-                  {([
-                    { value: "speech-1.6", label: "Elite Labs E2 Pro", sub: "Modelo insignia", badge: "Nuevo", badgeColor: "#3b82f6" },
-                    { value: "speech-1.5", label: "Elite Labs E1",     sub: "Heredado",        badge: null,    badgeColor: "" },
-                  ] as const).map(({ value, label, sub, badge, badgeColor }) => (
-                    <button
-                      key={value}
-                      onClick={() => { setSelectedModel(value); setModelDropdownOpen(false); }}
-                      className="w-full flex items-center justify-between px-3 py-2 text-sm text-left transition-colors"
-                      style={{ color: selectedModel === value ? "#e2e2f0" : "#8888a8" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-medium text-xs">{label}</span>
-                          {badge && <span className="text-xs font-semibold px-1 py-0.5 rounded" style={{ background: `${badgeColor}22`, color: badgeColor, border: `1px solid ${badgeColor}44`, fontSize: "9px" }}>{badge}</span>}
-                        </div>
-                        <span className="text-xs" style={{ color: "#444460" }}>{sub}</span>
-                      </div>
-                      {selectedModel === value && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 ml-2"><polyline points="20 6 9 17 4 12" /></svg>}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Reset */}
-            {(speed !== 1 || volume !== 1 || (selectedModel === "speech-1.5" && (temperature !== 0.9 || topP !== 0.9))) && (
-              <button
-                onClick={() => { setSpeed(1); setVolume(1); setTemperature(0.9); setTopP(0.9); }}
-                className="text-xs transition-colors flex-shrink-0"
-                style={{ color: "#444460" }}
-                title="Restablecer valores"
-              >
-                ↺
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Footer: progress + char count + buttons */}
-        <div className="border-t px-5 py-3 flex-shrink-0" style={{ borderColor: "#2a2a3e" }}>
+        {/* Bottom bar */}
+        <div className="px-6 py-4 border-t" style={{ borderColor: "#2a2a3e" }}>
           {submitting && (
-            <div className="mb-3 space-y-1.5">
+            <div className="mb-4 space-y-1.5">
               <div className="flex items-center justify-between text-xs">
                 <span style={{ color: "#93c5fd" }}>Generando audio... {Math.round(progress)}%</span>
                 <span style={{ color: "#8888a8" }}>{elapsedLabel}</span>
               </div>
               <div className="h-1 rounded-full overflow-hidden" style={{ background: "#2a2a3e" }}>
-                <div className="h-full rounded-full transition-all duration-1000 ease-linear" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #3b82f6, #2563eb)" }} />
+                <div
+                  className="h-full rounded-full transition-all duration-1000 ease-linear"
+                  style={{ width: `${progress}%`, background: "linear-gradient(90deg, #3b82f6, #2563eb)" }}
+                />
               </div>
-              {text.trim().length > 3000 && <p className="text-xs" style={{ color: "#8888a8" }}>Los audios largos pueden tardar varios minutos</p>}
+              {text.trim().length > 3000 && (
+                <p className="text-xs" style={{ color: "#8888a8" }}>
+                  Los audios largos pueden tardar varios minutos
+                </p>
+              )}
             </div>
           )}
 
           {formError && (
-            <div className="mb-2 p-2.5 rounded-lg text-xs" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
+            <div className="mb-3 p-3 rounded-lg text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
               {formError}
             </div>
           )}
 
-          <div className="flex items-center gap-3">
-            <span className="text-sm flex-1 min-w-0" style={{ color: "#555570" }}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <span className="text-sm" style={{ color: "#8888a8" }}>
               {text.length.toLocaleString("es-ES")} {t.generate.characters}
-              {text.length > 0 && <span className="ml-1.5 text-xs">· {charCost.toLocaleString("es-ES")} {t.generate.credits}</span>}
+              {text.length > 0 && (
+                <span className="ml-2 text-xs" style={{ color: "#555570" }}>
+                  · {charCost.toLocaleString("es-ES")} {t.generate.credits}
+                </span>
+              )}
             </span>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Preview */}
+            <button
+              onClick={handleGenerate}
+              disabled={submitting || text.trim().length === 0}
+              className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+              style={{
+                background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+                boxShadow: submitting ? "none" : "0 4px 15px rgba(59,130,246,0.3)",
+              }}
+            >
+              {submitting ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  {t.generate.generating}
+                </>
+              ) : (
+                t.generate.generateBtn
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── RIGHT: Settings panel ── */}
+      <div className="rounded-2xl border flex flex-col" style={{ background: "#0d0d17", borderColor: "#2a2a3e", overflow: "hidden", minHeight: 0 }}>
+        {/* Tabs */}
+        <div className="flex border-b flex-shrink-0" style={{ borderColor: "#2a2a3e" }}>
+          {(["ajustes", "historial"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setRightTab(tab)}
+              className="flex-1 py-3 text-sm font-medium transition-colors"
+              style={
+                rightTab === tab
+                  ? { color: "#ffffff", borderBottom: "2px solid #3b82f6" }
+                  : { color: "#8888a8" }
+              }
+            >
+              {tab === "ajustes" ? t.generate.settingsTab : t.generate.historyTab}
+            </button>
+          ))}
+        </div>
+
+        {rightTab === "ajustes" && (
+          <div className="p-5 space-y-6 overflow-y-auto flex-1">
+            {/* Voz */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#555570" }}>{t.generate.voiceLabel}</p>
+              {selectedVoice && !selectedVoice.isCloned && selectedVoice.tags ? (() => {
+                const gender = getGender(selectedVoice.tags);
+                const age = getAge(selectedVoice.tags);
+                const pillStyle = { background: "rgba(255,255,255,0.05)", color: "#6b7280", border: "1px solid rgba(255,255,255,0.07)" };
+                return (
+                  <button
+                    onClick={() => setShowBrowser(true)}
+                    className="w-full text-left rounded-xl transition-all"
+                    style={{ background: "#12121a", border: "1px solid #2a2a3e", padding: "12px" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#2a2a3e")}
+                  >
+                    {/* Top row: avatar + name + arrow */}
+                    <div className="flex items-center gap-3 mb-2">
+                      <VoiceAvatar name={selectedVoice.name} coverImage={selectedVoice.coverImage} size="lg" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-sm font-bold text-white truncate">{selectedVoice.name}</span>
+                          {gender && (
+                            <span className="text-xs flex-shrink-0" style={{ color: "#555570" }}>
+                              · {gender === "male" ? "Masculino" : "Femenino"}
+                            </span>
+                          )}
+                        </div>
+                        {selectedVoice.description && (
+                          <p className="text-xs truncate mt-0.5" style={{ color: "#6b6b88" }}>{selectedVoice.description}</p>
+                        )}
+                      </div>
+                      <span className="text-xs flex-shrink-0" style={{ color: "#555570" }}>→</span>
+                    </div>
+
+                    {/* Pills row */}
+                    {((selectedVoice.languages?.length ?? 0) > 0 || gender || age) && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {selectedVoice.languages?.slice(0, 3).map((l) => {
+                          const code = l.toLowerCase();
+                          
+                          return (
+                            <span key={l} className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>
+                              <span className={`fi fi-${code}`} style={{width:"16px",height:"12px",display:"inline-block",borderRadius:"2px"}}></span><span>{l.toUpperCase()}</span>
+                            </span>
+                          );
+                        })}
+                        {gender && (
+                          <span className="px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>
+                            {gender === "male" ? "Masculino" : "Femenino"}
+                          </span>
+                        )}
+                        {age && <span className="px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>{age}</span>}
+                      </div>
+                    )}
+
+                    {/* Stats row */}
+                    {((selectedVoice.taskCount ?? 0) > 0 || (selectedVoice.likeCount ?? 0) > 0) && (
+                      <div className="flex items-center gap-3" style={{ color: "#444460" }}>
+                        {(selectedVoice.taskCount ?? 0) > 0 && (
+                          <div className="flex items-center gap-1">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+                            </svg>
+                            <span className="text-xs">{formatCount(selectedVoice.taskCount!)}</span>
+                          </div>
+                        )}
+                        {(selectedVoice.likeCount ?? 0) > 0 && (
+                          <div className="flex items-center gap-1">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                            </svg>
+                            <span className="text-xs">{formatCount(selectedVoice.likeCount!)}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </button>
+                );
+              })() : (
+                <button
+                  onClick={() => setShowBrowser(true)}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all"
+                  style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#2a2a3e")}
+                >
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(59,130,246,0.15)" }}>
+                    <Mic size={13} style={{ color: "#93c5fd" }} />
+                  </div>
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{selectedVoice?.name ?? t.generate.defaultVoice}</p>
+                    <p className="text-xs" style={{ color: "#8888a8" }}>{selectedVoice?.isCloned ? t.generate.clonedVoice : t.generate.systemVoice}</p>
+                  </div>
+                  <span className="text-xs flex-shrink-0" style={{ color: "#8888a8" }}>→</span>
+                </button>
+              )}
+
+              {/* Preview button */}
               {plan !== "free" && (
                 <button
                   onClick={handlePreview}
                   disabled={previewing === "loading"}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all"
+                  className="mt-2 w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-all"
                   style={{
                     background: previewing === "playing" ? "rgba(239,68,68,0.1)" : "rgba(59,130,246,0.08)",
                     border: `1px solid ${previewing === "playing" ? "rgba(239,68,68,0.3)" : "rgba(59,130,246,0.2)"}`,
                     color: previewing === "playing" ? "#f87171" : previewing === "loading" ? "#8888a8" : "#93c5fd",
-                    opacity: previewing === "loading" ? 0.6 : 1,
                     cursor: previewing === "loading" ? "not-allowed" : "pointer",
+                    opacity: previewing === "loading" ? 0.6 : 1,
                   }}
                 >
-                  {previewing === "loading" && <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
+                  {previewing === "loading" && (
+                    <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  )}
                   {previewing === "idle" && "▶ Pre-escuchar"}
                   {previewing === "loading" && "Generando..."}
                   {previewing === "playing" && "⏹ Detener"}
                 </button>
               )}
-              {/* Generate */}
-              <button
-                onClick={handleGenerate}
-                disabled={submitting || text.trim().length === 0}
-                className="flex items-center gap-2 px-5 py-2 rounded-lg font-semibold text-white text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
-                style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", boxShadow: submitting ? "none" : "0 4px 12px rgba(59,130,246,0.3)" }}
-              >
-                {submitting ? (
-                  <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>{t.generate.generating}</>
-                ) : t.generate.generateBtn}
-              </button>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* ── History panel (below) ── */}
-      <div className="rounded-2xl border flex-shrink-0 flex flex-col overflow-hidden" style={{ background: "#0d0d17", borderColor: "#2a2a3e", maxHeight: "220px" }}>
-        <div className="px-5 py-2.5 border-b flex-shrink-0 flex items-center justify-between" style={{ borderColor: "#2a2a3e" }}>
-          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>{t.generate.historyTab}</p>
-        </div>
-        <div className="overflow-y-auto flex-1">
-          <AudioHistoryList compact plan={plan} />
-        </div>
+            {/* Model selector */}
+            <div className="border-t pt-5" style={{ borderColor: "#2a2a3e" }}>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#555570" }}>Modelo</p>
+              <div className="relative" ref={modelDropdownRef}>
+                {/* Trigger */}
+                <button
+                  onClick={() => setModelDropdownOpen((o) => !o)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 text-sm transition-all"
+                  style={{ background: "#0d0d17", border: "1px solid #2a2a3e", borderRadius: "10px", color: "#e2e2f0" }}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-medium truncate">
+                      {selectedModel === "speech-1.6" ? "Elite Labs E2 Pro" : "Elite Labs E1"}
+                    </span>
+                    {selectedModel === "speech-1.6" && (
+                      <span className="text-xs font-semibold px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: "#3b82f622", color: "#3b82f6", border: "1px solid #3b82f644" }}>
+                        El más nuevo
+                      </span>
+                    )}
+                  </div>
+                  <svg
+                    width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    className="flex-shrink-0 transition-transform"
+                    style={{ color: "#555570", transform: modelDropdownOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+
+                {/* Menu */}
+                {modelDropdownOpen && (
+                  <div
+                    className="absolute left-0 right-0 z-20 mt-1 py-1"
+                    style={{ background: "#0d0d17", border: "1px solid #2a2a3e", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}
+                  >
+                    {([
+                      { value: "speech-1.6", label: "Elite Labs E2 Pro", sub: "Nuestro modelo insignia", badge: "El más nuevo", badgeColor: "#3b82f6" },
+                      { value: "speech-1.5", label: "Elite Labs E1",     sub: "Heredado",                badge: null,           badgeColor: "" },
+                    ] as const).map(({ value, label, sub, badge, badgeColor }) => (
+                      <button
+                        key={value}
+                        onClick={() => { setSelectedModel(value); setModelDropdownOpen(false); }}
+                        className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-left transition-colors"
+                        style={{ background: "transparent", color: selectedModel === value ? "#e2e2f0" : "#8888a8" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                      >
+                        <div className="flex flex-col min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{label}</span>
+                            {badge && (
+                              <span className="text-xs font-semibold px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: `${badgeColor}22`, color: badgeColor, border: `1px solid ${badgeColor}44` }}>
+                                {badge}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs mt-0.5" style={{ color: "#444460" }}>{sub}</span>
+                        </div>
+                        {selectedModel === value && (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 ml-2">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Audio controls */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555570" }}>{t.generate.audioControls}</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <CompactSlider label={t.generate.speed} value={speed} onChange={setSpeed} min={0.5} max={1.5} step={0.01} decimals={2} defaultValue={1} />
+                <CompactSlider label={t.generate.volume} value={volume} onChange={setVolume} min={0} max={2} step={0.01} decimals={2} defaultValue={1} />
+                {selectedModel === "speech-1.5" && (
+                  <>
+                    <CompactSlider label="Temperatura" value={temperature} onChange={setTemperature} min={0} max={1} step={0.1} decimals={1} defaultValue={0.9} />
+                    <CompactSlider label="Top P" value={topP} onChange={setTopP} min={0} max={1} step={0.1} decimals={1} defaultValue={0.9} />
+                  </>
+                )}
+                {/* Normalization row */}
+                <div
+                  className="flex items-center justify-between px-3.5 flex-shrink-0"
+                  style={{ background: "#12121a", borderRadius: "10px", height: "40px" }}
+                >
+                  <span className="text-xs font-medium" style={{ color: "#8888a8" }}>
+                    {selectedModel === "speech-1.5" ? "Norm. texto" : "Normalización"}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    {(["No", "Sí"] as const).map((opt) => {
+                      const active = opt === "Sí" ? normalize : !normalize;
+                      return (
+                        <button
+                          key={opt}
+                          onClick={() => setNormalize(opt === "Sí")}
+                          className="text-xs font-medium px-2.5 py-1 rounded-md transition-all"
+                          style={{
+                            background: active ? "rgba(59,130,246,0.18)" : "transparent",
+                            color: active ? "#93c5fd" : "#444460",
+                            border: active ? "1px solid rgba(59,130,246,0.3)" : "1px solid transparent",
+                          }}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {(speed !== 1 || volume !== 1 || (selectedModel === "speech-1.5" && (temperature !== 0.9 || topP !== 0.9))) && (
+              <button
+                onClick={() => { setSpeed(1); setVolume(1); setTemperature(0.9); setTopP(0.9); }}
+                className="text-xs transition-colors"
+                style={{ color: "#8888a8" }}
+              >
+                Restablecer valores
+              </button>
+            )}
+          </div>
+        )}
+
+        {rightTab === "historial" && (
+          <div className="p-3 overflow-y-auto flex-1">
+            <AudioHistoryList compact plan={plan} />
+          </div>
+        )}
       </div>
 
       {showBrowser && (
@@ -810,6 +964,7 @@ function GenerateTab({
           plan={plan}
         />
       )}
+    </div>
     </div>
   );
 }
