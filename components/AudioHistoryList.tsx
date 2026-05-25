@@ -206,7 +206,7 @@ export default function AudioHistoryList({
                     const isDeleting = deletingIds.has(gen.id);
                     const isConfirming = confirmId === gen.id;
                     const isPlaying = playingId === gen.id;
-                    const vName = gen.voiceName ?? "Voz";
+                    const vName = gen.voiceId ?? "Voz";
                     const color = avatarColor(vName);
 
                     return (
