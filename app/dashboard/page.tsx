@@ -176,39 +176,6 @@ function Sidebar({
         ))}
       </nav>
 
-      {/* Credits — pinned to bottom */}
-      <div style={{ borderTop: "1px solid #1a1a28", padding: "16px 20px 20px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
-          <span style={{ fontSize: "11px", color: "#3a3a52", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>{t.nav.characters}</span>
-          <button
-            onClick={() => {
-              setActiveTab("billing");
-              onClose?.();
-              setTimeout(() => {
-                document.getElementById("creditos-extra")?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }, 80);
-            }}
-            style={{ fontSize: "11px", fontWeight: 700, color: "#3b82f6", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-          >
-            {t.nav.buy}
-          </button>
-        </div>
-        <p style={{ fontSize: "20px", fontWeight: 800, color: "#fff", marginBottom: "8px" }}>
-          {credits !== null ? credits.toLocaleString("es-ES") : "—"}
-        </p>
-        <div style={{ height: "3px", borderRadius: "999px", background: "#1a1a28", overflow: "hidden" }}>
-          <div
-            style={{
-              height: "100%",
-              borderRadius: "999px",
-              transition: "width 0.4s",
-              width: `${Math.min(100, ((credits ?? 0) / 1_400_000) * 100)}%`,
-              background: "linear-gradient(90deg, #3b82f6, #2563eb)",
-            }}
-          />
-        </div>
-      </div>
-
       {/* Team membership section — only for non-owner members */}
       {memberInfo && (
         <div style={{ borderTop: "1px solid #1a1a28", padding: "12px 20px 16px" }}>
