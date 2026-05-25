@@ -637,20 +637,6 @@ function GenerateTab({
             <p className="text-sm font-semibold text-white truncate">{selectedVoice?.name ?? t.generate.defaultVoice}</p>
             <p className="text-xs" style={{ color: "#555570" }}>{selectedVoice?.isCloned ? t.generate.clonedVoice : t.generate.systemVoice}</p>
           </div>
-          <div className="flex items-center gap-1 flex-shrink-0">
-            {(["ajustes", "historial"] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setRightTab(tab)}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all"
-                style={rightTab === tab
-                  ? { background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.3)" }
-                  : { color: "#8888a8", border: "1px solid transparent" }}
-              >
-                {tab === "ajustes" ? t.generate.settingsTab : t.generate.historyTab}
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Body: textarea (left) | settings/history (right) */}
@@ -664,6 +650,29 @@ function GenerateTab({
             style={{ background: "transparent", lineHeight: "1.75", borderRight: "1px solid #2a2a3e", minWidth: 0 }}
           />
           <div className="w-72 flex-shrink-0 flex flex-col overflow-hidden">
+
+            {/* Sliding pill tab toggle */}
+            <div className="relative flex rounded-lg p-1 mx-4 mt-4 flex-shrink-0" style={{ background: "#12121a" }}>
+              <div
+                className="absolute top-1 bottom-1 w-1/2 rounded-md"
+                style={{ background: "#2a2a3e", transform: rightTab === "ajustes" ? "translateX(0)" : "translateX(100%)", transition: "transform 200ms ease-out" }}
+              />
+              <button
+                onClick={() => setRightTab("ajustes")}
+                className="relative z-10 flex-1 py-1.5 text-xs font-medium text-center"
+                style={{ color: rightTab === "ajustes" ? "#ffffff" : "#8888a8", transition: "color 200ms ease-out" }}
+              >
+                {t.generate.settingsTab}
+              </button>
+              <button
+                onClick={() => setRightTab("historial")}
+                className="relative z-10 flex-1 py-1.5 text-xs font-medium text-center"
+                style={{ color: rightTab === "historial" ? "#ffffff" : "#8888a8", transition: "color 200ms ease-out" }}
+              >
+                {t.generate.historyTab}
+              </button>
+            </div>
+
             {rightTab === "ajustes" && (
               <div className="p-5 space-y-5 overflow-y-auto flex-1">
                 {/* VOZ */}
