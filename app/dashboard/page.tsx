@@ -625,7 +625,7 @@ function GenerateTab({
       <div className="flex flex-col rounded-2xl border overflow-hidden" style={{ background: "#0d0d17", borderColor: "#2a2a3e", flex: 1, minHeight: 0 }}>
 
         {/* Header: avatar + voice name | tabs */}
-        <div className="flex items-center gap-3 px-5 py-3 border-b flex-shrink-0" style={{ borderColor: "#2a2a3e" }}>
+        <div className="flex items-center gap-3 px-5 py-3 flex-shrink-0" style={{ borderBottom: "1px solid #2a2a3e" }}>
           {selectedVoice?.coverImage ? (
             <VoiceAvatar name={selectedVoice.name} coverImage={selectedVoice.coverImage} size="sm" />
           ) : (
@@ -660,8 +660,8 @@ function GenerateTab({
             onChange={(e) => setText(e.target.value)}
             placeholder={t.generate.placeholder}
             disabled={submitting}
-            className="flex-1 px-6 py-5 text-sm text-gray-200 resize-none focus:outline-none disabled:opacity-60 border-r"
-            style={{ background: "transparent", lineHeight: "1.75", borderColor: "#2a2a3e", minWidth: 0 }}
+            className="flex-1 px-6 py-5 text-sm text-gray-200 resize-none focus:outline-none disabled:opacity-60"
+            style={{ background: "transparent", lineHeight: "1.75", borderRight: "1px solid #2a2a3e", minWidth: 0 }}
           />
           <div className="w-72 flex-shrink-0 flex flex-col overflow-hidden">
             {rightTab === "ajustes" && (
@@ -838,7 +838,7 @@ function GenerateTab({
         </div>
 
         {/* Footer: progress + char count + buttons */}
-        <div className="border-t px-5 py-3.5 flex-shrink-0" style={{ borderColor: "#2a2a3e" }}>
+        <div className="px-5 py-3.5 flex-shrink-0" style={{ borderTop: "1px solid #2a2a3e" }}>
           {submitting && (
             <div className="mb-3 space-y-1.5">
               <div className="flex items-center justify-between text-xs">
