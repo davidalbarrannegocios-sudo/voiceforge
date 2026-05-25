@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Globe } from "lucide-react";
 import { FREE_VOICE_IDS } from "@/lib/free-voice-ids";
 import { CustomSelect } from "@/components/CustomSelect";
+import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 
 export interface SelectedVoice {
   referenceId: string;
@@ -221,11 +222,11 @@ function VoiceAvatar({ name, coverImage, size = "md" }: { name: string; coverIma
 
   useEffect(() => { setImgFailed(false); }, [coverImage]);
 
-  const initial = name[0]?.toUpperCase() ?? "?";
   const cls = size === "lg" ? "w-12 h-12" : size === "md" ? "w-11 h-11" : size === "sm" ? "w-9 h-9" : "w-6 h-6";
-  const fontSize = size === "lg" ? 16 : size === "md" ? 15 : size === "sm" ? 13 : 11;
   const showImage = !!coverImage && coverImage.trim() !== "" && !imgFailed;
   const proxiedSrc = coverImage ? `/api/voice-image?url=${encodeURIComponent(coverImage)}` : "";
+
+  const pxSize = size === "lg" ? 48 : size === "md" ? 44 : size === "sm" ? 36 : 24;
 
   if (showImage) {
     return (
@@ -239,14 +240,7 @@ function VoiceAvatar({ name, coverImage, size = "md" }: { name: string; coverIma
       />
     );
   }
-  return (
-    <div
-      className={`${cls} rounded-full flex items-center justify-center text-white font-bold flex-shrink-0`}
-      style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", fontSize }}
-    >
-      {initial}
-    </div>
-  );
+  return <VoiceAvatarGenerative seed={name} size={pxSize} className="flex-shrink-0" />;
 }
 
 function TierPill({
@@ -1299,12 +1293,7 @@ export function VoiceBrowser({
                           className="flex items-center gap-3 px-4 py-3 rounded-xl border"
                           style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
                         >
-                          <div
-                            className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-sm"
-                            style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
-                          >
-                            {voice.name[0]?.toUpperCase()}
-                          </div>
+                          <VoiceAvatarGenerative seed={voice.name} size={44} className="flex-shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-white truncate">{voice.name}</p>
                             <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Voz clonada</p>
@@ -1409,12 +1398,7 @@ export function VoiceBrowser({
                                 borderColor: isExact ? "rgba(124,58,237,0.3)" : "#1e1e2e",
                               }}
                             >
-                              <div
-                                className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-sm"
-                                style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
-                              >
-                                {voice.name[0]?.toUpperCase()}
-                              </div>
+                              <VoiceAvatarGenerative seed={voice.name} size={44} className="flex-shrink-0" />
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <p className="text-sm font-semibold text-white truncate">{voice.name}</p>

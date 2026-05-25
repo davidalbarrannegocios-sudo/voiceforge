@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Clock, Trash2, Play, Pause, Download, RefreshCw, Share2, FileText } from "lucide-react";
+import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 
 interface Generation {
   id: string;
@@ -53,13 +54,6 @@ function groupByDate(items: Generation[]): DateGroup[] {
   }
 
   return Array.from(map.entries()).map(([label, items]) => ({ label, items }));
-}
-
-function avatarColor(name: string): string {
-  const colors = ["#3b82f6", "#8b5cf6", "#ec4899", "#10b981", "#f59e0b", "#ef4444", "#06b6d4"];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return colors[Math.abs(hash) % colors.length];
 }
 
 function fmtMSS(s: number) {
@@ -233,7 +227,6 @@ export default function AudioHistoryList({
                     const isConfirming = confirmId === gen.id;
                     const isPlaying = playingId === gen.id;
                     const vName = gen.voiceId ?? "Voz";
-                    const color = avatarColor(vName);
 
                     return (
                       <div
@@ -242,9 +235,7 @@ export default function AudioHistoryList({
                       >
                         {/* Row 1: avatar + voice name + time */}
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                          <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <span style={{ fontSize: "10px", fontWeight: 700, color: "#fff" }}>{vName[0].toUpperCase()}</span>
-                          </div>
+                          <VoiceAvatarGenerative seed={vName} size={24} className="flex-shrink-0" />
                           <span style={{ fontSize: "12px", fontWeight: 500, color: "#e2e8f0", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{vName}</span>
                           <span style={{ fontSize: "11px", color: "#6b7280", flexShrink: 0 }}>{formatTime(gen.createdAt)}</span>
                         </div>

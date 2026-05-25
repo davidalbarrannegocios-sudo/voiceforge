@@ -15,6 +15,7 @@ import { CreditPackModal } from "./CreditPackModal";
 import { useLang } from "./LanguageContext";
 import AudioHistoryList from "@/components/AudioHistoryList";
 import { CustomSelect } from "@/components/CustomSelect";
+import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface Voice {
@@ -1370,13 +1371,6 @@ function HistoryTab({ plan }: { plan: string }) {
   function fmtTime(iso: string) {
     return new Date(iso).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
   }
-  function avatarColor(seed: string) {
-    const palette = ["#3b82f6","#8b5cf6","#ec4899","#f59e0b","#10b981","#06b6d4","#f97316","#6366f1"];
-    let h = 0;
-    for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) & 0xffffffff;
-    return palette[Math.abs(h) % palette.length];
-  }
-
   const groups: { date: string; items: HistoryGen[] }[] = [];
   for (const g of filtered) {
     const d = fmtGroupDate(g.createdAt);
@@ -1481,8 +1475,6 @@ function HistoryTab({ plan }: { plan: string }) {
                     const isRemoving = removingIds.has(gen.id);
                     const isPlaying = playingId === gen.id;
                     const seed = gen.voiceId ?? gen.id;
-                    const initial = seed[0]?.toUpperCase() ?? "V";
-                    const bgColor = avatarColor(seed);
 
                     return (
                       <div
@@ -1499,11 +1491,7 @@ function HistoryTab({ plan }: { plan: string }) {
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                           <span style={{ fontSize: 11, color: "#6b7280" }}>{fmtTime(gen.createdAt)}</span>
                           <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                            <div style={{
-                              width: 18, height: 18, borderRadius: "50%", background: bgColor,
-                              display: "flex", alignItems: "center", justifyContent: "center",
-                              fontSize: 9, fontWeight: 700, color: "#fff",
-                            }}>{initial}</div>
+                            <VoiceAvatarGenerative seed={seed} size={20} />
                             <span style={{ fontSize: 11, color: "#6b7280" }}>Voz</span>
                           </div>
                         </div>
