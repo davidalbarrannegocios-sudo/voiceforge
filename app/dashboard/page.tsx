@@ -3046,15 +3046,40 @@ interface ReferralEntry {
   rewardedAt: string | null;
 }
 
+const REDEEM_PLANS = [
+  { key: "starter",    label: "Starter",    price: 7,   chars: 200_000   },
+  { key: "pro",        label: "Pro",         price: 13,  chars: 500_000   },
+  { key: "elite",      label: "Elite",       price: 25,  chars: 1_000_000 },
+  { key: "enterprise", label: "Enterprise",  price: 110, chars: 5_000_000 },
+] as const;
+
+const REDEEM_PACKS = [
+  { key: "100k", label: "100.000 caracteres", price: 5,  chars: 100_000   },
+  { key: "300k", label: "300.000 caracteres", price: 12, chars: 300_000   },
+  { key: "600k", label: "600.000 caracteres", price: 19, chars: 600_000   },
+  { key: "1m",   label: "1.000.000 caracteres", price: 30, chars: 1_000_000 },
+] as const;
+
 function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referrals, setReferrals] = useState<ReferralEntry[]>([]);
-  const [pendingReward, setPendingReward] = useState(0);
-  const [totalEarned, setTotalEarned] = useState(0);
+  const [referralBalance, setReferralBalance] = useState(0);
+  const [referralEarned, setReferralEarned] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [claiming, setClaiming] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [claimedMsg, setClaimedMsg] = useState<number | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Redeem plan state
+  const [selectedPlan, setSelectedPlan] = useState<typeof REDEEM_PLANS[number]["key"]>("starter");
+  const [redeemingPlan, setRedeemingPlan] = useState(false);
+  const [planMsg, setPlanMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  // Redeem chars state
+  const [selectedPack, setSelectedPack] = useState<typeof REDEEM_PACKS[number]["key"]>("100k");
+  const [redeemingChars, setRedeemingChars] = useState(false);
+  const [charsMsg, setCharsMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const historyRef = useRef<HTMLDivElement>(null);
 
   const fetchReferral = useCallback(async () => {
     setLoading(true);
@@ -3063,8 +3088,8 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
       const data = await res.json();
       setReferralCode(data.referralCode ?? null);
       setReferrals(data.referrals ?? []);
-      setPendingReward(data.pendingReward ?? 0);
-      setTotalEarned(data.totalEarned ?? 0);
+      setReferralBalance(data.referralBalance ?? 0);
+      setReferralEarned(data.referralEarned ?? 0);
     } finally {
       setLoading(false);
     }
@@ -3073,7 +3098,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
   useEffect(() => { fetchReferral(); }, [fetchReferral]);
 
   const referralLink = referralCode
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/r/${referralCode}`
+    ? `https://elitelabs.es/?ref=${referralCode}`
     : "";
 
   async function handleCopy() {
@@ -3083,171 +3108,296 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  async function handleClaim() {
-    setClaiming(true);
+  async function handleRedeemPlan() {
+    setRedeemingPlan(true);
+    setPlanMsg(null);
     try {
-      const res = await fetch("/api/referral/claim", { method: "POST" });
+      const res = await fetch("/api/referral/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "plan", planKey: selectedPlan }),
+      });
       const data = await res.json();
-      if (data.claimed > 0) {
-        setClaimedMsg(data.claimed);
-        setTimeout(() => setClaimedMsg(null), 4000);
+      if (!res.ok) {
+        setPlanMsg({ ok: false, text: data.error ?? "Error al canjear" });
+      } else {
+        const plan = REDEEM_PLANS.find(p => p.key === selectedPlan);
+        setPlanMsg({ ok: true, text: `¡${plan?.chars.toLocaleString("es-ES")} caracteres añadidos!` });
         onClaimed();
         await fetchReferral();
+        setTimeout(() => setPlanMsg(null), 5000);
       }
     } finally {
-      setClaiming(false);
+      setRedeemingPlan(false);
     }
   }
 
-  const cardStyle = { background: "#12121a", borderColor: "#2a2a3e" };
+  async function handleRedeemChars() {
+    setRedeemingChars(true);
+    setCharsMsg(null);
+    try {
+      const res = await fetch("/api/referral/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "chars", packKey: selectedPack }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCharsMsg({ ok: false, text: data.error ?? "Error al canjear" });
+      } else {
+        const pack = REDEEM_PACKS.find(p => p.key === selectedPack);
+        setCharsMsg({ ok: true, text: `¡${pack?.chars.toLocaleString("es-ES")} caracteres añadidos!` });
+        onClaimed();
+        await fetchReferral();
+        setTimeout(() => setCharsMsg(null), 5000);
+      }
+    } finally {
+      setRedeemingChars(false);
+    }
+  }
+
+  function centsToUSD(cents: number) {
+    return `$${(cents / 100).toFixed(2)}`;
+  }
+
+  const currentPlan = REDEEM_PLANS.find(p => p.key === selectedPlan)!;
+  const currentPack = REDEEM_PACKS.find(p => p.key === selectedPack)!;
+  const canRedeemPlan = referralBalance >= currentPlan.price * 100;
+  const canRedeemChars = referralBalance >= currentPack.price * 100;
+
+  const card = { background: "#12121a", border: "1px solid #2a2a3e" };
+  const spin = (
+    <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  );
 
   return (
-    <div className="max-w-2xl">
-      {/* Referral link */}
-      <div className="rounded-xl border p-5 mb-6" style={cardStyle}>
-        <p className="text-xs text-gray-500 mb-1">Tu enlace de referido</p>
-        <p className="text-xs text-gray-400 mb-3">
-          Comparte este enlace. Cuando alguien compre caracteres, recibirás el <span className="text-blue-400 font-semibold">5%</span> en caracteres.
+    <div className="max-w-2xl space-y-5">
+      {/* Hero */}
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-white mb-1">Gana recompensas por referir amigos</h1>
+        <p className="text-sm" style={{ color: "#8888a8" }}>
+          Comparte Elite Labs y gana recompensas por cada persona que se una
         </p>
+      </div>
+
+      {/* ── Card: Comparte tu enlace ── */}
+      <div className="rounded-2xl p-6" style={card}>
+        <p className="text-sm font-semibold text-white mb-4">Comparte tu enlace</p>
+
         {loading ? (
-          <div className="h-10 rounded-lg animate-pulse" style={{ background: "#1a1a2e" }} />
+          <div className="h-10 rounded-xl animate-pulse mb-4" style={{ background: "#1a1a2e" }} />
         ) : (
-          <div className="flex items-center gap-2">
-            <div
-              className="flex-1 px-3 py-2.5 rounded-lg text-sm font-mono truncate"
-              style={{ background: "#0a0a0f", border: "1px solid #2a2a3e", color: "#93c5fd" }}
-            >
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex-1 px-3 py-2.5 rounded-xl text-sm font-mono truncate" style={{ background: "#0a0a0f", border: "1px solid #2a2a3e", color: "#93c5fd" }}>
               {referralLink || "—"}
             </div>
             <button
               onClick={handleCopy}
               disabled={!referralLink}
-              className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all disabled:opacity-50 flex-shrink-0"
               style={copied
                 ? { background: "rgba(34,197,94,0.15)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.3)" }
                 : { background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }
               }
             >
-              <Copy size={12} />
-              {copied ? "¡Copiado!" : "Copiar"}
+              <Copy size={12} /> {copied ? "¡Copiado!" : "Copiar"}
             </button>
           </div>
         )}
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        {[
-          { label: "Referidos", value: loading ? "—" : referrals.length.toString() },
-          { label: "Completados", value: loading ? "—" : referrals.filter(r => r.status !== "pending").length.toString() },
-          { label: "Total ganado", value: loading ? "—" : `${totalEarned.toLocaleString("es-ES")} chars` },
-        ].map(({ label, value }) => (
-          <div key={label} className="rounded-xl border p-4 text-center" style={cardStyle}>
-            <p className="text-xl font-bold text-white mb-0.5">{value}</p>
-            <p className="text-xs text-gray-500">{label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Claim */}
-      {(pendingReward > 0 || claimedMsg !== null) && (
-        <div
-          className="rounded-xl border p-5 mb-6 flex items-center justify-between gap-4"
-          style={claimedMsg !== null
-            ? { background: "rgba(34,197,94,0.08)", borderColor: "rgba(34,197,94,0.3)" }
-            : { background: "rgba(59,130,246,0.06)", borderColor: "rgba(59,130,246,0.25)" }
-          }
-        >
+        <div className="flex items-center gap-6 mb-4">
           <div>
-            {claimedMsg !== null ? (
-              <>
-                <p className="text-sm font-semibold text-green-400">¡Recompensa canjeada!</p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  +{claimedMsg.toLocaleString("es-ES")} caracteres añadidos a tu saldo
+            <p className="text-xs mb-0.5" style={{ color: "#8888a8" }}>Disponible para canjear</p>
+            <p className="text-lg font-bold" style={{ color: "#4ade80" }}>
+              {loading ? "—" : centsToUSD(referralBalance)}
+            </p>
+          </div>
+          <div style={{ width: 1, height: 36, background: "#2a2a3e" }} />
+          <div>
+            <p className="text-xs mb-0.5" style={{ color: "#8888a8" }}>Ganancias totales</p>
+            <p className="text-lg font-bold text-white">
+              {loading ? "—" : centsToUSD(referralEarned)}
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => { setShowHistory(h => !h); setTimeout(() => historyRef.current?.scrollIntoView({ behavior: "smooth" }), 50); }}
+          className="text-xs font-medium transition-colors hover:text-blue-300"
+          style={{ color: "#3b82f6", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+        >
+          Ver historial de recompensas →
+        </button>
+      </div>
+
+      {/* ── Card: Canjear recompensas ── */}
+      <div className="rounded-2xl p-6" style={card}>
+        <p className="text-sm font-semibold text-white mb-5">Canjear recompensas</p>
+
+        <div className="grid gap-4">
+          {/* Option 1: Plan credits */}
+          <div className="rounded-xl p-4" style={{ background: "#0d0d17", border: "1px solid #2a2a3e" }}>
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <p className="text-sm font-medium text-white">Créditos de plan</p>
+                <p className="text-xs mt-0.5" style={{ color: "#8888a8" }}>
+                  Canjea tu saldo por caracteres equivalentes a un mes de plan
                 </p>
-              </>
-            ) : (
-              <>
-                <p className="text-sm font-semibold text-white">Recompensa disponible</p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  <span className="text-blue-400 font-semibold">{pendingReward.toLocaleString("es-ES")} caracteres</span> listos para canjear
-                </p>
-              </>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex rounded-lg overflow-hidden flex-wrap gap-1">
+                {REDEEM_PLANS.map((p) => (
+                  <button
+                    key={p.key}
+                    onClick={() => setSelectedPlan(p.key)}
+                    className="px-3 py-1.5 text-xs font-medium transition-all rounded-lg"
+                    style={selectedPlan === p.key
+                      ? { background: "rgba(59,130,246,0.2)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
+                      : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a3e" }
+                    }
+                  >
+                    {p.label} <span style={{ color: selectedPlan === p.key ? "#93c5fd" : "#4a4a65" }}>${p.price}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs" style={{ color: "#8888a8" }}>
+                Obtienes <strong className="text-white">{currentPlan.chars.toLocaleString("es-ES")} chars</strong> · requiere <strong className="text-white">${currentPlan.price}</strong>
+                {!canRedeemPlan && <span style={{ color: "#f87171" }}> (saldo insuficiente)</span>}
+              </p>
+              <button
+                onClick={handleRedeemPlan}
+                disabled={!canRedeemPlan || redeemingPlan}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff" }}
+              >
+                {redeemingPlan ? spin : null} Canjear
+              </button>
+            </div>
+            {planMsg && (
+              <p className="text-xs mt-2 font-medium" style={{ color: planMsg.ok ? "#4ade80" : "#f87171" }}>{planMsg.text}</p>
             )}
           </div>
-          {claimedMsg === null && (
-            <button
-              onClick={handleClaim}
-              disabled={claiming}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
-              style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 12px rgba(59,130,246,0.3)" }}
+
+          {/* Option 2: Extra characters */}
+          <div className="rounded-xl p-4" style={{ background: "#0d0d17", border: "1px solid #2a2a3e" }}>
+            <div className="mb-3">
+              <p className="text-sm font-medium text-white">Caracteres extra</p>
+              <p className="text-xs mt-0.5" style={{ color: "#8888a8" }}>
+                Añade caracteres extra a tu cuenta al precio actual de la tienda
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-1 mb-3">
+              {REDEEM_PACKS.map((p) => (
+                <button
+                  key={p.key}
+                  onClick={() => setSelectedPack(p.key)}
+                  className="px-3 py-1.5 text-xs font-medium transition-all rounded-lg"
+                  style={selectedPack === p.key
+                    ? { background: "rgba(139,92,246,0.2)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.4)" }
+                    : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a3e" }
+                  }
+                >
+                  {p.label.replace(" caracteres", "")} <span style={{ color: selectedPack === p.key ? "#a78bfa" : "#4a4a65" }}>${p.price}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs" style={{ color: "#8888a8" }}>
+                Obtienes <strong className="text-white">{currentPack.chars.toLocaleString("es-ES")} chars</strong> · requiere <strong className="text-white">${currentPack.price}</strong>
+                {!canRedeemChars && <span style={{ color: "#f87171" }}> (saldo insuficiente)</span>}
+              </p>
+              <button
+                onClick={handleRedeemChars}
+                disabled={!canRedeemChars || redeemingChars}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: "linear-gradient(135deg,#8b5cf6,#7c3aed)", color: "#fff" }}
+              >
+                {redeemingChars ? spin : null} Canjear caracteres
+              </button>
+            </div>
+            {charsMsg && (
+              <p className="text-xs mt-2 font-medium" style={{ color: charsMsg.ok ? "#4ade80" : "#f87171" }}>{charsMsg.text}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Card: Comisión en efectivo ── */}
+      <div className="rounded-2xl p-6" style={{ background: "linear-gradient(135deg, #0f1a2e 0%, #12121a 100%)", border: "1px solid rgba(59,130,246,0.2)" }}>
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(59,130,246,0.12)" }}>
+            <CreditCard size={18} style={{ color: "#3b82f6" }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white mb-1">Comisión en efectivo</p>
+            <p className="text-sm mb-1" style={{ color: "#9ca3af" }}>
+              Gana un <strong style={{ color: "#93c5fd" }}>5% en efectivo</strong> por cada referido que pague
+            </p>
+            <p className="text-xs mb-4" style={{ color: "#6b7280" }}>Pagos vía PayPal o transferencia internacional</p>
+            <a
+              href="/dashboard/afiliados"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold transition-colors hover:text-blue-300"
+              style={{ color: "#3b82f6" }}
             >
-              {claiming && (
-                <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-              )}
-              Canjear caracteres
-            </button>
+              Solicitar más información →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Historial de referidos ── */}
+      {showHistory && (
+        <div ref={historyRef} className="rounded-2xl p-6" style={card}>
+          <p className="text-sm font-semibold text-white mb-4">Historial de recompensas</p>
+          {loading ? (
+            <div className="space-y-2">{[1, 2].map(i => <div key={i} className="h-12 rounded-xl animate-pulse" style={{ background: "#1a1a2e" }} />)}</div>
+          ) : referrals.length === 0 ? (
+            <div className="text-center py-10">
+              <Gift size={28} style={{ color: "#2a2a3e", marginBottom: 8 }} className="mx-auto" />
+              <p className="text-sm" style={{ color: "#6b7280" }}>Aún no tienes referidos</p>
+              <p className="text-xs mt-1" style={{ color: "#4a4a65" }}>Comparte tu enlace y empieza a ganar</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {referrals.map((r, i) => (
+                <div key={r.id} className="flex items-center justify-between p-3.5 rounded-xl" style={{ background: "#0d0d17", border: "1px solid #1a1a2e" }}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}>
+                      {i + 1}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-white">Referido #{i + 1}</p>
+                      <p className="text-xs" style={{ color: "#6b7280" }}>{formatDate(r.createdAt)}</p>
+                    </div>
+                  </div>
+                  <span
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
+                    style={r.status === "claimed"
+                      ? { background: "rgba(34,197,94,0.12)", color: "#4ade80" }
+                      : r.status === "rewarded"
+                      ? { background: "rgba(59,130,246,0.15)", color: "#93c5fd" }
+                      : { background: "rgba(255,255,255,0.06)", color: "#8888a8" }
+                    }
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: "currentColor" }} />
+                    {r.status === "claimed" ? "Canjeado" : r.status === "rewarded" ? "Completado" : "Pendiente"}
+                  </span>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}
-
-      {/* Referral list */}
-      <div>
-        <p className="text-sm font-semibold text-gray-300 mb-3">Historial de referidos</p>
-        {loading ? (
-          <div className="space-y-2">
-            {[1, 2].map(i => <div key={i} className="h-14 rounded-xl animate-pulse" style={{ background: "#12121a" }} />)}
-          </div>
-        ) : referrals.length === 0 ? (
-          <div className="text-center py-12 rounded-xl border" style={cardStyle}>
-            <Gift size={36} style={{ color: "#8888a8" }} className="mx-auto mb-3" />
-            <p className="text-sm font-medium text-gray-400">Aún no tienes referidos</p>
-            <p className="text-xs text-gray-600 mt-1">Comparte tu enlace y empieza a ganar</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {referrals.map((r, i) => (
-              <div key={r.id} className="flex items-center justify-between p-4 rounded-xl border" style={cardStyle}>
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                    style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
-                  >
-                    {i + 1}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">Referido #{i + 1}</p>
-                    <p className="text-xs text-gray-500">{formatDate(r.createdAt)}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
-                    style={
-                      r.status === "claimed"
-                        ? { background: "rgba(34,197,94,0.12)", color: "#4ade80" }
-                        : r.status === "rewarded"
-                        ? { background: "rgba(59,130,246,0.15)", color: "#93c5fd" }
-                        : { background: "rgba(255,255,255,0.06)", color: "#8888a8" }
-                    }
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full inline-block"
-                      style={{ background: r.status === "claimed" ? "#4ade80" : r.status === "rewarded" ? "#93c5fd" : "#8888a8" }}
-                    />
-                    {r.status === "claimed" ? "Canjeado" : r.status === "rewarded" ? "Listo" : "Pendiente"}
-                  </span>
-                  {r.rewardChars > 0 && (
-                    <p className="text-xs text-gray-500 mt-0.5">+{r.rewardChars.toLocaleString("es-ES")} chars</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

@@ -69,6 +69,20 @@ export async function POST(req: Request) {
         ]);
 
         console.log(`[webhook] credit pack purchased: user=${userId} credits=${credits}`);
+
+        // 5% referral commission on credit pack purchase
+        if (session.amount_total && session.amount_total > 0) {
+          const payer = await prisma.user.findUnique({ where: { id: userId }, select: { referredBy: true } });
+          if (payer?.referredBy) {
+            const commission = Math.floor(session.amount_total * 0.05);
+            await prisma.user.update({
+              where: { id: payer.referredBy },
+              data: { referralBalance: { increment: commission }, referralEarned: { increment: commission } },
+            });
+            console.log(`[webhook] referral commission: referrer=${payer.referredBy} +${commission} cents`);
+          }
+        }
+
         return NextResponse.json({ received: true });
       }
 
@@ -113,6 +127,20 @@ export async function POST(req: Request) {
       });
 
       console.log(`[webhook] subscription activated: user=${userId} plan=${planKey} credits=${credits}`);
+
+      // 5% referral commission on first subscription payment
+      const subAmount = sub.items.data[0]?.plan?.amount ?? 0;
+      if (subAmount > 0) {
+        const subscriber = await prisma.user.findUnique({ where: { id: userId }, select: { referredBy: true } });
+        if (subscriber?.referredBy) {
+          const commission = Math.floor(subAmount * 0.05);
+          await prisma.user.update({
+            where: { id: subscriber.referredBy },
+            data: { referralBalance: { increment: commission }, referralEarned: { increment: commission } },
+          });
+          console.log(`[webhook] referral commission (sub): referrer=${subscriber.referredBy} +${commission} cents`);
+        }
+      }
     } catch (error) {
       console.error("[webhook] Error completo:", error);
       console.error("[webhook] Stack:", error instanceof Error ? error.stack : error);
@@ -192,6 +220,16 @@ export async function POST(req: Request) {
     });
 
     console.log(`[webhook] credits updated: user=${user.id} plan=${user.plan} reason=${billingReason} credits=${planCredits}`);
+
+    // 5% referral commission on renewal
+    if (invoice.amount_paid > 0 && user.referredBy) {
+      const commission = Math.floor(invoice.amount_paid * 0.05);
+      await prisma.user.update({
+        where: { id: user.referredBy },
+        data: { referralBalance: { increment: commission }, referralEarned: { increment: commission } },
+      });
+      console.log(`[webhook] referral commission (renewal): referrer=${user.referredBy} +${commission} cents`);
+    }
   }
 
   // ── customer.subscription.deleted ────────────────────────

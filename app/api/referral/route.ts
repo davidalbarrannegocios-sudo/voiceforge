@@ -4,22 +4,14 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   const clerkUser = await currentUser();
-  if (!clerkUser) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  }
+  if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const user = await prisma.user.findUnique({
     where: { clerkId: clerkUser.id },
-    include: {
-      referralsGiven: {
-        orderBy: { createdAt: "desc" },
-      },
-    },
+    include: { referralsGiven: { orderBy: { createdAt: "desc" } } },
   });
 
-  if (!user) {
-    return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
-  }
+  if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
   const pendingReward = user.referralsGiven
     .filter((r) => r.status === "rewarded")
@@ -34,5 +26,9 @@ export async function GET() {
     referrals: user.referralsGiven,
     pendingReward,
     totalEarned,
+    referralBalance: user.referralBalance,
+    referralEarned: user.referralEarned,
+    referralCount: user.referralsGiven.length,
+    referralCompleted: user.referralsGiven.filter((r) => r.status !== "pending").length,
   });
 }
