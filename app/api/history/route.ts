@@ -35,7 +35,6 @@ export async function GET(req: Request) {
         creditsUsed: true,
         durationSeconds: true,
         voiceId: true,
-        voiceName: true,
         createdAt: true,
         expiresAt: true,
       },

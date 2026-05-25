@@ -3,11 +3,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useUser, UserButton, useClerk } from "@clerk/nextjs";
+import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
-import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, getAge, formatCount } from "./VoiceBrowser";
+import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, formatCount } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
 import { PaymentModal, type BillingPlan } from "./PaymentModal";
 import { SupportModal } from "./SupportModal";
@@ -38,7 +38,6 @@ type NavSection = {
 };
 
 function Sidebar({
-  credits,
   activeTab,
   setActiveTab,
   onClose,
@@ -46,7 +45,6 @@ function Sidebar({
   plan,
   memberInfo,
 }: {
-  credits: number | null;
   activeTab: Tab;
   setActiveTab: (t: Tab) => void;
   onClose?: () => void;
@@ -2461,7 +2459,7 @@ interface TeamData {
 
 const ENTERPRISE_CREDITS = 5_000_000;
 
-function TeamTab({ credits: _credits }: { credits: number | null }) {
+function TeamTab() {
   const [team, setTeam] = useState<TeamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [teamName, setTeamName] = useState("");
@@ -2874,7 +2872,7 @@ function AvatarWithProgress({
         style={{ position: "absolute", inset: "4px", borderRadius: "50%", overflow: "hidden", border: "none", cursor: "pointer", padding: 0, background: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center" }}
       >
         {imageUrl
-          ? <img src={imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ? <Image src={imageUrl} alt="" width={32} height={32} unoptimized style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           : <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>{initial}</span>
         }
       </button>
@@ -2898,7 +2896,6 @@ export default function DashboardPage() {
   const [extraCredits, setExtraCredits] = useState<number>(0);
   const [plan, setPlan] = useState<string>("free");
   const [effectivePlan, setEffectivePlan] = useState<string>("free");
-  const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
   const [transcriptionUsed, setTranscriptionUsed] = useState<number>(0);
   const [memberInfo, setMemberInfo] = useState<{ percentage: number; creditsLastDistributed: number; teamName: string } | null>(null);
   const [voices, setVoices] = useState<Voice[]>([]);
@@ -2917,7 +2914,6 @@ export default function DashboardPage() {
     if (typeof data.extraCredits === "number") setExtraCredits(data.extraCredits);
     if (data.plan) setPlan(data.plan);
     if (data.effectivePlan) setEffectivePlan(data.effectivePlan);
-    if ("planExpiresAt" in data) setPlanExpiresAt(data.planExpiresAt);
     if (typeof data.transcriptionUsed === "number") setTranscriptionUsed(data.transcriptionUsed);
     if ("nextRenewalDate" in data) setNextRenewalDate(data.nextRenewalDate);
     if (typeof data.daysUntilRenewal === "number") setDaysUntilRenewal(data.daysUntilRenewal);
@@ -2992,11 +2988,11 @@ export default function DashboardPage() {
         className={`fixed inset-y-0 left-0 z-50 flex flex-col lg:hidden transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
         style={{ width: "260px", background: "#0d0d17", borderRight: "1px solid #1e1e2e" }}
       >
-        <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} onClose={() => setSidebarOpen(false)} plan={plan} memberInfo={memberInfo} />
+        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onClose={() => setSidebarOpen(false)} plan={plan} memberInfo={memberInfo} />
       </div>
 
       {/* Desktop sidebar */}
-      <Sidebar credits={credits} activeTab={activeTab} setActiveTab={setActiveTab} desktop plan={plan} memberInfo={memberInfo} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} desktop plan={plan} memberInfo={memberInfo} />
 
       <main className="flex-1 overflow-auto relative min-w-0" style={{ padding: "0" }}>
         {/* Topbar */}
@@ -3136,7 +3132,7 @@ export default function DashboardPage() {
             onBilling={() => setActiveTab("billing")}
           />
         )}
-        {activeTab === "team" && <TeamTab credits={credits} />}
+        {activeTab === "team" && <TeamTab />}
         </div>{/* end page content */}
       </main>
     </div>

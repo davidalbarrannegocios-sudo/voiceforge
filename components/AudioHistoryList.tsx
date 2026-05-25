@@ -11,7 +11,6 @@ interface Generation {
   creditsUsed: number;
   durationSeconds: number;
   voiceId: string;
-  voiceName?: string | null;
   createdAt: string;
   expiresAt: string | null;
 }
@@ -38,7 +37,6 @@ function formatTime(iso: string) {
 function groupByDate(items: Generation[]): DateGroup[] {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterday = new Date(today.getTime() - 86400000);
 
   const map = new Map<string, Generation[]>();
   for (const g of items) {
