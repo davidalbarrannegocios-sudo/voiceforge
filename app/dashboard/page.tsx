@@ -45,6 +45,7 @@ function Sidebar({
   desktop = false,
   plan,
   memberInfo,
+  collapsed = false,
 }: {
   activeTab: Tab;
   setActiveTab: (t: Tab) => void;
@@ -52,6 +53,7 @@ function Sidebar({
   desktop?: boolean;
   plan?: string;
   memberInfo?: { percentage: number; creditsLastDistributed: number; teamName: string } | null;
+  collapsed?: boolean;
 }) {
   const { openUserProfile, signOut } = useClerk();
   const { t } = useLang();
@@ -112,30 +114,38 @@ function Sidebar({
         width: "100%",
         height: "100vh",
         flexDirection: "column",
-        ...(desktop ? { width: "240px", flexShrink: 0, position: "sticky", top: 0, borderRight: "1px solid #1e1e2e" } : {}),
+        ...(desktop ? {
+          width: collapsed ? "64px" : "240px",
+          flexShrink: 0,
+          position: "sticky",
+          top: 0,
+          borderRight: "1px solid #1e1e2e",
+          transition: "width 0.2s ease-in-out",
+          overflowX: "hidden",
+        } : {}),
         background: "#0d0d17",
       }}
     >
       {/* Logo */}
-      <div style={{ height: "56px", display: "flex", alignItems: "center", paddingLeft: "20px", paddingRight: "20px", flexShrink: 0 }}>
-        <Link href="/" className="flex items-center gap-2.5">
+      <div style={{ height: "56px", display: "flex", alignItems: "center", paddingLeft: collapsed && desktop ? "0" : "20px", paddingRight: collapsed && desktop ? "0" : "20px", justifyContent: collapsed && desktop ? "center" : "flex-start", flexShrink: 0 }}>
+        <Link href="/" className="flex items-center gap-2.5" title={collapsed && desktop ? "Elite Labs" : undefined}>
           <Image
             src="/elitelabs.png"
             alt="Elite Labs"
             width={28}
             height={28}
-            style={{ height: "28px", width: "auto", objectFit: "contain", imageRendering: "-webkit-optimize-contrast" }}
+            style={{ height: "28px", width: "auto", objectFit: "contain", imageRendering: "-webkit-optimize-contrast", flexShrink: 0 }}
             className="rounded-lg"
           />
-          <span className="font-bold text-white tracking-tight text-sm">Elite Labs</span>
+          {!(collapsed && desktop) && <span className="font-bold text-white tracking-tight text-sm">Elite Labs</span>}
         </Link>
       </div>
 
       {/* Nav */}
-      <nav style={{ flex: 1, paddingTop: "8px", paddingBottom: "8px", paddingLeft: "12px", paddingRight: "12px", overflowY: "auto" }}>
+      <nav style={{ flex: 1, paddingTop: "8px", paddingBottom: "8px", paddingLeft: collapsed && desktop ? "8px" : "12px", paddingRight: collapsed && desktop ? "8px" : "12px", overflowY: "auto" }}>
         {sections.map((section, si) => (
           <div key={si} style={{ marginBottom: si < sections.length - 1 ? "20px" : 0 }}>
-            {section.label && (
+            {section.label && !(collapsed && desktop) && (
               <p style={{ paddingLeft: "12px", marginBottom: "4px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#2e2e48" }}>
                 {section.label}
               </p>
@@ -147,12 +157,14 @@ function Sidebar({
                   <button
                     key={key}
                     onClick={() => handleNav(key)}
+                    title={collapsed && desktop ? label : undefined}
                     style={{
                       width: "100%",
                       display: "flex",
                       alignItems: "center",
-                      gap: "10px",
-                      padding: "8px 12px",
+                      justifyContent: collapsed && desktop ? "center" : "flex-start",
+                      gap: collapsed && desktop ? 0 : "10px",
+                      padding: collapsed && desktop ? "8px 0" : "8px 12px",
                       borderRadius: "8px",
                       fontSize: "13px",
                       fontWeight: 500,
@@ -165,8 +177,12 @@ function Sidebar({
                     }}
                   >
                     <Icon size={15} style={{ color: isActive ? "#93c5fd" : "#3e3e58", flexShrink: 0 }} />
-                    <span style={{ flex: 1 }}>{label}</span>
-                    {isActive && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#3b82f6", flexShrink: 0 }} />}
+                    {!(collapsed && desktop) && (
+                      <>
+                        <span style={{ flex: 1 }}>{label}</span>
+                        {isActive && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#3b82f6", flexShrink: 0 }} />}
+                      </>
+                    )}
                   </button>
                 );
               })}
@@ -176,7 +192,7 @@ function Sidebar({
       </nav>
 
       {/* Team membership section — only for non-owner members */}
-      {memberInfo && (
+      {memberInfo && !(collapsed && desktop) && (
         <div style={{ borderTop: "1px solid #1a1a28", padding: "12px 20px 16px" }}>
           <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#2e2e48", marginBottom: "8px" }}>
             Equipo
@@ -237,15 +253,17 @@ function Sidebar({
 
       {/* Upgrade button — hidden for enterprise */}
       {plan !== "enterprise" && (
-        <div style={{ padding: "0 12px 0", flexShrink: 0 }}>
+        <div style={{ padding: collapsed && desktop ? "0 8px 0" : "0 12px 0", flexShrink: 0 }}>
           <button
             onClick={() => { setActiveTab("billing"); onClose?.(); }}
+            title={collapsed && desktop ? "Mejorar plan" : undefined}
             style={{
               width: "100%",
               display: "flex",
               alignItems: "center",
-              gap: "8px",
-              padding: "10px 14px",
+              justifyContent: collapsed && desktop ? "center" : "flex-start",
+              gap: collapsed && desktop ? 0 : "8px",
+              padding: collapsed && desktop ? "10px 0" : "10px 14px",
               borderRadius: "10px",
               border: "1px solid rgba(255,255,255,0.08)",
               cursor: "pointer",
@@ -266,24 +284,30 @@ function Sidebar({
             <div style={{ position: "relative", zIndex: 1, width: "24px", height: "24px", borderRadius: "6px", background: "rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <Zap size={13} style={{ color: "#93c5fd" }} />
             </div>
-            <span style={{ position: "relative", zIndex: 1, fontSize: "13px", fontWeight: 600, color: "#c0c0d8", flex: 1, textAlign: "left" }}>Mejorar plan</span>
-            <svg style={{ position: "relative", zIndex: 1 }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555570" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
+            {!(collapsed && desktop) && (
+              <>
+                <span style={{ position: "relative", zIndex: 1, fontSize: "13px", fontWeight: 600, color: "#c0c0d8", flex: 1, textAlign: "left" }}>Mejorar plan</span>
+                <svg style={{ position: "relative", zIndex: 1 }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555570" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </>
+            )}
           </button>
         </div>
       )}
 
       {/* Sign out */}
-      <div style={{ padding: "8px 12px 16px", flexShrink: 0 }}>
+      <div style={{ padding: collapsed && desktop ? "8px 8px 16px" : "8px 12px 16px", flexShrink: 0 }}>
         <button
           onClick={() => signOut({ redirectUrl: "/" })}
+          title={collapsed && desktop ? "Cerrar sesión" : undefined}
           style={{
             width: "100%",
             display: "flex",
             alignItems: "center",
-            gap: "8px",
-            padding: "8px 12px",
+            justifyContent: collapsed && desktop ? "center" : "flex-start",
+            gap: collapsed && desktop ? 0 : "8px",
+            padding: collapsed && desktop ? "8px 0" : "8px 12px",
             borderRadius: "8px",
             border: "none",
             background: "transparent",
@@ -297,7 +321,7 @@ function Sidebar({
           onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#7a3a3a"; }}
         >
           <LogOut size={15} style={{ flexShrink: 0 }} />
-          Cerrar sesión
+          {!(collapsed && desktop) && "Cerrar sesión"}
         </button>
       </div>
     </aside>
@@ -4096,9 +4120,22 @@ export default function DashboardPage() {
   const [translateVoice, setTranslateVoice] = useState<SelectedVoice | null>(null);
   const [supportOpen, setSupportOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [nextRenewalDate, setNextRenewalDate] = useState<string | null>(null);
   const [daysUntilRenewal, setDaysUntilRenewal] = useState<number | null>(null);
   const { t: tt, toggle: toggleLang } = useLang();
+
+  useEffect(() => {
+    setSidebarCollapsed(localStorage.getItem("vf_sidebar_collapsed") === "true");
+  }, []);
+
+  function toggleSidebarCollapsed() {
+    setSidebarCollapsed(c => {
+      const next = !c;
+      localStorage.setItem("vf_sidebar_collapsed", String(next));
+      return next;
+    });
+  }
 
   const fetchCredits = useCallback(async () => {
     const res = await fetch("/api/credits");
@@ -4185,7 +4222,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Desktop sidebar */}
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} desktop plan={plan} memberInfo={memberInfo} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} desktop plan={plan} memberInfo={memberInfo} collapsed={sidebarCollapsed} />
 
       <main className="flex-1 overflow-auto relative min-w-0" style={{ padding: "0" }}>
         {/* Topbar */}
@@ -4205,10 +4242,9 @@ export default function DashboardPage() {
           return (
             <div style={{ height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", position: "sticky", top: 0, zIndex: 10, borderBottom: "1px solid #1a1a28", background: "#0a0a0f", flexShrink: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                {/* Hamburger — mobile only */}
+                {/* Hamburger — opens mobile drawer / collapses desktop sidebar */}
                 <button
-                  className="lg:hidden"
-                  onClick={() => setSidebarOpen(true)}
+                  onClick={() => window.innerWidth >= 1024 ? toggleSidebarCollapsed() : setSidebarOpen(true)}
                   style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", cursor: "pointer", color: "#8888a8", flexShrink: 0 }}
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect y="2" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="7.25" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="12.5" width="16" height="1.5" rx="0.75" fill="currentColor"/></svg>
