@@ -216,14 +216,14 @@ function matchesAdvancedFilters(voice: FishVoice, filters: AdvancedFilters): boo
 
 /* ── Sub-components ─────────────────────────────────────────── */
 
-function VoiceAvatar({ name, coverImage, size = "md" }: { name: string; coverImage?: string; size?: "sm" | "md" | "lg" }) {
+function VoiceAvatar({ name, coverImage, size = "md" }: { name: string; coverImage?: string; size?: "xs" | "sm" | "md" | "lg" }) {
   const [imgFailed, setImgFailed] = useState(false);
 
   useEffect(() => { setImgFailed(false); }, [coverImage]);
 
   const initial = name[0]?.toUpperCase() ?? "?";
-  const cls = size === "lg" ? "w-12 h-12" : size === "md" ? "w-11 h-11" : "w-9 h-9";
-  const fontSize = size === "lg" ? 16 : size === "md" ? 15 : 13;
+  const cls = size === "lg" ? "w-12 h-12" : size === "md" ? "w-11 h-11" : size === "sm" ? "w-9 h-9" : "w-6 h-6";
+  const fontSize = size === "lg" ? 16 : size === "md" ? 15 : size === "sm" ? 13 : 11;
   const showImage = !!coverImage && coverImage.trim() !== "" && !imgFailed;
   const proxiedSrc = coverImage ? `/api/voice-image?url=${encodeURIComponent(coverImage)}` : "";
 

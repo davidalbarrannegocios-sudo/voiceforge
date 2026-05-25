@@ -634,12 +634,7 @@ function GenerateTab({
             onClick={() => setShowBrowser(true)}
             style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", flexShrink: 0, width: "100%", textAlign: "left", background: "transparent", cursor: "pointer", border: "none" }}
           >
-            <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "rgba(59,130,246,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
-              {selectedVoice?.coverImage
-                ? <img src={selectedVoice.coverImage} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-                : <span style={{ fontSize: "11px", fontWeight: 700, color: "#93c5fd" }}>{(selectedVoice?.name ?? "V")[0].toUpperCase()}</span>
-              }
-            </div>
+            <VoiceAvatar name={selectedVoice?.name ?? "V"} coverImage={selectedVoice?.coverImage} size="xs" />
             <span style={{ fontSize: "13px", fontWeight: 400, color: "#9ca3af" }}>{selectedVoice?.name ?? t.generate.defaultVoice}</span>
           </button>
 
