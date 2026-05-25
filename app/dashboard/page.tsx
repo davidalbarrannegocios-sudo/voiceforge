@@ -972,16 +972,16 @@ function GenerateTab({
 
 /* ─── Clone Modal ─────────────────────────────────────────── */
 const CLONE_LANGUAGES = [
-  { value: "es", label: "Español",   flag: "🇪🇸" },
-  { value: "en", label: "Inglés",    flag: "🇺🇸" },
-  { value: "fr", label: "Francés",   flag: "🇫🇷" },
-  { value: "de", label: "Alemán",    flag: "🇩🇪" },
-  { value: "it", label: "Italiano",  flag: "🇮🇹" },
-  { value: "pt", label: "Portugués", flag: "🇧🇷" },
-  { value: "ja", label: "Japonés",   flag: "🇯🇵" },
-  { value: "zh", label: "Chino",     flag: "🇨🇳" },
-  { value: "ko", label: "Coreano",   flag: "🇰🇷" },
-  { value: "ar", label: "Árabe",     flag: "🇸🇦" },
+  { value: "es", label: "Español",   fi: "es" },
+  { value: "en", label: "Inglés",    fi: "us" },
+  { value: "fr", label: "Francés",   fi: "fr" },
+  { value: "de", label: "Alemán",    fi: "de" },
+  { value: "it", label: "Italiano",  fi: "it" },
+  { value: "pt", label: "Portugués", fi: "br" },
+  { value: "ja", label: "Japonés",   fi: "jp" },
+  { value: "zh", label: "Chino",     fi: "cn" },
+  { value: "ko", label: "Coreano",   fi: "kr" },
+  { value: "ar", label: "Árabe",     fi: "sa" },
 ];
 
 function LangDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -1016,7 +1016,7 @@ function LangDropdown({ value, onChange }: { value: string; onChange: (v: string
         className="w-full flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
         style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }}
       >
-        <span className="text-base leading-none">{selected.flag}</span>
+        <span className={`fi fi-${selected.fi} flex-shrink-0`} style={{ borderRadius: "2px", width: "20px", height: "15px", display: "inline-block" }} />
         <span className="flex-1 text-left">{selected.label}</span>
         <ChevronDown
           size={14}
@@ -1058,7 +1058,7 @@ function LangDropdown({ value, onChange }: { value: string; onChange: (v: string
                 onMouseEnter={(e) => { if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = "rgba(59,130,246,0.08)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
               >
-                <span className="text-base leading-none w-5 flex-shrink-0">{l.flag}</span>
+                <span className={`fi fi-${l.fi} flex-shrink-0`} style={{ borderRadius: "2px", width: "20px", height: "15px", display: "inline-block" }} />
                 <span className="flex-1">{l.label}</span>
                 {isSelected && <Check size={12} style={{ color: "#93c5fd", flexShrink: 0 }} />}
               </button>
