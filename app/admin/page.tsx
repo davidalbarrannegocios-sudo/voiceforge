@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { CustomSelect } from "@/components/CustomSelect";
 
 /* ─── Types ───────────────────────────────────────────────── */
 const PLAN_PRICE: Record<string, number> = { free: 0, starter: 7, pro: 13, elite: 25, enterprise: 110 };
@@ -412,15 +413,12 @@ function UserDetailModal({
                 Plan actual: <span style={{ color: "#e5e7eb" }}>{detail.user.plan}</span>
               </p>
               <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                <select
+                <CustomSelect
+                  options={["free", "starter", "pro", "elite", "enterprise"].map((p) => ({ value: p, label: p }))}
                   value={planValue}
-                  onChange={(e) => setPlanValue(e.target.value)}
-                  style={{ ...input, width: "auto", minWidth: "140px" }}
-                >
-                  {["free", "starter", "pro", "elite", "enterprise"].map((p) => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
+                  onChange={setPlanValue}
+                  style={{ minWidth: "160px" }}
+                />
                 <button
                   onClick={handleAssignPlan}
                   disabled={planLoading || !planValue || planValue === detail.user.plan}
@@ -767,10 +765,12 @@ export default function AdminPage() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: "0.75rem", color: "#8888a8", display: "block", marginBottom: "0.35rem" }}>Operación</label>
-                  <select style={{ ...input }} value={creditOp} onChange={(e) => setCreditOp(e.target.value as "add" | "subtract")}>
-                    <option value="add">Añadir</option>
-                    <option value="subtract">Quitar</option>
-                  </select>
+                  <CustomSelect
+                    options={[{ value: "add", label: "Añadir" }, { value: "subtract", label: "Quitar" }]}
+                    value={creditOp}
+                    onChange={(v) => setCreditOp(v as "add" | "subtract")}
+                    className="w-full"
+                  />
                 </div>
               </div>
               <button type="submit" disabled={creditLoading} style={{ ...btn(creditOp === "add" ? "#3b82f6" : "#ef4444"), opacity: creditLoading ? 0.6 : 1 }}>
@@ -789,10 +789,12 @@ export default function AdminPage() {
               </div>
               <div>
                 <label style={{ fontSize: "0.75rem", color: "#8888a8", display: "block", marginBottom: "0.35rem" }}>Nuevo rol</label>
-                <select style={{ ...input }} value={roleValue} onChange={(e) => setRoleValue(e.target.value as "admin" | "user")}>
-                  <option value="user">user</option>
-                  <option value="admin">admin</option>
-                </select>
+                <CustomSelect
+                  options={[{ value: "user", label: "user" }, { value: "admin", label: "admin" }]}
+                  value={roleValue}
+                  onChange={(v) => setRoleValue(v as "admin" | "user")}
+                  className="w-full"
+                />
               </div>
               <button type="submit" disabled={roleLoading} style={{ ...btn(), opacity: roleLoading ? 0.6 : 1 }}>
                 {roleLoading ? "Actualizando..." : "Cambiar rol"}

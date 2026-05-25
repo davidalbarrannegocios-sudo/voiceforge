@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Globe } from "lucide-react";
 import { FREE_VOICE_IDS } from "@/lib/free-voice-ids";
+import { CustomSelect } from "@/components/CustomSelect";
 
 export interface SelectedVoice {
   referenceId: string;
@@ -1038,16 +1039,12 @@ export function VoiceBrowser({
                   </div>
 
                   {/* Language dropdown */}
-                  <select
+                  <CustomSelect
+                    options={LANGS.map(({ code, label }) => ({ value: code, label }))}
                     value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
-                    className="px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer focus:outline-none"
-                    style={{ background: "#0d0d17", border: "1px solid #1e1e2e", color: "#c0c0d8", minWidth: "120px" }}
-                  >
-                    {LANGS.map(({ code, label }) => (
-                      <option key={code} value={code}>{label}</option>
-                    ))}
-                  </select>
+                    onChange={setLanguage}
+                    style={{ minWidth: "140px" }}
+                  />
 
                   {/* Advanced filter button */}
                   <button

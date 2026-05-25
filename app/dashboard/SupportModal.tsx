@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { X, HelpCircle, Send, ChevronLeft, MessageSquare, ChevronDown } from "lucide-react";
+import { CustomSelect } from "@/components/CustomSelect";
 
 const FAQS = [
   {
@@ -204,13 +205,12 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
               <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "#6b7280", marginBottom: "6px" }}>Tipo de solicitud</label>
-                  <select
+                  <CustomSelect
+                    options={TICKET_TYPES.map((t) => ({ value: t.value, label: t.label }))}
                     value={type}
-                    onChange={(e) => setType(e.target.value)}
-                    style={{ width: "100%", padding: "10px 12px", borderRadius: "10px", background: "#0a0a0f", border: "1px solid #2a2a3e", color: "#e5e7eb", fontSize: "14px", outline: "none" }}
-                  >
-                    {TICKET_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
+                    onChange={setType}
+                    className="w-full"
+                  />
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "#6b7280", marginBottom: "6px" }}>Descripción</label>
