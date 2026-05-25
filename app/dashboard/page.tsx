@@ -7,7 +7,7 @@ import { useUser, UserButton, useClerk } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
-import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, getAge, LANG_FLAGS, formatCount } from "./VoiceBrowser";
+import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, getAge, formatCount } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
 import { PaymentModal, type BillingPlan } from "./PaymentModal";
 import { SupportModal } from "./SupportModal";
@@ -738,10 +738,10 @@ function GenerateTab({
                       <div className="flex flex-wrap gap-1 mb-2">
                         {selectedVoice.languages?.slice(0, 3).map((l) => {
                           const code = l.toLowerCase();
-                          const flag = LANG_FLAGS[code] ?? "🌐";
+                          
                           return (
                             <span key={l} className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>
-                              <span>{flag}</span><span>{l.toUpperCase()}</span>
+                              <span className="fi fi-{code}" style={{width:"16px",height:"12px",display:"inline-block",borderRadius:"2px"}}></span><span>{l.toUpperCase()}</span>
                             </span>
                           );
                         })}
@@ -1202,7 +1202,7 @@ function VoiceCard({
         <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
           <div className="flex items-center gap-1 min-w-0">
             <span className="font-semibold text-white text-sm truncate">{voice.name}</span>
-            {voice.language && <span className="text-xs leading-none flex-shrink-0">{LANG_FLAGS[voice.language] ?? "🌐"}</span>}
+            {voice.language && <span className="text-xs leading-none flex-shrink-0">{<span className={`fi fi-${voice.language}`} style={{width:"16px",height:"12px",display:"inline-block",borderRadius:"2px"}} />}</span>}
             {voice.gender && <span className="text-xs flex-shrink-0" style={{ color: "#3a3a52" }}>{voice.gender === "masculine" ? "♂" : "♀"}</span>}
             {voice.isPublic !== undefined && (
               <span

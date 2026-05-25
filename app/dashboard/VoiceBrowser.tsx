@@ -60,7 +60,7 @@ interface AdvancedFilters {
 }
 
 export { FREE_VOICE_IDS };
-export { getGender, getAge, LANG_FLAGS, formatCount };
+export { getGender, getAge, formatCount };
 export { VoiceAvatar };
 
 function isPremiumVoice(id: string) {
@@ -81,10 +81,6 @@ function getGender(tags: string[]): "male" | "female" | null {
 const MALE_TAGS = new Set(["male", "man", "masculine", "masculino", "hombre"]);
 const FEMALE_TAGS = new Set(["female", "woman", "feminine", "femenino", "mujer"]);
 
-const LANG_FLAGS: Record<string, string> = {
-  es: "🇪🇸", en: "🇺🇸", ja: "🇯🇵", zh: "🇨🇳",
-  fr: "🇫🇷", de: "🇩🇪", pt: "🇧🇷", ko: "🇰🇷", it: "🇮🇹", ar: "🇸🇦",
-};
 
 function getAge(tags: string[]): string | null {
   const t = tags.map((s) => s.toLowerCase());
@@ -95,18 +91,29 @@ function getAge(tags: string[]): string | null {
 }
 
 const LANGS = [
-  { code: "es", label: "🇪🇸 Español" },
-  { code: "en", label: "🇺🇸 Inglés" },
-  { code: "zh", label: "🇨🇳 Chino" },
-  { code: "de", label: "🇩🇪 Alemán" },
-  { code: "ja", label: "🇯🇵 Japonés" },
-  { code: "fr", label: "🇫🇷 Francés" },
-  { code: "ko", label: "🇰🇷 Coreano" },
-  { code: "ar", label: "🇸🇦 Árabe" },
-  { code: "ru", label: "🇷🇺 Ruso" },
-  { code: "pt", label: "🇧🇷 Portugués" },
+  { code: "es", label: "Español" },
+  { code: "en", label: "Inglés" },
+  { code: "zh", label: "Chino" },
+  { code: "de", label: "Alemán" },
+  { code: "ja", label: "Japonés" },
+  { code: "fr", label: "Francés" },
+  { code: "ko", label: "Coreano" },
+  { code: "ar", label: "Árabe" },
+  { code: "ru", label: "Ruso" },
+  { code: "pt", label: "Portugués" },
 ];
-
+const LANGS = [
+  { code: "es", label: "Español" },
+  { code: "en", label: "Inglés" },
+  { code: "zh", label: "Chino" },
+  { code: "de", label: "Alemán" },
+  { code: "ja", label: "Japonés" },
+  { code: "fr", label: "Francés" },
+  { code: "ko", label: "Coreano" },
+  { code: "ar", label: "Árabe" },
+  { code: "ru", label: "Ruso" },
+  { code: "pt", label: "Portugués" },
+];
 const RECENT_KEY = "vf_recent_voices";
 const MAX_RECENT = 12;
 
@@ -516,10 +523,10 @@ function VoiceRow({
         <div className="flex items-center gap-1.5 flex-wrap mt-1">
           {voice.languages.slice(0, 3).map((l) => {
             const code = l.toLowerCase();
-            const flag = LANG_FLAGS[code] ?? "🌐";
+            
             return (
               <span key={l} className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>
-                <span>{flag}</span>
+                <span className={`fi fi-${code}`} style={{width:"16px",height:"12px",display:"inline-block",borderRadius:"2px"}} />
                 <span>{l.toUpperCase()}</span>
               </span>
             );
@@ -1419,7 +1426,7 @@ export function VoiceBrowser({
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <p className="text-sm font-semibold text-white truncate">{voice.name}</p>
-                                  <span className="text-sm leading-none flex-shrink-0">{LANG_FLAGS[voice.language] ?? "🌐"}</span>
+                                  <span className="text-sm leading-none flex-shrink-0">{<span className={`fi fi-${voice.language}`} style={{width:"16px",height:"12px",display:"inline-block",borderRadius:"2px"}} />}</span>
                                   {voice.gender && (
                                     <span className="text-xs flex-shrink-0" style={{ color: "#3a3a52" }}>
                                       {voice.gender === "masculine" ? "♂" : voice.gender === "feminine" ? "♀" : ""}
