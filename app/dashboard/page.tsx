@@ -1001,9 +1001,11 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleFile(f: File) {
-    const allowed = ["audio/wav", "audio/mpeg", "audio/mp4", "audio/x-m4a"];
-    if (!allowed.includes(f.type)) {
-      setError("Formato no soportado. Usa WAV, MP3 o M4A.");
+    if (!f.name.toLowerCase().endsWith(".mp3") && f.type !== "audio/mpeg") {
+      setFile(null);
+      setFileDuration(null);
+      setError("Solo se admiten archivos MP3");
+      setTimeout(() => setError(null), 3000);
       return;
     }
     const duration = await new Promise<number>((resolve) => {
@@ -1061,7 +1063,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
           className="rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-all mb-4"
           style={{ borderColor: dragging ? "#3b82f6" : "#2a2a3e", background: dragging ? "rgba(59,130,246,0.05)" : "transparent" }}
         >
-          <input ref={inputRef} type="file" className="hidden" accept=".wav,.mp3,.m4a,audio/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+          <input ref={inputRef} type="file" className="hidden" accept=".mp3,audio/mpeg" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
           {file ? (
             <div>
               <p className="text-green-400 font-medium mb-1">{file.name}</p>
@@ -1076,10 +1078,14 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
                 <Mic size={32} style={{ color: "#8888a8" }} />
               </div>
               <p className="text-sm text-gray-400 mb-1">Arrastra tu audio aquí o haz clic</p>
-              <p className="text-xs text-gray-600">WAV, MP3, M4A · Ideal: 10-30 segundos</p>
+              <p className="text-xs text-gray-600">Solo MP3 · Ideal: 10-30 segundos</p>
             </div>
           )}
         </div>
+
+        {error && (
+          <p className="text-xs mb-3" style={{ color: "#f87171" }}>{error}</p>
+        )}
 
         <div className="mb-4">
           <label className="text-sm font-medium text-gray-300 mb-2 block">Nombre de la voz</label>
@@ -1110,12 +1116,6 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
         </div>
 
         <p className="text-xs text-gray-500 mb-4">La clonación es gratuita</p>
-
-        {error && (
-          <div className="mb-4 p-3 rounded-lg text-xs" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
-            {error}
-          </div>
-        )}
 
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors" style={{ background: "#1a1a2e", border: "1px solid #2a2a3e" }}>
