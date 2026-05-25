@@ -3,7 +3,7 @@ FROM node:20-alpine AS base
 
 # ─── deps ────────────────────────────────────────────────────
 FROM base AS deps
-RUN apk add --no-cache libc6-compat openssl
+RUN apk add --no-cache libc6-compat openssl ffmpeg
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
@@ -23,7 +23,7 @@ RUN npm run build
 
 # ─── runner ──────────────────────────────────────────────────
 FROM node:18-alpine AS runner
-RUN apk add --no-cache openssl
+RUN apk add --no-cache openssl ffmpeg
 
 WORKDIR /app
 
