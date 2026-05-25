@@ -618,292 +618,207 @@ function GenerateTab({
     }
   }
 
+  const voiceGender = selectedVoice?.tags ? getGender(selectedVoice.tags) : null;
+
   return (
     <div style={{ height: "calc(100vh - 88px)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
-      {/* ── Single unified container ── */}
-      <div className="flex flex-col rounded-2xl border overflow-hidden" style={{ background: "#0d0d17", borderColor: "#2a2a3e", flex: 1, minHeight: 0 }}>
+      {/* ── Unified two-column container ── */}
+      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "row", background: "#0d0f14", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", overflow: "hidden" }}>
 
-        {/* Header: avatar + voice name | tabs */}
-        <div className="flex items-center gap-3 px-5 py-3 flex-shrink-0" style={{ borderBottom: "1px solid #2a2a3e" }}>
-          {selectedVoice?.coverImage ? (
-            <VoiceAvatar name={selectedVoice.name} coverImage={selectedVoice.coverImage} size="sm" />
-          ) : (
-            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(59,130,246,0.15)" }}>
-              <Mic size={14} style={{ color: "#93c5fd" }} />
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white truncate">{selectedVoice?.name ?? t.generate.defaultVoice}</p>
-            <p className="text-xs" style={{ color: "#555570" }}>{selectedVoice?.isCloned ? t.generate.clonedVoice : t.generate.systemVoice}</p>
-          </div>
-        </div>
+        {/* ── LEFT COLUMN ── */}
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", borderRight: "1px solid rgba(255,255,255,0.08)" }}>
 
-        {/* Body: textarea (left) | settings/history (right) */}
-        <div className="flex flex-1 min-h-0 overflow-hidden">
+          {/* Left header: avatar + voice name → opens browser */}
+          <button
+            onClick={() => setShowBrowser(true)}
+            style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", flexShrink: 0, width: "100%", textAlign: "left", background: "transparent", cursor: "pointer", borderWidth: "0 0 1px 0", borderStyle: "solid", borderColor: "rgba(255,255,255,0.08)" }}
+          >
+            <VoiceAvatar name={selectedVoice?.name ?? "V"} coverImage={selectedVoice?.coverImage} size="sm" />
+            <span style={{ fontSize: "14px", fontWeight: 600, color: "#e2e8f0" }}>{selectedVoice?.name ?? t.generate.defaultVoice}</span>
+          </button>
+
+          {/* Textarea */}
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder={t.generate.placeholder}
             disabled={submitting}
-            className="flex-1 px-6 py-5 text-sm text-gray-200 resize-none focus:outline-none disabled:opacity-60"
-            style={{ background: "transparent", lineHeight: "1.75", borderRight: "1px solid #2a2a3e", minWidth: 0 }}
+            style={{ flex: 1, padding: "16px", background: "transparent", border: "none", outline: "none", resize: "none", fontSize: "14px", color: "#e2e8f0", lineHeight: "1.75", opacity: submitting ? 0.6 : 1, fontFamily: "inherit" }}
           />
-          <div className="w-72 flex-shrink-0 flex flex-col overflow-hidden">
 
-            {/* Sliding pill tab toggle */}
-            <div className="relative flex rounded-lg p-1 mx-4 mt-4 flex-shrink-0" style={{ background: "#12121a" }}>
-              <div
-                className="absolute top-1 bottom-1 w-1/2 rounded-md"
-                style={{ background: "#2a2a3e", transform: rightTab === "ajustes" ? "translateX(0)" : "translateX(100%)", transition: "transform 200ms ease-out" }}
-              />
-              <button
-                onClick={() => setRightTab("ajustes")}
-                className="relative z-10 flex-1 py-1.5 text-xs font-medium text-center"
-                style={{ color: rightTab === "ajustes" ? "#ffffff" : "#8888a8", transition: "color 200ms ease-out" }}
-              >
-                {t.generate.settingsTab}
-              </button>
-              <button
-                onClick={() => setRightTab("historial")}
-                className="relative z-10 flex-1 py-1.5 text-xs font-medium text-center"
-                style={{ color: rightTab === "historial" ? "#ffffff" : "#8888a8", transition: "color 200ms ease-out" }}
-              >
-                {t.generate.historyTab}
-              </button>
+          {/* Left footer */}
+          <div style={{ flexShrink: 0, borderWidth: "1px 0 0 0", borderStyle: "solid", borderColor: "rgba(255,255,255,0.08)" }}>
+            {submitting && (
+              <div style={{ padding: "10px 16px 0", display: "flex", flexDirection: "column", gap: "4px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: "11px", color: "#93c5fd" }}>Generando audio... {Math.round(progress)}%</span>
+                  <span style={{ fontSize: "11px", color: "#6b7280" }}>{elapsedLabel}</span>
+                </div>
+                <div style={{ height: "3px", borderRadius: "9999px", background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+                  <div style={{ height: "100%", borderRadius: "9999px", width: `${progress}%`, background: "linear-gradient(90deg, #3b82f6, #2563eb)", transition: "width 1s linear" }} />
+                </div>
+              </div>
+            )}
+            {formError && (
+              <div style={{ margin: "10px 16px 0", padding: "10px 12px", borderRadius: "8px", fontSize: "13px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
+                {formError}
+              </div>
+            )}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px" }}>
+              <span style={{ fontSize: "13px", color: "#6b7280" }}>
+                {text.length.toLocaleString("es-ES")} {t.generate.characters}
+                {text.length > 0 && <span style={{ marginLeft: "6px", fontSize: "11px", color: "#4b4b6a" }}>· {charCost.toLocaleString("es-ES")} {t.generate.credits}</span>}
+              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                {plan !== "free" && (
+                  <button
+                    onClick={handlePreview}
+                    disabled={previewing === "loading"}
+                    style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: 500, background: previewing === "playing" ? "rgba(239,68,68,0.1)" : "rgba(59,130,246,0.08)", border: `1px solid ${previewing === "playing" ? "rgba(239,68,68,0.3)" : "rgba(59,130,246,0.2)"}`, color: previewing === "playing" ? "#f87171" : previewing === "loading" ? "#6b7280" : "#93c5fd", cursor: previewing === "loading" ? "not-allowed" : "pointer", opacity: previewing === "loading" ? 0.6 : 1 }}
+                  >
+                    {previewing === "loading" && <svg className="animate-spin" style={{ width: "12px", height: "12px" }} fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
+                    {previewing === "idle" && "▶ Pre-escuchar"}
+                    {previewing === "loading" && "Generando..."}
+                    {previewing === "playing" && "⏹ Detener"}
+                  </button>
+                )}
+                <button
+                  onClick={handleGenerate}
+                  disabled={submitting || text.trim().length === 0}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "8px 20px", borderRadius: "8px", fontSize: "13px", fontWeight: 600, color: "#fff", border: "none", cursor: submitting || text.trim().length === 0 ? "not-allowed" : "pointer", background: "linear-gradient(135deg, #3b82f6, #2563eb)", boxShadow: submitting ? "none" : "0 4px 15px rgba(59,130,246,0.3)", opacity: submitting || text.trim().length === 0 ? 0.6 : 1 }}
+                >
+                  {submitting ? <><svg className="animate-spin" style={{ width: "14px", height: "14px" }} fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>{t.generate.generating}</> : t.generate.generateBtn}
+                </button>
+              </div>
             </div>
+          </div>
+        </div>
 
-            {rightTab === "ajustes" && (
-              <div className="p-5 space-y-5 overflow-y-auto flex-1">
-                {/* VOZ */}
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#555570" }}>{t.generate.voiceLabel}</p>
+        {/* ── RIGHT COLUMN ── */}
+        <div style={{ width: "288px", flexShrink: 0, display: "flex", flexDirection: "column" }}>
 
-                  {selectedVoice && !selectedVoice.isCloned && selectedVoice.tags ? (() => {
-                    const gender = getGender(selectedVoice.tags);
-                    const age = getAge(selectedVoice.tags);
-                    const pillStyle = { background: "rgba(255,255,255,0.05)", color: "#6b7280", border: "1px solid rgba(255,255,255,0.07)" };
-                    return (
-                      <button
-                        onClick={() => setShowBrowser(true)}
-                        className="w-full text-left rounded-xl transition-all"
-                        style={{ background: "#12121a", border: "1px solid #2a2a3e", padding: "12px" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
-                        onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#2a2a3e")}
-                      >
-                        <div className="flex items-center gap-3 mb-2">
-                          <VoiceAvatar name={selectedVoice.name} coverImage={selectedVoice.coverImage} size="lg" />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-sm font-bold text-white truncate">{selectedVoice.name}</span>
-                              {gender && <span className="text-xs flex-shrink-0" style={{ color: "#555570" }}>· {gender === "male" ? "Masculino" : "Femenino"}</span>}
-                            </div>
-                            {selectedVoice.description && <p className="text-xs truncate mt-0.5" style={{ color: "#6b6b88" }}>{selectedVoice.description}</p>}
-                          </div>
-                          <span className="text-xs flex-shrink-0" style={{ color: "#555570" }}>→</span>
+          {/* Sliding pill tab toggle */}
+          <div style={{ padding: "12px", flexShrink: 0 }}>
+            <div style={{ position: "relative", display: "flex", background: "#12121a", borderRadius: "8px", padding: "4px" }}>
+              <div style={{ position: "absolute", top: "4px", bottom: "4px", left: "4px", width: "calc(50% - 4px)", background: "#2a2a3e", borderRadius: "6px", transform: rightTab === "ajustes" ? "translateX(0)" : "translateX(100%)", transition: "transform 200ms ease-out" }} />
+              <button onClick={() => setRightTab("ajustes")} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: rightTab === "ajustes" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>{t.generate.settingsTab}</button>
+              <button onClick={() => setRightTab("historial")} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: rightTab === "historial" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>{t.generate.historyTab}</button>
+            </div>
+          </div>
+
+          {rightTab === "ajustes" && (
+            <div style={{ flex: 1, overflowY: "auto", padding: "0 12px 16px", display: "flex", flexDirection: "column", gap: "20px" }}>
+
+              {/* VOZ */}
+              <div>
+                <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", marginBottom: "8px" }}>{t.generate.voiceLabel}</p>
+                <button
+                  onClick={() => setShowBrowser(true)}
+                  style={{ width: "100%", textAlign: "left", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "12px", cursor: "pointer" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
+                >
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                    <VoiceAvatar name={selectedVoice?.name ?? "V"} coverImage={selectedVoice?.coverImage} size="lg" />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap", marginBottom: "2px" }}>
+                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>{selectedVoice?.name ?? t.generate.defaultVoice}</span>
+                        {voiceGender && <span style={{ fontSize: "12px", color: "#6b7280" }}>· {voiceGender === "male" ? "Masculino" : "Femenino"}</span>}
+                      </div>
+                      {selectedVoice?.description && <p style={{ fontSize: "11px", color: "#6b7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "6px" }}>{selectedVoice.description}</p>}
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                        {selectedVoice?.languages?.slice(0, 3).map((l) => (
+                          <span key={l} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "2px 6px", borderRadius: "4px", background: "rgba(255,255,255,0.08)", fontSize: "11px", color: "#e2e8f0" }}>
+                            <span className={`fi fi-${l.toLowerCase()}`} style={{ width: "14px", height: "10px", display: "inline-block", borderRadius: "2px" }} />{l.toUpperCase()}
+                          </span>
+                        ))}
+                        {voiceGender && <span style={{ padding: "2px 6px", borderRadius: "4px", background: "rgba(255,255,255,0.08)", fontSize: "11px", color: "#e2e8f0" }}>{voiceGender === "male" ? "Masculino" : "Femenino"}</span>}
+                      </div>
+                      {((selectedVoice?.taskCount ?? 0) > 0 || (selectedVoice?.likeCount ?? 0) > 0) && (
+                        <div style={{ display: "flex", gap: "10px", marginTop: "6px" }}>
+                          {(selectedVoice?.taskCount ?? 0) > 0 && <span style={{ fontSize: "11px", color: "#6b7280", display: "flex", alignItems: "center", gap: "3px" }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>{formatCount(selectedVoice!.taskCount!)}</span>}
+                          {(selectedVoice?.likeCount ?? 0) > 0 && <span style={{ fontSize: "11px", color: "#6b7280", display: "flex", alignItems: "center", gap: "3px" }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>{formatCount(selectedVoice!.likeCount!)}</span>}
                         </div>
-                        {((selectedVoice.languages?.length ?? 0) > 0 || gender || age) && (
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            {selectedVoice.languages?.slice(0, 3).map((l) => {
-                              const code = l.toLowerCase();
-                              return (
-                                <span key={l} className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>
-                                  <span className={`fi fi-${code}`} style={{width:"16px",height:"12px",display:"inline-block",borderRadius:"2px"}} /><span>{l.toUpperCase()}</span>
-                                </span>
-                              );
-                            })}
-                            {gender && <span className="px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>{gender === "male" ? "Masculino" : "Femenino"}</span>}
-                            {age && <span className="px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>{age}</span>}
+                      )}
+                    </div>
+                    <span style={{ fontSize: "12px", color: "#6b7280", flexShrink: 0 }}>→</span>
+                  </div>
+                </button>
+              </div>
+
+              {/* MODELO */}
+              <div>
+                <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", marginBottom: "8px" }}>Modelo</p>
+                <div style={{ position: "relative" }} ref={modelDropdownRef}>
+                  <button
+                    onClick={() => setModelDropdownOpen((o) => !o)}
+                    style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                      <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{selectedModel === "speech-1.6" ? "Elite Labs E2 Pro" : "Elite Labs E1"}</span>
+                      {selectedModel === "speech-1.6" && <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", background: "rgba(59,130,246,0.15)", color: "#3b82f6", border: "1px solid rgba(59,130,246,0.3)", flexShrink: 0 }}>El más nuevo</span>}
+                    </div>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", flexShrink: 0, transform: modelDropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
+                  </button>
+                  {modelDropdownOpen && (
+                    <div style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "4px", padding: "4px", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
+                      {([
+                        { value: "speech-1.6", label: "Elite Labs E2 Pro", sub: "Nuestro modelo insignia", badge: "El más nuevo", badgeColor: "#3b82f6" },
+                        { value: "speech-1.5", label: "Elite Labs E1",     sub: "Heredado",                badge: null,           badgeColor: "" },
+                      ] as const).map(({ value, label, sub, badge, badgeColor }) => (
+                        <button key={value} onClick={() => { setSelectedModel(value); setModelDropdownOpen(false); }} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: selectedModel === value ? "#e2e2f0" : "#6b7280", cursor: "pointer" }} onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                          <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{ fontWeight: 500 }}>{label}</span>
+                              {badge && <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", background: `${badgeColor}22`, color: badgeColor, border: `1px solid ${badgeColor}44`, flexShrink: 0 }}>{badge}</span>}
+                            </div>
+                            <span style={{ fontSize: "11px", marginTop: "2px", color: "#4b4b6a" }}>{sub}</span>
                           </div>
-                        )}
-                        {((selectedVoice.taskCount ?? 0) > 0 || (selectedVoice.likeCount ?? 0) > 0) && (
-                          <div className="flex items-center gap-3" style={{ color: "#444460" }}>
-                            {(selectedVoice.taskCount ?? 0) > 0 && (
-                              <div className="flex items-center gap-1">
-                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                                <span className="text-xs">{formatCount(selectedVoice.taskCount!)}</span>
-                              </div>
-                            )}
-                            {(selectedVoice.likeCount ?? 0) > 0 && (
-                              <div className="flex items-center gap-1">
-                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                                <span className="text-xs">{formatCount(selectedVoice.likeCount!)}</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })() : (
-                    <button
-                      onClick={() => setShowBrowser(true)}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all"
-                      style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#2a2a3e")}
-                    >
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(59,130,246,0.15)" }}>
-                        <Mic size={13} style={{ color: "#93c5fd" }} />
-                      </div>
-                      <div className="flex-1 text-left min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{selectedVoice?.name ?? t.generate.defaultVoice}</p>
-                        <p className="text-xs" style={{ color: "#8888a8" }}>{selectedVoice?.isCloned ? t.generate.clonedVoice : t.generate.systemVoice}</p>
-                      </div>
-                      <span className="text-xs flex-shrink-0" style={{ color: "#8888a8" }}>→</span>
-                    </button>
+                          {selectedModel === value && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginLeft: "8px" }}><polyline points="20 6 9 17 4 12" /></svg>}
+                        </button>
+                      ))}
+                    </div>
                   )}
                 </div>
+              </div>
 
-                {/* MODELO */}
-                <div className="border-t pt-5" style={{ borderColor: "#2a2a3e" }}>
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#555570" }}>Modelo</p>
-                  <div className="relative" ref={modelDropdownRef}>
-                    <button
-                      onClick={() => setModelDropdownOpen((o) => !o)}
-                      className="w-full flex items-center justify-between px-3 py-2.5 text-sm transition-all"
-                      style={{ background: "#12121a", border: "1px solid #2a2a3e", borderRadius: "10px", color: "#e2e2f0" }}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-medium truncate">{selectedModel === "speech-1.6" ? "Elite Labs E2 Pro" : "Elite Labs E1"}</span>
-                        {selectedModel === "speech-1.6" && (
-                          <span className="text-xs font-semibold px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: "#3b82f622", color: "#3b82f6", border: "1px solid #3b82f644" }}>El más nuevo</span>
-                        )}
-                      </div>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 transition-transform" style={{ color: "#555570", transform: modelDropdownOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                    </button>
-                    {modelDropdownOpen && (
-                      <div className="absolute left-0 right-0 z-20 mt-1 py-1" style={{ background: "#12121a", border: "1px solid #2a2a3e", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
-                        {([
-                          { value: "speech-1.6", label: "Elite Labs E2 Pro", sub: "Nuestro modelo insignia", badge: "El más nuevo", badgeColor: "#3b82f6" },
-                          { value: "speech-1.5", label: "Elite Labs E1",     sub: "Heredado",                badge: null,           badgeColor: "" },
-                        ] as const).map(({ value, label, sub, badge, badgeColor }) => (
-                          <button
-                            key={value}
-                            onClick={() => { setSelectedModel(value); setModelDropdownOpen(false); }}
-                            className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-left transition-colors"
-                            style={{ background: "transparent", color: selectedModel === value ? "#e2e2f0" : "#8888a8" }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
-                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                          >
-                            <div className="flex flex-col min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{label}</span>
-                                {badge && <span className="text-xs font-semibold px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: `${badgeColor}22`, color: badgeColor, border: `1px solid ${badgeColor}44` }}>{badge}</span>}
-                              </div>
-                              <span className="text-xs mt-0.5" style={{ color: "#444460" }}>{sub}</span>
-                            </div>
-                            {selectedModel === value && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 ml-2"><polyline points="20 6 9 17 4 12" /></svg>}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* CONTROLES DE AUDIO */}
-                <div className="border-t pt-5" style={{ borderColor: "#2a2a3e" }}>
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555570" }}>{t.generate.audioControls}</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                    <CompactSlider label={t.generate.speed} value={speed} onChange={setSpeed} min={0.5} max={1.5} step={0.01} decimals={2} defaultValue={1} />
-                    <CompactSlider label={t.generate.volume} value={volume} onChange={setVolume} min={0} max={2} step={0.01} decimals={2} defaultValue={1} />
-                    {selectedModel === "speech-1.5" && (
-                      <>
-                        <CompactSlider label="Temperatura" value={temperature} onChange={setTemperature} min={0} max={1} step={0.1} decimals={1} defaultValue={0.9} />
-                        <CompactSlider label="Top P" value={topP} onChange={setTopP} min={0} max={1} step={0.1} decimals={1} defaultValue={0.9} />
-                      </>
-                    )}
-                    <div className="flex items-center justify-between px-3.5 flex-shrink-0" style={{ background: "#12121a", borderRadius: "10px", height: "40px" }}>
-                      <span className="text-xs font-medium" style={{ color: "#8888a8" }}>{selectedModel === "speech-1.5" ? "Norm. texto" : "Normalización"}</span>
-                      <div className="flex items-center gap-1">
-                        {(["No", "Sí"] as const).map((opt) => {
-                          const active = opt === "Sí" ? normalize : !normalize;
-                          return (
-                            <button key={opt} onClick={() => setNormalize(opt === "Sí")} className="text-xs font-medium px-2.5 py-1 rounded-md transition-all" style={{ background: active ? "rgba(59,130,246,0.18)" : "transparent", color: active ? "#93c5fd" : "#444460", border: active ? "1px solid rgba(59,130,246,0.3)" : "1px solid transparent" }}>
-                              {opt}
-                            </button>
-                          );
-                        })}
-                      </div>
+              {/* CONTROLES DE AUDIO */}
+              <div>
+                <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", marginBottom: "8px" }}>{t.generate.audioControls}</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <CompactSlider label={t.generate.speed} value={speed} onChange={setSpeed} min={0.5} max={1.5} step={0.01} decimals={2} defaultValue={1} />
+                  <CompactSlider label={t.generate.volume} value={volume} onChange={setVolume} min={0} max={2} step={0.01} decimals={2} defaultValue={1} />
+                  {selectedModel === "speech-1.5" && (
+                    <>
+                      <CompactSlider label="Temperatura" value={temperature} onChange={setTemperature} min={0} max={1} step={0.1} decimals={1} defaultValue={0.9} />
+                      <CompactSlider label="Top P" value={topP} onChange={setTopP} min={0} max={1} step={0.1} decimals={1} defaultValue={0.9} />
+                    </>
+                  )}
+                  {/* Normalización — sliding pill */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#12121a", borderRadius: "10px", height: "40px" }}>
+                    <span style={{ fontSize: "12px", fontWeight: 500, color: "#8888a8" }}>{selectedModel === "speech-1.5" ? "Norm. texto" : "Normalización"}</span>
+                    <div style={{ position: "relative", display: "flex", background: "#0d0f14", borderRadius: "6px", padding: "2px" }}>
+                      <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#2a2a3e", borderRadius: "4px", transform: normalize ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
+                      <button onClick={() => setNormalize(false)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: !normalize ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>No</button>
+                      <button onClick={() => setNormalize(true)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: normalize ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>Sí</button>
                     </div>
                   </div>
-                  {(speed !== 1 || volume !== 1 || (selectedModel === "speech-1.5" && (temperature !== 0.9 || topP !== 0.9))) && (
-                    <button onClick={() => { setSpeed(1); setVolume(1); setTemperature(0.9); setTopP(0.9); }} className="mt-3 text-xs transition-colors" style={{ color: "#8888a8" }}>
-                      Restablecer valores
-                    </button>
-                  )}
                 </div>
+                {(speed !== 1 || volume !== 1 || (selectedModel === "speech-1.5" && (temperature !== 0.9 || topP !== 0.9))) && (
+                  <button onClick={() => { setSpeed(1); setVolume(1); setTemperature(0.9); setTopP(0.9); }} style={{ marginTop: "10px", fontSize: "11px", color: "#6b7280", background: "none", border: "none", cursor: "pointer" }}>Restablecer valores</button>
+                )}
+              </div>
 
-              </div>
-            )}
-
-            {rightTab === "historial" && (
-              <div className="p-3 overflow-y-auto flex-1">
-                <AudioHistoryList compact plan={plan} />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Footer: progress + char count + buttons */}
-        <div className="px-5 py-3.5 flex-shrink-0" style={{ borderTop: "1px solid #2a2a3e" }}>
-          {submitting && (
-            <div className="mb-3 space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span style={{ color: "#93c5fd" }}>Generando audio... {Math.round(progress)}%</span>
-                <span style={{ color: "#8888a8" }}>{elapsedLabel}</span>
-              </div>
-              <div className="h-1 rounded-full overflow-hidden" style={{ background: "#2a2a3e" }}>
-                <div className="h-full rounded-full transition-all duration-1000 ease-linear" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #3b82f6, #2563eb)" }} />
-              </div>
-              {text.trim().length > 3000 && <p className="text-xs" style={{ color: "#8888a8" }}>Los audios largos pueden tardar varios minutos</p>}
             </div>
           )}
-          {formError && (
-            <div className="mb-3 p-3 rounded-lg text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
-              {formError}
+
+          {rightTab === "historial" && (
+            <div style={{ flex: 1, overflowY: "auto", padding: "0 12px 12px" }}>
+              <AudioHistoryList compact plan={plan} />
             </div>
           )}
-          <div className="flex items-center gap-3">
-            <span className="text-sm flex-1" style={{ color: "#8888a8" }}>
-              {text.length.toLocaleString("es-ES")} {t.generate.characters}
-              {text.length > 0 && <span className="ml-2 text-xs" style={{ color: "#555570" }}>· {charCost.toLocaleString("es-ES")} {t.generate.credits}</span>}
-            </span>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {plan !== "free" && (
-                <button
-                  onClick={handlePreview}
-                  disabled={previewing === "loading"}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all"
-                  style={{
-                    background: previewing === "playing" ? "rgba(239,68,68,0.1)" : "rgba(59,130,246,0.08)",
-                    border: `1px solid ${previewing === "playing" ? "rgba(239,68,68,0.3)" : "rgba(59,130,246,0.2)"}`,
-                    color: previewing === "playing" ? "#f87171" : previewing === "loading" ? "#8888a8" : "#93c5fd",
-                    cursor: previewing === "loading" ? "not-allowed" : "pointer",
-                    opacity: previewing === "loading" ? 0.6 : 1,
-                  }}
-                >
-                  {previewing === "loading" && <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
-                  {previewing === "idle" && "▶ Pre-escuchar"}
-                  {previewing === "loading" && "Generando..."}
-                  {previewing === "playing" && "⏹ Detener"}
-                </button>
-              )}
-              <button
-                onClick={handleGenerate}
-                disabled={submitting || text.trim().length === 0}
-                className="flex items-center justify-center gap-2 px-6 py-2 rounded-lg font-semibold text-white text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
-                style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", boxShadow: submitting ? "none" : "0 4px 15px rgba(59,130,246,0.3)" }}
-              >
-                {submitting ? (
-                  <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>{t.generate.generating}</>
-                ) : t.generate.generateBtn}
-              </button>
-            </div>
-          </div>
         </div>
-
       </div>
 
       {showBrowser && (
