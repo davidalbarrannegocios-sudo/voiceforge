@@ -21,8 +21,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Todos los campos son obligatorios" }, { status: 400 });
   }
 
+  const dbUser = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
+
   const application = await prisma.affiliateApplication.create({
     data: {
+      userId: dbUser?.id ?? null,
       name: body.name,
       email: body.email,
       platform: body.platform,

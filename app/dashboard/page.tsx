@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, formatCount } from "./VoiceBrowser";
@@ -3060,6 +3060,149 @@ const REDEEM_PACKS = [
   { key: "1m",   label: "1.000.000 caracteres", price: 30, chars: 1_000_000 },
 ] as const;
 
+function WithdrawModal({ balance, onClose, onSuccess }: { balance: number; onClose: () => void; onSuccess: () => void }) {
+  const [method, setMethod] = useState<"paypal" | "transfer">("paypal");
+  const [amount, setAmount] = useState("");
+  const [paypalEmail, setPaypalEmail] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [bankIban, setBankIban] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const maxAmount = balance / 100;
+  const numAmount = parseFloat(amount) || 0;
+  const canSubmit = numAmount >= 20 && numAmount <= maxAmount && (method === "paypal" ? !!paypalEmail : !!(bankName && bankIban));
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      const details = method === "paypal" ? { email: paypalEmail } : { bankName, iban: bankIban };
+      const res = await fetch("/api/referral/withdraw", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: numAmount, method, details }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Error al procesar");
+      onSuccess();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const inputSt = { background: "#0a0a0f", border: "1px solid #2a2a3e", color: "#e5e7eb", borderRadius: "10px", padding: "10px 14px", width: "100%", fontSize: "14px", outline: "none" };
+  const labelSt = { display: "block", fontSize: "12px", fontWeight: 600 as const, color: "#8888a8", marginBottom: "6px" };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+      <div style={{ background: "#12121a", border: "1px solid #2a2a3e", borderRadius: "20px", width: "100%", maxWidth: "420px", padding: "28px", position: "relative" }}>
+        <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", color: "#6b7280", fontSize: "18px", lineHeight: 1 }}>✕</button>
+
+        <h2 style={{ color: "#fff", fontSize: "18px", fontWeight: 700, margin: "0 0 4px" }}>Retirar en efectivo</h2>
+        <p style={{ color: "#8888a8", fontSize: "13px", margin: "0 0 20px" }}>
+          Saldo disponible: <strong style={{ color: "#4ade80" }}>${maxAmount.toFixed(2)}</strong> · Mín. $20
+        </p>
+
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {/* Method toggle */}
+          <div>
+            <label style={labelSt}>Método de pago</label>
+            <div style={{ position: "relative", background: "#0a0a0f", border: "1px solid #2a2a3e", borderRadius: "8px", padding: "3px", display: "flex" }}>
+              <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#1a1a2e", borderRadius: "5px", transition: "transform 0.2s ease", transform: `translateX(${method === "transfer" ? "100%" : "0%"})`, border: "1px solid #2a2a3e" }} />
+              {(["paypal", "transfer"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setMethod(m)}
+                  style={{ flex: 1, position: "relative", zIndex: 1, padding: "8px", borderRadius: "5px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: method === m ? "#e5e7eb" : "#6b7280", transition: "color 0.2s" }}
+                >
+                  {m === "paypal" ? "PayPal" : "Transferencia"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Amount */}
+          <div>
+            <label style={labelSt}>Importe (USD)</label>
+            <div style={{ position: "relative" }}>
+              <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#6b7280", fontSize: "14px" }}>$</span>
+              <input
+                style={{ ...inputSt, paddingLeft: "28px" }}
+                type="number"
+                min="20"
+                max={maxAmount}
+                step="0.01"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                placeholder="20.00"
+                required
+              />
+            </div>
+            {numAmount > maxAmount && numAmount > 0 && (
+              <p style={{ color: "#f87171", fontSize: "12px", marginTop: 4 }}>Supera tu saldo disponible</p>
+            )}
+          </div>
+
+          {/* PayPal fields */}
+          {method === "paypal" && (
+            <div>
+              <label style={labelSt}>Email de PayPal</label>
+              <input style={inputSt} type="email" value={paypalEmail} onChange={e => setPaypalEmail(e.target.value)} placeholder="tu@paypal.com" required />
+            </div>
+          )}
+
+          {/* Transfer fields */}
+          {method === "transfer" && (
+            <>
+              <div>
+                <label style={labelSt}>Nombre del banco</label>
+                <input style={inputSt} value={bankName} onChange={e => setBankName(e.target.value)} placeholder="Nombre del banco" required />
+              </div>
+              <div>
+                <label style={labelSt}>IBAN / Número de cuenta</label>
+                <input style={inputSt} value={bankIban} onChange={e => setBankIban(e.target.value)} placeholder="ES00 0000 0000 0000 0000 0000" required />
+              </div>
+            </>
+          )}
+
+          {error && <p style={{ color: "#f87171", fontSize: "13px", margin: 0 }}>{error}</p>}
+
+          <button
+            type="submit"
+            disabled={!canSubmit || loading}
+            style={{ padding: "12px", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", border: "none", borderRadius: "12px", fontWeight: 700, fontSize: "14px", cursor: canSubmit && !loading ? "pointer" : "not-allowed", opacity: canSubmit && !loading ? 1 : 0.5, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+          >
+            {loading ? (
+              <svg style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} fill="none" viewBox="0 0 24 24">
+                <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : null}
+            Solicitar retiro
+          </button>
+        </form>
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      </div>
+    </div>
+  );
+}
+
+function ReferralTabRedirect() {
+  const router = useRouter();
+  useEffect(() => { router.push("/dashboard/referidos"); }, [router]);
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 200, color: "#555570", fontSize: "14px" }}>
+      Redirigiendo…
+    </div>
+  );
+}
+
 function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referrals, setReferrals] = useState<ReferralEntry[]>([]);
@@ -3068,6 +3211,9 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [canWithdraw, setCanWithdraw] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawMsg, setWithdrawMsg] = useState<string | null>(null);
 
   // Redeem plan state
   const [selectedPlan, setSelectedPlan] = useState<typeof REDEEM_PLANS[number]["key"]>("starter");
@@ -3090,6 +3236,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
       setReferrals(data.referrals ?? []);
       setReferralBalance(data.referralBalance ?? 0);
       setReferralEarned(data.referralEarned ?? 0);
+      setCanWithdraw(data.canWithdraw ?? false);
     } finally {
       setLoading(false);
     }
@@ -3175,6 +3322,18 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
 
   return (
     <div className="max-w-2xl space-y-5">
+      {showWithdrawModal && (
+        <WithdrawModal
+          balance={referralBalance}
+          onClose={() => setShowWithdrawModal(false)}
+          onSuccess={() => {
+            setWithdrawMsg("¡Solicitud de retiro enviada! Te contactaremos pronto.");
+            fetchReferral();
+            setTimeout(() => setWithdrawMsg(null), 6000);
+          }}
+        />
+      )}
+
       {/* Hero */}
       <div className="mb-2">
         <h1 className="text-2xl font-bold text-white mb-1">Gana recompensas por referir amigos</h1>
@@ -3333,24 +3492,48 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
       </div>
 
       {/* ── Card: Comisión en efectivo ── */}
-      <div className="rounded-2xl p-6" style={{ background: "linear-gradient(135deg, #0f1a2e 0%, #12121a 100%)", border: "1px solid rgba(59,130,246,0.2)" }}>
+      <div className="rounded-2xl p-6" style={{ background: "linear-gradient(135deg, #0f1a2e 0%, #12121a 100%)", border: `1px solid ${canWithdraw ? "rgba(74,222,128,0.25)" : "rgba(59,130,246,0.2)"}` }}>
         <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(59,130,246,0.12)" }}>
-            <CreditCard size={18} style={{ color: "#3b82f6" }} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: canWithdraw ? "rgba(74,222,128,0.12)" : "rgba(59,130,246,0.12)" }}>
+            <CreditCard size={18} style={{ color: canWithdraw ? "#4ade80" : "#3b82f6" }} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white mb-1">Comisión en efectivo</p>
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-sm font-semibold text-white">Comisión en efectivo</p>
+              {canWithdraw && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(74,222,128,0.15)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.3)" }}>
+                  Afiliado aprobado
+                </span>
+              )}
+            </div>
             <p className="text-sm mb-1" style={{ color: "#9ca3af" }}>
               Gana un <strong style={{ color: "#93c5fd" }}>5% en efectivo</strong> por cada referido que pague
             </p>
             <p className="text-xs mb-4" style={{ color: "#6b7280" }}>Pagos vía PayPal o transferencia internacional</p>
-            <a
-              href="/dashboard/afiliados"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold transition-colors hover:text-blue-300"
-              style={{ color: "#3b82f6" }}
-            >
-              Solicitar más información →
-            </a>
+
+            {withdrawMsg && (
+              <p className="text-xs mb-3 font-medium" style={{ color: "#4ade80" }}>{withdrawMsg}</p>
+            )}
+
+            <div className="flex items-center gap-3 flex-wrap">
+              {canWithdraw ? (
+                <button
+                  onClick={() => setShowWithdrawModal(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl transition-all"
+                  style={{ background: "linear-gradient(135deg,#16a34a,#15803d)", color: "#fff", border: "none", cursor: "pointer" }}
+                >
+                  Retirar en efectivo →
+                </button>
+              ) : (
+                <a
+                  href="/dashboard/afiliados"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold transition-colors hover:text-blue-300"
+                  style={{ color: "#3b82f6" }}
+                >
+                  Solicitar más información →
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -4073,7 +4256,7 @@ export default function DashboardPage() {
           />
         )}
         {activeTab === "referral" && (
-          <ReferralTab onClaimed={fetchCredits} />
+          <ReferralTabRedirect />
         )}
         {activeTab === "translate" && (
           <TranslateTab

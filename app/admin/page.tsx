@@ -19,6 +19,18 @@ interface AffiliateApplication {
   createdAt: string;
 }
 
+interface WithdrawalRequest {
+  id: string;
+  userId: string;
+  amount: number;
+  method: string;
+  details: Record<string, string>;
+  status: string;
+  createdAt: string;
+  paidAt: string | null;
+  user: { email: string };
+}
+
 interface AdminUser {
   id: string;
   email: string;
@@ -684,6 +696,8 @@ export default function AdminPage() {
   const [replyLoading, setReplyLoading] = useState(false);
   const [affiliateApps, setAffiliateApps] = useState<AffiliateApplication[]>([]);
   const [affiliateDetailApp, setAffiliateDetailApp] = useState<AffiliateApplication | null>(null);
+  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
+  const [withdrawalLoading, setWithdrawalLoading] = useState<string | null>(null);
 
   // Credits form
   const [creditUserId, setCreditUserId] = useState("");
@@ -702,11 +716,12 @@ export default function AdminPage() {
   }, []);
 
   const fetchAll = useCallback(async () => {
-    const [uRes, sRes, tRes, aRes] = await Promise.all([
+    const [uRes, sRes, tRes, aRes, wRes] = await Promise.all([
       fetch("/api/admin/users"),
       fetch("/api/admin/stats"),
       fetch("/api/admin/support"),
       fetch("/api/admin/affiliate-applications"),
+      fetch("/api/admin/withdrawal-requests"),
     ]);
     if (uRes.status === 403 || uRes.status === 401) { setAuthorized(false); return; }
     setAuthorized(true);
@@ -716,7 +731,30 @@ export default function AdminPage() {
     setTickets(Array.isArray(tData) ? tData : []);
     const aData = await aRes.json();
     setAffiliateApps(Array.isArray(aData) ? aData : []);
+    const wData = await wRes.json();
+    setWithdrawalRequests(Array.isArray(wData) ? wData : []);
   }, []);
+
+  async function handleWithdrawal(id: string, status: "paid" | "rejected") {
+    setWithdrawalLoading(id);
+    try {
+      const res = await fetch(`/api/admin/withdrawal-requests/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? "Error");
+      }
+      setWithdrawalRequests((prev) => prev.map((w) => w.id === id ? { ...w, status, paidAt: status === "paid" ? new Date().toISOString() : null } : w));
+      toast(status === "paid" ? "Marcado como pagado" : "Solicitud rechazada y saldo devuelto", status === "paid");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Error", false);
+    } finally {
+      setWithdrawalLoading(null);
+    }
+  }
 
   async function updateAffiliateStatus(id: string, status: "approved" | "rejected") {
     const res = await fetch(`/api/admin/affiliate-applications/${id}`, {
@@ -863,12 +901,14 @@ export default function AdminPage() {
       {(() => {
         const pendingAff = affiliateApps.filter(a => a.status === "pending").length;
         const openTickets = tickets.filter(t => t.status === "open").length;
+        const pendingWithdrawals = withdrawalRequests.filter(w => w.status === "pending").length;
         return (
           <div style={{ borderBottom: "1px solid #1e1e2e", padding: "0 2rem", display: "flex", gap: "4px", overflowX: "auto" }}>
             {[
               { label: "Usuarios", anchor: "#section-users", badge: 0 },
               { label: "Tickets soporte", anchor: "#section-tickets", badge: openTickets },
               { label: "Solicitudes Afiliados", anchor: "#section-affiliates", badge: pendingAff },
+              { label: "Solicitudes de Retiro", anchor: "#section-withdrawals", badge: pendingWithdrawals },
             ].map(({ label, anchor, badge }) => (
               <a
                 key={anchor}
@@ -1226,6 +1266,95 @@ export default function AdminPage() {
                                   </>
                                 )}
                               </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Withdrawal requests */}
+        {(() => {
+          const pendingCount = withdrawalRequests.filter(w => w.status === "pending").length;
+          return (
+            <div id="section-withdrawals" style={{ ...card, marginTop: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "1rem" }}>
+                <p style={{ fontWeight: 700 }}>Solicitudes de Retiro ({withdrawalRequests.length})</p>
+                {pendingCount > 0 && (
+                  <span style={{ padding: "2px 10px", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 700, background: "rgba(251,191,36,0.15)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)" }}>
+                    {pendingCount} pendiente{pendingCount !== 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+
+              {withdrawalRequests.length === 0 ? (
+                <p style={{ color: "#555570", fontSize: "0.85rem" }}>No hay solicitudes de retiro aún.</p>
+              ) : (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid #2a2a3e" }}>
+                        {["Usuario", "Importe", "Método", "Detalles", "Fecha", "Estado", "Acciones"].map((h) => (
+                          <th key={h} style={{ padding: "0.5rem 0.75rem", textAlign: "left", color: "#555570", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {withdrawalRequests.map((w) => {
+                        const statusColor = w.status === "paid" ? "#4ade80" : w.status === "rejected" ? "#f87171" : "#fbbf24";
+                        const statusBg = w.status === "paid" ? "rgba(74,222,128,0.12)" : w.status === "rejected" ? "rgba(239,68,68,0.12)" : "rgba(251,191,36,0.12)";
+                        const statusBorder = w.status === "paid" ? "rgba(74,222,128,0.3)" : w.status === "rejected" ? "rgba(239,68,68,0.3)" : "rgba(251,191,36,0.3)";
+                        const statusLabel = w.status === "paid" ? "Pagado" : w.status === "rejected" ? "Rechazado" : "Pendiente";
+                        const detailStr = w.method === "paypal"
+                          ? `PayPal: ${w.details?.email ?? "—"}`
+                          : `${w.details?.bankName ?? "—"} · ${w.details?.iban ?? "—"}`;
+                        return (
+                          <tr key={w.id} style={{ borderBottom: "1px solid #1e1e2e" }}>
+                            <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af" }}>{w.user.email}</td>
+                            <td style={{ padding: "0.6rem 0.75rem", color: "#4ade80", fontWeight: 700 }}>${w.amount.toFixed(2)}</td>
+                            <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", whiteSpace: "nowrap" }}>
+                              {w.method === "paypal" ? "PayPal" : "Transferencia"}
+                            </td>
+                            <td style={{ padding: "0.6rem 0.75rem", color: "#6b7280", maxWidth: 200 }}>
+                              <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{detailStr}</span>
+                            </td>
+                            <td style={{ padding: "0.6rem 0.75rem", color: "#555570", whiteSpace: "nowrap" }}>
+                              {new Date(w.createdAt).toLocaleDateString("es-ES")}
+                            </td>
+                            <td style={{ padding: "0.6rem 0.75rem" }}>
+                              <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", background: statusBg, color: statusColor, border: `1px solid ${statusBorder}`, whiteSpace: "nowrap" }}>
+                                {statusLabel}
+                              </span>
+                            </td>
+                            <td style={{ padding: "0.6rem 0.75rem" }}>
+                              {w.status === "pending" && (
+                                <div style={{ display: "flex", gap: "4px" }}>
+                                  <button
+                                    onClick={() => handleWithdrawal(w.id, "paid")}
+                                    disabled={withdrawalLoading === w.id}
+                                    style={btn("#16a34a", { padding: "0.25rem 0.6rem", fontSize: "0.7rem", opacity: withdrawalLoading === w.id ? 0.6 : 1 })}
+                                  >
+                                    {withdrawalLoading === w.id ? "..." : "Marcar pagado"}
+                                  </button>
+                                  <button
+                                    onClick={() => handleWithdrawal(w.id, "rejected")}
+                                    disabled={withdrawalLoading === w.id}
+                                    style={btn("#dc2626", { padding: "0.25rem 0.6rem", fontSize: "0.7rem", opacity: withdrawalLoading === w.id ? 0.6 : 1 })}
+                                  >
+                                    Rechazar
+                                  </button>
+                                </div>
+                              )}
+                              {w.status === "paid" && w.paidAt && (
+                                <span style={{ fontSize: "0.7rem", color: "#4ade80" }}>
+                                  {new Date(w.paidAt).toLocaleDateString("es-ES")}
+                                </span>
+                              )}
                             </td>
                           </tr>
                         );

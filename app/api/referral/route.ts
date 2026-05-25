@@ -8,7 +8,10 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { clerkId: clerkUser.id },
-    include: { referralsGiven: { orderBy: { createdAt: "desc" } } },
+    include: {
+      referralsGiven: { orderBy: { createdAt: "desc" } },
+      affiliateApplications: { where: { status: "approved" }, take: 1 },
+    },
   });
 
   if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
@@ -21,6 +24,8 @@ export async function GET() {
     .filter((r) => r.status === "rewarded" || r.status === "claimed")
     .reduce((sum, r) => sum + r.rewardChars, 0);
 
+  const canWithdraw = user.affiliateApplications.length > 0;
+
   return NextResponse.json({
     referralCode: user.referralCode,
     referrals: user.referralsGiven,
@@ -30,5 +35,6 @@ export async function GET() {
     referralEarned: user.referralEarned,
     referralCount: user.referralsGiven.length,
     referralCompleted: user.referralsGiven.filter((r) => r.status !== "pending").length,
+    canWithdraw,
   });
 }
