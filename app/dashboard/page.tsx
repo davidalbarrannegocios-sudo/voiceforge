@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, formatCount } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
@@ -1311,8 +1311,330 @@ function VoicesTab({
 }
 
 /* ─── History Tab ─────────────────────────────────────────── */
+interface HistoryGen {
+  id: string;
+  text: string;
+  audioUrl: string | null;
+  creditsUsed: number;
+  durationSeconds: number | null;
+  voiceId: string | null;
+  createdAt: string;
+  expiresAt: string | null;
+}
+
 function HistoryTab({ plan }: { plan: string }) {
-  return <AudioHistoryList plan={plan} />;
+  const [gens, setGens] = useState<HistoryGen[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  void plan;
+
+  const fetchHistory = useCallback(async (p: number) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/history?page=${p}`);
+      const data = await res.json() as { generations: HistoryGen[]; total: number; page: number; totalPages: number };
+      setGens(data.generations ?? []);
+      setTotal(data.total ?? 0);
+      setPage(data.page ?? 1);
+      setTotalPages(data.totalPages ?? 1);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchHistory(1); }, [fetchHistory]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!openMenuId) return;
+    const close = () => setOpenMenuId(null);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [openMenuId]);
+
+  const filtered = search.trim()
+    ? gens.filter((g) => g.text.toLowerCase().includes(search.toLowerCase()))
+    : gens;
+
+  function fmtGroupDate(iso: string) {
+    return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+  function fmtTime(iso: string) {
+    return new Date(iso).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+  }
+  function avatarColor(seed: string) {
+    const palette = ["#3b82f6","#8b5cf6","#ec4899","#f59e0b","#10b981","#06b6d4","#f97316","#6366f1"];
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) & 0xffffffff;
+    return palette[Math.abs(h) % palette.length];
+  }
+
+  const groups: { date: string; items: HistoryGen[] }[] = [];
+  for (const g of filtered) {
+    const d = fmtGroupDate(g.createdAt);
+    const last = groups[groups.length - 1];
+    if (!last || last.date !== d) groups.push({ date: d, items: [g] });
+    else last.items.push(g);
+  }
+
+  function togglePlay(gen: HistoryGen) {
+    if (!gen.audioUrl) return;
+    if (playingId === gen.id) {
+      audioRef.current?.pause();
+      setPlayingId(null);
+      return;
+    }
+    audioRef.current?.pause();
+    const audio = new Audio(gen.audioUrl);
+    audioRef.current = audio;
+    audio.onended = () => setPlayingId(null);
+    audio.play();
+    setPlayingId(gen.id);
+  }
+
+  async function handleDelete(id: string) {
+    setOpenMenuId(null);
+    setRemovingIds((prev) => new Set([...prev, id]));
+    try {
+      await fetch(`/api/history/${id}`, { method: "DELETE" });
+      setTimeout(() => {
+        setGens((prev) => prev.filter((g) => g.id !== id));
+        setRemovingIds((prev) => { const s = new Set(prev); s.delete(id); return s; });
+        setTotal((t) => Math.max(0, t - 1));
+      }, 300);
+    } catch {
+      setRemovingIds((prev) => { const s = new Set(prev); s.delete(id); return s; });
+    }
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+      {/* Search header */}
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px", flexShrink: 0 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#4a4a65", pointerEvents: "none" }} />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar en historial..."
+            style={{
+              width: "100%", paddingLeft: 36, paddingRight: 12, paddingTop: 9, paddingBottom: 9,
+              background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: 8,
+              color: "#d1d5db", fontSize: 13, outline: "none", boxSizing: "border-box",
+            }}
+          />
+        </div>
+        <button
+          onClick={() => fetchHistory(page)}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+            background: "#0d0d17", border: "1px solid #1e1e2e", color: "#9ca3af", cursor: "pointer",
+          }}
+          title="Actualizar"
+        >
+          <RefreshCw size={14} />
+        </button>
+      </div>
+
+      {/* Scrollable body */}
+      <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+        {loading ? (
+          <div style={{ textAlign: "center", paddingTop: 80, color: "#4a4a65", fontSize: 14 }}>Cargando...</div>
+        ) : groups.length === 0 ? (
+          <div style={{ textAlign: "center", paddingTop: 80 }}>
+            <Clock size={40} style={{ margin: "0 auto 12px", color: "#2a2a3e" }} />
+            <p style={{ color: "#6b7280", fontSize: 14, fontWeight: 500 }}>Sin generaciones</p>
+            <p style={{ color: "#4a4a65", fontSize: 12, marginTop: 4 }}>Tus audios generados aparecerán aquí</p>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+            {groups.map(({ date, items }) => (
+              <div key={date} style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+                {/* Date label */}
+                <div style={{ width: 52, flexShrink: 0, paddingTop: 5 }}>
+                  <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600 }}>{date}</span>
+                </div>
+
+                {/* 2-col card grid */}
+                <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  {items.map((gen) => {
+                    const isRemoving = removingIds.has(gen.id);
+                    const isPlaying = playingId === gen.id;
+                    const seed = gen.voiceId ?? gen.id;
+                    const initial = seed[0]?.toUpperCase() ?? "V";
+                    const bgColor = avatarColor(seed);
+
+                    return (
+                      <div
+                        key={gen.id}
+                        style={{
+                          background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: 10,
+                          padding: 14, position: "relative",
+                          transition: "opacity 0.3s, transform 0.3s",
+                          opacity: isRemoving ? 0 : 1,
+                          transform: isRemoving ? "scale(0.95)" : "scale(1)",
+                        }}
+                      >
+                        {/* Top row: time + voice avatar */}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                          <span style={{ fontSize: 11, color: "#6b7280" }}>{fmtTime(gen.createdAt)}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                            <div style={{
+                              width: 18, height: 18, borderRadius: "50%", background: bgColor,
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              fontSize: 9, fontWeight: 700, color: "#fff",
+                            }}>{initial}</div>
+                            <span style={{ fontSize: 11, color: "#6b7280" }}>Voz</span>
+                          </div>
+                        </div>
+
+                        {/* Text */}
+                        <p style={{
+                          fontSize: 12, color: "#c9cad4", lineHeight: 1.55, marginBottom: 12,
+                          display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" as const,
+                          overflow: "hidden",
+                        }}>
+                          {gen.text}
+                        </p>
+
+                        {/* Actions */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                          <button
+                            onClick={() => togglePlay(gen)}
+                            disabled={!gen.audioUrl}
+                            style={{
+                              display: "flex", alignItems: "center", gap: 4,
+                              padding: "4px 9px", borderRadius: 20, border: "none",
+                              background: isPlaying ? "#3b82f6" : "#1a1a2e",
+                              color: isPlaying ? "#fff" : "#9ca3af",
+                              fontSize: 11, cursor: gen.audioUrl ? "pointer" : "not-allowed",
+                              opacity: gen.audioUrl ? 1 : 0.4, flexShrink: 0,
+                            }}
+                          >
+                            {isPlaying ? <Pause size={10} /> : <Play size={10} />}
+                            {isPlaying ? "Pausar" : "Reproducir"}
+                          </button>
+
+                          <div style={{ flex: 1 }} />
+
+                          {gen.audioUrl && (
+                            <a
+                              href={gen.audioUrl}
+                              download
+                              style={{
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                width: 26, height: 26, borderRadius: "50%",
+                                background: "#1a1a2e", color: "#9ca3af", textDecoration: "none",
+                              }}
+                              title="Descargar"
+                            >
+                              <Download size={11} />
+                            </a>
+                          )}
+
+                          <button
+                            onClick={() => gen.audioUrl && navigator.clipboard.writeText(gen.audioUrl)}
+                            style={{
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              width: 26, height: 26, borderRadius: "50%",
+                              background: "#1a1a2e", color: "#9ca3af", border: "none", cursor: "pointer",
+                            }}
+                            title="Copiar enlace"
+                          >
+                            <Share2 size={11} />
+                          </button>
+
+                          {/* More dropdown */}
+                          <div style={{ position: "relative" }}>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === gen.id ? null : gen.id); }}
+                              style={{
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                width: 26, height: 26, borderRadius: "50%",
+                                background: "#1a1a2e", color: "#9ca3af", border: "none", cursor: "pointer",
+                              }}
+                            >
+                              <MoreHorizontal size={13} />
+                            </button>
+                            {openMenuId === gen.id && (
+                              <div
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                  position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: 50,
+                                  background: "#12121e", border: "1px solid #1e1e2e", borderRadius: 8,
+                                  padding: 4, minWidth: 120, boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+                                }}
+                              >
+                                <button
+                                  onClick={() => handleDelete(gen.id)}
+                                  onMouseEnter={(e) => { e.currentTarget.style.background = "#1e1e2e"; }}
+                                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                                  style={{
+                                    display: "flex", alignItems: "center", gap: 8,
+                                    width: "100%", padding: "8px 10px", borderRadius: 6,
+                                    background: "transparent", border: "none", cursor: "pointer",
+                                    color: "#ef4444", fontSize: 13,
+                                  }}
+                                >
+                                  <Trash2 size={13} />
+                                  Eliminar
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          paddingTop: 16, marginTop: 16, borderTop: "1px solid #1a1a2e", flexShrink: 0,
+        }}>
+          <button
+            onClick={() => fetchHistory(page - 1)}
+            disabled={page <= 1}
+            style={{
+              padding: "5px 12px", borderRadius: 6, fontSize: 12, cursor: page <= 1 ? "not-allowed" : "pointer",
+              background: "#0d0d17", border: "1px solid #1e1e2e", color: page <= 1 ? "#4a4a65" : "#9ca3af",
+            }}
+          >Anterior</button>
+          <span style={{ fontSize: 12, color: "#6b7280" }}>{page} / {totalPages}</span>
+          <button
+            onClick={() => fetchHistory(page + 1)}
+            disabled={page >= totalPages}
+            style={{
+              padding: "5px 12px", borderRadius: 6, fontSize: 12, cursor: page >= totalPages ? "not-allowed" : "pointer",
+              background: "#0d0d17", border: "1px solid #1e1e2e", color: page >= totalPages ? "#4a4a65" : "#9ca3af",
+            }}
+          >Siguiente</button>
+        </div>
+      )}
+
+      {total > 0 && (
+        <p style={{ fontSize: 11, color: "#4a4a65", textAlign: "center", paddingTop: 8, flexShrink: 0 }}>
+          {total} generaci{total !== 1 ? "ones" : "ón"} en total
+        </p>
+      )}
+    </div>
+  );
 }
 /* ─── Plan limits (mirrored from lib/stripe.ts for client use) ── */
 const VOICE_SLOT_LIMITS: Record<string, number> = { free: 1, starter: 3, pro: 10, elite: 20, enterprise: Infinity };
