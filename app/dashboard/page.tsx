@@ -2942,6 +2942,30 @@ export default function DashboardPage() {
     fetchMemberInfo();
   }, [fetchCredits, fetchVoices, fetchMemberInfo]);
 
+  // Restore selected voice from localStorage once userId is available
+  useEffect(() => {
+    if (!user?.id) return;
+    try {
+      const saved = localStorage.getItem(`vf_selected_voice_${user.id}`);
+      if (saved) {
+        const parsed = JSON.parse(saved) as SelectedVoice;
+        setSelectedVoice(parsed);
+      }
+    } catch {
+      // ignore malformed data
+    }
+  }, [user?.id]);
+
+  // Persist selected voice to localStorage whenever it changes
+  useEffect(() => {
+    if (!user?.id || selectedVoice === null) return;
+    try {
+      localStorage.setItem(`vf_selected_voice_${user.id}`, JSON.stringify(selectedVoice));
+    } catch {
+      // ignore quota errors
+    }
+  }, [selectedVoice, user?.id]);
+
   const successPlan     = searchParams.get("plan");
   const creditsBought   = searchParams.get("creditsBought");
 
