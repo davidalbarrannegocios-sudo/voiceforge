@@ -13,7 +13,7 @@ interface UserMenuProps {
 
 export function UserMenu({ used, total }: UserMenuProps = {}) {
   const { user } = useUser();
-  const { signOut } = useClerk();
+  const { signOut, openUserProfile } = useClerk();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -150,7 +150,6 @@ export function UserMenu({ used, total }: UserMenuProps = {}) {
               { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
               { href: "/dashboard?tab=billing", label: "Facturación", Icon: CreditCard },
               { href: "/dashboard?tab=referral", label: "Referidos", Icon: Gift },
-              { href: "/dashboard?tab=home", label: "Mi cuenta", Icon: Settings },
             ].map(({ href, label, Icon }) => (
               <Link
                 key={href}
@@ -165,6 +164,16 @@ export function UserMenu({ used, total }: UserMenuProps = {}) {
                 {label}
               </Link>
             ))}
+            <button
+              onClick={() => { setOpen(false); openUserProfile(); }}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm w-full transition-colors"
+              style={{ color: "#9ca3af", background: "transparent", border: "none", cursor: "pointer" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#fff"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#9ca3af"; }}
+            >
+              <Settings size={15} style={{ flexShrink: 0 }} />
+              Mi cuenta
+            </button>
           </div>
 
           {/* Sign out */}
