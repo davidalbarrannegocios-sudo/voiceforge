@@ -6,7 +6,7 @@ import { randomUUID } from "crypto";
 import { uploadToR2 } from "./r2";
 
 const FISH_AUDIO_BASE = "https://api.fish.audio";
-const CHUNK_MAX = 2000;
+const CHUNK_MAX = 2500;
 
 function getApiKey(): string {
   const key = process.env.FISH_AUDIO_API_KEY;
@@ -46,7 +46,22 @@ function splitTextIntoChunks(text: string, maxChars = CHUNK_MAX): string[] {
       }
     }
 
-    // 3. Last resort: cut at the last space
+    // 3. No boundary found within limit — extend to the next sentence end beyond maxChars
+    if (cutAt === -1) {
+      const beyond = [
+        remaining.indexOf(". ", maxChars),
+        remaining.indexOf(".\n", maxChars),
+        remaining.indexOf("! ", maxChars),
+        remaining.indexOf("!\n", maxChars),
+        remaining.indexOf("? ", maxChars),
+        remaining.indexOf("?\n", maxChars),
+      ].filter((i) => i !== -1);
+      if (beyond.length > 0) {
+        cutAt = Math.min(...beyond) + 2;
+      }
+    }
+
+    // 4. Absolute last resort: cut at the last space (no sentence boundary anywhere)
     if (cutAt === -1) {
       const lastSpace = slice.lastIndexOf(" ");
       cutAt = lastSpace > 0 ? lastSpace + 1 : maxChars;
@@ -115,9 +130,7 @@ async function fetchChunk(
 
 function getBatchSize(totalChars: number): number {
   if (totalChars <= 10_000) return 3;
-  if (totalChars <= 25_000) return 6;
-  if (totalChars <= 50_000) return 8;
-  return 12;
+  return 5;
 }
 
 async function processInBatches(chunks: string[], fetchFn: (index: number) => Promise<Buffer>, batchSize: number): Promise<Buffer[]> {
@@ -216,7 +229,7 @@ export async function fishAudioGenerate({
   console.log(`[FishAudio] TTS — referenceId=${referenceId ?? "none"} chars=${text.length} chunks=${chunks.length}`);
 
   const batchSize = getBatchSize(text.length);
-  console.log(`[FishAudio] batchSize=${batchSize} for ${text.length} chars`);
+  console.log(`[chunking] Total chars: ${text.length}, chunks: ${chunks.length}, batchSize: ${batchSize}`);
 
   const audioBuffers = await processInBatches(chunks, (i) => {
     const payload: Record<string, unknown> = {
