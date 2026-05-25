@@ -62,7 +62,7 @@ const T = {
       audioControls: "Controles de audio",
       speed: "Velocidad",
       volume: "Volumen",
-      pitch: "Tono (Pitch)",
+
       characters: "caracteres",
       credits: "créditos",
     },
@@ -124,7 +124,7 @@ const T = {
       audioControls: "Audio controls",
       speed: "Speed",
       volume: "Volume",
-      pitch: "Pitch",
+
       characters: "characters",
       credits: "credits",
     },

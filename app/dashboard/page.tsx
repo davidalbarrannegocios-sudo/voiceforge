@@ -477,7 +477,7 @@ function GenerateTab({
   const [formError, setFormError] = useState<string | null>(null);
   const [speed, setSpeed] = useState(1.0);
   const [volume, setVolume] = useState(1.0);
-  const [pitch, setPitch] = useState(0.0);
+
   const [normalize, setNormalize] = useState(true);
   const [temperature, setTemperature] = useState(0.9);
   const [topP, setTopP] = useState(0.9);
@@ -519,7 +519,7 @@ function GenerateTab({
     setFormError(null);
     setSubmitting(true);
     try {
-      const prosody = (speed !== 1 || volume !== 1 || pitch !== 0) ? { speed, volume, pitch } : undefined;
+      const prosody = (speed !== 1 || volume !== 1) ? { speed, volume } : undefined;
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -557,7 +557,7 @@ function GenerateTab({
 
     setPreviewing("loading");
     try {
-      const prosody = (speed !== 1 || volume !== 1 || pitch !== 0) ? { speed, volume, pitch } : undefined;
+      const prosody = (speed !== 1 || volume !== 1) ? { speed, volume } : undefined;
       const res = await fetch("/api/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -906,8 +906,6 @@ function GenerateTab({
                     <CompactSlider label="Top P" value={topP} onChange={setTopP} min={0} max={1} step={0.1} decimals={1} defaultValue={0.9} />
                   </>
                 )}
-                <CompactSlider label={t.generate.pitch} value={pitch} onChange={setPitch} min={-6} max={6} step={0.1} decimals={1} defaultValue={0} />
-
                 {/* Normalization row */}
                 <div
                   className="flex items-center justify-between px-3.5 flex-shrink-0"
@@ -939,9 +937,9 @@ function GenerateTab({
               </div>
             </div>
 
-            {(speed !== 1 || volume !== 1 || pitch !== 0 || (selectedModel === "speech-1.5" && (temperature !== 0.9 || topP !== 0.9))) && (
+            {(speed !== 1 || volume !== 1 || (selectedModel === "speech-1.5" && (temperature !== 0.9 || topP !== 0.9))) && (
               <button
-                onClick={() => { setSpeed(1); setVolume(1); setPitch(0); setTemperature(0.9); setTopP(0.9); }}
+                onClick={() => { setSpeed(1); setVolume(1); setTemperature(0.9); setTopP(0.9); }}
                 className="text-xs transition-colors"
                 style={{ color: "#8888a8" }}
               >

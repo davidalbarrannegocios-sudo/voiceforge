@@ -183,7 +183,7 @@ export async function fishAudioGenerate({
   referenceId?: string;
   userId: string;
   signal?: AbortSignal;
-  prosody?: { speed?: number; volume?: number; pitch?: number };
+  prosody?: { speed?: number; volume?: number };
   model?: string;
   temperature?: number;
   topP?: number;
@@ -214,13 +214,8 @@ export async function fishAudioGenerate({
       if (topP !== undefined) payload.top_p = topP;
     }
     // speed se aplica con ffmpeg post-proceso — nunca se envía a Fish Audio
-    if (prosody && (prosody.volume !== 1 || prosody.pitch !== 0)) {
-      payload.prosody = {
-        volume: prosody.volume,
-        pitch: prosody.pitch !== undefined && prosody.pitch !== 0
-          ? `${prosody.pitch > 0 ? "+" : ""}${prosody.pitch}st`
-          : undefined,
-      };
+    if (prosody?.volume !== undefined && prosody.volume !== 1) {
+      payload.prosody = { volume: prosody.volume };
     }
     console.log("[fishaudio] payload prosody (sin speed):", JSON.stringify(payload.prosody));
     return fetchChunk(apiKey, payload, i, chunks.length, signal);
