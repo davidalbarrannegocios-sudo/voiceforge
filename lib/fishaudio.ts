@@ -4,6 +4,7 @@ import { tmpdir } from "os";
 import { join } from "path";
 import { randomUUID } from "crypto";
 import { uploadToR2 } from "./r2";
+import { withSlot } from "./fishAudioQueue";
 
 const FISH_AUDIO_BASE = "https://api.fish.audio";
 const CHUNK_MAX = 2500;
@@ -128,22 +129,6 @@ async function fetchChunk(
   throw new Error(`Fish Audio TTS rate limited on chunk ${chunkIndex + 1}/${total} after ${MAX_ATTEMPTS} attempts`);
 }
 
-function getBatchSize(totalChars: number): number {
-  if (totalChars <= 10_000) return 3;
-  return 5;
-}
-
-async function processInBatches(chunks: string[], fetchFn: (index: number) => Promise<Buffer>, batchSize: number): Promise<Buffer[]> {
-  const results: Buffer[] = [];
-  for (let i = 0; i < chunks.length; i += batchSize) {
-    const batch = chunks.slice(i, i + batchSize);
-    const batchResults = await Promise.all(
-      batch.map((_, j) => fetchFn(i + j))
-    );
-    results.push(...batchResults);
-  }
-  return results;
-}
 
 // atempo acepta [0.5, 2.0]; encadenamos filtros para valores fuera de rango
 function buildAtempoFilter(speed: number): string {
@@ -227,11 +212,9 @@ export async function fishAudioGenerate({
   console.log("[fishaudio] Iniciando generación");
   console.log("[fishaudio] prosody recibido:", JSON.stringify(prosody));
   console.log(`[FishAudio] TTS — referenceId=${referenceId ?? "none"} chars=${text.length} chunks=${chunks.length}`);
+  console.log(`[chunking] Total chars: ${text.length}, chunks: ${chunks.length}, batchSize: global-queue(max 15)`);
 
-  const batchSize = getBatchSize(text.length);
-  console.log(`[chunking] Total chars: ${text.length}, chunks: ${chunks.length}, batchSize: ${batchSize}`);
-
-  const audioBuffers = await processInBatches(chunks, (i) => {
+  const audioBuffers = await Promise.all(chunks.map((_, i) => {
     const payload: Record<string, unknown> = {
       text: chunks[i],
       model,
@@ -251,8 +234,8 @@ export async function fishAudioGenerate({
       payload.prosody = { volume: prosody.volume };
     }
     console.log("[fishaudio] payload prosody (sin speed):", JSON.stringify(payload.prosody));
-    return fetchChunk(apiKey, payload, i, chunks.length, signal);
-  }, batchSize);
+    return withSlot(() => fetchChunk(apiKey, payload, i, chunks.length, signal));
+  }));
 
   let audioBuffer = audioBuffers.length === 1 ? audioBuffers[0] : Buffer.concat(audioBuffers);
 
