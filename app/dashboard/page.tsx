@@ -2877,9 +2877,54 @@ function TeamTab({ credits: _credits }: { credits: number | null }) {
   );
 }
 
+/* ─── Avatar with progress ring ──────────────────────────── */
+function AvatarWithProgress({
+  used, total, imageUrl, initial, onClick,
+}: {
+  used: number; total: number; imageUrl?: string; initial: string; onClick: () => void;
+}) {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const pct = total > 0 ? Math.min(100, (used / total) * 100) : 0;
+  const radius = 18;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (pct / 100) * circumference;
+  const color = pct < 60 ? "#3b82f6" : pct < 85 ? "#f59e0b" : "#ef4444";
+
+  return (
+    <div
+      style={{ position: "relative", width: "40px", height: "40px" }}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+    >
+      <svg style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }} width="40" height="40">
+        <circle cx="20" cy="20" r={radius} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="2" />
+        <circle cx="20" cy="20" r={radius} fill="none" stroke={color} strokeWidth="2"
+          strokeDasharray={circumference} strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round" style={{ transition: "stroke-dashoffset 0.5s ease" }} />
+      </svg>
+      <button
+        onClick={onClick}
+        style={{ position: "absolute", inset: "4px", borderRadius: "50%", overflow: "hidden", border: "none", cursor: "pointer", padding: 0, background: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center" }}
+      >
+        {imageUrl
+          ? <img src={imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          : <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>{initial}</span>
+        }
+      </button>
+      {showTooltip && (
+        <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 10px", zIndex: 50, whiteSpace: "nowrap", pointerEvents: "none", boxShadow: "0 4px 16px rgba(0,0,0,0.4)" }}>
+          <p style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "2px" }}>{Math.round(pct)}% usado</p>
+          <p style={{ fontSize: "11px", color: "#6b7280" }}>{used.toLocaleString("es-ES")} / {total.toLocaleString("es-ES")} chars</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Main Dashboard ──────────────────────────────────────── */
 export default function DashboardPage() {
   const { user } = useUser();
+  const { openUserProfile } = useClerk();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<Tab>("home");
   const [credits, setCredits] = useState<number | null>(null);
@@ -3010,7 +3055,20 @@ export default function DashboardPage() {
                 >
                   <HelpCircle size={15} />
                 </button>
-                <UserButton />
+                {credits !== null && (() => {
+                  const planTotal = (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 5_000) + extraCredits;
+                  const used = Math.max(0, planTotal - credits);
+                  const initial = (user?.firstName ?? user?.emailAddresses?.[0]?.emailAddress ?? "U")[0].toUpperCase();
+                  return (
+                    <AvatarWithProgress
+                      used={used}
+                      total={planTotal}
+                      imageUrl={user?.imageUrl}
+                      initial={initial}
+                      onClick={openUserProfile}
+                    />
+                  );
+                })()}
               </div>
             </div>
           );
