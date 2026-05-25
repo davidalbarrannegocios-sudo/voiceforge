@@ -8,6 +8,17 @@ import { CustomSelect } from "@/components/CustomSelect";
 /* ─── Types ───────────────────────────────────────────────── */
 const PLAN_PRICE: Record<string, number> = { free: 0, starter: 7, pro: 13, elite: 25, enterprise: 110 };
 
+interface AffiliateApplication {
+  id: string;
+  name: string;
+  email: string;
+  platform: string;
+  audience: string;
+  paymentMethod: string;
+  status: string;
+  createdAt: string;
+}
+
 interface AdminUser {
   id: string;
   email: string;
@@ -567,6 +578,96 @@ function UserDetailModal({
 }
 
 /* ─── Main ────────────────────────────────────────────────── */
+/* ─── Affiliate Detail Modal ──────────────────────────────── */
+function AffiliateDetailModal({
+  app,
+  onClose,
+  onUpdate,
+  toast,
+}: {
+  app: AffiliateApplication;
+  onClose: () => void;
+  onUpdate: (id: string, status: "approved" | "rejected") => Promise<void>;
+  toast: (msg: string, ok?: boolean) => void;
+}) {
+  const [loading, setLoading] = useState<"approved" | "rejected" | null>(null);
+
+  async function handle(status: "approved" | "rejected") {
+    setLoading(status);
+    try {
+      await onUpdate(app.id, status);
+      toast(status === "approved" ? "Solicitud aprobada" : "Solicitud rechazada", status === "approved");
+      onClose();
+    } catch {
+      toast("Error al actualizar", false);
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  const row = (label: string, value: string) => (
+    <div style={{ display: "flex", gap: "12px", padding: "10px 0", borderBottom: "1px solid #1e1e2e" }}>
+      <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#555570", width: 140, flexShrink: 0, paddingTop: 1 }}>{label}</span>
+      <span style={{ fontSize: "0.875rem", color: "#e5e7eb", wordBreak: "break-word" }}>{value}</span>
+    </div>
+  );
+
+  const statusColor = app.status === "approved" ? "#4ade80" : app.status === "rejected" ? "#f87171" : "#fbbf24";
+  const statusBg = app.status === "approved" ? "rgba(74,222,128,0.12)" : app.status === "rejected" ? "rgba(239,68,68,0.12)" : "rgba(251,191,36,0.12)";
+  const statusBorder = app.status === "approved" ? "rgba(74,222,128,0.3)" : app.status === "rejected" ? "rgba(239,68,68,0.3)" : "rgba(251,191,36,0.3)";
+  const statusLabel = app.status === "approved" ? "Aprobado" : app.status === "rejected" ? "Rechazado" : "Pendiente";
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+      <div style={{ background: "#12121a", border: "1px solid #2a2a3e", borderRadius: "16px", width: "100%", maxWidth: "520px", padding: "28px", position: "relative" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+          <div>
+            <p style={{ fontWeight: 700, fontSize: "1rem", color: "#fff", margin: 0 }}>Solicitud de afiliado</p>
+            <p style={{ fontSize: "0.75rem", color: "#555570", margin: "4px 0 0" }}>{app.id}</p>
+          </div>
+          <span style={{ fontSize: "0.7rem", fontWeight: 700, padding: "3px 10px", borderRadius: "999px", background: statusBg, color: statusColor, border: `1px solid ${statusBorder}` }}>
+            {statusLabel}
+          </span>
+        </div>
+
+        {row("Nombre", app.name)}
+        {row("Email", app.email)}
+        {row("Canal / Plataforma", app.platform)}
+        {row("Audiencia estimada", app.audience)}
+        {row("Método de pago", app.paymentMethod === "paypal" ? "PayPal" : "Transferencia internacional")}
+        {row("Fecha de solicitud", new Date(app.createdAt).toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" }))}
+        {row("Estado actual", statusLabel)}
+
+        {app.status === "pending" && (
+          <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+            <button
+              onClick={() => handle("approved")}
+              disabled={loading !== null}
+              style={{ ...btn("#16a34a"), flex: 1, opacity: loading ? 0.6 : 1 }}
+            >
+              {loading === "approved" ? "Aprobando..." : "✓ Aprobar"}
+            </button>
+            <button
+              onClick={() => handle("rejected")}
+              disabled={loading !== null}
+              style={{ ...btn("#dc2626"), flex: 1, opacity: loading ? 0.6 : 1 }}
+            >
+              {loading === "rejected" ? "Rechazando..." : "✕ Rechazar"}
+            </button>
+          </div>
+        )}
+
+        <button
+          onClick={onClose}
+          style={{ ...btn("#1e1e2e", { border: "1px solid #2a2a3e", color: "#8888a8" }), width: "100%", marginTop: app.status === "pending" ? "8px" : "20px" }}
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
@@ -581,6 +682,8 @@ export default function AdminPage() {
   const [replyTicketId, setReplyTicketId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [replyLoading, setReplyLoading] = useState(false);
+  const [affiliateApps, setAffiliateApps] = useState<AffiliateApplication[]>([]);
+  const [affiliateDetailApp, setAffiliateDetailApp] = useState<AffiliateApplication | null>(null);
 
   // Credits form
   const [creditUserId, setCreditUserId] = useState("");
@@ -599,10 +702,11 @@ export default function AdminPage() {
   }, []);
 
   const fetchAll = useCallback(async () => {
-    const [uRes, sRes, tRes] = await Promise.all([
+    const [uRes, sRes, tRes, aRes] = await Promise.all([
       fetch("/api/admin/users"),
       fetch("/api/admin/stats"),
       fetch("/api/admin/support"),
+      fetch("/api/admin/affiliate-applications"),
     ]);
     if (uRes.status === 403 || uRes.status === 401) { setAuthorized(false); return; }
     setAuthorized(true);
@@ -610,7 +714,24 @@ export default function AdminPage() {
     setStats(await sRes.json());
     const tData = await tRes.json();
     setTickets(Array.isArray(tData) ? tData : []);
+    const aData = await aRes.json();
+    setAffiliateApps(Array.isArray(aData) ? aData : []);
   }, []);
+
+  async function updateAffiliateStatus(id: string, status: "approved" | "rejected") {
+    const res = await fetch(`/api/admin/affiliate-applications/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error ?? "Error al actualizar");
+    }
+    setAffiliateApps((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)));
+    // update detail if open
+    setAffiliateDetailApp((prev) => (prev?.id === id ? { ...prev, status } : prev));
+  }
 
   useEffect(() => { if (isLoaded && user) fetchAll(); }, [isLoaded, user, fetchAll]);
   useEffect(() => { if (isLoaded && !user) router.push("/sign-in"); }, [isLoaded, user, router]);
@@ -728,6 +849,46 @@ export default function AdminPage() {
         />
       )}
 
+      {/* Affiliate detail modal */}
+      {affiliateDetailApp && (
+        <AffiliateDetailModal
+          app={affiliateDetailApp}
+          onClose={() => setAffiliateDetailApp(null)}
+          onUpdate={updateAffiliateStatus}
+          toast={toast}
+        />
+      )}
+
+      {/* Quick-nav strip */}
+      {(() => {
+        const pendingAff = affiliateApps.filter(a => a.status === "pending").length;
+        const openTickets = tickets.filter(t => t.status === "open").length;
+        return (
+          <div style={{ borderBottom: "1px solid #1e1e2e", padding: "0 2rem", display: "flex", gap: "4px", overflowX: "auto" }}>
+            {[
+              { label: "Usuarios", anchor: "#section-users", badge: 0 },
+              { label: "Tickets soporte", anchor: "#section-tickets", badge: openTickets },
+              { label: "Solicitudes Afiliados", anchor: "#section-affiliates", badge: pendingAff },
+            ].map(({ label, anchor, badge }) => (
+              <a
+                key={anchor}
+                href={anchor}
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "10px 14px", fontSize: "13px", fontWeight: 500, color: "#8888a8", textDecoration: "none", whiteSpace: "nowrap", borderBottom: "2px solid transparent" }}
+                onMouseEnter={e => (e.currentTarget.style.color = "#e5e7eb")}
+                onMouseLeave={e => (e.currentTarget.style.color = "#8888a8")}
+              >
+                {label}
+                {badge > 0 && (
+                  <span style={{ fontSize: "10px", fontWeight: 700, padding: "1px 6px", borderRadius: "999px", background: "rgba(239,68,68,0.85)", color: "#fff", lineHeight: 1.6 }}>
+                    {badge}
+                  </span>
+                )}
+              </a>
+            ))}
+          </div>
+        );
+      })()}
+
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem" }}>
 
         {/* Stats */}
@@ -804,7 +965,7 @@ export default function AdminPage() {
         </div>
 
         {/* Users table */}
-        <div style={card}>
+        <div id="section-users" style={card}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem", flexWrap: "wrap", gap: "0.75rem" }}>
             <p style={{ fontWeight: 700 }}>Usuarios ({filtered.length})</p>
             <input style={{ ...input, width: "260px" }} placeholder="Buscar por email o ID..." value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -889,7 +1050,7 @@ export default function AdminPage() {
         </div>
 
         {/* Support tickets */}
-        <div style={{ ...card, marginTop: "1.5rem" }}>
+        <div id="section-tickets" style={{ ...card, marginTop: "1.5rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "1rem" }}>
             <p style={{ fontWeight: 700 }}>Tickets de soporte</p>
             {tickets.filter(t => t.status === "open").length > 0 && (
@@ -976,6 +1137,107 @@ export default function AdminPage() {
             </div>
           )}
         </div>
+
+        {/* Affiliate applications */}
+        {(() => {
+          const pendingCount = affiliateApps.filter(a => a.status === "pending").length;
+          return (
+            <div id="section-affiliates" style={{ ...card, marginTop: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "1rem" }}>
+                <p style={{ fontWeight: 700 }}>Solicitudes Afiliados ({affiliateApps.length})</p>
+                {pendingCount > 0 && (
+                  <span style={{ padding: "2px 10px", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 700, background: "rgba(251,191,36,0.15)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)" }}>
+                    {pendingCount} pendiente{pendingCount !== 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+
+              {affiliateApps.length === 0 ? (
+                <p style={{ color: "#555570", fontSize: "0.85rem" }}>No hay solicitudes de afiliado aún.</p>
+              ) : (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid #2a2a3e" }}>
+                        {["Nombre", "Email", "Canal / Plataforma", "Audiencia", "Pago", "Fecha", "Estado", "Acciones"].map((h) => (
+                          <th key={h} style={{ padding: "0.5rem 0.75rem", textAlign: "left", color: "#555570", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {affiliateApps.map((app) => {
+                        const statusColor = app.status === "approved" ? "#4ade80" : app.status === "rejected" ? "#f87171" : "#fbbf24";
+                        const statusBg = app.status === "approved" ? "rgba(74,222,128,0.12)" : app.status === "rejected" ? "rgba(239,68,68,0.12)" : "rgba(251,191,36,0.12)";
+                        const statusBorder = app.status === "approved" ? "rgba(74,222,128,0.3)" : app.status === "rejected" ? "rgba(239,68,68,0.3)" : "rgba(251,191,36,0.3)";
+                        const statusLabel = app.status === "approved" ? "Aprobado" : app.status === "rejected" ? "Rechazado" : "Pendiente";
+                        return (
+                          <tr key={app.id} style={{ borderBottom: "1px solid #1e1e2e" }}>
+                            <td style={{ padding: "0.6rem 0.75rem", color: "#e5e7eb", whiteSpace: "nowrap" }}>{app.name}</td>
+                            <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af" }}>{app.email}</td>
+                            <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", maxWidth: 160 }}>
+                              <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{app.platform}</span>
+                            </td>
+                            <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", maxWidth: 140 }}>
+                              <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{app.audience}</span>
+                            </td>
+                            <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", whiteSpace: "nowrap" }}>
+                              {app.paymentMethod === "paypal" ? "PayPal" : "Transferencia"}
+                            </td>
+                            <td style={{ padding: "0.6rem 0.75rem", color: "#555570", whiteSpace: "nowrap" }}>
+                              {new Date(app.createdAt).toLocaleDateString("es-ES")}
+                            </td>
+                            <td style={{ padding: "0.6rem 0.75rem" }}>
+                              <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", background: statusBg, color: statusColor, border: `1px solid ${statusBorder}`, whiteSpace: "nowrap" }}>
+                                {statusLabel}
+                              </span>
+                            </td>
+                            <td style={{ padding: "0.6rem 0.75rem" }}>
+                              <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+                                <button
+                                  onClick={() => setAffiliateDetailApp(app)}
+                                  style={btn("#1e1e2e", { border: "1px solid #2a2a3e", color: "#93c5fd", padding: "0.25rem 0.6rem", fontSize: "0.7rem" })}
+                                >
+                                  Ver
+                                </button>
+                                {app.status === "pending" && (
+                                  <>
+                                    <button
+                                      onClick={async () => {
+                                        try {
+                                          await updateAffiliateStatus(app.id, "approved");
+                                          toast("Solicitud aprobada");
+                                        } catch { toast("Error al aprobar", false); }
+                                      }}
+                                      style={btn("#16a34a", { padding: "0.25rem 0.6rem", fontSize: "0.7rem" })}
+                                    >
+                                      Aprobar
+                                    </button>
+                                    <button
+                                      onClick={async () => {
+                                        try {
+                                          await updateAffiliateStatus(app.id, "rejected");
+                                          toast("Solicitud rechazada", false);
+                                        } catch { toast("Error al rechazar", false); }
+                                      }}
+                                      style={btn("#dc2626", { padding: "0.25rem 0.6rem", fontSize: "0.7rem" })}
+                                    >
+                                      Rechazar
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
       </div>
     </div>
   );
