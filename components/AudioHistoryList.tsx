@@ -236,7 +236,7 @@ export default function AudioHistoryList({
                       >
                         {/* Row 1: avatar + voice name + time */}
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                          <VoiceAvatarGenerative seed={vName} size={24} className="flex-shrink-0" />
+                          <VoiceAvatarGenerative seed={gen.voiceId} size={24} className="flex-shrink-0" />
                           <span style={{ fontSize: "12px", fontWeight: 500, color: "#e2e8f0", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{vName}</span>
                           <span style={{ fontSize: "11px", color: "#6b7280", flexShrink: 0 }}>{formatTime(gen.createdAt)}</span>
                         </div>

@@ -217,7 +217,7 @@ function matchesAdvancedFilters(voice: FishVoice, filters: AdvancedFilters): boo
 
 /* ── Sub-components ─────────────────────────────────────────── */
 
-function VoiceAvatar({ name, coverImage, size = "md" }: { name: string; coverImage?: string; size?: "xs" | "sm" | "md" | "lg" }) {
+function VoiceAvatar({ name, coverImage, size = "md", id }: { name: string; coverImage?: string; size?: "xs" | "sm" | "md" | "lg"; id?: string }) {
   const [imgFailed, setImgFailed] = useState(false);
 
   useEffect(() => { setImgFailed(false); }, [coverImage]);
@@ -225,7 +225,6 @@ function VoiceAvatar({ name, coverImage, size = "md" }: { name: string; coverIma
   const cls = size === "lg" ? "w-12 h-12" : size === "md" ? "w-11 h-11" : size === "sm" ? "w-9 h-9" : "w-6 h-6";
   const showImage = !!coverImage && coverImage.trim() !== "" && !imgFailed;
   const proxiedSrc = coverImage ? `/api/voice-image?url=${encodeURIComponent(coverImage)}` : "";
-
   const pxSize = size === "lg" ? 48 : size === "md" ? 44 : size === "sm" ? 36 : 24;
 
   if (showImage) {
@@ -240,7 +239,7 @@ function VoiceAvatar({ name, coverImage, size = "md" }: { name: string; coverIma
       />
     );
   }
-  return <VoiceAvatarGenerative seed={name} size={pxSize} className="flex-shrink-0" />;
+  return <VoiceAvatarGenerative seed={id ?? name} size={pxSize} className="flex-shrink-0" />;
 }
 
 function TierPill({
@@ -479,7 +478,7 @@ function VoiceRow({
       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
     >
       {/* Avatar 48px */}
-      <VoiceAvatar name={voice.title} coverImage={voice.cover_image} size="lg" />
+      <VoiceAvatar name={voice.title} coverImage={voice.cover_image} size="lg" id={voice._id} />
 
       {/* Center info */}
       <div className="flex-1 min-w-0">
@@ -1293,7 +1292,7 @@ export function VoiceBrowser({
                           className="flex items-center gap-3 px-4 py-3 rounded-xl border"
                           style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
                         >
-                          <VoiceAvatarGenerative seed={voice.name} size={44} className="flex-shrink-0" />
+                          <VoiceAvatarGenerative seed={voice.fishAudioModelId ?? voice.name} size={44} className="flex-shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-white truncate">{voice.name}</p>
                             <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Voz clonada</p>
@@ -1398,7 +1397,7 @@ export function VoiceBrowser({
                                 borderColor: isExact ? "rgba(124,58,237,0.3)" : "#1e1e2e",
                               }}
                             >
-                              <VoiceAvatarGenerative seed={voice.name} size={44} className="flex-shrink-0" />
+                              <VoiceAvatarGenerative seed={voice.fishAudioModelId ?? voice.name} size={44} className="flex-shrink-0" />
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <p className="text-sm font-semibold text-white truncate">{voice.name}</p>

@@ -607,7 +607,7 @@ function GenerateTab({
             onClick={() => setShowBrowser(true)}
             style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", flexShrink: 0, width: "100%", textAlign: "left", background: "transparent", cursor: "pointer", border: "none" }}
           >
-            <VoiceAvatar name={selectedVoice?.name ?? "V"} coverImage={selectedVoice?.coverImage} size="xs" />
+            <VoiceAvatar name={selectedVoice?.name ?? "V"} coverImage={selectedVoice?.coverImage} size="xs" id={selectedVoice?.referenceId} />
             <span style={{ fontSize: "13px", fontWeight: 400, color: "#9ca3af" }}>{selectedVoice?.name ?? t.generate.defaultVoice}</span>
           </button>
 
@@ -693,7 +693,7 @@ function GenerateTab({
                   onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
                 >
                   <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
-                    <VoiceAvatar name={selectedVoice?.name ?? "V"} coverImage={selectedVoice?.coverImage} size="lg" />
+                    <VoiceAvatar name={selectedVoice?.name ?? "V"} coverImage={selectedVoice?.coverImage} size="lg" id={selectedVoice?.referenceId} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap", marginBottom: "2px" }}>
                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>{selectedVoice?.name ?? t.generate.defaultVoice}</span>
@@ -1031,9 +1031,7 @@ function VoiceCard({
     >
       {/* Top row: avatar · name+date */}
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: "#1a1a2e" }}>
-          <Mic size={16} style={{ color: "#2a2a5e" }} />
-        </div>
+        <VoiceAvatarGenerative seed={voice.fishAudioModelId ?? voice.id} size={40} className="flex-shrink-0 rounded-lg" />
         <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
           <div className="flex items-center gap-1 min-w-0">
             <span className="font-semibold text-white text-sm truncate">{voice.name}</span>
