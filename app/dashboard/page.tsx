@@ -741,7 +741,7 @@ function GenerateTab({
                           
                           return (
                             <span key={l} className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>
-                              <span className="fi fi-{code}" style={{width:"16px",height:"12px",display:"inline-block",borderRadius:"2px"}}></span><span>{l.toUpperCase()}</span>
+                              <span className={`fi fi-${code}`} style={{width:"16px",height:"12px",display:"inline-block",borderRadius:"2px"}}></span><span>{l.toUpperCase()}</span>
                             </span>
                           );
                         })}
