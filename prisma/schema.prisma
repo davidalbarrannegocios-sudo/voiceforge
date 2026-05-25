@@ -38,6 +38,7 @@ model User {
   teamOwned            Team?           @relation("TeamOwner")
   teamMember           TeamMember?
   transcriptionTasks   TranscriptionTask[]
+  translationTasks     TranslationTask[]
 }
 
 model Job {
@@ -181,4 +182,22 @@ model TranscriptionTask {
   errorMessage      String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+}
+
+model TranslationTask {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id])
+  fileName           String
+  targetLanguage     String
+  targetLanguageName String
+  status             String   @default("processing")
+  creditsUsed        Int      @default(0)
+  durationSeconds    Float?
+  audioUrl           String?
+  transcribedText    String?
+  translatedText     String?
+  errorMessage       String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }

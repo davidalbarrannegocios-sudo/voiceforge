@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, formatCount } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
@@ -2031,6 +2031,19 @@ interface TranslateResult {
   charCost: number;
 }
 
+interface TTranslateTask {
+  id: string;
+  fileName: string;
+  targetLanguage: string;
+  targetLanguageName: string;
+  status: string;
+  creditsUsed: number;
+  durationSeconds: number | null;
+  audioUrl: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+}
+
 const TRANSLATE_STEPS = [
   { after: 0,    label: "Transcribiendo audio..." },
   { after: 9000, label: "Traduciendo texto..." },
@@ -2046,8 +2059,14 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
   selectedVoice: SelectedVoice | null;
   onVoiceChange: (v: SelectedVoice | null) => void;
 }) {
+  const [innerTab, setInnerTab] = useState<"convert" | "history">("convert");
+
+  // Convert state
   const [file, setFile] = useState<File | null>(null);
+  const [fileDuration, setFileDuration] = useState<number | null>(null);
   const [targetLang, setTargetLang] = useState("en");
+  const [voiceSubTab, setVoiceSubTab] = useState<"model" | "reference">("model");
+  const [referenceFile, setReferenceFile] = useState<File | null>(null);
   const [showBrowser, setShowBrowser] = useState(false);
   const [loading, setLoading] = useState(false);
   const [stepLabel, setStepLabel] = useState<string | null>(null);
@@ -2055,40 +2074,107 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
   const [result, setResult] = useState<TranslateResult | null>(null);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const refInputRef = useRef<HTMLInputElement>(null);
   const stepTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // Recording
+  const [recording, setRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingChunks = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // History state
+  const [historyTasks, setHistoryTasks] = useState<TTranslateTask[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [historySearch, setHistorySearch] = useState("");
+
   const clonedVoices = voices.filter((v) => !v.isSystem);
+  const FREE_LIMIT = 2;
+  const isFreeExhausted = plan === "free" && transcriptionUsed >= FREE_LIMIT;
+  const freeRemaining = Math.max(0, FREE_LIMIT - transcriptionUsed);
+
+  function fmtSec(s: number) {
+    const m = Math.floor(s / 60);
+    return `${m}:${String(s % 60).padStart(2, "0")}`;
+  }
 
   function handleFile(f: File) {
     const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
-    const okType = f.type.startsWith("audio/") || ["mp3", "wav", "m4a"].includes(ext);
+    const okType = f.type.startsWith("audio/") || ["mp3", "wav", "m4a", "webm", "ogg"].includes(ext);
     if (!okType) { setError("Formato no soportado. Usa MP3, WAV o M4A."); return; }
+    if (f.size > 50 * 1024 * 1024) { setError("El archivo supera el límite de 50 MB."); return; }
     setFile(f);
     setError(null);
     setResult(null);
+    setFileDuration(null);
+    const url = URL.createObjectURL(f);
+    const a = new Audio(url);
+    a.onloadedmetadata = () => { if (isFinite(a.duration)) setFileDuration(a.duration); URL.revokeObjectURL(url); };
+    a.onerror = () => URL.revokeObjectURL(url);
   }
+
+  async function toggleRecording() {
+    if (recording) {
+      mediaRecorderRef.current?.stop();
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      setRecording(false);
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recordingChunks.current = [];
+      const mr = new MediaRecorder(stream);
+      mr.ondataavailable = (e) => { if (e.data.size > 0) recordingChunks.current.push(e.data); };
+      mr.onstop = () => {
+        const blob = new Blob(recordingChunks.current, { type: "audio/webm" });
+        handleFile(new File([blob], `grabacion-${Date.now()}.webm`, { type: "audio/webm" }));
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      mediaRecorderRef.current = mr;
+      mr.start();
+      setRecording(true);
+      setRecordingTime(0);
+      recordingTimerRef.current = setInterval(() => setRecordingTime((t) => t + 1), 1000);
+    } catch {
+      setError("No se pudo acceder al micrófono. Revisa los permisos.");
+    }
+  }
+
+  async function fetchHistory() {
+    setLoadingHistory(true);
+    try {
+      const res = await fetch("/api/translation-tasks");
+      const data = await res.json();
+      setHistoryTasks(data.tasks ?? []);
+    } catch { /* ignore */ } finally { setLoadingHistory(false); }
+  }
+
+  useEffect(() => {
+    if (innerTab === "history") fetchHistory();
+  }, [innerTab]);
 
   async function handleTranslate() {
     if (!file) return;
     setLoading(true);
     setError(null);
     setResult(null);
-
-    // Animate step labels
     stepTimers.current.forEach(clearTimeout);
     stepTimers.current = TRANSLATE_STEPS.map(({ after, label }) =>
       setTimeout(() => setStepLabel(label), after)
     );
-
     try {
       const fd = new FormData();
       fd.append("audio", file);
       fd.append("target_lang", targetLang);
-      if (selectedVoice?.referenceId) fd.append("reference_id", selectedVoice.referenceId);
-
+      if (voiceSubTab === "model" && selectedVoice?.referenceId) {
+        fd.append("reference_id", selectedVoice.referenceId);
+      } else if (voiceSubTab === "reference" && referenceFile) {
+        fd.append("reference_audio", referenceFile);
+      }
       const res = await fetch("/api/translate", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error desconocido");
-
       setResult(data);
       onGenerated();
     } catch (e) {
@@ -2100,214 +2186,380 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
     }
   }
 
-  const FREE_LIMIT = 2;
-  const isFreeExhausted = plan === "free" && transcriptionUsed >= FREE_LIMIT;
-  const freeRemaining = Math.max(0, FREE_LIMIT - transcriptionUsed);
+  const filteredHistory = historyTasks.filter((t) =>
+    t.fileName.toLowerCase().includes(historySearch.toLowerCase()) ||
+    t.targetLanguageName.toLowerCase().includes(historySearch.toLowerCase())
+  );
 
   return (
     <div className="max-w-2xl">
-      <p className="text-sm mb-4" style={{ color: "#8888a8" }}>
-        Sube un audio en español y obtén la versión traducida al idioma de tu elección.
-      </p>
+      {/* ── Header ── */}
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <h1 className="text-xl font-bold text-white">Traducción de Audio</h1>
+          <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.05em", padding: "2px 8px", borderRadius: "9999px", background: "rgba(139,92,246,0.15)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.3)" }}>
+            PREVIEW
+          </span>
+        </div>
+        <p className="text-sm" style={{ color: "#8888a8" }}>
+          Transforma tu audio a cualquier idioma manteniendo tu voz original
+        </p>
 
-      {/* Free plan usage indicator */}
-      {plan === "free" && (
-        isFreeExhausted ? (
-          <div className="mb-6 p-4 rounded-xl flex items-center justify-between gap-4" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-            <p className="text-sm" style={{ color: "#f87171" }}>
-              Has agotado tus usos gratuitos. Actualiza tu plan para continuar.
-            </p>
+        {plan === "free" && (
+          isFreeExhausted ? (
+            <div className="mt-4 p-4 rounded-xl flex items-center justify-between gap-4" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+              <p className="text-sm" style={{ color: "#f87171" }}>Has agotado tus usos gratuitos. Actualiza tu plan para continuar.</p>
+              <button onClick={onBilling} style={{ padding: "6px 14px", borderRadius: "8px", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0 }}>Ver planes</button>
+            </div>
+          ) : (
+            <div className="mt-4 p-3 rounded-xl" style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)" }}>
+              <p className="text-xs" style={{ color: "#4a6fa8" }}>Plan gratuito · <strong style={{ color: "#93c5fd" }}>{freeRemaining} de {FREE_LIMIT} usos restantes</strong> · Suscríbete para uso ilimitado</p>
+            </div>
+          )
+        )}
+
+        {/* Inner tabs */}
+        <div className="flex mt-5" style={{ borderBottom: "1px solid #2a2a3e" }}>
+          {(["convert", "history"] as const).map((t) => (
             <button
-              onClick={onBilling}
-              style={{ padding: "6px 14px", borderRadius: "8px", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0 }}
+              key={t}
+              onClick={() => setInnerTab(t)}
+              className="relative pb-3 px-1 mr-6 text-sm font-medium transition-colors"
+              style={{ color: innerTab === t ? "#fff" : "#8888a8", background: "none", border: "none", cursor: "pointer" }}
             >
-              Ver planes
+              {t === "convert" ? "Convertir" : "Historial"}
+              {innerTab === t && (
+                <span style={{ position: "absolute", bottom: -1, left: 0, right: 0, height: "2px", background: "#3b82f6", borderRadius: "2px 2px 0 0" }} />
+              )}
             </button>
-          </div>
-        ) : (
-          <div className="mb-6 p-3 rounded-xl" style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)" }}>
-            <p className="text-xs" style={{ color: "#4a6fa8" }}>
-              Plan gratuito · <strong style={{ color: "#93c5fd" }}>{freeRemaining} de {FREE_LIMIT} usos restantes</strong> · Suscríbete para uso ilimitado
-            </p>
-          </div>
-        )
-      )}
+          ))}
+        </div>
+      </div>
 
-      <div className="space-y-4">
+      {/* ── Convertir tab ── */}
+      {innerTab === "convert" && (
+        <div className="space-y-5">
 
-        {/* Step 1 — File upload */}
-        <div className="rounded-2xl border p-6" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
-          <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>
-            1 · Audio de origen (en español)
-          </p>
+          {/* Upload card */}
           <div
-            onClick={() => inputRef.current?.click()}
+            className="relative rounded-2xl overflow-hidden"
+            style={{ background: "linear-gradient(135deg, #1a1035 0%, #0f1830 50%, #0a1525 100%)", border: "1px solid rgba(139,92,246,0.25)" }}
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
-            className="rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-all"
-            style={{ borderColor: dragging ? "#3b82f6" : "#2a2a3e", background: dragging ? "rgba(59,130,246,0.05)" : "transparent" }}
           >
-            <input
-              ref={inputRef}
-              type="file"
-              className="hidden"
-              accept=".mp3,.wav,.m4a,audio/*"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
-            />
-            {file ? (
-              <div>
-                <p className="font-medium mb-1" style={{ color: "#4ade80" }}>{file.name}</p>
-                <p className="text-xs" style={{ color: "#8888a8" }}>
-                  {(file.size / 1024 / 1024).toFixed(2)} MB ·{" "}
+            <div style={{ position: "absolute", top: -40, right: -40, width: 140, height: 140, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%)", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", bottom: -30, left: -30, width: 100, height: 100, borderRadius: "50%", background: "radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)", pointerEvents: "none" }} />
+
+            <div className="relative p-8 text-center">
+              {dragging && (
+                <div style={{ position: "absolute", inset: 0, background: "rgba(59,130,246,0.1)", border: "2px dashed #3b82f6", borderRadius: "inherit", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <p className="text-blue-400 font-medium">Suelta el archivo aquí</p>
+                </div>
+              )}
+              <h3 className="text-base font-semibold text-white mb-1">Subir audio fuente</h3>
+              <p className="text-sm mb-1" style={{ color: "#9ca3af" }}>Sube el audio que quieres traducir</p>
+              <p className="text-xs mb-6" style={{ color: "#555570" }}>MP3, WAV, M4A · MAX 50MB</p>
+
+              {file ? (
+                <div className="flex items-center gap-3 rounded-xl px-4 py-3 mx-auto max-w-sm" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                  <FileAudio size={18} style={{ color: "#a78bfa", flexShrink: 0 }} />
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{file.name}</p>
+                    <p className="text-xs" style={{ color: "#8888a8" }}>
+                      {fileDuration != null ? fmtSec(Math.round(fileDuration)) + " · " : ""}
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
                   <button
-                    onClick={(ev) => { ev.stopPropagation(); setFile(null); setResult(null); }}
-                    className="text-blue-400 hover:underline"
+                    onClick={() => { setFile(null); setFileDuration(null); setResult(null); }}
+                    style={{ color: "#6b7280", background: "none", border: "none", cursor: "pointer", padding: "4px", flexShrink: 0 }}
                   >
-                    Cambiar
+                    <X size={14} />
                   </button>
-                </p>
-              </div>
+                </div>
+              ) : (
+                <div className="flex gap-3 justify-center flex-wrap">
+                  <button
+                    onClick={() => inputRef.current?.click()}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all hover:bg-white/10"
+                    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#d1d5db" }}
+                  >
+                    <Upload size={14} /> Elegir archivo
+                  </button>
+                  <button
+                    onClick={toggleRecording}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all"
+                    style={{
+                      background: recording ? "rgba(239,68,68,0.12)" : "rgba(255,255,255,0.06)",
+                      border: `1px solid ${recording ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.15)"}`,
+                      color: recording ? "#f87171" : "#d1d5db",
+                    }}
+                  >
+                    {recording
+                      ? <><Square size={12} style={{ fill: "#f87171" }} /> {fmtSec(recordingTime)}</>
+                      : <><Mic size={14} /> Grabar</>
+                    }
+                  </button>
+                </div>
+              )}
+              <input ref={inputRef} type="file" className="hidden" accept=".mp3,.wav,.m4a,audio/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
+            </div>
+          </div>
+
+          {/* Language selector */}
+          <div>
+            <p className="text-sm font-semibold text-white mb-3">Idioma de destino</p>
+            <div className="grid grid-cols-5 gap-2">
+              {TRANSLATE_LANGS.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => setTargetLang(lang.code)}
+                  className="flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl text-xs font-medium transition-all"
+                  style={
+                    targetLang === lang.code
+                      ? { background: "rgba(59,130,246,0.18)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
+                      : { background: "#12121a", color: "#8888a8", border: "1px solid #2a2a3e" }
+                  }
+                >
+                  <span className={`fi fi-${lang.fi}`} style={{ width: "24px", height: "18px", display: "inline-block", borderRadius: "3px", flexShrink: 0 }} />
+                  {lang.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Voice section */}
+          <div>
+            <p className="text-sm font-semibold text-white mb-3">Voz para el audio traducido</p>
+            <div className="flex p-1 rounded-xl gap-1 mb-3" style={{ background: "#0d0d17", border: "1px solid #2a2a3e" }}>
+              {(["model", "reference"] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setVoiceSubTab(t)}
+                  className="flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all"
+                  style={{ background: voiceSubTab === t ? "#1a1a2e" : "transparent", color: voiceSubTab === t ? "#e5e7eb" : "#6b7280", border: "none", cursor: "pointer" }}
+                >
+                  {t === "model" ? "Seleccionar modelo" : "Subir referencia"}
+                </button>
+              ))}
+            </div>
+
+            {voiceSubTab === "model" ? (
+              <button
+                onClick={() => setShowBrowser(true)}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all hover:border-blue-500/60"
+                style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
+              >
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(59,130,246,0.15)" }}>
+                  <Mic size={13} style={{ color: "#93c5fd" }} />
+                </div>
+                <div className="flex-1 text-left min-w-0">
+                  <p className="text-sm font-medium text-white truncate">{selectedVoice?.name ?? "Voz por defecto"}</p>
+                  <p className="text-xs" style={{ color: "#8888a8" }}>{selectedVoice?.isCloned ? "Voz clonada" : "Sistema"}</p>
+                </div>
+                <span className="text-xs flex-shrink-0" style={{ color: "#8888a8" }}>→</span>
+              </button>
             ) : (
-              <>
-                <Globe size={28} className="mx-auto mb-3" style={{ color: "#8888a8" }} />
-                <p className="text-sm text-gray-400 mb-1">Arrastra tu audio aquí o haz clic</p>
-                <p className="text-xs" style={{ color: "#555570" }}>MP3, WAV, M4A</p>
-              </>
+              <div>
+                {referenceFile ? (
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: "#12121a", border: "1px solid #2a2a3e" }}>
+                    <Mic2 size={16} style={{ color: "#a78bfa", flexShrink: 0 }} />
+                    <div className="flex-1 text-left min-w-0">
+                      <p className="text-sm font-medium text-white truncate">{referenceFile.name}</p>
+                      <p className="text-xs" style={{ color: "#8888a8" }}>{(referenceFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                    <button onClick={() => setReferenceFile(null)} style={{ color: "#6b7280", background: "none", border: "none", cursor: "pointer", padding: "4px" }}>
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => refInputRef.current?.click()}
+                    className="w-full flex flex-col items-center gap-2 px-4 py-6 rounded-xl cursor-pointer transition-all hover:border-blue-500/40"
+                    style={{ background: "#12121a", border: "1px dashed #2a2a3e" }}
+                  >
+                    <Mic2 size={20} style={{ color: "#555570" }} />
+                    <p className="text-sm" style={{ color: "#8888a8" }}>Sube un audio de referencia de voz</p>
+                    <p className="text-xs" style={{ color: "#555570" }}>MP3, WAV, M4A</p>
+                  </div>
+                )}
+                <input ref={refInputRef} type="file" className="hidden" accept=".mp3,.wav,.m4a,audio/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) setReferenceFile(f); e.target.value = ""; }} />
+              </div>
             )}
           </div>
-        </div>
 
-        {/* Step 2 — Language selector */}
-        <div className="rounded-2xl border p-6" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
-          <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>
-            2 · Idioma de destino
-          </p>
-          <div className="grid grid-cols-5 gap-2">
-            {TRANSLATE_LANGS.map((lang) => (
-              <button
-                key={lang.code}
-                onClick={() => setTargetLang(lang.code)}
-                className="flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl text-xs font-medium transition-all"
-                style={
-                  targetLang === lang.code
-                    ? { background: "rgba(59,130,246,0.18)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
-                    : { background: "#12121a", color: "#8888a8", border: "1px solid #2a2a3e" }
-                }
-              >
-                <span className={`fi fi-${lang.fi}`} style={{ width: "24px", height: "18px", display: "inline-block", borderRadius: "3px", flexShrink: 0 }} />
-                {lang.label}
-              </button>
-            ))}
+          {/* Cost note */}
+          <div className="flex items-start gap-3 px-4 py-3 rounded-xl text-xs leading-relaxed" style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)", color: "#8888a8" }}>
+            <span className="flex-shrink-0 mt-0.5" style={{ color: "#3b82f6" }}>ℹ</span>
+            <span>
+              Se aplica un incremento del{" "}
+              <span className="font-semibold" style={{ color: "#93c5fd" }}>{plan === "enterprise" ? "10%" : "20%"}</span>{" "}
+              sobre el coste estándar para cubrir los costes de transcripción y traducción automática.
+            </span>
           </div>
-        </div>
 
-        {/* Step 3 — Voice selector */}
-        <div className="rounded-2xl border p-6" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
-          <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>
-            3 · Voz para el audio traducido
-          </p>
-          <button
-            onClick={() => setShowBrowser(true)}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all hover:border-blue-500/60"
-            style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
-          >
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: "rgba(59,130,246,0.15)" }}
+          {error && (
+            <div className="p-4 rounded-xl text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
+              {error}
+            </div>
+          )}
+
+          {/* Submit */}
+          <div className="flex justify-center">
+            <button
+              onClick={handleTranslate}
+              disabled={!file || loading || isFreeExhausted}
+              className="flex items-center gap-2 px-8 py-3 rounded-full font-semibold text-white text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+              style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", boxShadow: loading || !file ? "none" : "0 4px 20px rgba(59,130,246,0.35)" }}
             >
-              <Mic size={13} style={{ color: "#93c5fd" }} />
-            </div>
-            <div className="flex-1 text-left min-w-0">
-              <p className="text-sm font-medium text-white truncate">
-                {selectedVoice?.name ?? "Voz por defecto"}
-              </p>
-              <p className="text-xs" style={{ color: "#8888a8" }}>
-                {selectedVoice?.isCloned ? "Voz clonada" : "Sistema"}
-              </p>
-            </div>
-            <span className="text-xs flex-shrink-0" style={{ color: "#8888a8" }}>→</span>
-          </button>
-        </div>
-
-        {/* Cost info */}
-        <div
-          className="flex items-start gap-3 px-4 py-3 rounded-xl text-xs leading-relaxed"
-          style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)", color: "#8888a8" }}
-        >
-          <span className="flex-shrink-0 mt-0.5" style={{ color: "#3b82f6" }}>ℹ</span>
-          <span>
-            Se aplica un pequeño incremento del{" "}
-            <span className="font-semibold" style={{ color: "#93c5fd" }}>{plan === "enterprise" ? "10%" : "20%"}</span>{" "}
-            sobre el coste estándar para cubrir los costes de transcripción y traducción automática incluidos en el proceso.
-          </span>
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="p-4 rounded-xl text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
-            {error}
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  {stepLabel ?? "Iniciando..."}
+                </>
+              ) : (
+                <><Globe size={15} /> Iniciar traducción</>
+              )}
+            </button>
           </div>
-        )}
 
-        {/* Submit */}
-        <button
-          onClick={handleTranslate}
-          disabled={!file || loading}
-          className="w-full py-3.5 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
-          style={{
-            background: "linear-gradient(135deg, #3b82f6, #2563eb)",
-            boxShadow: loading ? "none" : "0 4px 15px rgba(59,130,246,0.3)",
-          }}
-        >
-          {loading ? (
-            <>
-              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+          {/* Result */}
+          {result && (
+            <div className="rounded-2xl border p-6 space-y-5" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#4ade80" }} />
+                <p className="text-sm font-semibold text-white">Audio traducido al {result.targetLanguageName}</p>
+                <span className="ml-auto text-xs px-2 py-0.5 rounded-full" style={{ color: "#8888a8", background: "#12121a", border: "1px solid #2a2a3e" }}>
+                  {result.charCost.toLocaleString("es-ES")} créditos · {result.durationSeconds.toFixed(1)}s
+                </span>
+              </div>
+              <AudioPlayer src={result.audioUrl} filename={`traduccion-${result.targetLanguageName.toLowerCase()}.mp3`} />
+              <div className="grid gap-3">
+                <div className="rounded-xl p-4" style={{ background: "#12121a", border: "1px solid #2a2a3e" }}>
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555570" }}>Transcripción (español)</p>
+                  <p className="text-sm leading-relaxed" style={{ color: "#9ca3af" }}>{result.transcribedText}</p>
+                </div>
+                <div className="rounded-xl p-4" style={{ background: "#12121a", border: "1px solid #2a2a3e" }}>
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555570" }}>Traducción ({result.targetLanguageName})</p>
+                  <p className="text-sm leading-relaxed" style={{ color: "#9ca3af" }}>{result.translatedText}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Historial tab ── */}
+      {innerTab === "history" && (
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#4a4a65", pointerEvents: "none" }} />
+              <input
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+                placeholder="Buscar traducciones..."
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                style={{ background: "#0d0d17", border: "1px solid #2a2a3e", color: "#e5e7eb" }}
+              />
+            </div>
+            <button onClick={fetchHistory} className="p-2.5 rounded-xl transition-colors hover:bg-white/5" style={{ border: "1px solid #2a2a3e", color: "#8888a8", background: "transparent", cursor: "pointer" }}>
+              <RefreshCw size={14} className={loadingHistory ? "animate-spin" : ""} />
+            </button>
+          </div>
+
+          {loadingHistory ? (
+            <div className="flex items-center justify-center py-16">
+              <svg className="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24" style={{ color: "#3b82f6" }}>
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              {stepLabel ?? "Iniciando..."}
-            </>
-          ) : (
-            <><Globe size={15} /> Traducir audio</>
-          )}
-        </button>
-
-        {/* Result */}
-        {result && (
-          <div className="rounded-2xl border p-6 space-y-5" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#4ade80" }} />
-              <p className="text-sm font-semibold text-white">
-                Audio traducido al {result.targetLanguageName}
+            </div>
+          ) : filteredHistory.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Globe size={32} style={{ color: "#2a2a3e", marginBottom: "12px" }} />
+              <p className="text-sm font-medium" style={{ color: "#6b7280" }}>
+                {historySearch ? "No se encontraron traducciones" : "Sin traducciones aún"}
               </p>
-              <span className="ml-auto text-xs px-2 py-0.5 rounded-full" style={{ color: "#8888a8", background: "#12121a", border: "1px solid #2a2a3e" }}>
-                {result.charCost.toLocaleString("es-ES")} créditos · {result.durationSeconds.toFixed(1)}s
-              </span>
+              {!historySearch && <p className="text-xs mt-1" style={{ color: "#4a4a65" }}>Las traducciones que realices aparecerán aquí</p>}
             </div>
-
-            <AudioPlayer
-              src={result.audioUrl}
-              filename={`elitelabs-${result.targetLanguageName.toLowerCase()}.mp3`}
-            />
-
-            <div className="grid gap-3">
-              <div className="rounded-xl p-4" style={{ background: "#12121a", border: "1px solid #2a2a3e" }}>
-                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555570" }}>
-                  Transcripción (español)
-                </p>
-                <p className="text-sm leading-relaxed" style={{ color: "#9ca3af" }}>{result.transcribedText}</p>
-              </div>
-              <div className="rounded-xl p-4" style={{ background: "#12121a", border: "1px solid #2a2a3e" }}>
-                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555570" }}>
-                  Traducción ({result.targetLanguageName})
-                </p>
-                <p className="text-sm leading-relaxed" style={{ color: "#9ca3af" }}>{result.translatedText}</p>
-              </div>
+          ) : (
+            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid #2a2a3e" }}>
+              <table className="w-full" style={{ borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ background: "#0d0d17", borderBottom: "1px solid #2a2a3e" }}>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>Archivo</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>Idioma destino</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>Estado</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>Fecha</th>
+                    <th className="px-4 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredHistory.map((task, i) => {
+                    const langInfo = TRANSLATE_LANGS.find((l) => l.code === task.targetLanguage);
+                    return (
+                      <tr
+                        key={task.id}
+                        style={{ background: i % 2 === 0 ? "#0a0a0f" : "#0d0d17", borderBottom: i < filteredHistory.length - 1 ? "1px solid #1a1a2e" : "none" }}
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <Globe size={13} style={{ color: "#555570", flexShrink: 0 }} />
+                            <span className="text-sm text-white truncate" style={{ maxWidth: 160 }}>{task.fileName}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            {langInfo && <span className={`fi fi-${langInfo.fi}`} style={{ width: "18px", height: "14px", display: "inline-block", borderRadius: "2px", flexShrink: 0 }} />}
+                            <span className="text-sm" style={{ color: "#d1d5db" }}>{task.targetLanguageName}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                            style={
+                              task.status === "completed"
+                                ? { background: "rgba(34,197,94,0.12)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.25)" }
+                                : task.status === "processing"
+                                ? { background: "rgba(250,204,21,0.12)", color: "#fbbf24", border: "1px solid rgba(250,204,21,0.25)" }
+                                : { background: "rgba(239,68,68,0.12)", color: "#f87171", border: "1px solid rgba(239,68,68,0.25)" }
+                            }
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "currentColor" }} />
+                            {task.status === "completed" ? "Completado" : task.status === "processing" ? "Procesando" : "Error"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-xs" style={{ color: "#6b7280" }}>
+                            {new Date(task.createdAt).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {task.audioUrl && (
+                            <a
+                              href={task.audioUrl}
+                              download={`traduccion-${task.targetLanguage}-${task.id}.mp3`}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-blue-500/20"
+                              style={{ background: "rgba(59,130,246,0.1)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}
+                            >
+                              <Download size={11} /> Descargar
+                            </a>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {showBrowser && (
         <VoiceBrowser
