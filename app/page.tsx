@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useUser, UserButton } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
+import { UserMenu } from "@/components/UserMenu";
 import { ChevronDown, Check } from "lucide-react";
 import { AudioPlayer } from "./dashboard/AudioPlayer";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
@@ -411,7 +412,7 @@ export default function LandingPage() {
                 >
                   Dashboard
                 </Link>
-                <UserButton />
+                <UserMenu />
               </>
             ) : (
               <>
