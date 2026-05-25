@@ -7,6 +7,7 @@ import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, Info, LogOut } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
+import { UserMenu } from "@/components/UserMenu";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, formatCount } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
 import { PaymentModal, type BillingPlan } from "./PaymentModal";
@@ -4105,7 +4106,6 @@ function AvatarWithProgress({
 /* ─── Main Dashboard ──────────────────────────────────────── */
 export default function DashboardPage() {
   const { user } = useUser();
-  const { openUserProfile } = useClerk();
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get("tab") as Tab | null) ?? "home";
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
@@ -4271,20 +4271,7 @@ export default function DashboardPage() {
                 >
                   <HelpCircle size={15} />
                 </button>
-                {credits !== null && (() => {
-                  const planTotal = (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 5_000) + extraCredits;
-                  const used = Math.max(0, planTotal - credits);
-                  const initial = (user?.firstName ?? user?.emailAddresses?.[0]?.emailAddress ?? "U")[0].toUpperCase();
-                  return (
-                    <AvatarWithProgress
-                      used={used}
-                      total={planTotal}
-                      imageUrl={user?.imageUrl}
-                      initial={initial}
-                      onClick={openUserProfile}
-                    />
-                  );
-                })()}
+                <UserMenu />
               </div>
             </div>
           );
