@@ -102,18 +102,6 @@ const LANGS = [
   { code: "ru", label: "Ruso" },
   { code: "pt", label: "Portugués" },
 ];
-const LANGS = [
-  { code: "es", label: "Español" },
-  { code: "en", label: "Inglés" },
-  { code: "zh", label: "Chino" },
-  { code: "de", label: "Alemán" },
-  { code: "ja", label: "Japonés" },
-  { code: "fr", label: "Francés" },
-  { code: "ko", label: "Coreano" },
-  { code: "ar", label: "Árabe" },
-  { code: "ru", label: "Ruso" },
-  { code: "pt", label: "Portugués" },
-];
 const RECENT_KEY = "vf_recent_voices";
 const MAX_RECENT = 12;
 
