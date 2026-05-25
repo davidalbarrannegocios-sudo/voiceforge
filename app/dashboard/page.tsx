@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, Info } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, Info, LogOut } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, formatCount } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
@@ -53,7 +53,7 @@ function Sidebar({
   plan?: string;
   memberInfo?: { percentage: number; creditsLastDistributed: number; teamName: string } | null;
 }) {
-  const { openUserProfile } = useClerk();
+  const { openUserProfile, signOut } = useClerk();
   const { t } = useLang();
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -237,7 +237,7 @@ function Sidebar({
 
       {/* Upgrade button — hidden for enterprise */}
       {plan !== "enterprise" && (
-        <div style={{ padding: "0 12px 16px", flexShrink: 0 }}>
+        <div style={{ padding: "0 12px 0", flexShrink: 0 }}>
           <button
             onClick={() => { setActiveTab("billing"); onClose?.(); }}
             style={{
@@ -256,7 +256,6 @@ function Sidebar({
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(59,130,246,0.35)"; e.currentTarget.style.background = "#0d0d1e"; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "#0a0a14"; }}
           >
-            {/* diagonal stripe layer — always visible, unaffected by hover */}
             <div
               aria-hidden="true"
               style={{
@@ -274,6 +273,33 @@ function Sidebar({
           </button>
         </div>
       )}
+
+      {/* Sign out */}
+      <div style={{ padding: "8px 12px 16px", flexShrink: 0 }}>
+        <button
+          onClick={() => signOut({ redirectUrl: "/" })}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "8px 12px",
+            borderRadius: "8px",
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            fontSize: "13px",
+            fontWeight: 500,
+            color: "#7a3a3a",
+            transition: "background 0.15s, color 0.15s",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; e.currentTarget.style.color = "#f87171"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#7a3a3a"; }}
+        >
+          <LogOut size={15} style={{ flexShrink: 0 }} />
+          Cerrar sesión
+        </button>
+      </div>
     </aside>
   );
 }
