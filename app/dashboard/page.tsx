@@ -4270,6 +4270,7 @@ export default function DashboardPage() {
                 <UserMenu
                   used={credits !== null ? Math.max(0, (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 5_000) + extraCredits - credits) : undefined}
                   total={credits !== null ? (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 5_000) + extraCredits : undefined}
+                  plan={plan}
                 />
               </div>
             </div>
