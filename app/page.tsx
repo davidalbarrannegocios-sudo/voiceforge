@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useUser, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { useUser, UserButton } from "@clerk/nextjs";
 import { ChevronDown, Check } from "lucide-react";
 import { AudioPlayer } from "./dashboard/AudioPlayer";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
@@ -187,27 +187,18 @@ export default function LandingPage() {
     navCloseTimer.current = setTimeout(() => setActiveNav(null), 80);
   }
 
-  const HOME_DEMO_VOICE_IDS = [
-    "dfa5b230c8054f429e434f4a6e9bbdec",
-    "35199d5438854f5d9157c500479ab684",
-    "43e1948b1a544700bd88250916cd31e8",
-    "bfed5c0810a347dbb62e8ccce7f59c48",
-    "53042fcee6b84e138e72db017d9e50a6",
-    "05100dcc9dfd4af49ea96dc5affbe5b1",
+  const HOME_DEMO_VOICES: DemoVoice[] = [
+    { _id: "dfa5b230c8054f429e434f4a6e9bbdec", title: "Farid Dieck" },
+    { _id: "35199d5438854f5d9157c500479ab684", title: "Valentino" },
+    { _id: "43e1948b1a544700bd88250916cd31e8", title: "Hatsune Miku" },
+    { _id: "bfed5c0810a347dbb62e8ccce7f59c48", title: "Kasane Teto" },
+    { _id: "53042fcee6b84e138e72db017d9e50a6", title: "Idea Vilariño" },
+    { _id: "05100dcc9dfd4af49ea96dc5affbe5b1", title: "Narrador v2" },
   ];
 
   useEffect(() => {
-    Promise.all(
-      HOME_DEMO_VOICE_IDS.map((id) =>
-        fetch(`/api/fish-voice/${id}`)
-          .then((r) => (r.ok ? r.json() : null))
-          .catch(() => null)
-      )
-    ).then((results) => {
-      const voices: DemoVoice[] = results.filter((v): v is DemoVoice => v !== null && Boolean(v._id));
-      setDemoVoices(voices);
-      if (voices.length > 0) setSelectedVoice(voices[0]._id);
-    });
+    setDemoVoices(HOME_DEMO_VOICES);
+    setSelectedVoice(HOME_DEMO_VOICES[0]._id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -424,19 +415,16 @@ export default function LandingPage() {
               </>
             ) : (
               <>
-                <SignInButton mode="modal">
-                  <button className="text-sm text-gray-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-transparent hover:border-white/10">
-                    Iniciar sesión
-                  </button>
-                </SignInButton>
-                <SignUpButton mode="modal">
-                  <button
-                    className="text-sm font-semibold text-white px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5"
-                    style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
-                  >
-                    Empezar gratis
-                  </button>
-                </SignUpButton>
+                <Link href="/sign-in" className="text-sm text-gray-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-transparent hover:border-white/10">
+                  Iniciar sesión
+                </Link>
+                <Link
+                  href="/sign-up"
+                  className="text-sm font-semibold text-white px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5"
+                  style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
+                >
+                  Empezar gratis
+                </Link>
               </>
             )}
           </div>
@@ -772,14 +760,13 @@ export default function LandingPage() {
                       Ir al Dashboard →
                     </Link>
                   ) : (
-                    <SignUpButton mode="modal">
-                      <button
-                        className="font-semibold text-white transition-all hover:opacity-80 flex-shrink-0"
-                        style={{ fontSize: "13px", padding: "8px 18px", borderRadius: "8px", background: "#2563eb" }}
-                      >
-                        Empezar gratis →
-                      </button>
-                    </SignUpButton>
+                    <Link
+                      href="/sign-up"
+                      className="font-semibold text-white transition-all hover:opacity-80 flex-shrink-0"
+                      style={{ fontSize: "13px", padding: "8px 18px", borderRadius: "8px", background: "#2563eb" }}
+                    >
+                      Empezar gratis →
+                    </Link>
                   )}
                 </div>
               </div>
@@ -865,14 +852,13 @@ export default function LandingPage() {
                     Ir al Dashboard →
                   </Link>
                 ) : (
-                  <SignUpButton mode="modal">
-                    <button
-                      className="px-6 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
-                      style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 15px rgba(59,130,246,0.3)" }}
-                    >
-                      Empezar gratis →
-                    </button>
-                  </SignUpButton>
+                  <Link
+                    href="/sign-up"
+                    className="px-6 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
+                    style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 15px rgba(59,130,246,0.3)" }}
+                  >
+                    Empezar gratis →
+                  </Link>
                 )}
               </div>
 
@@ -1071,14 +1057,13 @@ export default function LandingPage() {
                   Ir al Dashboard →
                 </Link>
               ) : (
-                <SignUpButton mode="modal">
-                  <button
-                    className="px-8 py-4 rounded-xl font-semibold text-white text-base transition-all hover:-translate-y-1 relative"
-                    style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 8px 30px rgba(59,130,246,0.4)" }}
-                  >
-                    Empezar gratis →
-                  </button>
-                </SignUpButton>
+                <Link
+                  href="/sign-up"
+                  className="px-8 py-4 rounded-xl font-semibold text-white text-base transition-all hover:-translate-y-1 relative"
+                  style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 8px 30px rgba(59,130,246,0.4)" }}
+                >
+                  Empezar gratis →
+                </Link>
               )}
             </div>
           </div>
