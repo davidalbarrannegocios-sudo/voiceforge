@@ -4252,22 +4252,18 @@ export default function DashboardPage() {
                 <Icon size={16} style={{ color: "#4a4a65" }} />
                 <span className="hidden sm:inline" style={{ fontSize: "14px", fontWeight: 600, color: "#e5e7eb" }}>{title}</span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div className="flex items-center gap-2">
                 <button
                   onClick={toggleLang}
                   title="Español / English"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "50%", border: "1px solid #2a2a3e", background: "transparent", cursor: "pointer", color: "#4a4a65", transition: "color 0.15s, border-color 0.15s" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "#93c5fd"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#3b82f6"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "#4a4a65"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#2a2a3e"; }}
+                  className="w-9 h-9 flex items-center justify-center rounded-full border border-white/10 bg-transparent text-[#4a4a65] transition-colors hover:text-[#93c5fd] hover:border-blue-500 cursor-pointer"
                 >
                   <Languages size={15} />
                 </button>
                 <button
                   onClick={() => setSupportOpen(true)}
                   title="Soporte"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "50%", border: "1px solid #2a2a3e", background: "transparent", cursor: "pointer", color: "#4a4a65", transition: "color 0.15s, border-color 0.15s" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "#93c5fd"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#3b82f6"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "#4a4a65"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#2a2a3e"; }}
+                  className="w-9 h-9 flex items-center justify-center rounded-full border border-white/10 bg-transparent text-[#4a4a65] transition-colors hover:text-[#93c5fd] hover:border-blue-500 cursor-pointer"
                 >
                   <HelpCircle size={15} />
                 </button>

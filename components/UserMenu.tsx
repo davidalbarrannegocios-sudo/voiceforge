@@ -30,7 +30,7 @@ export function UserMenu({ used, total }: UserMenuProps = {}) {
 
   const showRing = used !== undefined && total !== undefined && total > 0;
   const pct = showRing ? Math.min(100, (used / total) * 100) : 0;
-  const r = 18;
+  const r = 16;
   const circumference = 2 * Math.PI * r;
   const strokeDashoffset = circumference - (pct / 100) * circumference;
   const ringColor = pct < 60 ? "#3b82f6" : pct < 85 ? "#f59e0b" : "#ef4444";
@@ -40,21 +40,20 @@ export function UserMenu({ used, total }: UserMenuProps = {}) {
       {/* Avatar trigger */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="relative flex-shrink-0"
-        style={{ width: showRing ? 40 : undefined, height: showRing ? 40 : undefined }}
+        className="relative flex-shrink-0 w-9 h-9"
         aria-label="Menú de usuario"
       >
         {showRing ? (
           <>
             <svg
-              style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}
-              width="40"
-              height="40"
+              className="absolute inset-0 -rotate-90"
+              width="36"
+              height="36"
             >
-              <circle cx="20" cy="20" r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="2" />
+              <circle cx="18" cy="18" r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="2" />
               <circle
-                cx="20"
-                cy="20"
+                cx="18"
+                cy="18"
                 r={r}
                 fill="none"
                 stroke={ringColor}
@@ -70,12 +69,12 @@ export function UserMenu({ used, total }: UserMenuProps = {}) {
                 src={user.imageUrl}
                 alt={user.fullName ?? "Avatar"}
                 className="absolute rounded-full object-cover"
-                style={{ top: 4, left: 4, width: "calc(100% - 8px)", height: "calc(100% - 8px)" }}
+                style={{ top: 3, left: 3, width: "calc(100% - 6px)", height: "calc(100% - 6px)" }}
               />
             ) : (
               <div
                 className="absolute rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm"
-                style={{ top: 4, left: 4, width: "calc(100% - 8px)", height: "calc(100% - 8px)" }}
+                style={{ top: 3, left: 3, width: "calc(100% - 6px)", height: "calc(100% - 6px)" }}
               >
                 {initial}
               </div>
