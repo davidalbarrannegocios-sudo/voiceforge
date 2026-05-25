@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, Info } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, formatCount } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
@@ -3193,16 +3193,6 @@ function WithdrawModal({ balance, onClose, onSuccess }: { balance: number; onClo
   );
 }
 
-function ReferralTabRedirect() {
-  const router = useRouter();
-  useEffect(() => { router.push("/dashboard/referidos"); }, [router]);
-  return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 200, color: "#555570", fontSize: "14px" }}>
-      Redirigiendo…
-    </div>
-  );
-}
-
 function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referrals, setReferrals] = useState<ReferralEntry[]>([]);
@@ -3215,17 +3205,13 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawMsg, setWithdrawMsg] = useState<string | null>(null);
 
-  // Redeem plan state
+  // Redeem state
+  const [openRedeem, setOpenRedeem] = useState<"plan" | "chars" | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<typeof REDEEM_PLANS[number]["key"]>("starter");
-  const [redeemingPlan, setRedeemingPlan] = useState(false);
-  const [planMsg, setPlanMsg] = useState<{ ok: boolean; text: string } | null>(null);
-
-  // Redeem chars state
   const [selectedPack, setSelectedPack] = useState<typeof REDEEM_PACKS[number]["key"]>("100k");
+  const [redeemingPlan, setRedeemingPlan] = useState(false);
   const [redeemingChars, setRedeemingChars] = useState(false);
-  const [charsMsg, setCharsMsg] = useState<{ ok: boolean; text: string } | null>(null);
-
-  const historyRef = useRef<HTMLDivElement>(null);
+  const [redeemMsg, setRedeemMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const fetchReferral = useCallback(async () => {
     setLoading(true);
@@ -3244,9 +3230,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
 
   useEffect(() => { fetchReferral(); }, [fetchReferral]);
 
-  const referralLink = referralCode
-    ? `https://elitelabs.es/?ref=${referralCode}`
-    : "";
+  const referralLink = referralCode ? `https://elitelabs.es/?ref=${referralCode}` : "";
 
   async function handleCopy() {
     if (!referralLink) return;
@@ -3257,7 +3241,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
 
   async function handleRedeemPlan() {
     setRedeemingPlan(true);
-    setPlanMsg(null);
+    setRedeemMsg(null);
     try {
       const res = await fetch("/api/referral/redeem", {
         method: "POST",
@@ -3266,13 +3250,13 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setPlanMsg({ ok: false, text: data.error ?? "Error al canjear" });
+        setRedeemMsg({ ok: false, text: data.error ?? "Error al canjear" });
       } else {
         const plan = REDEEM_PLANS.find(p => p.key === selectedPlan);
-        setPlanMsg({ ok: true, text: `¡${plan?.chars.toLocaleString("es-ES")} caracteres añadidos!` });
+        setRedeemMsg({ ok: true, text: `¡${plan?.chars.toLocaleString("es-ES")} caracteres añadidos!` });
         onClaimed();
-        await fetchReferral();
-        setTimeout(() => setPlanMsg(null), 5000);
+        fetchReferral();
+        setTimeout(() => setRedeemMsg(null), 5000);
       }
     } finally {
       setRedeemingPlan(false);
@@ -3281,7 +3265,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
 
   async function handleRedeemChars() {
     setRedeemingChars(true);
-    setCharsMsg(null);
+    setRedeemMsg(null);
     try {
       const res = await fetch("/api/referral/redeem", {
         method: "POST",
@@ -3290,38 +3274,45 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setCharsMsg({ ok: false, text: data.error ?? "Error al canjear" });
+        setRedeemMsg({ ok: false, text: data.error ?? "Error al canjear" });
       } else {
         const pack = REDEEM_PACKS.find(p => p.key === selectedPack);
-        setCharsMsg({ ok: true, text: `¡${pack?.chars.toLocaleString("es-ES")} caracteres añadidos!` });
+        setRedeemMsg({ ok: true, text: `¡${pack?.chars.toLocaleString("es-ES")} caracteres añadidos!` });
         onClaimed();
-        await fetchReferral();
-        setTimeout(() => setCharsMsg(null), 5000);
+        fetchReferral();
+        setTimeout(() => setRedeemMsg(null), 5000);
       }
     } finally {
       setRedeemingChars(false);
     }
   }
 
-  function centsToUSD(cents: number) {
-    return `$${(cents / 100).toFixed(2)}`;
-  }
+  function centsToUSD(cents: number) { return `$${(cents / 100).toFixed(2)}`; }
 
   const currentPlan = REDEEM_PLANS.find(p => p.key === selectedPlan)!;
   const currentPack = REDEEM_PACKS.find(p => p.key === selectedPack)!;
   const canRedeemPlan = referralBalance >= currentPlan.price * 100;
   const canRedeemChars = referralBalance >= currentPack.price * 100;
 
-  const card = { background: "#12121a", border: "1px solid #2a2a3e" };
   const spin = (
-    <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    <svg style={{ width: 13, height: 13, animation: "spin 1s linear infinite", flexShrink: 0 }} fill="none" viewBox="0 0 24 24">
+      <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
     </svg>
   );
 
+  // Outline button style for the Canjear column
+  const redeemRowBtn = (active: boolean): React.CSSProperties => ({
+    width: "100%", textAlign: "center" as const, padding: "10px 14px",
+    borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 500,
+    background: active ? "#1a1a2e" : "transparent",
+    border: `1px solid ${active ? "#3a3a5e" : "#2a2a3e"}`,
+    color: active ? "#e5e7eb" : "#9ca3af",
+    transition: "all 0.15s",
+  });
+
   return (
-    <div className="max-w-2xl space-y-5">
+    <div style={{ maxWidth: "56rem", margin: "0 auto" }}>
       {showWithdrawModal && (
         <WithdrawModal
           balance={referralBalance}
@@ -3334,253 +3325,283 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
         />
       )}
 
-      {/* Hero */}
-      <div className="mb-2">
-        <h1 className="text-2xl font-bold text-white mb-1">Gana recompensas por referir amigos</h1>
-        <p className="text-sm" style={{ color: "#8888a8" }}>
-          Comparte Elite Labs y gana recompensas por cada persona que se una
-        </p>
-      </div>
+      {/* Page title */}
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: "#fff", marginBottom: 32 }}>
+        Gana recompensas de dos maneras
+      </h1>
 
-      {/* ── Card: Comparte tu enlace ── */}
-      <div className="rounded-2xl p-6" style={card}>
-        <p className="text-sm font-semibold text-white mb-4">Comparte tu enlace</p>
+      {/* ── SECCIÓN 1 ───────────────────────────────────────── */}
+      <div style={{ paddingBottom: 36, marginBottom: 36, borderBottom: "1px solid #1e1e2e" }}>
 
-        {loading ? (
-          <div className="h-10 rounded-xl animate-pulse mb-4" style={{ background: "#1a1a2e" }} />
-        ) : (
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex-1 px-3 py-2.5 rounded-xl text-sm font-mono truncate" style={{ background: "#0a0a0f", border: "1px solid #2a2a3e", color: "#93c5fd" }}>
-              {referralLink || "—"}
+        {/* Section header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22, gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Gift size={15} style={{ color: "#3b82f6", flexShrink: 0 }} />
+            <span style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>
+              Comparte tu enlace y obtén créditos de producto
+            </span>
+            <div style={{ position: "relative", display: "inline-flex" }}>
+              <button
+                style={{ background: "none", border: "none", cursor: "default", color: "#555570", padding: 0, display: "flex" }}
+                title="Comparte tu enlace y cuando alguien pague recibirás saldo que puedes canjear por caracteres."
+              >
+                <Info size={13} />
+              </button>
             </div>
-            <button
-              onClick={handleCopy}
-              disabled={!referralLink}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all disabled:opacity-50 flex-shrink-0"
-              style={copied
-                ? { background: "rgba(34,197,94,0.15)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.3)" }
-                : { background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }
-              }
-            >
-              <Copy size={12} /> {copied ? "¡Copiado!" : "Copiar"}
-            </button>
           </div>
-        )}
-
-        <div className="flex items-center gap-6 mb-4">
-          <div>
-            <p className="text-xs mb-0.5" style={{ color: "#8888a8" }}>Disponible para canjear</p>
-            <p className="text-lg font-bold" style={{ color: "#4ade80" }}>
-              {loading ? "—" : centsToUSD(referralBalance)}
-            </p>
-          </div>
-          <div style={{ width: 1, height: 36, background: "#2a2a3e" }} />
-          <div>
-            <p className="text-xs mb-0.5" style={{ color: "#8888a8" }}>Ganancias totales</p>
-            <p className="text-lg font-bold text-white">
-              {loading ? "—" : centsToUSD(referralEarned)}
-            </p>
-          </div>
+          <button
+            onClick={() => setShowHistory(h => !h)}
+            style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#6b7280", whiteSpace: "nowrap", flexShrink: 0 }}
+          >
+            Ver historial de recompensas <ChevronRight size={13} />
+          </button>
         </div>
 
-        <button
-          onClick={() => { setShowHistory(h => !h); setTimeout(() => historyRef.current?.scrollIntoView({ behavior: "smooth" }), 50); }}
-          className="text-xs font-medium transition-colors hover:text-blue-300"
-          style={{ color: "#3b82f6", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-        >
-          Ver historial de recompensas →
-        </button>
-      </div>
+        {/* Two-column body */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 220px", gap: "40px 48px", alignItems: "start" }}>
 
-      {/* ── Card: Canjear recompensas ── */}
-      <div className="rounded-2xl p-6" style={card}>
-        <p className="text-sm font-semibold text-white mb-5">Canjear recompensas</p>
+          {/* Left: link + stats */}
+          <div>
+            <p style={{ fontSize: 12, color: "#8888a8", marginBottom: 8 }}>Tu enlace único:</p>
+            <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+              <div style={{ flex: 1, padding: "9px 14px", borderRadius: 10, background: "transparent", border: "1px solid #2a2a3e", fontSize: 13, fontFamily: "monospace", color: "#93c5fd", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {loading ? "—" : (referralLink || "—")}
+              </div>
+              <button
+                onClick={handleCopy}
+                disabled={!referralLink}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6, padding: "9px 14px",
+                  borderRadius: 10, fontSize: 12, fontWeight: 600, border: "1px solid #2a2a3e",
+                  background: "transparent", cursor: referralLink ? "pointer" : "not-allowed",
+                  color: copied ? "#4ade80" : "#9ca3af", flexShrink: 0, transition: "color 0.15s",
+                  opacity: referralLink ? 1 : 0.4,
+                }}
+              >
+                {copied ? <Check size={13} /> : <Copy size={13} />}
+                {copied ? "Copiado" : "Copiar"}
+              </button>
+            </div>
 
-        <div className="grid gap-4">
-          {/* Option 1: Plan credits */}
-          <div className="rounded-xl p-4" style={{ background: "#0d0d17", border: "1px solid #2a2a3e" }}>
-            <div className="flex items-start justify-between gap-3 mb-3">
+            {/* Balance stats */}
+            <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
               <div>
-                <p className="text-sm font-medium text-white">Créditos de plan</p>
-                <p className="text-xs mt-0.5" style={{ color: "#8888a8" }}>
-                  Canjea tu saldo por caracteres equivalentes a un mes de plan
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", display: "inline-block", flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, color: "#8888a8" }}>Disponible para canjear</span>
+                </div>
+                <p style={{ fontSize: 22, fontWeight: 800, color: "#4ade80", lineHeight: 1 }}>
+                  {loading ? <span style={{ color: "#3a3a52" }}>—</span> : centsToUSD(referralBalance)}
+                </p>
+              </div>
+              <div style={{ width: 1, height: 40, background: "#2a2a3e", flexShrink: 0 }} />
+              <div>
+                <p style={{ fontSize: 11, color: "#8888a8", marginBottom: 4 }}>Créditos Totales Ganados</p>
+                <p style={{ fontSize: 22, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
+                  {loading ? <span style={{ color: "#3a3a52" }}>—</span> : centsToUSD(referralEarned)}
                 </p>
               </div>
             </div>
+          </div>
 
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex rounded-lg overflow-hidden flex-wrap gap-1">
-                {REDEEM_PLANS.map((p) => (
-                  <button
-                    key={p.key}
-                    onClick={() => setSelectedPlan(p.key)}
-                    className="px-3 py-1.5 text-xs font-medium transition-all rounded-lg"
-                    style={selectedPlan === p.key
-                      ? { background: "rgba(59,130,246,0.2)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
-                      : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a3e" }
-                    }
-                  >
-                    {p.label} <span style={{ color: selectedPlan === p.key ? "#93c5fd" : "#4a4a65" }}>${p.price}</span>
-                  </button>
+          {/* Right: Canjear column */}
+          <div>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#555570", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>
+              Canjear
+            </p>
+
+            {/* Plan button */}
+            <button
+              onClick={() => setOpenRedeem(o => o === "plan" ? null : "plan")}
+              style={redeemRowBtn(openRedeem === "plan")}
+            >
+              Plan de 1 mes
+            </button>
+
+            {openRedeem === "plan" && (
+              <div style={{ marginTop: 8, padding: "14px", background: "#0d0d17", borderRadius: 10, border: "1px solid #2a2a3e", marginBottom: 8 }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                  {REDEEM_PLANS.map(p => (
+                    <button
+                      key={p.key}
+                      onClick={() => setSelectedPlan(p.key)}
+                      style={{
+                        padding: "5px 10px", borderRadius: 8, fontSize: 12, fontWeight: 500,
+                        cursor: "pointer", transition: "all 0.15s",
+                        ...(selectedPlan === p.key
+                          ? { background: "rgba(59,130,246,0.2)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
+                          : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a3e" }),
+                      }}
+                    >
+                      {p.label} <span style={{ opacity: 0.7 }}>${p.price}</span>
+                    </button>
+                  ))}
+                </div>
+                <p style={{ fontSize: 11, color: "#6b7280", marginBottom: 10 }}>
+                  {currentPlan.chars.toLocaleString("es-ES")} chars
+                  {!canRedeemPlan && <span style={{ color: "#f87171" }}> · saldo insuficiente</span>}
+                </p>
+                <button
+                  onClick={handleRedeemPlan}
+                  disabled={!canRedeemPlan || redeemingPlan}
+                  style={{ width: "100%", padding: "8px", borderRadius: 8, fontSize: 12, fontWeight: 700, border: "none", cursor: canRedeemPlan && !redeemingPlan ? "pointer" : "not-allowed", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", opacity: canRedeemPlan && !redeemingPlan ? 1 : 0.45, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                >
+                  {redeemingPlan ? spin : null} Canjear plan
+                </button>
+              </div>
+            )}
+
+            {/* Chars button */}
+            <button
+              onClick={() => setOpenRedeem(o => o === "chars" ? null : "chars")}
+              style={{ ...redeemRowBtn(openRedeem === "chars"), marginTop: openRedeem === "plan" ? 0 : 8 }}
+            >
+              Caracteres extra
+            </button>
+
+            {openRedeem === "chars" && (
+              <div style={{ marginTop: 8, padding: "14px", background: "#0d0d17", borderRadius: 10, border: "1px solid #2a2a3e" }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                  {REDEEM_PACKS.map(p => (
+                    <button
+                      key={p.key}
+                      onClick={() => setSelectedPack(p.key)}
+                      style={{
+                        padding: "5px 10px", borderRadius: 8, fontSize: 12, fontWeight: 500,
+                        cursor: "pointer", transition: "all 0.15s",
+                        ...(selectedPack === p.key
+                          ? { background: "rgba(139,92,246,0.2)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.4)" }
+                          : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a3e" }),
+                      }}
+                    >
+                      {p.label} <span style={{ opacity: 0.7 }}>${p.price}</span>
+                    </button>
+                  ))}
+                </div>
+                <p style={{ fontSize: 11, color: "#6b7280", marginBottom: 10 }}>
+                  {currentPack.chars.toLocaleString("es-ES")} chars
+                  {!canRedeemChars && <span style={{ color: "#f87171" }}> · saldo insuficiente</span>}
+                </p>
+                <button
+                  onClick={handleRedeemChars}
+                  disabled={!canRedeemChars || redeemingChars}
+                  style={{ width: "100%", padding: "8px", borderRadius: 8, fontSize: 12, fontWeight: 700, border: "none", cursor: canRedeemChars && !redeemingChars ? "pointer" : "not-allowed", background: "linear-gradient(135deg,#8b5cf6,#7c3aed)", color: "#fff", opacity: canRedeemChars && !redeemingChars ? 1 : 0.45, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                >
+                  {redeemingChars ? spin : null} Canjear
+                </button>
+              </div>
+            )}
+
+            {redeemMsg && (
+              <p style={{ fontSize: 12, marginTop: 10, fontWeight: 600, color: redeemMsg.ok ? "#4ade80" : "#f87171" }}>
+                {redeemMsg.ok ? "✓ " : ""}{redeemMsg.text}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* History (inline, below the two columns) */}
+        {showHistory && (
+          <div style={{ marginTop: 28 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: "#fff", marginBottom: 14 }}>Historial de recompensas</p>
+            {loading ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {[1, 2].map(i => <div key={i} style={{ height: 48, borderRadius: 10, background: "#1a1a2e" }} />)}
+              </div>
+            ) : referrals.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "32px 0" }}>
+                <Gift size={24} style={{ color: "#2a2a3e", marginBottom: 8 }} />
+                <p style={{ fontSize: 13, color: "#6b7280" }}>Aún no tienes referidos</p>
+                <p style={{ fontSize: 12, color: "#4a4a65", marginTop: 4 }}>Comparte tu enlace y empieza a ganar</p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {referrals.map((r, i) => (
+                  <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderRadius: 10, background: "#0d0d17", border: "1px solid #1e1e2e" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg,#3b82f6,#2563eb)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{i + 1}</div>
+                      <div>
+                        <p style={{ fontSize: 13, fontWeight: 500, color: "#e5e7eb" }}>Referido #{i + 1}</p>
+                        <p style={{ fontSize: 11, color: "#6b7280" }}>{formatDate(r.createdAt)}</p>
+                      </div>
+                    </div>
+                    <span style={{
+                      fontSize: 11, fontWeight: 600, padding: "2px 9px", borderRadius: "999px",
+                      ...(r.status === "claimed"
+                        ? { background: "rgba(34,197,94,0.12)", color: "#4ade80" }
+                        : r.status === "rewarded"
+                        ? { background: "rgba(59,130,246,0.12)", color: "#93c5fd" }
+                        : { background: "rgba(255,255,255,0.06)", color: "#8888a8" })
+                    }}>
+                      {r.status === "claimed" ? "Canjeado" : r.status === "rewarded" ? "Completado" : "Pendiente"}
+                    </span>
+                  </div>
                 ))}
               </div>
-            </div>
-
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs" style={{ color: "#8888a8" }}>
-                Obtienes <strong className="text-white">{currentPlan.chars.toLocaleString("es-ES")} chars</strong> · requiere <strong className="text-white">${currentPlan.price}</strong>
-                {!canRedeemPlan && <span style={{ color: "#f87171" }}> (saldo insuficiente)</span>}
-              </p>
-              <button
-                onClick={handleRedeemPlan}
-                disabled={!canRedeemPlan || redeemingPlan}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff" }}
-              >
-                {redeemingPlan ? spin : null} Canjear
-              </button>
-            </div>
-            {planMsg && (
-              <p className="text-xs mt-2 font-medium" style={{ color: planMsg.ok ? "#4ade80" : "#f87171" }}>{planMsg.text}</p>
             )}
           </div>
-
-          {/* Option 2: Extra characters */}
-          <div className="rounded-xl p-4" style={{ background: "#0d0d17", border: "1px solid #2a2a3e" }}>
-            <div className="mb-3">
-              <p className="text-sm font-medium text-white">Caracteres extra</p>
-              <p className="text-xs mt-0.5" style={{ color: "#8888a8" }}>
-                Añade caracteres extra a tu cuenta al precio actual de la tienda
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-1 mb-3">
-              {REDEEM_PACKS.map((p) => (
-                <button
-                  key={p.key}
-                  onClick={() => setSelectedPack(p.key)}
-                  className="px-3 py-1.5 text-xs font-medium transition-all rounded-lg"
-                  style={selectedPack === p.key
-                    ? { background: "rgba(139,92,246,0.2)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.4)" }
-                    : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a3e" }
-                  }
-                >
-                  {p.label.replace(" caracteres", "")} <span style={{ color: selectedPack === p.key ? "#a78bfa" : "#4a4a65" }}>${p.price}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs" style={{ color: "#8888a8" }}>
-                Obtienes <strong className="text-white">{currentPack.chars.toLocaleString("es-ES")} chars</strong> · requiere <strong className="text-white">${currentPack.price}</strong>
-                {!canRedeemChars && <span style={{ color: "#f87171" }}> (saldo insuficiente)</span>}
-              </p>
-              <button
-                onClick={handleRedeemChars}
-                disabled={!canRedeemChars || redeemingChars}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ background: "linear-gradient(135deg,#8b5cf6,#7c3aed)", color: "#fff" }}
-              >
-                {redeemingChars ? spin : null} Canjear caracteres
-              </button>
-            </div>
-            {charsMsg && (
-              <p className="text-xs mt-2 font-medium" style={{ color: charsMsg.ok ? "#4ade80" : "#f87171" }}>{charsMsg.text}</p>
-            )}
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* ── Card: Comisión en efectivo ── */}
-      <div className="rounded-2xl p-6" style={{ background: "linear-gradient(135deg, #0f1a2e 0%, #12121a 100%)", border: `1px solid ${canWithdraw ? "rgba(74,222,128,0.25)" : "rgba(59,130,246,0.2)"}` }}>
-        <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: canWithdraw ? "rgba(74,222,128,0.12)" : "rgba(59,130,246,0.12)" }}>
-            <CreditCard size={18} style={{ color: canWithdraw ? "#4ade80" : "#3b82f6" }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <p className="text-sm font-semibold text-white">Comisión en efectivo</p>
-              {canWithdraw && (
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(74,222,128,0.15)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.3)" }}>
-                  Afiliado aprobado
-                </span>
-              )}
-            </div>
-            <p className="text-sm mb-1" style={{ color: "#9ca3af" }}>
-              Gana un <strong style={{ color: "#93c5fd" }}>5% en efectivo</strong> por cada referido que pague
-            </p>
-            <p className="text-xs mb-4" style={{ color: "#6b7280" }}>Pagos vía PayPal o transferencia internacional</p>
-
-            {withdrawMsg && (
-              <p className="text-xs mb-3 font-medium" style={{ color: "#4ade80" }}>{withdrawMsg}</p>
-            )}
-
-            <div className="flex items-center gap-3 flex-wrap">
-              {canWithdraw ? (
-                <button
-                  onClick={() => setShowWithdrawModal(true)}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl transition-all"
-                  style={{ background: "linear-gradient(135deg,#16a34a,#15803d)", color: "#fff", border: "none", cursor: "pointer" }}
-                >
-                  Retirar en efectivo →
-                </button>
-              ) : (
-                <a
-                  href="/dashboard/afiliados"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold transition-colors hover:text-blue-300"
-                  style={{ color: "#3b82f6" }}
-                >
-                  Solicitar más información →
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Historial de referidos ── */}
-      {showHistory && (
-        <div ref={historyRef} className="rounded-2xl p-6" style={card}>
-          <p className="text-sm font-semibold text-white mb-4">Historial de recompensas</p>
-          {loading ? (
-            <div className="space-y-2">{[1, 2].map(i => <div key={i} className="h-12 rounded-xl animate-pulse" style={{ background: "#1a1a2e" }} />)}</div>
-          ) : referrals.length === 0 ? (
-            <div className="text-center py-10">
-              <Gift size={28} style={{ color: "#2a2a3e", marginBottom: 8 }} className="mx-auto" />
-              <p className="text-sm" style={{ color: "#6b7280" }}>Aún no tienes referidos</p>
-              <p className="text-xs mt-1" style={{ color: "#4a4a65" }}>Comparte tu enlace y empieza a ganar</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {referrals.map((r, i) => (
-                <div key={r.id} className="flex items-center justify-between p-3.5 rounded-xl" style={{ background: "#0d0d17", border: "1px solid #1a1a2e" }}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}>
-                      {i + 1}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-white">Referido #{i + 1}</p>
-                      <p className="text-xs" style={{ color: "#6b7280" }}>{formatDate(r.createdAt)}</p>
-                    </div>
-                  </div>
-                  <span
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
-                    style={r.status === "claimed"
-                      ? { background: "rgba(34,197,94,0.12)", color: "#4ade80" }
-                      : r.status === "rewarded"
-                      ? { background: "rgba(59,130,246,0.15)", color: "#93c5fd" }
-                      : { background: "rgba(255,255,255,0.06)", color: "#8888a8" }
-                    }
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: "currentColor" }} />
-                    {r.status === "claimed" ? "Canjeado" : r.status === "rewarded" ? "Completado" : "Pendiente"}
-                  </span>
-                </div>
-              ))}
-            </div>
+      {/* ── SECCIÓN 2 ───────────────────────────────────────── */}
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+          <DollarSign size={15} style={{ color: canWithdraw ? "#4ade80" : "#eab308", flexShrink: 0 }} />
+          <span style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>
+            Comparte tu enlace y recibe comisiones en efectivo
+          </span>
+          {canWithdraw && (
+            <span style={{ fontSize: 11, fontWeight: 700, padding: "1px 8px", borderRadius: "999px", background: "rgba(74,222,128,0.12)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.25)", flexShrink: 0 }}>
+              Afiliado aprobado
+            </span>
           )}
+          <div style={{ display: "inline-flex" }}>
+            <button style={{ background: "none", border: "none", cursor: "default", color: "#555570", padding: 0, display: "flex" }} title="Gana un 5% en efectivo por cada pago de tus referidos. Requiere aprobación previa del equipo.">
+              <Info size={13} />
+            </button>
+          </div>
         </div>
-      )}
+
+        <p style={{ fontSize: 13, color: "#9ca3af", marginBottom: 20 }}>
+          Gana un <strong style={{ color: "#e5e7eb" }}>5% de comisión en efectivo</strong> por cada referido que pague
+        </p>
+
+        {withdrawMsg && (
+          <p style={{ fontSize: 13, color: "#4ade80", fontWeight: 600, marginBottom: 14 }}>✓ {withdrawMsg}</p>
+        )}
+
+        {canWithdraw ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+            <div>
+              <p style={{ fontSize: 11, color: "#8888a8", marginBottom: 3 }}>Disponible para retirar</p>
+              <p style={{ fontSize: 20, fontWeight: 800, color: "#4ade80" }}>{centsToUSD(referralBalance)}</p>
+            </div>
+            <button
+              onClick={() => setShowWithdrawModal(true)}
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 18px", borderRadius: 10, background: "rgba(74,222,128,0.1)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.25)", cursor: "pointer", fontSize: 13, fontWeight: 600 }}
+            >
+              Retirar en efectivo <ChevronRight size={13} />
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            <a
+              href="/dashboard/afiliados"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 18px", borderRadius: 10, background: "transparent", color: "#e5e7eb", border: "1px solid #3a3a52", fontSize: 13, fontWeight: 600, textDecoration: "none" }}
+            >
+              Más información y solicitar
+            </a>
+            <span style={{ fontSize: 13, color: "#555570" }}>
+              ¿Ya estás aprobado?{" "}
+              <a href="/dashboard/afiliados" style={{ color: "#6b7280", textDecoration: "underline" }}>
+                Ver tu panel →
+              </a>
+            </span>
+          </div>
+        )}
+      </div>
+
+      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 }
@@ -4256,7 +4277,7 @@ export default function DashboardPage() {
           />
         )}
         {activeTab === "referral" && (
-          <ReferralTabRedirect />
+          <ReferralTab onClaimed={fetchCredits} />
         )}
         {activeTab === "translate" && (
           <TranslateTab
