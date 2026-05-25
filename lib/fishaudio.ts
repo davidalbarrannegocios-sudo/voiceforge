@@ -1,3 +1,8 @@
+import { execFile } from "child_process";
+import { writeFile, readFile, unlink } from "fs/promises";
+import { tmpdir } from "os";
+import { join } from "path";
+import { randomUUID } from "crypto";
 import { uploadToR2 } from "./r2";
 
 const FISH_AUDIO_BASE = "https://api.fish.audio";
@@ -127,6 +132,37 @@ async function processInBatches(chunks: string[], fetchFn: (index: number) => Pr
   return results;
 }
 
+// atempo acepta [0.5, 2.0]; encadenamos filtros para valores fuera de rango
+function buildAtempoFilter(speed: number): string {
+  if (speed < 0.5) return `atempo=0.5,atempo=${(speed / 0.5).toFixed(4)}`;
+  if (speed > 2.0) return `atempo=2.0,atempo=${(speed / 2.0).toFixed(4)}`;
+  return `atempo=${speed.toFixed(4)}`;
+}
+
+async function adjustSpeed(audioBuffer: Buffer, speed: number): Promise<Buffer> {
+  if (speed === 1.0) return audioBuffer;
+
+  const id = randomUUID();
+  const inputPath = join(tmpdir(), `${id}_input.mp3`);
+  const outputPath = join(tmpdir(), `${id}_output.mp3`);
+
+  await writeFile(inputPath, audioBuffer);
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      execFile(
+        "ffmpeg",
+        ["-i", inputPath, "-filter:a", buildAtempoFilter(speed), "-y", outputPath],
+        (err) => (err ? reject(err) : resolve()),
+      );
+    });
+    return await readFile(outputPath);
+  } finally {
+    await unlink(inputPath).catch(() => {});
+    await unlink(outputPath).catch(() => {});
+  }
+}
+
 export interface GenerateResult {
   audio_url: string;
   duration_seconds: number;
@@ -177,20 +213,26 @@ export async function fishAudioGenerate({
       if (temperature !== undefined) payload.temperature = temperature;
       if (topP !== undefined) payload.top_p = topP;
     }
-    if (prosody && (prosody.speed !== 1 || prosody.volume !== 1 || prosody.pitch !== 0)) {
+    // speed se aplica con ffmpeg post-proceso — nunca se envía a Fish Audio
+    if (prosody && (prosody.volume !== 1 || prosody.pitch !== 0)) {
       payload.prosody = {
-        speed: prosody.speed,
         volume: prosody.volume,
         pitch: prosody.pitch !== undefined && prosody.pitch !== 0
           ? `${prosody.pitch > 0 ? "+" : ""}${prosody.pitch}st`
           : undefined,
       };
     }
-    console.log("[fishaudio] payload prosody:", JSON.stringify(payload.prosody));
+    console.log("[fishaudio] payload prosody (sin speed):", JSON.stringify(payload.prosody));
     return fetchChunk(apiKey, payload, i, chunks.length, signal);
   }, batchSize);
 
-  const audioBuffer = audioBuffers.length === 1 ? audioBuffers[0] : Buffer.concat(audioBuffers);
+  let audioBuffer = audioBuffers.length === 1 ? audioBuffers[0] : Buffer.concat(audioBuffers);
+
+  const speed = prosody?.speed ?? 1.0;
+  if (speed !== 1.0) {
+    console.log(`[FishAudio] aplicando ajuste de velocidad x${speed} con ffmpeg`);
+    audioBuffer = await adjustSpeed(audioBuffer, speed);
+  }
 
   // Estimate duration from buffer size at 128 kbps CBR
   const duration_seconds = Math.round((audioBuffer.length * 8) / 128_000 * 10) / 10;
