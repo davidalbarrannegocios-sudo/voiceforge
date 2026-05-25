@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useUser, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { ChevronDown, Check } from "lucide-react";
 import { AudioPlayer } from "./dashboard/AudioPlayer";
+import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 
 /* ─── Types ─────────────────────────────────────────────────── */
 
@@ -659,31 +660,7 @@ export default function LandingPage() {
                                   background: active ? "#1a1a2e" : "transparent",
                                 }}
                               >
-                                {proxiedSrc ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img
-                                    src={proxiedSrc}
-                                    alt=""
-                                    className="rounded-full object-cover flex-shrink-0"
-                                    style={{ width: "30px", height: "30px" }}
-                                    onError={(e) => {
-                                      const t = e.currentTarget;
-                                      t.style.display = "none";
-                                      const fb = t.nextElementSibling as HTMLElement | null;
-                                      if (fb) fb.style.display = "flex";
-                                    }}
-                                  />
-                                ) : null}
-                                <div
-                                  className="rounded-full items-center justify-center text-white font-bold flex-shrink-0"
-                                  style={{
-                                    width: "30px", height: "30px", fontSize: "12px",
-                                    background: "linear-gradient(135deg,#3b82f6,#2563eb)",
-                                    display: proxiedSrc ? "none" : "flex",
-                                  }}
-                                >
-                                  {voice.title[0]?.toUpperCase()}
-                                </div>
+                                <VoiceAvatarGenerative seed={voice._id} size={30} />
                                 <span
                                   className="truncate font-medium"
                                   style={{ fontSize: "13px", color: active ? "#e5e7eb" : "#555570" }}
@@ -959,22 +936,7 @@ export default function LandingPage() {
 
                     {/* Voice row */}
                     <div className="flex items-center gap-3">
-                      {fv?.cover_image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={fv.cover_image}
-                          alt=""
-                          className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                        />
-                      ) : (
-                        <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                          style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
-                        >
-                          {fv?.title[0]?.toUpperCase() ?? "V"}
-                        </div>
-                      )}
+                      <VoiceAvatarGenerative seed={fv?._id ?? "default"} size={32} />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-white truncate">{fv?.title ?? "Cargando..."}</p>
                         <p className="text-xs" style={{ color: "#6b7280" }}>Español</p>
