@@ -91,16 +91,16 @@ function getAge(tags: string[]): string | null {
 }
 
 const LANGS = [
-  { code: "es", label: "Español" },
-  { code: "en", label: "Inglés" },
-  { code: "zh", label: "Chino" },
-  { code: "de", label: "Alemán" },
-  { code: "ja", label: "Japonés" },
-  { code: "fr", label: "Francés" },
-  { code: "ko", label: "Coreano" },
-  { code: "ar", label: "Árabe" },
-  { code: "ru", label: "Ruso" },
-  { code: "pt", label: "Portugués" },
+  { code: "es", label: "Español",   fi: "es" },
+  { code: "en", label: "Inglés",    fi: "us" },
+  { code: "zh", label: "Chino",     fi: "cn" },
+  { code: "de", label: "Alemán",    fi: "de" },
+  { code: "ja", label: "Japonés",   fi: "jp" },
+  { code: "fr", label: "Francés",   fi: "fr" },
+  { code: "ko", label: "Coreano",   fi: "kr" },
+  { code: "ar", label: "Árabe",     fi: "sa" },
+  { code: "ru", label: "Ruso",      fi: "ru" },
+  { code: "pt", label: "Portugués", fi: "br" },
 ];
 const RECENT_KEY = "vf_recent_voices";
 const MAX_RECENT = 12;
@@ -1035,7 +1035,11 @@ export function VoiceBrowser({
 
                   {/* Language dropdown */}
                   <CustomSelect
-                    options={LANGS.map(({ code, label }) => ({ value: code, label }))}
+                    options={LANGS.map(({ code, label, fi }) => ({
+                      value: code,
+                      label,
+                      icon: <span className={`fi fi-${fi}`} style={{ width: "20px", height: "15px", display: "inline-block", borderRadius: "2px", flexShrink: 0 }} />,
+                    }))}
                     value={language}
                     onChange={setLanguage}
                     style={{ minWidth: "140px" }}

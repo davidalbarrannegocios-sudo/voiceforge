@@ -1849,16 +1849,16 @@ function BillingTab({
 
 /* ─── Translate Tab ───────────────────────────────────────── */
 const TRANSLATE_LANGS = [
-  { code: "en", label: "Inglés",    flag: "🇺🇸" },
-  { code: "zh", label: "Chino",     flag: "🇨🇳" },
-  { code: "de", label: "Alemán",    flag: "🇩🇪" },
-  { code: "ja", label: "Japonés",   flag: "🇯🇵" },
-  { code: "fr", label: "Francés",   flag: "🇫🇷" },
-  { code: "es", label: "Español",   flag: "🇪🇸" },
-  { code: "ko", label: "Coreano",   flag: "🇰🇷" },
-  { code: "ar", label: "Árabe",     flag: "🇸🇦" },
-  { code: "ru", label: "Ruso",      flag: "🇷🇺" },
-  { code: "pt", label: "Portugués", flag: "🇧🇷" },
+  { code: "en", label: "Inglés",    fi: "us" },
+  { code: "zh", label: "Chino",     fi: "cn" },
+  { code: "de", label: "Alemán",    fi: "de" },
+  { code: "ja", label: "Japonés",   fi: "jp" },
+  { code: "fr", label: "Francés",   fi: "fr" },
+  { code: "es", label: "Español",   fi: "es" },
+  { code: "ko", label: "Coreano",   fi: "kr" },
+  { code: "ar", label: "Árabe",     fi: "sa" },
+  { code: "ru", label: "Ruso",      fi: "ru" },
+  { code: "pt", label: "Portugués", fi: "br" },
 ];
 
 interface TranslateResult {
@@ -2034,7 +2034,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                     : { background: "#12121a", color: "#8888a8", border: "1px solid #2a2a3e" }
                 }
               >
-                <span className="text-xl leading-none">{lang.flag}</span>
+                <span className={`fi fi-${lang.fi}`} style={{ width: "24px", height: "18px", display: "inline-block", borderRadius: "3px", flexShrink: 0 }} />
                 {lang.label}
               </button>
             ))}
