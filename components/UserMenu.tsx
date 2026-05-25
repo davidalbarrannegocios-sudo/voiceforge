@@ -4,7 +4,6 @@ import { useUser, useClerk } from "@clerk/nextjs";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { Settings, CreditCard, Gift, LogOut, LayoutDashboard } from "lucide-react";
 
 interface UserMenuProps {
@@ -67,30 +66,26 @@ export function UserMenu({ used, total }: UserMenuProps = {}) {
               />
             </svg>
             {user?.imageUrl ? (
-              <Image
+              <img
                 src={user.imageUrl}
                 alt={user.fullName ?? "Avatar"}
-                width={32}
-                height={32}
-                className="rounded-full"
-                style={{ position: "absolute", inset: 4 }}
+                className="absolute rounded-full object-cover"
+                style={{ top: 4, left: 4, width: "calc(100% - 8px)", height: "calc(100% - 8px)" }}
               />
             ) : (
               <div
-                className="rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm"
-                style={{ position: "absolute", inset: 4 }}
+                className="absolute rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm"
+                style={{ top: 4, left: 4, width: "calc(100% - 8px)", height: "calc(100% - 8px)" }}
               >
                 {initial}
               </div>
             )}
           </>
         ) : user?.imageUrl ? (
-          <Image
+          <img
             src={user.imageUrl}
             alt={user.fullName ?? "Avatar"}
-            width={36}
-            height={36}
-            className="rounded-full ring-2 ring-transparent hover:ring-blue-500 transition-all"
+            className="w-9 h-9 rounded-full object-cover ring-2 ring-transparent hover:ring-blue-500 transition-all"
           />
         ) : (
           <div className="w-9 h-9 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white font-bold text-sm transition-colors ring-2 ring-transparent hover:ring-blue-400">
@@ -109,12 +104,10 @@ export function UserMenu({ used, total }: UserMenuProps = {}) {
           <div className="p-4" style={{ borderBottom: "1px solid #1e1e2e" }}>
             <div className="flex items-center gap-3">
               {user?.imageUrl ? (
-                <Image
+                <img
                   src={user.imageUrl}
                   alt={user.fullName ?? "Avatar"}
-                  width={40}
-                  height={40}
-                  className="rounded-full flex-shrink-0"
+                  className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                 />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0">
