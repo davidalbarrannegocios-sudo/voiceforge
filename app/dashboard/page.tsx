@@ -538,9 +538,11 @@ function GenerateTab({
   const [topP, setTopP] = useState(0.9);
   const [selectedModel, setSelectedModel] = useState("speech-1.6");
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
+  const [providerDropdownOpen, setProviderDropdownOpen] = useState(false);
   const [ttsEngine, setTtsEngine] = useState<"elitelabs" | "elitelabs2">("elitelabs");
   const [ai33Provider, setAi33Provider] = useState<"elevenlabs" | "minimax">("elevenlabs");
   const modelDropdownRef = useRef<HTMLDivElement>(null);
+  const providerDropdownRef = useRef<HTMLDivElement>(null);
   const [previewing, setPreviewing] = useState<"idle" | "loading" | "playing">("idle");
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const [rightTab, setRightTab] = useState<"ajustes" | "historial">("ajustes");
@@ -571,6 +573,17 @@ function GenerateTab({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [modelDropdownOpen]);
+
+  useEffect(() => {
+    if (!providerDropdownOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (providerDropdownRef.current && !providerDropdownRef.current.contains(e.target as Node)) {
+        setProviderDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [providerDropdownOpen]);
 
   useEffect(() => {
     try {
@@ -829,10 +842,38 @@ function GenerateTab({
               {ttsEngine === "elitelabs2" && (
                 <div>
                   <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", marginBottom: "8px" }}>Proveedor</p>
-                  <div style={{ position: "relative", display: "flex", background: "#12121a", borderRadius: "8px", padding: "4px" }}>
-                    <div style={{ position: "absolute", top: "4px", bottom: "4px", left: "4px", width: "calc(50% - 4px)", background: "#2a2a3e", borderRadius: "6px", transform: ai33Provider === "elevenlabs" ? "translateX(0)" : "translateX(100%)", transition: "transform 200ms ease-out" }} />
-                    <button onClick={() => { setAi33Provider("elevenlabs"); onVoiceChange(null); }} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: ai33Provider === "elevenlabs" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>ElevenLabs</button>
-                    <button onClick={() => { setAi33Provider("minimax"); onVoiceChange(null); }} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: ai33Provider === "minimax" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>Minimax</button>
+                  <div style={{ position: "relative" }} ref={providerDropdownRef}>
+                    <button
+                      onClick={() => setProviderDropdownOpen((o) => !o)}
+                      style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
+                    >
+                      <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {ai33Provider === "elevenlabs" ? "EliteLabs 2" : "EliteLabs 2 CLONE"}
+                      </span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", flexShrink: 0, transform: providerDropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
+                    </button>
+                    {providerDropdownOpen && (
+                      <div style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "4px", padding: "4px", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
+                        {([
+                          { value: "elevenlabs" as const, label: "EliteLabs 2",       sub: "Motor de voz premium" },
+                          { value: "minimax"    as const, label: "EliteLabs 2 CLONE", sub: "Especializado en voces clonadas" },
+                        ]).map(({ value, label, sub }) => (
+                          <button
+                            key={value}
+                            onClick={() => { setAi33Provider(value); onVoiceChange(null); setProviderDropdownOpen(false); }}
+                            style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: ai33Provider === value ? "#e2e2f0" : "#6b7280", cursor: "pointer" }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                          >
+                            <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                              <span style={{ fontWeight: 500 }}>{label}</span>
+                              <span style={{ fontSize: "11px", marginTop: "2px", color: "#4b4b6a" }}>{sub}</span>
+                            </div>
+                            {ai33Provider === value && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginLeft: "8px" }}><polyline points="20 6 9 17 4 12" /></svg>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
