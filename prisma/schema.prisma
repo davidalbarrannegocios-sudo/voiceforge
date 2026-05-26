@@ -86,6 +86,8 @@ model ClonedVoice {
   language          String   @default("es")
   gender            String   @default("masculine")
   isPublic          Boolean  @default(false)
+  provider          String   @default("fish_audio")
+  minimaxVoiceId    String?
   createdAt         DateTime @default(now())
 }
 

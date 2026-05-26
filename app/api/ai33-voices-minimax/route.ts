@@ -1,5 +1,6 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
@@ -49,22 +50,46 @@ export async function GET(req: Request) {
   const search = (searchParams.get("search") ?? "").toLowerCase().trim();
   const PAGE_SIZE = 20;
 
-  const res = await fetch("https://api.ai33.pro/v1m/voice/list", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "xi-api-key": apiKey },
-    body: JSON.stringify({ page: 1, page_size: 200, tag_list: [] }),
-  });
+  // Load user's cloned Minimax voices from DB
+  const user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
+  const clonedVoices = user
+    ? await prisma.clonedVoice.findMany({
+        where: { userId: user.id, provider: "minimax" },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
 
-  if (!res.ok) {
-    const text = await res.text();
-    return NextResponse.json({ error: `ai33.pro error ${res.status}: ${text}` }, { status: res.status });
+  const clonedItems = clonedVoices.map((v) => ({
+    _id: v.minimaxVoiceId ?? v.id,
+    title: v.name,
+    description: "Mi voz clonada",
+    cover_image: null,
+    languages: [v.language],
+    tags: ["clonada", v.gender === "feminine" ? "female" : "male"],
+    task_count: 0,
+    like_count: 0,
+    samples: [] as { audio: string }[],
+  }));
+
+  // Fetch public Minimax voices from ai33.pro
+  let publicItems: ReturnType<typeof mapToFishVoice>[] = [];
+  try {
+    const res = await fetch("https://api.ai33.pro/v1m/voice/list", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "xi-api-key": apiKey },
+      body: JSON.stringify({ page: 1, page_size: 200, tag_list: [] }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const rawVoices: MinimaxVoice[] =
+        data.voices ?? data.items ?? data.list ?? (Array.isArray(data) ? data : []);
+      publicItems = rawVoices.map(mapToFishVoice);
+    }
+  } catch {
+    // Return cloned voices only if public fetch fails
   }
 
-  const data = await res.json();
-  const rawVoices: MinimaxVoice[] =
-    data.voices ?? data.items ?? data.list ?? (Array.isArray(data) ? data : []);
-
-  const allItems = rawVoices.map(mapToFishVoice);
+  const allItems = [...clonedItems, ...publicItems];
 
   const filtered = search
     ? allItems.filter(

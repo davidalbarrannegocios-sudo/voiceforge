@@ -40,9 +40,11 @@ export async function GET() {
     gender: v.gender,
     isSystem: false,
     isPublic: v.isPublic,
-    fishAudioModelId: v.referenceAudioUrl,
+    fishAudioModelId: v.provider === "minimax" ? undefined : v.referenceAudioUrl,
+    minimaxVoiceId: v.minimaxVoiceId ?? undefined,
+    provider: v.provider,
     createdAt: v.createdAt,
-    clipCount: countMap[v.referenceAudioUrl] ?? 0,
+    clipCount: v.provider === "minimax" ? 0 : (countMap[v.referenceAudioUrl] ?? 0),
   }));
 
   return NextResponse.json([...SYSTEM_VOICES, ...clonedVoices]);

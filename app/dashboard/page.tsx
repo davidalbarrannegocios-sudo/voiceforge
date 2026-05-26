@@ -27,6 +27,8 @@ interface Voice {
   gender?: string;
   isSystem: boolean;
   fishAudioModelId?: string;
+  minimaxVoiceId?: string;
+  provider?: string;
   createdAt?: string;
   clipCount?: number;
   isPublic?: boolean;
@@ -1099,6 +1101,149 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
   );
 }
 
+/* ─── Clone Minimax Modal ────────────────────────────────── */
+const MINIMAX_LANGUAGE_OPTIONS = [
+  { value: "es", label: "Español",   icon: <span className="fi fi-es" style={{ borderRadius: "2px", width: "20px", height: "15px", display: "inline-block" }} /> },
+  { value: "en", label: "Inglés",    icon: <span className="fi fi-us" style={{ borderRadius: "2px", width: "20px", height: "15px", display: "inline-block" }} /> },
+  { value: "zh", label: "Chino",     icon: <span className="fi fi-cn" style={{ borderRadius: "2px", width: "20px", height: "15px", display: "inline-block" }} /> },
+  { value: "fr", label: "Francés",   icon: <span className="fi fi-fr" style={{ borderRadius: "2px", width: "20px", height: "15px", display: "inline-block" }} /> },
+  { value: "de", label: "Alemán",    icon: <span className="fi fi-de" style={{ borderRadius: "2px", width: "20px", height: "15px", display: "inline-block" }} /> },
+  { value: "ja", label: "Japonés",   icon: <span className="fi fi-jp" style={{ borderRadius: "2px", width: "20px", height: "15px", display: "inline-block" }} /> },
+  { value: "ko", label: "Coreano",   icon: <span className="fi fi-kr" style={{ borderRadius: "2px", width: "20px", height: "15px", display: "inline-block" }} /> },
+  { value: "pt", label: "Portugués", icon: <span className="fi fi-br" style={{ borderRadius: "2px", width: "20px", height: "15px", display: "inline-block" }} /> },
+  { value: "ru", label: "Ruso",      icon: <span className="fi fi-ru" style={{ borderRadius: "2px", width: "20px", height: "15px", display: "inline-block" }} /> },
+  { value: "ar", label: "Árabe",     icon: <span className="fi fi-sa" style={{ borderRadius: "2px", width: "20px", height: "15px", display: "inline-block" }} /> },
+];
+
+function CloneMinimaxModal({ onClose, onCloned }: { onClose: () => void; onCloned: () => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [fileDuration, setFileDuration] = useState<number | null>(null);
+  const [voiceName, setVoiceName] = useState("");
+  const [language, setLanguage] = useState("es");
+  const [gender, setGender] = useState<"male" | "female">("male");
+  const [noiseReduction, setNoiseReduction] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFile(f: File) {
+    if (!f.name.toLowerCase().endsWith(".mp3") && f.type !== "audio/mpeg") {
+      setError("Solo se admiten archivos MP3"); setTimeout(() => setError(null), 3000); return;
+    }
+    if (f.size > 20 * 1024 * 1024) {
+      setError("El archivo no puede superar 20 MB"); setTimeout(() => setError(null), 3000); return;
+    }
+    const duration = await new Promise<number>((resolve) => {
+      const url = URL.createObjectURL(f);
+      const audio = new Audio(url);
+      audio.addEventListener("loadedmetadata", () => { URL.revokeObjectURL(url); resolve(audio.duration); }, { once: true });
+      audio.addEventListener("error", () => { URL.revokeObjectURL(url); resolve(0); }, { once: true });
+    });
+    if (duration < 10) { setError("El audio debe tener al menos 10 segundos"); setFile(null); setFileDuration(null); return; }
+    if (duration > 300) { setError("El audio no puede superar 5 minutos"); setFile(null); setFileDuration(null); return; }
+    setFile(f); setFileDuration(duration); setError(null);
+  }
+
+  async function handleClone() {
+    if (!file || !voiceName.trim()) return;
+    setError(null); setLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append("audio", file);
+      fd.append("voice_name", voiceName.trim());
+      fd.append("language_tag", language);
+      fd.append("gender_tag", gender);
+      fd.append("need_noise_reduction", String(noiseReduction));
+      const res = await fetch("/api/clone-voice-minimax", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al clonar");
+      onCloned(); onClose();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Error desconocido");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
+      <div className="w-full max-w-md rounded-2xl p-6" style={{ background: "#12121a", border: "1px solid #2a2a3e" }}>
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h2 className="text-lg font-bold text-white">Clonar voz con Minimax</h2>
+            <p className="text-xs mt-0.5" style={{ color: "#6b7280" }}>via EliteLabs 2</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">×</button>
+        </div>
+
+        <div
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
+          className="rounded-xl border-2 border-dashed p-7 text-center cursor-pointer transition-all mb-4"
+          style={{ borderColor: dragging ? "#3b82f6" : "#2a2a3e", background: dragging ? "rgba(59,130,246,0.05)" : "transparent" }}
+        >
+          <input ref={inputRef} type="file" className="hidden" accept=".mp3,audio/mpeg" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
+          {file ? (
+            <div>
+              <p className="text-green-400 font-medium mb-1">{file.name}</p>
+              <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(1)} MB{fileDuration !== null && ` · ${Math.floor(fileDuration)}s`}</p>
+            </div>
+          ) : (
+            <div>
+              <div className="flex justify-center mb-2"><Mic size={28} style={{ color: "#8888a8" }} /></div>
+              <p className="text-sm text-gray-400 mb-1">Arrastra tu MP3 aquí o haz clic</p>
+              <p className="text-xs text-gray-600">Max 20 MB · 10 seg – 5 min</p>
+            </div>
+          )}
+        </div>
+
+        {error && <p className="text-xs mb-3" style={{ color: "#f87171" }}>{error}</p>}
+
+        <div className="mb-4">
+          <label className="text-sm font-medium text-gray-300 mb-2 block">Nombre de la voz</label>
+          <input type="text" value={voiceName} onChange={(e) => setVoiceName(e.target.value)} placeholder="Ej: Mi voz Minimax..." className="w-full rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50" style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }} />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label className="text-sm font-medium text-gray-300 mb-2 block">Idioma</label>
+            <CustomSelect options={MINIMAX_LANGUAGE_OPTIONS} value={language} onChange={setLanguage} />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-300 mb-2 block">Género</label>
+            <div style={{ position: "relative", display: "grid", gridTemplateColumns: "1fr 1fr", background: "#0a0a0f", border: "1px solid #2a2a3e", borderRadius: "8px", padding: "3px" }}>
+              <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#1a1a2e", borderRadius: "5px", pointerEvents: "none", transition: "transform 0.2s ease", transform: `translateX(${gender === "female" ? "100%" : "0%"})` }} />
+              <button type="button" onClick={() => setGender("male")} style={{ position: "relative", zIndex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 600, background: "transparent", border: "none", cursor: "pointer", color: gender === "male" ? "#e5e7eb" : "#4a4a65", transition: "color 0.2s ease" }}>♂ Masc.</button>
+              <button type="button" onClick={() => setGender("female")} style={{ position: "relative", zIndex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 600, background: "transparent", border: "none", cursor: "pointer", color: gender === "female" ? "#e5e7eb" : "#4a4a65", transition: "color 0.2s ease" }}>♀ Fem.</button>
+            </div>
+          </div>
+        </div>
+
+        {/* Noise reduction toggle */}
+        <div className="flex items-center justify-between mb-5 px-3 py-2.5 rounded-lg" style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }}>
+          <span className="text-sm text-gray-300">Reducción de ruido</span>
+          <div style={{ position: "relative", display: "flex", background: "#12121a", borderRadius: "6px", padding: "2px" }}>
+            <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#2a2a3e", borderRadius: "4px", transform: noiseReduction ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
+            <button onClick={() => setNoiseReduction(false)} style={{ position: "relative", zIndex: 10, padding: "2px 12px", fontSize: "11px", fontWeight: 500, color: !noiseReduction ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer" }}>No</button>
+            <button onClick={() => setNoiseReduction(true)} style={{ position: "relative", zIndex: 10, padding: "2px 12px", fontSize: "11px", fontWeight: 500, color: noiseReduction ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer" }}>Sí</button>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors" style={{ background: "#1a1a2e", border: "1px solid #2a2a3e" }}>Cancelar</button>
+          <button onClick={handleClone} disabled={!file || !voiceName.trim() || loading} className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}>
+            {loading && <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
+            {loading ? "Clonando..." : "Clonar voz"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Voice Card ─────────────────────────────────────────── */
 function VoiceCard({
   voice,
@@ -1121,9 +1266,11 @@ function VoiceCard({
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const isMinimax = voice.provider === "minimax";
+  const effectiveId = isMinimax ? (voice.minimaxVoiceId ?? voice.id) : (voice.fishAudioModelId ?? voice.id);
+
   function handleCopy() {
-    const idToCopy = voice.fishAudioModelId ?? voice.id;
-    navigator.clipboard.writeText(idToCopy).then(() => {
+    navigator.clipboard.writeText(effectiveId).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     });
@@ -1158,7 +1305,9 @@ function VoiceCard({
             <span className="font-semibold text-white text-sm truncate">{voice.name}</span>
             {voice.language && <span className="text-xs leading-none flex-shrink-0">{<span className={`fi fi-${voice.language}`} style={{width:"16px",height:"12px",display:"inline-block",borderRadius:"2px"}} />}</span>}
             {voice.gender && <span className="text-xs flex-shrink-0" style={{ color: "#3a3a52" }}>{voice.gender === "masculine" ? "♂" : "♀"}</span>}
-            {voice.isPublic !== undefined && (
+            {isMinimax ? (
+              <span className="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 font-medium leading-none" style={{ background: "rgba(139,92,246,0.15)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.3)" }}>Minimax</span>
+            ) : voice.isPublic !== undefined && (
               <span
                 className="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 font-medium leading-none"
                 style={{
@@ -1220,7 +1369,7 @@ function VoiceCard({
               >
                 <button
                   onClick={() => { onPreview(voice); setMenuOpen(false); }}
-                  disabled={!voice.fishAudioModelId}
+                  disabled={isMinimax || !voice.fishAudioModelId}
                   className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors disabled:opacity-40"
                   style={{ color: "#d1d5db" }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
@@ -1269,7 +1418,7 @@ function VoiceCard({
           {/* Use pill */}
           <button
             onClick={() => onUse(voice)}
-            disabled={!voice.fishAudioModelId}
+            disabled={isMinimax ? !voice.minimaxVoiceId : !voice.fishAudioModelId}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors disabled:opacity-40"
             style={{ background: "#ffffff", color: "#0a0a0f" }}
           >
@@ -1295,15 +1444,23 @@ function VoicesTab({
   plan: string;
 }) {
   const [showModal, setShowModal] = useState(false);
+  const [showMinimaxModal, setShowMinimaxModal] = useState(false);
+  const [voiceProvider, setVoiceProvider] = useState<"fish_audio" | "minimax">("fish_audio");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [previewState, setPreviewState] = useState<Record<string, "idle" | "loading" | "playing">>({});
   const previewAudiosRef = useRef<Record<string, HTMLAudioElement>>({});
   const [search, setSearch] = useState("");
 
-  const cloned = voices.filter((v) => !v.isSystem);
+  const allCloned = voices.filter((v) => !v.isSystem);
+  const fishCloned = allCloned.filter((v) => !v.provider || v.provider === "fish_audio");
+  const minimaxCloned = allCloned.filter((v) => v.provider === "minimax");
+  const cloned = voiceProvider === "minimax" ? minimaxCloned : fishCloned;
+
   const slotLimit = VOICE_SLOT_LIMITS[plan] ?? 0;
-  const atLimit = slotLimit !== Infinity && cloned.length >= slotLimit;
-  const slotLabel = slotLimit === Infinity ? `${cloned.length} voces` : `${cloned.length}/${slotLimit} slots`;
+  const atLimit = voiceProvider === "fish_audio" && slotLimit !== Infinity && fishCloned.length >= slotLimit;
+  const slotLabel = voiceProvider === "fish_audio"
+    ? (slotLimit === Infinity ? `${fishCloned.length} voces` : `${fishCloned.length}/${slotLimit} slots`)
+    : `${minimaxCloned.length} voces Minimax`;
 
   const filtered = search.trim()
     ? cloned.filter((v) => v.name.toLowerCase().includes(search.toLowerCase()))
@@ -1335,8 +1492,13 @@ function VoicesTab({
 
   async function handleDelete(voiceId: string) {
     setDeletingId(voiceId);
+    const voice = allCloned.find((v) => v.id === voiceId);
     try {
-      await fetch(`/api/voices/${voiceId}`, { method: "DELETE" });
+      if (voice?.provider === "minimax") {
+        await fetch(`/api/delete-voice-minimax/${voiceId}`, { method: "DELETE" });
+      } else {
+        await fetch(`/api/voices/${voiceId}`, { method: "DELETE" });
+      }
       onRefresh();
     } finally {
       setDeletingId(null);
@@ -1360,23 +1522,37 @@ function VoicesTab({
           onCloned={() => { setShowModal(false); onRefresh(); }}
         />
       )}
+      {showMinimaxModal && (
+        <CloneMinimaxModal
+          onClose={() => setShowMinimaxModal(false)}
+          onCloned={() => { setShowMinimaxModal(false); onRefresh(); }}
+        />
+      )}
 
-      {/* Top tabs */}
+      {/* Top tabs — Fish Audio | Minimax */}
       <div className="flex gap-1 mb-5 border-b" style={{ borderColor: "#1e1e2e" }}>
         <button
+          onClick={() => setVoiceProvider("fish_audio")}
           className="px-4 py-2.5 text-sm font-semibold relative"
-          style={{ color: "#e5e7eb" }}
+          style={{ color: voiceProvider === "fish_audio" ? "#e5e7eb" : "#555570" }}
         >
           Voz personalizada
-          <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t" style={{ background: "#3b82f6" }} />
+          {voiceProvider === "fish_audio" && <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t" style={{ background: "#3b82f6" }} />}
+        </button>
+        <button
+          onClick={() => setVoiceProvider("minimax")}
+          className="px-4 py-2.5 text-sm font-semibold relative flex items-center gap-1.5"
+          style={{ color: voiceProvider === "minimax" ? "#e5e7eb" : "#555570" }}
+        >
+          Clonar con Minimax
+          <span className="text-xs px-1.5 py-0.5 rounded-full font-medium leading-none" style={{ background: "rgba(139,92,246,0.15)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.3)" }}>nuevo</span>
+          {voiceProvider === "minimax" && <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t" style={{ background: "#8b5cf6" }} />}
         </button>
       </div>
 
       {/* Toolbar: slots · search · clone button */}
       <div className="flex items-center gap-3 mb-6">
-        <span className="text-xs flex-shrink-0" style={{ color: "#4a4a65" }}>
-          {slotLabel}
-        </span>
+        <span className="text-xs flex-shrink-0" style={{ color: "#4a4a65" }}>{slotLabel}</span>
         <div className="flex-1 relative">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a4a65" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input
@@ -1388,23 +1564,46 @@ function VoicesTab({
             style={{ background: "#0d0d17", border: "1px solid #1e1e2e", color: "#d1d5db" }}
           />
         </div>
-        <button
-          onClick={() => !atLimit && setShowModal(true)}
-          disabled={atLimit}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white flex-shrink-0 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
-        >
-          <span className="text-base leading-none">+</span>
-          Clonar nueva voz
-        </button>
+        {voiceProvider === "fish_audio" ? (
+          <button
+            onClick={() => !atLimit && setShowModal(true)}
+            disabled={atLimit}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white flex-shrink-0 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
+          >
+            <span className="text-base leading-none">+</span>
+            Clonar nueva voz
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowMinimaxModal(true)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white flex-shrink-0 transition-all hover:opacity-90"
+            style={{ background: "linear-gradient(135deg,#8b5cf6,#6d28d9)" }}
+          >
+            <span className="text-base leading-none">+</span>
+            Clonar con Minimax
+          </button>
+        )}
       </div>
+
+      {/* Minimax info banner */}
+      {voiceProvider === "minimax" && (
+        <div className="mb-4 px-4 py-3 rounded-xl flex items-start gap-3" style={{ background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.2)" }}>
+          <Info size={14} className="flex-shrink-0 mt-0.5" style={{ color: "#a78bfa" }} />
+          <p className="text-xs" style={{ color: "#a78bfa" }}>Las voces clonadas con Minimax sólo funcionan en el motor <strong>EliteLabs 2 → Minimax</strong>.</p>
+        </div>
+      )}
 
       {/* Grid */}
       {cloned.length === 0 ? (
         <div className="text-center py-20" style={{ color: "#8888a8" }}>
           <Mic size={40} className="mx-auto mb-3 opacity-30" />
-          <p className="font-medium mb-1">No tienes voces clonadas</p>
-          <p className="text-sm opacity-60">Clona una voz con 10 segundos de audio</p>
+          <p className="font-medium mb-1">
+            {voiceProvider === "minimax" ? "No tienes voces clonadas con Minimax" : "No tienes voces clonadas"}
+          </p>
+          <p className="text-sm opacity-60">
+            {voiceProvider === "minimax" ? "Sube un MP3 para clonar tu primera voz Minimax" : "Clona una voz con 10 segundos de audio"}
+          </p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16" style={{ color: "#8888a8" }}>
@@ -1419,9 +1618,13 @@ function VoicesTab({
               previewState={previewState}
               deletingId={deletingId}
               onPreview={handlePreview}
-              onUse={(v) => onUseVoice({ referenceId: v.fishAudioModelId ?? "", name: v.name, isCloned: true })}
+              onUse={(v) =>
+                v.provider === "minimax"
+                  ? onUseVoice({ referenceId: v.minimaxVoiceId ?? "", name: v.name, isCloned: true })
+                  : onUseVoice({ referenceId: v.fishAudioModelId ?? "", name: v.name, isCloned: true })
+              }
               onDelete={handleDelete}
-              onToggleVisibility={handleToggleVisibility}
+              onToggleVisibility={voiceProvider === "fish_audio" ? handleToggleVisibility : undefined}
             />
           ))}
         </div>
