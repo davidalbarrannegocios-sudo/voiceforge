@@ -119,13 +119,15 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
                       <Zap size={14} className="text-blue-400" />
                       <span className="text-white font-medium text-sm">Balance</span>
                     </div>
-                    <Link
-                      href="/dashboard?tab=billing"
-                      onClick={() => setOpen(false)}
+                    <button
+                      onClick={() => {
+                        setOpen(false);
+                        router.push("/dashboard?tab=billing");
+                      }}
                       className="bg-white text-black text-xs font-semibold px-3 py-1 rounded-full hover:bg-gray-200 transition-colors"
                     >
                       Mejorar
-                    </Link>
+                    </button>
                   </div>
                   <div className="flex justify-between text-sm mb-0.5">
                     <span style={{ color: "#6b7280" }}>Total</span>
