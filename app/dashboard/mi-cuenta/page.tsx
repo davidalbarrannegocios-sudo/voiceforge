@@ -9,6 +9,18 @@ import {
   Home, Mic2, Type, FileAudio, Globe, Clock,
   CreditCard, Gift, Zap, User, Shield, Check, X,
 } from "lucide-react";
+import { useLang } from "@/app/dashboard/LanguageContext";
+import { CustomSelect } from "@/components/CustomSelect";
+
+const LANG_STORAGE_KEY = "elitelabs_lang";
+
+const LANGUAGE_OPTIONS = [
+  { value: "es", label: "Español",    icon: <span className="fi fi-es" style={{ width: "16px", height: "12px", display: "inline-block", borderRadius: "2px" }} /> },
+  { value: "en", label: "English",    icon: <span className="fi fi-us" style={{ width: "16px", height: "12px", display: "inline-block", borderRadius: "2px" }} /> },
+  { value: "fr", label: "Français",   icon: <span className="fi fi-fr" style={{ width: "16px", height: "12px", display: "inline-block", borderRadius: "2px" }} /> },
+  { value: "de", label: "Deutsch",    icon: <span className="fi fi-de" style={{ width: "16px", height: "12px", display: "inline-block", borderRadius: "2px" }} /> },
+  { value: "pt", label: "Português",  icon: <span className="fi fi-br" style={{ width: "16px", height: "12px", display: "inline-block", borderRadius: "2px" }} /> },
+];
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Inicio", Icon: Home },
@@ -26,9 +38,11 @@ type SettingsTab = "perfil" | "seguridad";
 export default function MiCuentaPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
+  const { lang } = useLang();
 
   const [settingsTab, setSettingsTab] = useState<SettingsTab>("perfil");
   const [plan, setPlan] = useState<string | null>(null);
+  const [language, setLanguage] = useState<string>(lang);
 
   // Name
   const [editingName, setEditingName] = useState(false);
@@ -405,6 +419,24 @@ export default function MiCuentaPage() {
                   <span style={{ fontSize: "12px", color: "#22c55e", fontWeight: 600 }}>Conectado</span>
                 </div>
               )}
+            </div>
+
+            {/* Preferencias */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", gap: "16px" }}>
+              <div>
+                <p style={{ margin: "0 0 4px", fontWeight: 500, color: "#fff", fontSize: "14px" }}>Idioma de la interfaz</p>
+                <p style={{ margin: 0, color: "#6b7280", fontSize: "13px" }}>Cambia el idioma de la web</p>
+              </div>
+              <CustomSelect
+                options={LANGUAGE_OPTIONS}
+                value={language}
+                onChange={(val) => {
+                  setLanguage(val);
+                  localStorage.setItem(LANG_STORAGE_KEY, val);
+                  window.location.reload();
+                }}
+                style={{ minWidth: "140px" }}
+              />
             </div>
 
             {/* Eliminar cuenta */}
