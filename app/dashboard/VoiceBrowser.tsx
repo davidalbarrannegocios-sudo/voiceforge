@@ -601,9 +601,9 @@ export function VoiceBrowser({
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const ACCENT_SEARCH_TERMS: Record<string, string> = {
-    spain: "spain español castellano",
-    mexico: "mexican mexico mexicano",
-    latam: "latin america colombia argentina chile",
+    spain: "spain",
+    mexico: "mexicano",
+    latam: "latam",
   };
   const accentKeyword = accent !== "all" ? (ACCENT_SEARCH_TERMS[accent] ?? "") : "";
   const effectiveSearch = [debouncedSearch, accentKeyword].filter(Boolean).join(" ");
