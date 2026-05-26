@@ -600,13 +600,6 @@ export function VoiceBrowser({
   const [tier, setTier] = useState<"all" | "free" | "premium">("all");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const ACCENT_SEARCH_TERMS: Record<string, string> = {
-    spain: "spain",
-    mexico: "mexicano",
-    latam: "latam",
-  };
-  const accentKeyword = accent !== "all" ? (ACCENT_SEARCH_TERMS[accent] ?? "") : "";
-  const effectiveSearch = [debouncedSearch, accentKeyword].filter(Boolean).join(" ");
   const [publicVoices, setPublicVoices] = useState<FishVoice[]>([]);
   const [recentVoices, setRecentVoices] = useState<FishVoice[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
@@ -767,7 +760,8 @@ export function VoiceBrowser({
             if (tierRawRef.current.filter(matchesCriteria).length >= targetCount) break;
 
             const p = new URLSearchParams({ page: String(tierFishPageRef.current), language });
-            if (effectiveSearch) p.set("search", effectiveSearch);
+            if (debouncedSearch) p.set("search", debouncedSearch);
+            if (accent !== "all") p.set("accent", accent);
             const res = await fetch(`/api/fish-voices?${p}`, { signal });
             if (signal.aborted) return;
             const data = await res.json();
@@ -787,7 +781,8 @@ export function VoiceBrowser({
           setPublicVoices([...tierRawRef.current]);
         } else {
           const p = new URLSearchParams({ page: String(1), language });
-          if (effectiveSearch) p.set("search", effectiveSearch);
+          if (debouncedSearch) p.set("search", debouncedSearch);
+          if (accent !== "all") p.set("accent", accent);
           const res = await fetch(`/api/fish-voices?${p}`, { signal });
           if (signal.aborted) return;
           const data = await res.json();
@@ -805,7 +800,7 @@ export function VoiceBrowser({
     run();
     return () => { controller.abort(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, tier, language, effectiveSearch, appliedFilters]);
+  }, [tab, tier, language, debouncedSearch, accent, appliedFilters]);
 
   // Separate effect for page navigation (no buffer reset — just slices into existing data)
   useEffect(() => {
@@ -831,7 +826,8 @@ export function VoiceBrowser({
             if (tierRawRef.current.filter(matchesCriteria).length >= targetCount) break;
 
             const p = new URLSearchParams({ page: String(tierFishPageRef.current), language });
-            if (effectiveSearch) p.set("search", effectiveSearch);
+            if (debouncedSearch) p.set("search", debouncedSearch);
+            if (accent !== "all") p.set("accent", accent);
             const res = await fetch(`/api/fish-voices?${p}`, { signal });
             if (signal.aborted) return;
             const data = await res.json();
@@ -851,7 +847,8 @@ export function VoiceBrowser({
           setPublicVoices([...tierRawRef.current]);
         } else {
           const p = new URLSearchParams({ page: String(page), language });
-          if (effectiveSearch) p.set("search", effectiveSearch);
+          if (debouncedSearch) p.set("search", debouncedSearch);
+          if (accent !== "all") p.set("accent", accent);
           const res = await fetch(`/api/fish-voices?${p}`, { signal });
           if (signal.aborted) return;
           const data = await res.json();
@@ -936,7 +933,7 @@ export function VoiceBrowser({
     ? filteredVoices.slice((page - 1) * 20, page * 20)
     : filteredVoices;
 
-  const applyFeatured = page === 1 && !effectiveSearch && !hasActiveFilters && tier === "all" && featuredVoices.length > 0;
+  const applyFeatured = page === 1 && !debouncedSearch && accent === "all" && !hasActiveFilters && tier === "all" && featuredVoices.length > 0;
   const displayedVoices = applyFeatured
     ? [
         // applyFeatured requires tier === "all", so no tier filter needed here
