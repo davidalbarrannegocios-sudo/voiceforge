@@ -13,8 +13,8 @@ function CardBrandLogo({ brand }: { brand: string }) {
   };
   if (b === "visa") return (
     <div style={wrapper}>
-      <svg viewBox="0 0 48 16" style={{ height: "16px", width: "auto" }}>
-        <text x="0" y="14" fontSize="16" fontWeight="900" fill="#1A1F71" fontFamily="Arial, sans-serif" letterSpacing="-1">VISA</text>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 16" style={{ height: "16px", width: "auto" }}>
+        <path fill="#1A1F71" d="M18.7 1.6L15.5 14.4h-3.2L15.5 1.6h3.2zm13.4 8.3l1.7-4.6.9 4.6h-2.6zm3.6 4.5h2.9L36 1.6h-2.7c-.6 0-1.1.4-1.4.9L27 14.4h3.2l.6-1.7h3.9l.9 1.7zm-7.9-4.1c0-3.1-4.3-3.3-4.3-4.7 0-.4.4-.9 1.3-.9.7 0 1.4.1 2.1.4l.4-2.2c-.7-.3-1.5-.4-2.3-.4-2.5 0-4.2 1.3-4.2 3.2 0 2.4 3.4 2.6 3.4 4.1 0 .5-.5 1-1.5 1-.9 0-1.9-.3-2.7-.7l-.4 2.2c.9.4 2 .6 3 .6 2.7.1 4.2-1.2 4.2-3.6zm-10.3-8.7L12.7 14.4H9.4L6.1 4.2C6 3.7 5.8 3.5 5.4 3.3 4.7 3 3.6 2.6 2.7 2.4L2.8 1.6h5.1c.7 0 1.2.5 1.4 1.1l1.3 6.8 3.2-7.9h3.2z"/>
       </svg>
     </div>
   );
