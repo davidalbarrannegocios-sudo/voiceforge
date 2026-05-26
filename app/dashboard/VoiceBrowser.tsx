@@ -771,6 +771,8 @@ export function VoiceBrowser({
   const [appliedFilters, setAppliedFilters] = useState<AdvancedFilters>(EMPTY_FILTERS);
   const [featuredVoices, setFeaturedVoices] = useState<FishVoice[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [enrichedVoices, setEnrichedVoices] = useState<Map<string, FishVoice>>(new Map());
+  const [enrichingFavorites, setEnrichingFavorites] = useState(false);
   const [communityVoices, setCommunityVoices] = useState<CommunityVoice[]>([]);
   const [communityLoading, setCommunityLoading] = useState(false);
   const [communitySearch, setCommunitySearch] = useState("");
@@ -815,6 +817,40 @@ export function VoiceBrowser({
       })
       .catch(() => {});
   }, []);
+
+  // Enrich favorites with full voice data from publicVoices pool or individual API calls
+  useEffect(() => {
+    if (favoriteVoices.length === 0) {
+      setEnrichedVoices(new Map());
+      return;
+    }
+    const allKnown = new Map<string, FishVoice>();
+    [...publicVoices, ...featuredVoices, ...DEFAULT_VOICES].forEach((v) => allKnown.set(v._id, v));
+
+    const missingIds = favoriteVoices.filter((f) => !allKnown.has(f.voiceId)).map((f) => f.voiceId);
+
+    if (missingIds.length === 0) {
+      const m = new Map<string, FishVoice>();
+      favoriteVoices.forEach((f) => { const v = allKnown.get(f.voiceId); if (v) m.set(f.voiceId, v); });
+      setEnrichedVoices(m);
+      return;
+    }
+
+    setEnrichingFavorites(true);
+    Promise.all(
+      missingIds.map((id) =>
+        fetch(`/api/fish-voice/${id}`)
+          .then((r) => r.ok ? r.json() : null)
+          .catch(() => null)
+      )
+    ).then((results) => {
+      results.forEach((v: FishVoice | null) => { if (v?._id) allKnown.set(v._id, v); });
+      const m = new Map<string, FishVoice>();
+      favoriteVoices.forEach((f) => { const v = allKnown.get(f.voiceId); if (v) m.set(f.voiceId, v); });
+      setEnrichedVoices(m);
+    }).finally(() => setEnrichingFavorites(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [favoriteVoices]);
 
   async function toggleFavorite(voice: FishVoice) {
     const wasFav = favoriteIds.has(voice._id);
@@ -1433,13 +1469,23 @@ export function VoiceBrowser({
                       Explorar voces
                     </button>
                   </div>
+                ) : enrichingFavorites ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-2">
+                    {Array.from({ length: favoriteVoices.length }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="rounded-xl animate-pulse"
+                        style={{ background: "#0d0d17", border: "1px solid #1e1e2e", height: "152px" }}
+                      />
+                    ))}
+                  </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-2">
                     {favoriteVoices.map((fav) => {
-                      const favVoice: FishVoice = {
+                      const fullVoice: FishVoice = enrichedVoices.get(fav.voiceId) ?? {
                         _id: fav.voiceId,
                         title: fav.voiceName,
-                        cover_image: fav.coverImage ?? "",
+                        cover_image: fav.coverImage ?? null,
                         languages: [],
                         tags: [],
                         task_count: 0,
@@ -1449,7 +1495,7 @@ export function VoiceBrowser({
                       return (
                         <VoiceCard
                           key={fav.id}
-                          voice={favVoice}
+                          voice={fullVoice}
                           previewingId={previewingId}
                           previewLoadingId={previewLoadingId}
                           onPreview={handlePreview}
