@@ -28,7 +28,8 @@ interface FishVoice {
   cover_image: string | null;
   task_count: number;
   like_count?: number;
-  creator?: { nickname?: string };
+  samples?: Array<{ audio: string; task_id?: string }>;
+  author?: { nickname?: string; _id?: string };
 }
 
 interface ClonedVoice {
@@ -608,7 +609,7 @@ function VoiceCard({
   voice: FishVoice;
   previewingId: string | null;
   previewLoadingId: string | null;
-  onPreview: (id: string) => void;
+  onPreview: (id: string, sampleUrl?: string) => void;
   onUse: (voice: FishVoice) => void;
   isLocked: boolean;
   isPremium: boolean;
@@ -621,7 +622,8 @@ function VoiceCard({
   const isPreviewLoading = previewLoadingId === voice._id;
 
   const pillStyle = { background: "rgba(255,255,255,0.05)", color: "#6b7280", border: "1px solid rgba(255,255,255,0.07)" };
-  const authorName = voice.creator?.nickname;
+  const authorName = voice.author?.nickname;
+  const sampleUrl = voice.samples?.[0]?.audio;
 
   return (
     <div
@@ -714,7 +716,7 @@ function VoiceCard({
         style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)" }}
       >
         <button
-          onClick={(e) => { e.stopPropagation(); onPreview(voice._id); }}
+          onClick={(e) => { e.stopPropagation(); onPreview(voice._id, sampleUrl); }}
           disabled={isPreviewLoading}
           className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60"
           style={{
@@ -1070,7 +1072,7 @@ export function VoiceBrowser({
 
   useEffect(() => () => { audioRef.current?.pause(); }, []);
 
-  async function handlePreview(id: string) {
+  async function handlePreview(id: string, sampleUrl?: string) {
     if (previewingId === id) {
       audioRef.current?.pause();
       setPreviewingId(null);
@@ -1078,6 +1080,28 @@ export function VoiceBrowser({
     }
     audioRef.current?.pause();
     setPreviewingId(null);
+
+    // Fast path: try pre-generated sample URL, then CDN shortcut
+    const fastUrl = sampleUrl ?? `https://cdn.fish.audio/voices/${id}.mp3`;
+    const playedFast = await new Promise<boolean>((resolve) => {
+      const audio = new Audio(fastUrl);
+      let done = false;
+      const finish = (ok: boolean) => { if (!done) { done = true; resolve(ok); } };
+      audio.onerror = () => finish(false);
+      audio.onplaying = () => {
+        audio.onended = () => setPreviewingId(null);
+        audioRef.current = audio;
+        setPreviewingId(id);
+        finish(true);
+      };
+      audio.play().catch(() => finish(false));
+      // Abort fast path after 3s if it hasn't started
+      setTimeout(() => { audio.src = ""; finish(false); }, 3000);
+    });
+
+    if (playedFast) return;
+
+    // Slow path: generate on-demand
     setPreviewLoadingId(id);
     try {
       const res = await fetch(`/api/voice-preview/${id}`);
