@@ -601,6 +601,7 @@ export function VoiceBrowser({
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [publicVoices, setPublicVoices] = useState<FishVoice[]>([]);
+  const [accentNotEnough, setAccentNotEnough] = useState(false);
   const [recentVoices, setRecentVoices] = useState<FishVoice[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [favoriteVoices, setFavoriteVoices] = useState<FavoriteVoice[]>([]);
@@ -739,6 +740,7 @@ export function VoiceBrowser({
     tierHasMoreRef.current = true;
     setPage(1);
     setPublicVoices([]);
+    setAccentNotEnough(false);
 
     const controller = new AbortController();
     const { signal } = controller;
@@ -788,6 +790,7 @@ export function VoiceBrowser({
           const data = await res.json();
           setPublicVoices(data.items ?? []);
           setTotal(data.total ?? 0);
+          setAccentNotEnough(!!data.accentNotEnough);
         }
       } catch (e) {
         if ((e as Error)?.name === "AbortError") return;
@@ -1120,6 +1123,13 @@ export function VoiceBrowser({
                   </div>
                   <span className="text-xs flex-shrink-0" style={{ color: "#3b82f6" }}>Seleccionar →</span>
                 </button>
+
+                {/* Accent not enough notice */}
+                {accentNotEnough && (
+                  <p className="text-xs mb-3" style={{ color: "rgba(234, 179, 8, 0.7)" }}>
+                    Estamos añadiendo más voces con este acento próximamente.
+                  </p>
+                )}
 
                 {/* Voice list */}
                 {loading ? (

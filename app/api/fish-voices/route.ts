@@ -83,9 +83,17 @@ export async function GET(req: Request) {
     const manualIds = MANUAL_ACCENT_VOICES[accent] ?? [];
     const manualVoices = filtered.filter((v: FishItem) => manualIds.includes(v._id));
     const restVoices = filtered.filter((v: FishItem) => !manualIds.includes(v._id));
-    const items = [...manualVoices, ...restVoices].map(normalizeCoverImage);
+    const combined = [...manualVoices, ...restVoices].map(normalizeCoverImage);
 
-    return Response.json({ items, total: items.length });
+    if (combined.length < 5) {
+      console.log("Pocas voces encontradas por filtro, usando solo manuales");
+      const manualItems = allVoices
+        .filter((v) => manualIds.includes(v._id))
+        .map(normalizeCoverImage);
+      return Response.json({ items: manualItems, total: manualItems.length, accentNotEnough: true });
+    }
+
+    return Response.json({ items: combined, total: combined.length });
   }
 
   // Normal (non-accent) fetch
