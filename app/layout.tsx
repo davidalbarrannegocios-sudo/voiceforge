@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages, getLocale } from "next-intl/server";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -12,11 +14,14 @@ export const metadata: Metadata = {
     "Genera voces realistas con IA y clona cualquier voz con solo 10 segundos de audio. Powered by Chatterbox TTS.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
     <ClerkProvider appearance={{
       baseTheme: dark,
@@ -48,8 +53,12 @@ export default function RootLayout({
         tableHead: 'text-gray-300',
       },
     }}>
-      <html lang="es">
-        <body className={`${inter.className} antialiased`}>{children}</body>
+      <html lang={locale}>
+        <body className={`${inter.className} antialiased`}>
+          <NextIntlClientProvider messages={messages} locale={locale}>
+            {children}
+          </NextIntlClientProvider>
+        </body>
       </html>
     </ClerkProvider>
   );

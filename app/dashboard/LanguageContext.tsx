@@ -1,176 +1,76 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useCallback } from "react";
+import { useMessages, useLocale } from "next-intl";
 
-export type Lang = "es" | "en";
+export type Lang = "es" | "en" | "fr" | "de" | "pt";
 
-const T = {
-  es: {
-    nav: {
-      home: "Inicio",
-      customVoice: "Voz personalizada",
-      generate: "Texto a voz",
-      transcribe: "Audio a Texto",
-      translate: "Traducción de audio",
-      history: "Historial",
-      billing: "Facturación",
-      referrals: "Referidos",
-      account: "Mi cuenta",
-      products: "Productos",
-      platform: "Plataforma",
-      characters: "Caracteres",
-      buy: "+ Comprar",
-    },
-    tabs: {
-      home: "Inicio",
-      generate: "Texto a Voz",
-      transcribe: "Audio a Texto",
-      translate: "Traducción de Audio",
-      history: "Historial",
-      billing: "Facturación",
-      voices: "Mis Voces",
-      referral: "Referidos",
-    },
-    home: {
-      greeting: "Hola,",
-      defaultName: "de nuevo",
-      available: "caracteres disponibles",
-      cardGenerate: "Texto a Voz",
-      cardGenerateDesc: "Convierte texto en voz natural al instante",
-      cardVoices: "Mis Voces",
-      cardVoicesDesc: "Gestiona y clona tus voces personalizadas",
-      cardHistory: "Historial",
-      cardHistoryDesc: "Revisa todas tus generaciones anteriores",
-      cardTranscribe: "Audio a Texto",
-      cardTranscribeDesc: "Transcribe cualquier audio a texto al instante",
-      cardTranslate: "Traducción de Audio",
-      cardTranslateDesc: "Traduce tus audios a otros idiomas automáticamente",
-    },
-    generate: {
-      placeholder: "Escribe el texto a narrar...",
-      generateBtn: "Generar audio",
-      generating: "Generando...",
-      settingsTab: "Ajustes",
-      historyTab: "Historial",
-      voiceLabel: "Voz",
-      randomVoice: "Voz aleatoria",
-      paidOnly: "Solo en planes de pago",
-      paidOnlyLong: "Solo disponible en planes de pago",
-      defaultVoice: "Voz por defecto",
-      clonedVoice: "Voz clonada",
-      systemVoice: "Sistema",
-      audioControls: "Controles de audio",
-      speed: "Velocidad",
-      volume: "Volumen",
+// Typed to match messages/es.json structure
+export interface Translations {
+  nav: {
+    home: string; customVoice: string; generate: string; transcribe: string;
+    translate: string; history: string; billing: string; referrals: string;
+    account: string; products: string; platform: string; characters: string;
+    buy: string; upgradePlan: string; signOut: string;
+    [key: string]: string;
+  };
+  tabs: {
+    home: string; generate: string; transcribe: string; translate: string;
+    history: string; billing: string; voices: string; referral: string;
+    [key: string]: string;
+  };
+  home: {
+    greeting: string; defaultName: string; available: string;
+    cardGenerate: string; cardGenerateDesc: string; cardVoices: string;
+    cardVoicesDesc: string; cardHistory: string; cardHistoryDesc: string;
+    cardTranscribe: string; cardTranscribeDesc: string;
+    cardTranslate: string; cardTranslateDesc: string;
+    [key: string]: string;
+  };
+  generate: { [key: string]: string };
+  voices: { [key: string]: string };
+  account: { [key: string]: string };
+  billing: { [key: string]: string };
+  landing: { [key: string]: string };
+  auth: { [key: string]: string };
+  [key: string]: Record<string, string>;
+}
 
-      characters: "caracteres",
-      credits: "créditos",
-    },
-  },
-  en: {
-    nav: {
-      home: "Home",
-      customVoice: "Custom Voice",
-      generate: "Text to Speech",
-      transcribe: "Audio to Text",
-      translate: "Audio Translation",
-      history: "History",
-      billing: "Billing",
-      referrals: "Referrals",
-      account: "My Account",
-      products: "Products",
-      platform: "Platform",
-      characters: "Characters",
-      buy: "+ Buy",
-    },
-    tabs: {
-      home: "Home",
-      generate: "Text to Speech",
-      transcribe: "Audio to Text",
-      translate: "Audio Translation",
-      history: "History",
-      billing: "Billing",
-      voices: "My Voices",
-      referral: "Referrals",
-    },
-    home: {
-      greeting: "Hello,",
-      defaultName: "again",
-      available: "characters available",
-      cardGenerate: "Text to Speech",
-      cardGenerateDesc: "Convert text to natural voice instantly",
-      cardVoices: "My Voices",
-      cardVoicesDesc: "Manage and clone your custom voices",
-      cardHistory: "History",
-      cardHistoryDesc: "Review all your previous generations",
-      cardTranscribe: "Audio to Text",
-      cardTranscribeDesc: "Transcribe any audio to text instantly",
-      cardTranslate: "Audio Translation",
-      cardTranslateDesc: "Translate your audio to other languages automatically",
-    },
-    generate: {
-      placeholder: "Write the text to narrate...",
-      generateBtn: "Generate audio",
-      generating: "Generating...",
-      settingsTab: "Settings",
-      historyTab: "History",
-      voiceLabel: "Voice",
-      randomVoice: "Random voice",
-      paidOnly: "Paid plans only",
-      paidOnlyLong: "Only available on paid plans",
-      defaultVoice: "Default voice",
-      clonedVoice: "Cloned voice",
-      systemVoice: "System",
-      audioControls: "Audio controls",
-      speed: "Speed",
-      volume: "Volume",
-
-      characters: "characters",
-      credits: "credits",
-    },
-  },
-} as const;
-
-type Widen<T> = { [K in keyof T]: T[K] extends object ? Widen<T[K]> : string };
-export type Translations = Widen<typeof T.es>;
+const COOKIE_KEY = "vf_locale";
+const STORAGE_KEY = "elitelabs_lang";
 
 interface LangCtx {
   lang: Lang;
   t: Translations;
   toggle: () => void;
+  setLang: (lang: string) => void;
 }
 
 const LanguageContext = createContext<LangCtx>({
   lang: "es",
-  t: T.es,
+  t: {} as Translations,
   toggle: () => {},
+  setLang: () => {},
 });
 
-const STORAGE_KEY = "elitelabs_lang";
-
+// Pass-through provider — locale state lives in next-intl (cookie → server)
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLang] = useState<Lang>("es");
+  return <>{children}</>;
+}
 
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "en" || stored === "es") setLang(stored);
+export function useLang(): LangCtx {
+  const locale = useLocale() as Lang;
+  const messages = useMessages() as unknown as Translations;
+
+  const setLang = useCallback((lang: string) => {
+    document.cookie = `${COOKIE_KEY}=${lang}; path=/; max-age=31536000; SameSite=Lax`;
+    localStorage.setItem(STORAGE_KEY, lang);
+    window.location.reload();
   }, []);
 
   const toggle = useCallback(() => {
-    setLang((prev) => {
-      const next: Lang = prev === "es" ? "en" : "es";
-      localStorage.setItem(STORAGE_KEY, next);
-      return next;
-    });
-  }, []);
+    setLang(locale === "es" ? "en" : "es");
+  }, [locale, setLang]);
 
-  return (
-    <LanguageContext.Provider value={{ lang, t: T[lang], toggle }}>
-      {children}
-    </LanguageContext.Provider>
-  );
-}
-
-export function useLang() {
-  return useContext(LanguageContext);
+  return { lang: locale, t: messages, toggle, setLang };
 }

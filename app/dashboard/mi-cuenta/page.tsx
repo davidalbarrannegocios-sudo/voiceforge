@@ -12,8 +12,6 @@ import {
 import { useLang } from "@/app/dashboard/LanguageContext";
 import { CustomSelect } from "@/components/CustomSelect";
 
-const LANG_STORAGE_KEY = "elitelabs_lang";
-
 const LANGUAGE_OPTIONS = [
   { value: "es", label: "Español",    icon: <span className="fi fi-es" style={{ width: "16px", height: "12px", display: "inline-block", borderRadius: "2px" }} /> },
   { value: "en", label: "English",    icon: <span className="fi fi-us" style={{ width: "16px", height: "12px", display: "inline-block", borderRadius: "2px" }} /> },
@@ -38,11 +36,10 @@ type SettingsTab = "perfil" | "seguridad";
 export default function MiCuentaPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
-  const { lang } = useLang();
+  const { lang, t, setLang } = useLang();
 
   const [settingsTab, setSettingsTab] = useState<SettingsTab>("perfil");
   const [plan, setPlan] = useState<string | null>(null);
-  const [language, setLanguage] = useState<string>(lang);
 
   // Name
   const [editingName, setEditingName] = useState(false);
@@ -134,7 +131,7 @@ export default function MiCuentaPage() {
   }
 
   async function deleteAccount() {
-    if (!user || deleteInput !== "ELIMINAR") return;
+    if (!user || deleteInput !== t.account.deleteConfirmWord) return;
     setDeleting(true);
     try {
       await user.delete();
@@ -259,15 +256,15 @@ export default function MiCuentaPage() {
       <main style={{ flex: 1, padding: "40px 32px", minWidth: 0 }}>
         {/* Header */}
         <div style={{ marginBottom: "32px" }}>
-          <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>Configuración</h1>
-          <p style={{ fontSize: "14px", color: "#6b7280", margin: 0 }}>Gestiona tu perfil y preferencias de seguridad</p>
+          <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>{t.account.title}</h1>
+          <p style={{ fontSize: "14px", color: "#6b7280", margin: 0 }}>{t.account.subtitle}</p>
         </div>
 
         {/* Tabs */}
         <div style={{ display: "flex", borderBottom: "1px solid #1e1e2e", marginBottom: "32px" }}>
           {([
-            { key: "perfil" as SettingsTab, label: "Perfil", Icon: User },
-            { key: "seguridad" as SettingsTab, label: "Seguridad", Icon: Shield },
+            { key: "perfil" as SettingsTab, label: t.account.tabProfile, Icon: User },
+            { key: "seguridad" as SettingsTab, label: t.account.tabSecurity, Icon: Shield },
           ] as const).map(({ key, label, Icon }) => (
             <button
               key={key}
@@ -294,12 +291,12 @@ export default function MiCuentaPage() {
             {/* Email */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               <div>
-                <p style={{ margin: "0 0 4px", fontWeight: 500, color: "#fff", fontSize: "14px" }}>Dirección de email</p>
+                <p style={{ margin: "0 0 4px", fontWeight: 500, color: "#fff", fontSize: "14px" }}>{t.account.email}</p>
                 <p style={{ margin: 0, color: "#6b7280", fontSize: "13px" }}>{user?.emailAddresses[0]?.emailAddress}</p>
               </div>
               {isGoogleUser && (
                 <span style={{ fontSize: "12px", color: "#4a4a65", background: "#13131f", border: "1px solid #1e1e2e", padding: "4px 10px", borderRadius: "6px", whiteSpace: "nowrap" }}>
-                  Gestionado por Google
+                  {t.account.managedByGoogle}
                 </span>
               )}
             </div>
@@ -308,18 +305,18 @@ export default function MiCuentaPage() {
             <div style={{ display: "flex", alignItems: editingName ? "flex-start" : "center", justifyContent: "space-between", padding: "20px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", gap: "16px" }}>
               {editingName ? (
                 <div style={{ flex: 1 }}>
-                  <p style={{ margin: "0 0 12px", fontWeight: 500, color: "#fff", fontSize: "14px" }}>Nombre</p>
+                  <p style={{ margin: "0 0 12px", fontWeight: 500, color: "#fff", fontSize: "14px" }}>{t.account.name}</p>
                   <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
                     <input
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="Nombre"
+                      placeholder={t.account.firstName}
                       style={{ flex: 1, padding: "8px 12px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "#13131f", color: "#fff", fontSize: "13px", outline: "none" }}
                     />
                     <input
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Apellidos"
+                      placeholder={t.account.lastName}
                       style={{ flex: 1, padding: "8px 12px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "#13131f", color: "#fff", fontSize: "13px", outline: "none" }}
                     />
                   </div>
@@ -329,22 +326,22 @@ export default function MiCuentaPage() {
                       disabled={nameSaving}
                       style={{ padding: "7px 16px", borderRadius: "7px", border: "none", background: "#3b82f6", color: "#fff", fontSize: "12px", fontWeight: 600, cursor: "pointer", opacity: nameSaving ? 0.7 : 1 }}
                     >
-                      {nameSaving ? "Guardando..." : "Guardar"}
+                      {nameSaving ? t.account.saving : t.account.save}
                     </button>
                     <button
                       onClick={() => setEditingName(false)}
                       style={{ padding: "7px 16px", borderRadius: "7px", border: "1px solid #2a2a3e", background: "transparent", color: "#9ca3af", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}
                     >
-                      Cancelar
+                      {t.account.cancel}
                     </button>
                   </div>
                 </div>
               ) : (
                 <div>
-                  <p style={{ margin: "0 0 4px", fontWeight: 500, color: "#fff", fontSize: "14px" }}>Nombre</p>
+                  <p style={{ margin: "0 0 4px", fontWeight: 500, color: "#fff", fontSize: "14px" }}>{t.account.name}</p>
                   <p style={{ margin: 0, color: "#6b7280", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px" }}>
                     {user?.fullName ?? "No disponible"}
-                    {nameSaved && <span style={{ color: "#22c55e", fontSize: "12px" }}>✓ Guardado</span>}
+                    {nameSaved && <span style={{ color: "#22c55e", fontSize: "12px" }}>{t.account.saved}</span>}
                   </p>
                 </div>
               )}
@@ -361,14 +358,14 @@ export default function MiCuentaPage() {
             {/* Plan */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", gap: "16px" }}>
               <div>
-                <p style={{ margin: "0 0 4px", fontWeight: 500, color: "#fff", fontSize: "14px" }}>Plan actual</p>
+                <p style={{ margin: "0 0 4px", fontWeight: 500, color: "#fff", fontSize: "14px" }}>{t.account.currentPlan}</p>
                 <p style={{ margin: 0, color: "#6b7280", fontSize: "13px", textTransform: "capitalize" }}>{plan ?? "..."}</p>
               </div>
               <Link
                 href="/dashboard?tab=billing"
                 style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "#d1d5db", fontSize: "13px", textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}
               >
-                Gestionar suscripción
+                {t.account.manageSub}
               </Link>
             </div>
 
@@ -387,8 +384,8 @@ export default function MiCuentaPage() {
                   </div>
                 )}
                 <div>
-                  <p style={{ margin: "0 0 4px", fontWeight: 500, color: "#fff", fontSize: "14px" }}>Foto de perfil</p>
-                  <p style={{ margin: 0, color: "#6b7280", fontSize: "13px" }}>JPG, PNG, máx 5MB</p>
+                  <p style={{ margin: "0 0 4px", fontWeight: 500, color: "#fff", fontSize: "14px" }}>{t.account.profilePhoto}</p>
+                  <p style={{ margin: 0, color: "#6b7280", fontSize: "13px" }}>{t.account.photoDesc}</p>
                 </div>
               </div>
               <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={changePhoto} />
@@ -397,26 +394,26 @@ export default function MiCuentaPage() {
                 disabled={photoSaving}
                 style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "#d1d5db", fontSize: "13px", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0, opacity: photoSaving ? 0.6 : 1 }}
               >
-                {photoSaving ? "Subiendo..." : "Cambiar foto"}
+                {photoSaving ? t.account.uploading : t.account.changePhoto}
               </button>
             </div>
 
             {/* Cuentas conectadas */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", gap: "16px" }}>
               <div>
-                <p style={{ margin: "0 0 4px", fontWeight: 500, color: "#fff", fontSize: "14px" }}>Cuentas conectadas</p>
+                <p style={{ margin: "0 0 4px", fontWeight: 500, color: "#fff", fontSize: "14px" }}>{t.account.connectedAccounts}</p>
                 {isGoogleUser && googleAccount ? (
                   <p style={{ margin: 0, color: "#6b7280", fontSize: "13px" }}>
                     Google · {googleAccount.emailAddress ?? user?.emailAddresses[0]?.emailAddress}
                   </p>
                 ) : (
-                  <p style={{ margin: 0, color: "#6b7280", fontSize: "13px" }}>Sin cuentas externas conectadas</p>
+                  <p style={{ margin: 0, color: "#6b7280", fontSize: "13px" }}>{t.account.noConnected}</p>
                 )}
               </div>
               {isGoogleUser && (
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", padding: "5px 12px", borderRadius: "6px", flexShrink: 0 }}>
                   <Check size={12} color="#22c55e" />
-                  <span style={{ fontSize: "12px", color: "#22c55e", fontWeight: 600 }}>Conectado</span>
+                  <span style={{ fontSize: "12px", color: "#22c55e", fontWeight: 600 }}>{t.account.connected}</span>
                 </div>
               )}
             </div>
@@ -424,16 +421,14 @@ export default function MiCuentaPage() {
             {/* Preferencias */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", gap: "16px" }}>
               <div>
-                <p style={{ margin: "0 0 4px", fontWeight: 500, color: "#fff", fontSize: "14px" }}>Idioma de la interfaz</p>
-                <p style={{ margin: 0, color: "#6b7280", fontSize: "13px" }}>Cambia el idioma de la web</p>
+                <p style={{ margin: "0 0 4px", fontWeight: 500, color: "#fff", fontSize: "14px" }}>{t.account.language}</p>
+                <p style={{ margin: 0, color: "#6b7280", fontSize: "13px" }}>{t.account.languageDesc}</p>
               </div>
               <CustomSelect
                 options={LANGUAGE_OPTIONS}
-                value={language}
+                value={lang}
                 onChange={(val) => {
-                  setLanguage(val);
-                  localStorage.setItem(LANG_STORAGE_KEY, val);
-                  window.location.reload();
+                  setLang(val);
                 }}
                 style={{ minWidth: "140px" }}
               />
@@ -442,14 +437,14 @@ export default function MiCuentaPage() {
             {/* Eliminar cuenta */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 0", gap: "16px" }}>
               <div>
-                <p style={{ margin: "0 0 4px", fontWeight: 500, color: "#f87171", fontSize: "14px" }}>Eliminar cuenta</p>
-                <p style={{ margin: 0, color: "#6b7280", fontSize: "13px" }}>Esta acción es permanente e irreversible</p>
+                <p style={{ margin: "0 0 4px", fontWeight: 500, color: "#f87171", fontSize: "14px" }}>{t.account.deleteAccount}</p>
+                <p style={{ margin: 0, color: "#6b7280", fontSize: "13px" }}>{t.account.deleteDesc}</p>
               </div>
               <button
                 onClick={() => setShowDeleteModal(true)}
                 style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid rgba(239,68,68,0.35)", background: "transparent", color: "#f87171", fontSize: "13px", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
               >
-                Eliminar cuenta
+                {t.account.deleteAccount}
               </button>
             </div>
           </div>
@@ -460,13 +455,13 @@ export default function MiCuentaPage() {
           <div>
             {/* Contraseña */}
             <div style={{ paddingBottom: "32px", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: "32px" }}>
-              <h3 style={{ margin: "0 0 20px", fontSize: "15px", fontWeight: 600, color: "#fff" }}>Contraseña</h3>
+              <h3 style={{ margin: "0 0 20px", fontSize: "15px", fontWeight: 600, color: "#fff" }}>{t.account.password}</h3>
               {hasPassword ? (
                 <div>
                   {[
-                    { label: "Contraseña actual", value: currentPassword, set: setCurrentPassword },
-                    { label: "Nueva contraseña", value: newPassword, set: setNewPassword },
-                    { label: "Confirmar contraseña", value: confirmPassword, set: setConfirmPassword },
+                    { label: t.account.currentPassword, value: currentPassword, set: setCurrentPassword },
+                    { label: t.account.newPassword, value: newPassword, set: setNewPassword },
+                    { label: t.account.confirmPassword, value: confirmPassword, set: setConfirmPassword },
                   ].map(({ label, value, set }) => (
                     <div key={label} style={{ marginBottom: "14px" }}>
                       <label style={{ display: "block", fontSize: "12px", color: "#6b7280", marginBottom: "6px", fontWeight: 500 }}>{label}</label>
@@ -489,14 +484,14 @@ export default function MiCuentaPage() {
                       opacity: passwordSaving || !currentPassword || !newPassword || !confirmPassword ? 0.5 : 1,
                     }}
                   >
-                    {passwordSaving ? "Guardando..." : "Cambiar contraseña"}
+                    {passwordSaving ? t.account.saving : t.account.changePassword}
                   </button>
                 </div>
               ) : (
                 <div style={{ background: "#13131f", border: "1px solid #1e1e2e", borderRadius: "10px", padding: "16px 20px", display: "flex", alignItems: "center", gap: "12px" }}>
                   <Shield size={18} style={{ color: "#3b82f6", flexShrink: 0 }} />
                   <p style={{ margin: 0, color: "#9ca3af", fontSize: "13px", lineHeight: 1.5 }}>
-                    Tu cuenta usa <strong style={{ color: "#fff" }}>Google</strong> para autenticarse. No es necesario gestionar una contraseña.
+                    {t.account.googleAuth}
                   </p>
                 </div>
               )}
@@ -505,11 +500,11 @@ export default function MiCuentaPage() {
             {/* 2FA */}
             <div className="flex items-center justify-between py-5 border-b border-white/10">
               <div>
-                <p className="text-white font-medium">Autenticación de dos factores (2FA)</p>
-                <p className="text-gray-400 text-sm">Añade una capa extra de seguridad a tu cuenta</p>
+                <p className="text-white font-medium">{t.account.twoFactor}</p>
+                <p className="text-gray-400 text-sm">{t.account.twoFactorDesc}</p>
               </div>
               <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-white/10 text-gray-400 border border-white/10">
-                Próximamente
+                {t.account.comingSoon}
               </span>
             </div>
           </div>
@@ -528,40 +523,40 @@ export default function MiCuentaPage() {
         >
           <div style={{ background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: "16px", width: "100%", maxWidth: "400px", padding: "24px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#f87171" }}>Eliminar cuenta</h3>
+              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#f87171" }}>{t.account.deleteAccount}</h3>
               <button onClick={() => setShowDeleteModal(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280", display: "flex", padding: "4px" }}>
                 <X size={18} />
               </button>
             </div>
             <div style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "10px", padding: "14px 16px", marginBottom: "20px" }}>
               <p style={{ margin: 0, fontSize: "13px", color: "#fca5a5", lineHeight: 1.6 }}>
-                Esta acción es <strong>permanente e irreversible</strong>. Se eliminarán todos tus datos, voces e historial.
+                {t.account.deleteConfirmText}
               </p>
             </div>
             <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "10px" }}>
-              Escribe <strong style={{ color: "#d1d5db" }}>ELIMINAR</strong> para confirmar:
+              {t.account.deleteConfirmLabel}
             </p>
             <input
               type="text"
               value={deleteInput}
               onChange={(e) => setDeleteInput(e.target.value)}
-              placeholder="ELIMINAR"
+              placeholder={t.account.deleteConfirmPlaceholder}
               style={{ width: "100%", boxSizing: "border-box", padding: "10px 14px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "#13131f", color: "#fff", fontSize: "13px", marginBottom: "16px", outline: "none" }}
             />
             <button
               onClick={deleteAccount}
-              disabled={deleteInput !== "ELIMINAR" || deleting}
+              disabled={deleteInput !== t.account.deleteConfirmWord || deleting}
               style={{
                 width: "100%", padding: "11px", borderRadius: "8px", border: "none",
                 background: deleteInput === "ELIMINAR" ? "#ef4444" : "#1a1a2e",
                 color: deleteInput === "ELIMINAR" ? "#fff" : "#4a4a65",
                 fontSize: "13px", fontWeight: 700,
-                cursor: deleteInput !== "ELIMINAR" || deleting ? "not-allowed" : "pointer",
+                cursor: deleteInput !== t.account.deleteConfirmWord || deleting ? "not-allowed" : "pointer",
                 opacity: deleting ? 0.7 : 1,
                 transition: "background 0.2s, color 0.2s",
               }}
             >
-              {deleting ? "Eliminando..." : "Eliminar mi cuenta"}
+              {deleting ? t.account.deleting : t.account.deleteBtn}
             </button>
           </div>
         </div>

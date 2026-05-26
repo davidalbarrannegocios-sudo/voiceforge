@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Settings, CreditCard, Gift, LogOut, LayoutDashboard, Zap } from "lucide-react";
+import { useLang } from "@/app/dashboard/LanguageContext";
 
 interface UserMenuProps {
   used?: number;
@@ -16,6 +17,7 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
   const { user } = useUser();
   const { signOut } = useClerk();
   const router = useRouter();
+  const { t, setLang } = useLang();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -126,7 +128,7 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
                       }}
                       className="bg-white text-black text-xs font-semibold px-3 py-1 rounded-full hover:bg-gray-200 transition-colors"
                     >
-                      Mejorar
+                      {t.billing.upgrade}
                     </button>
                   </div>
                   <div className="flex justify-between text-sm mb-0.5">
@@ -154,9 +156,9 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
           {/* Nav links */}
           <div className="p-2">
             {[
-              { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
-              { href: "/dashboard?tab=billing", label: "Facturación", Icon: CreditCard },
-              { href: "/dashboard?tab=referral", label: "Referidos", Icon: Gift },
+              { href: "/dashboard", label: t.nav.home, Icon: LayoutDashboard },
+              { href: "/dashboard?tab=billing", label: t.nav.billing, Icon: CreditCard },
+              { href: "/dashboard?tab=referral", label: t.nav.referrals, Icon: Gift },
             ].map(({ href, label, Icon }) => (
               <Link
                 key={href}
@@ -179,7 +181,7 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
               onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#9ca3af"; }}
             >
               <Settings size={15} style={{ flexShrink: 0 }} />
-              Mi cuenta
+              {t.nav.account}
             </button>
           </div>
 
@@ -193,7 +195,7 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
               onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#f87171"; }}
             >
               <LogOut size={15} style={{ flexShrink: 0 }} />
-              Cerrar sesión
+              {t.nav.signOut}
             </button>
           </div>
       </div>
