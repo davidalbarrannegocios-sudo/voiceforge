@@ -15,29 +15,11 @@ function getExpiresAt(plan: string): Date {
   return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 }
 
-async function ai33Generate(
-  voiceId: string,
-  text: string,
+async function ai33Poll(
+  taskId: string,
+  apiKey: string,
   signal: AbortSignal
 ): Promise<{ audio_url: string; duration_seconds: number }> {
-  const apiKey = process.env.SK_AI33_KEY;
-  if (!apiKey) throw new Error("SK_AI33_KEY no configurada");
-
-  const ttsRes = await fetch(`https://api.ai33.pro/v1/text-to-speech/${voiceId}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "xi-api-key": apiKey },
-    body: JSON.stringify({ text, model_id: "eleven_multilingual_v2" }),
-    signal,
-  });
-
-  if (!ttsRes.ok) {
-    const errText = await ttsRes.text();
-    throw new Error(`ai33.pro error ${ttsRes.status}: ${errText}`);
-  }
-
-  const { task_id } = (await ttsRes.json()) as { task_id: string };
-  if (!task_id) throw new Error("ai33.pro no devolvió task_id");
-
   const MAX_ATTEMPTS = 60;
   const POLL_INTERVAL_MS = 2000;
 
@@ -46,7 +28,7 @@ async function ai33Generate(
 
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
 
-    const pollRes = await fetch(`https://api.ai33.pro/v1/task/${task_id}`, {
+    const pollRes = await fetch(`https://api.ai33.pro/v1/task/${taskId}`, {
       headers: { "xi-api-key": apiKey },
       signal,
     });
@@ -72,21 +54,65 @@ async function ai33Generate(
     }
   }
 
-  throw new Error(`ai33.pro: timeout tras ${MAX_ATTEMPTS} intentos (${MAX_ATTEMPTS * POLL_INTERVAL_MS / 1000}s)`);
+  throw new Error(`ai33.pro: timeout tras ${MAX_ATTEMPTS} intentos (${(MAX_ATTEMPTS * POLL_INTERVAL_MS) / 1000}s)`);
+}
+
+async function ai33Generate(
+  voiceId: string,
+  text: string,
+  provider: "elevenlabs" | "minimax",
+  apiKey: string,
+  signal: AbortSignal
+): Promise<{ audio_url: string; duration_seconds: number }> {
+  let ttsRes: Response;
+
+  if (provider === "minimax") {
+    ttsRes = await fetch("https://api.ai33.pro/v1m/task/text-to-speech", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "xi-api-key": apiKey },
+      body: JSON.stringify({
+        text,
+        model: "speech-2.6-hd",
+        voice_setting: { voice_id: voiceId, vol: 1, pitch: 0, speed: 1 },
+      }),
+      signal,
+    });
+  } else {
+    ttsRes = await fetch(`https://api.ai33.pro/v1/text-to-speech/${voiceId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "xi-api-key": apiKey },
+      body: JSON.stringify({ text, model_id: "eleven_multilingual_v2" }),
+      signal,
+    });
+  }
+
+  if (!ttsRes.ok) {
+    const errText = await ttsRes.text();
+    throw new Error(`ai33.pro error ${ttsRes.status}: ${errText}`);
+  }
+
+  const { task_id } = (await ttsRes.json()) as { task_id: string };
+  if (!task_id) throw new Error("ai33.pro no devolvió task_id");
+
+  return ai33Poll(task_id, apiKey, signal);
 }
 
 export async function POST(req: Request) {
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const { text, reference_id, voiceName } = await req.json();
+  const { text, voice_id, voiceName, provider = "elevenlabs" } = await req.json();
 
   if (!text || typeof text !== "string" || text.trim().length === 0) {
     return NextResponse.json({ error: "Texto requerido" }, { status: 400 });
   }
 
   const trimmed = text.trim();
-  const voiceId = (reference_id as string | undefined) || "default";
+  const voiceId = (voice_id as string | undefined) || "default";
+  const resolvedProvider = (provider === "minimax" ? "minimax" : "elevenlabs") as "elevenlabs" | "minimax";
+
+  const apiKey = process.env.SK_AI33_KEY;
+  if (!apiKey) return NextResponse.json({ error: "SK_AI33_KEY no configurada" }, { status: 500 });
 
   try {
     const user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
@@ -125,11 +151,11 @@ export async function POST(req: Request) {
       }),
     ]);
 
-    console.log(`[generate-ai33] jobId=${job.id} chars=${trimmed.length} voiceId=${voiceId}`);
+    console.log(`[generate-ai33] jobId=${job.id} provider=${resolvedProvider} chars=${trimmed.length} voiceId=${voiceId}`);
 
     let result: { audio_url: string; duration_seconds: number };
     try {
-      result = await ai33Generate(voiceId, trimmed, req.signal);
+      result = await ai33Generate(voiceId, trimmed, resolvedProvider, apiKey, req.signal);
     } catch (err) {
       const isAbort = req.signal.aborted;
       const errMsg = isAbort ? "Generación cancelada" : (err instanceof Error ? err.message : String(err));

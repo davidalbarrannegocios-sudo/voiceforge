@@ -510,6 +510,120 @@ function CompactSlider({
   );
 }
 
+/* ─── Ai33 Voice Browser ──────────────────────────────────── */
+type Ai33Voice = { id: string; name: string; sampleUrl: string | null };
+
+function Ai33VoiceBrowser({
+  provider,
+  onSelect,
+  onClose,
+}: {
+  provider: "elevenlabs" | "minimax";
+  onSelect: (v: Ai33Voice) => void;
+  onClose: () => void;
+}) {
+  const [voices, setVoices] = useState<Ai33Voice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    const endpoint = provider === "minimax" ? "/api/ai33-voices-minimax" : "/api/ai33-voices-eleven";
+    fetch(endpoint)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) throw new Error(data.error);
+        setVoices(data.voices ?? []);
+      })
+      .catch((e) => setError(e.message ?? "Error al cargar voces"))
+      .finally(() => setLoading(false));
+  }, [provider]);
+
+  function handlePreview(v: Ai33Voice) {
+    if (!v.sampleUrl) return;
+    if (playingId === v.id) {
+      audioRef.current?.pause();
+      audioRef.current = null;
+      setPlayingId(null);
+      return;
+    }
+    audioRef.current?.pause();
+    const audio = new Audio(v.sampleUrl);
+    audioRef.current = audio;
+    setPlayingId(v.id);
+    audio.onended = () => setPlayingId(null);
+    audio.onerror = () => setPlayingId(null);
+    audio.play();
+  }
+
+  const filtered = voices.filter((v) => v.name.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
+      <div style={{ width: "100%", maxWidth: "680px", background: "#0d0f14", border: "1px solid rgba(255,255,255,0.08)", borderTopLeftRadius: "20px", borderTopRightRadius: "20px", padding: "24px", maxHeight: "80vh", display: "flex", flexDirection: "column", gap: "16px" }} onClick={(e) => e.stopPropagation()}>
+
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#fff" }}>
+              Voces de {provider === "elevenlabs" ? "ElevenLabs" : "Minimax"}
+            </h2>
+            <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#6b7280" }}>via EliteLabs 2</p>
+          </div>
+          <button onClick={onClose} style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(255,255,255,0.06)", border: "none", color: "#9ca3af", cursor: "pointer", fontSize: "16px", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+        </div>
+
+        {/* Search */}
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar voz..."
+          style={{ padding: "10px 14px", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", color: "#e2e8f0", fontSize: "13px", outline: "none", width: "100%", boxSizing: "border-box" }}
+        />
+
+        {/* Body */}
+        <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px" }}>
+          {loading && (
+            <div style={{ textAlign: "center", padding: "40px", color: "#6b7280", fontSize: "13px" }}>Cargando voces...</div>
+          )}
+          {error && (
+            <div style={{ padding: "16px", borderRadius: "10px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", fontSize: "13px" }}>{error}</div>
+          )}
+          {!loading && !error && filtered.length === 0 && (
+            <div style={{ textAlign: "center", padding: "40px", color: "#6b7280", fontSize: "13px" }}>No se encontraron voces</div>
+          )}
+          {!loading && !error && filtered.map((v) => (
+            <div key={v.id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", background: "#12121a", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px" }}>
+              <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "linear-gradient(135deg, #3b82f6, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+              </div>
+              <span style={{ flex: 1, fontSize: "13px", fontWeight: 500, color: "#e2e8f0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v.name}</span>
+              {v.sampleUrl && (
+                <button
+                  onClick={() => handlePreview(v)}
+                  style={{ padding: "6px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, background: playingId === v.id ? "rgba(239,68,68,0.1)" : "rgba(59,130,246,0.08)", border: `1px solid ${playingId === v.id ? "rgba(239,68,68,0.3)" : "rgba(59,130,246,0.2)"}`, color: playingId === v.id ? "#f87171" : "#93c5fd", cursor: "pointer", flexShrink: 0 }}
+                >
+                  {playingId === v.id ? "⏹" : "▶"}
+                </button>
+              )}
+              <button
+                onClick={() => onSelect(v)}
+                style={{ padding: "6px 14px", borderRadius: "6px", fontSize: "12px", fontWeight: 600, background: "linear-gradient(135deg, #3b82f6, #2563eb)", border: "none", color: "#fff", cursor: "pointer", flexShrink: 0 }}
+              >
+                Usar
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Generate Tab ────────────────────────────────────────── */
 function GenerateTab({
   voices,
@@ -537,6 +651,9 @@ function GenerateTab({
   const [selectedModel, setSelectedModel] = useState("speech-1.6");
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   const [ttsEngine, setTtsEngine] = useState<"elitelabs" | "elitelabs2">("elitelabs");
+  const [ai33Provider, setAi33Provider] = useState<"elevenlabs" | "minimax">("elevenlabs");
+  const [selectedAi33Voice, setSelectedAi33Voice] = useState<{ id: string; name: string; sampleUrl: string | null } | null>(null);
+  const [showAi33Browser, setShowAi33Browser] = useState(false);
   const modelDropdownRef = useRef<HTMLDivElement>(null);
   const [previewing, setPreviewing] = useState<"idle" | "loading" | "playing">("idle");
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -579,6 +696,17 @@ function GenerateTab({
     try { localStorage.setItem("vf_tts_engine", ttsEngine); } catch { /* ignore */ }
   }, [ttsEngine]);
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("vf_ai33_provider");
+      if (saved === "minimax") setAi33Provider("minimax");
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    try { localStorage.setItem("vf_ai33_provider", ai33Provider); } catch { /* ignore */ }
+  }, [ai33Provider]);
+
   async function handleGenerate() {
     setFormError(null);
     setSubmitting(true);
@@ -590,8 +718,9 @@ function GenerateTab({
         endpoint = "/api/generate-ai33";
         body = {
           text,
-          reference_id: selectedVoice?.referenceId ?? undefined,
-          voiceName: selectedVoice?.name ?? "Voz por defecto",
+          voice_id: selectedAi33Voice?.id ?? undefined,
+          voiceName: selectedAi33Voice?.name ?? "Voz por defecto",
+          provider: ai33Provider,
         };
       } else {
         endpoint = "/api/generate";
@@ -761,38 +890,63 @@ function GenerateTab({
               {/* VOZ */}
               <div>
                 <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", marginBottom: "8px" }}>{t.generate.voiceLabel}</p>
-                <button
-                  onClick={() => setShowBrowser(true)}
-                  style={{ width: "100%", textAlign: "left", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "12px", cursor: "pointer" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
-                >
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
-                    <VoiceAvatar name={selectedVoice?.name ?? "V"} coverImage={selectedVoice?.coverImage} size="lg" id={selectedVoice?.referenceId} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap", marginBottom: "2px" }}>
-                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>{selectedVoice?.name ?? t.generate.defaultVoice}</span>
-                        {voiceGender && <span style={{ fontSize: "12px", color: "#6b7280" }}>· {voiceGender === "male" ? "Masculino" : "Femenino"}</span>}
+
+                {ttsEngine === "elitelabs2" ? (
+                  <button
+                    onClick={() => setShowAi33Browser(true)}
+                    style={{ width: "100%", textAlign: "left", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "12px", cursor: "pointer" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "linear-gradient(135deg, #3b82f6, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
                       </div>
-                      {selectedVoice?.description && <p style={{ fontSize: "11px", color: "#6b7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "6px" }}>{selectedVoice.description}</p>}
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-                        {selectedVoice?.languages?.slice(0, 3).map((l) => (
-                          <span key={l} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "2px 6px", borderRadius: "4px", background: "rgba(255,255,255,0.08)", fontSize: "11px", color: "#e2e8f0" }}>
-                            <span className={`fi fi-${l.toLowerCase()}`} style={{ width: "14px", height: "10px", display: "inline-block", borderRadius: "2px" }} />{l.toUpperCase()}
-                          </span>
-                        ))}
-                        {voiceGender && <span style={{ padding: "2px 6px", borderRadius: "4px", background: "rgba(255,255,255,0.08)", fontSize: "11px", color: "#e2e8f0" }}>{voiceGender === "male" ? "Masculino" : "Femenino"}</span>}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {selectedAi33Voice ? selectedAi33Voice.name : "Seleccionar voz"}
+                        </span>
+                        <span style={{ fontSize: "11px", color: "#6b7280" }}>
+                          {selectedAi33Voice ? (ai33Provider === "elevenlabs" ? "ElevenLabs" : "Minimax") : "Ninguna seleccionada"}
+                        </span>
                       </div>
-                      {((selectedVoice?.taskCount ?? 0) > 0 || (selectedVoice?.likeCount ?? 0) > 0) && (
-                        <div style={{ display: "flex", gap: "10px", marginTop: "6px" }}>
-                          {(selectedVoice?.taskCount ?? 0) > 0 && <span style={{ fontSize: "11px", color: "#6b7280", display: "flex", alignItems: "center", gap: "3px" }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>{formatCount(selectedVoice!.taskCount!)}</span>}
-                          {(selectedVoice?.likeCount ?? 0) > 0 && <span style={{ fontSize: "11px", color: "#6b7280", display: "flex", alignItems: "center", gap: "3px" }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>{formatCount(selectedVoice!.likeCount!)}</span>}
-                        </div>
-                      )}
+                      <span style={{ fontSize: "12px", color: "#6b7280", flexShrink: 0 }}>→</span>
                     </div>
-                    <span style={{ fontSize: "12px", color: "#6b7280", flexShrink: 0 }}>→</span>
-                  </div>
-                </button>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowBrowser(true)}
+                    style={{ width: "100%", textAlign: "left", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "12px", cursor: "pointer" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
+                  >
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                      <VoiceAvatar name={selectedVoice?.name ?? "V"} coverImage={selectedVoice?.coverImage} size="lg" id={selectedVoice?.referenceId} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap", marginBottom: "2px" }}>
+                          <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>{selectedVoice?.name ?? t.generate.defaultVoice}</span>
+                          {voiceGender && <span style={{ fontSize: "12px", color: "#6b7280" }}>· {voiceGender === "male" ? "Masculino" : "Femenino"}</span>}
+                        </div>
+                        {selectedVoice?.description && <p style={{ fontSize: "11px", color: "#6b7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "6px" }}>{selectedVoice.description}</p>}
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                          {selectedVoice?.languages?.slice(0, 3).map((l) => (
+                            <span key={l} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "2px 6px", borderRadius: "4px", background: "rgba(255,255,255,0.08)", fontSize: "11px", color: "#e2e8f0" }}>
+                              <span className={`fi fi-${l.toLowerCase()}`} style={{ width: "14px", height: "10px", display: "inline-block", borderRadius: "2px" }} />{l.toUpperCase()}
+                            </span>
+                          ))}
+                          {voiceGender && <span style={{ padding: "2px 6px", borderRadius: "4px", background: "rgba(255,255,255,0.08)", fontSize: "11px", color: "#e2e8f0" }}>{voiceGender === "male" ? "Masculino" : "Femenino"}</span>}
+                        </div>
+                        {((selectedVoice?.taskCount ?? 0) > 0 || (selectedVoice?.likeCount ?? 0) > 0) && (
+                          <div style={{ display: "flex", gap: "10px", marginTop: "6px" }}>
+                            {(selectedVoice?.taskCount ?? 0) > 0 && <span style={{ fontSize: "11px", color: "#6b7280", display: "flex", alignItems: "center", gap: "3px" }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>{formatCount(selectedVoice!.taskCount!)}</span>}
+                            {(selectedVoice?.likeCount ?? 0) > 0 && <span style={{ fontSize: "11px", color: "#6b7280", display: "flex", alignItems: "center", gap: "3px" }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>{formatCount(selectedVoice!.likeCount!)}</span>}
+                          </div>
+                        )}
+                      </div>
+                      <span style={{ fontSize: "12px", color: "#6b7280", flexShrink: 0 }}>→</span>
+                    </div>
+                  </button>
+                )}
               </div>
 
               {/* MOTOR */}
@@ -804,6 +958,18 @@ function GenerateTab({
                   <button onClick={() => setTtsEngine("elitelabs2")} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: ttsEngine === "elitelabs2" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>EliteLabs 2</button>
                 </div>
               </div>
+
+              {/* PROVEEDOR (solo EliteLabs 2) */}
+              {ttsEngine === "elitelabs2" && (
+                <div>
+                  <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", marginBottom: "8px" }}>Proveedor</p>
+                  <div style={{ position: "relative", display: "flex", background: "#12121a", borderRadius: "8px", padding: "4px" }}>
+                    <div style={{ position: "absolute", top: "4px", bottom: "4px", left: "4px", width: "calc(50% - 4px)", background: "#2a2a3e", borderRadius: "6px", transform: ai33Provider === "elevenlabs" ? "translateX(0)" : "translateX(100%)", transition: "transform 200ms ease-out" }} />
+                    <button onClick={() => { setAi33Provider("elevenlabs"); setSelectedAi33Voice(null); }} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: ai33Provider === "elevenlabs" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>ElevenLabs</button>
+                    <button onClick={() => { setAi33Provider("minimax"); setSelectedAi33Voice(null); }} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: ai33Provider === "minimax" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>Minimax</button>
+                  </div>
+                </div>
+              )}
 
               {/* MODELO */}
               {ttsEngine === "elitelabs" && <div>
@@ -887,6 +1053,14 @@ function GenerateTab({
           onSelect={onVoiceChange}
           onClose={() => setShowBrowser(false)}
           plan={plan}
+        />
+      )}
+
+      {showAi33Browser && (
+        <Ai33VoiceBrowser
+          provider={ai33Provider}
+          onSelect={(v) => { setSelectedAi33Voice(v); setShowAi33Browser(false); }}
+          onClose={() => setShowAi33Browser(false)}
         />
       )}
     </div>
