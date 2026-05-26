@@ -1,7 +1,6 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { calculateCharCost } from "@/lib/utils";
 import { getEffectivePlan } from "@/lib/plan";
 
 export const runtime = "nodejs";
@@ -119,7 +118,7 @@ export async function POST(req: Request) {
     if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
     const effectivePlan = await getEffectivePlan(user.id, user.plan);
-    const charCost = Math.ceil(calculateCharCost(trimmed.length) / 2); // 50% discount vs EliteLabs
+    const charCost = Math.ceil(trimmed.length * 0.5); // 0.5 créditos por carácter (vs 1 en EliteLabs)
     const totalAvailable = user.credits + user.extraCredits;
 
     if (totalAvailable < charCost) {

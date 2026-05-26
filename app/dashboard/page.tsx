@@ -2109,6 +2109,10 @@ function BillingTab({
             </>
           )}
         </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "5px 10px", borderRadius: "6px", background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.2)" }}>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style={{ color: "#22c55e", flexShrink: 0 }}><circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/><path d="M8 5v4M8 11v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          <span style={{ fontSize: "11px", color: "#4ade80", whiteSpace: "nowrap" }}>EliteLabs 2 consume la mitad de créditos</span>
+        </div>
         {plan !== "free" && (
           <button
             onClick={() => setBillingModalOpen(true)}

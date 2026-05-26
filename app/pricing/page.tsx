@@ -49,7 +49,7 @@ const PLANS: Plan[] = [
     free: false,
     cta: "Suscribirse",
     features: [
-      "200.000 caracteres/mes",
+      "200.000 caracteres/mes (x2 con EliteLabs 2)",
       "Selección de voz completa",
       "Transcripciones y traducciones ilimitadas",
       "3 voces clonadas",
@@ -66,7 +66,7 @@ const PLANS: Plan[] = [
     free: false,
     cta: "Suscribirse",
     features: [
-      "500.000 caracteres/mes",
+      "500.000 caracteres/mes (x2 con EliteLabs 2)",
       "Selección de voz completa",
       "Transcripciones y traducciones ilimitadas",
       "10 voces clonadas",
@@ -84,7 +84,7 @@ const PLANS: Plan[] = [
     free: false,
     cta: "Suscribirse",
     features: [
-      "1.000.000 caracteres/mes",
+      "1.000.000 caracteres/mes (x2 con EliteLabs 2)",
       "Selección de voz completa",
       "Transcripciones y traducciones ilimitadas",
       "20 voces clonadas",
@@ -103,7 +103,7 @@ const PLANS: Plan[] = [
     free: false,
     cta: "Suscribirse",
     features: [
-      "5.000.000 caracteres/mes",
+      "5.000.000 caracteres/mes (x2 con EliteLabs 2)",
       "Voces clonadas ilimitadas",
       "Transcripciones y traducciones ilimitadas",
       "Traducción de audio +10%",
