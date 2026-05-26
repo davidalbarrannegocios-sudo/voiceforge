@@ -581,6 +581,12 @@ function VoiceRow({
   );
 }
 
+const ACCENT_TAGS: Record<string, string[]> = {
+  spain: ["spain", "españa", "castilian", "castellano", "european spanish", "iberian", "iberico", "peninsular"],
+  mexico: ["mexico", "méxico", "mexican", "mexicano"],
+  latam: ["latin america", "latinoamerica", "latam", "colombia", "argentina", "chile", "peru", "venezuela", "argentino", "chileno"],
+};
+
 /* ── Main component ─────────────────────────────────────────── */
 
 export function VoiceBrowser({
@@ -596,6 +602,7 @@ export function VoiceBrowser({
 }) {
   const [tab, setTab] = useState<"recent" | "explore" | "favorites" | "cloned">("explore");
   const [language, setLanguage] = useState("es");
+  const [accent, setAccent] = useState<"all" | "spain" | "mexico" | "latam">("all");
   const [tier, setTier] = useState<"all" | "free" | "premium">("all");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -913,11 +920,21 @@ export function VoiceBrowser({
     });
   }
 
-  const filteredVoices = publicVoices.filter((v) => {
+  const baseFiltered = publicVoices.filter((v) => {
     if (tier === "free" && isPremiumVoice(v._id)) return false;
     if (tier === "premium" && !isPremiumVoice(v._id)) return false;
     return matchesAdvancedFilters(v, appliedFilters);
   });
+
+  const accentFiltered = language === "es" && accent !== "all"
+    ? baseFiltered.filter((v) => {
+        const tags = v.tags?.map((t: string) => t.toLowerCase()) ?? [];
+        return ACCENT_TAGS[accent]?.some((tag) => tags.includes(tag));
+      })
+    : baseFiltered;
+
+  const accentFallback = language === "es" && accent !== "all" && accentFiltered.length < 5;
+  const filteredVoices = accentFallback ? baseFiltered : accentFiltered;
 
   const hasActiveFilters = Object.values(appliedFilters).some((arr) => arr.length > 0);
 
@@ -1034,9 +1051,33 @@ export function VoiceBrowser({
                       icon: <span className={`fi fi-${fi}`} style={{ width: "20px", height: "15px", display: "inline-block", borderRadius: "2px", flexShrink: 0 }} />,
                     }))}
                     value={language}
-                    onChange={setLanguage}
+                    onChange={(v) => { setLanguage(v); setAccent("all"); }}
                     style={{ minWidth: "140px" }}
                   />
+
+                  {/* Accent sub-filter (Spanish only) */}
+                  {language === "es" && (
+                    <div className="flex gap-1.5 flex-wrap">
+                      {(["all", "spain", "mexico", "latam"] as const).map((a) => {
+                        const labels: Record<string, string> = { all: "Todos", spain: "🇪🇸 España", mexico: "🇲🇽 México", latam: "🌎 Latinoamérica" };
+                        return (
+                          <button
+                            key={a}
+                            onClick={() => setAccent(a)}
+                            className="px-3 py-1 rounded-full text-xs border transition-colors"
+                            style={accent === a
+                              ? { background: "#2563eb", borderColor: "#2563eb", color: "#fff" }
+                              : { borderColor: "rgba(255,255,255,0.2)", color: "#9ca3af" }
+                            }
+                            onMouseEnter={(e) => { if (accent !== a) e.currentTarget.style.borderColor = "rgba(255,255,255,0.4)"; }}
+                            onMouseLeave={(e) => { if (accent !== a) e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
+                          >
+                            {labels[a]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   {/* Advanced filter button */}
                   <button
@@ -1098,6 +1139,14 @@ export function VoiceBrowser({
                   </div>
                   <span className="text-xs flex-shrink-0" style={{ color: "#3b82f6" }}>Seleccionar →</span>
                 </button>
+
+                {/* Accent fallback notice */}
+                {accentFallback && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg mb-2 text-xs" style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)", color: "#93c5fd" }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    Mostrando todas las voces en español
+                  </div>
+                )}
 
                 {/* Voice list */}
                 {loading ? (
