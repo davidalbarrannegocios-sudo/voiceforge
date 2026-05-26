@@ -43,7 +43,10 @@ export async function GET(req: Request) {
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const apiKey = process.env.SK_AI33_KEY;
-  if (!apiKey) return NextResponse.json({ error: "SK_AI33_KEY no configurada" }, { status: 500 });
+  if (!apiKey) {
+    console.error("[ai33-voices-minimax] SK_AI33_KEY not configured");
+    return NextResponse.json({ error: "SK_AI33_KEY no configurada" }, { status: 500 });
+  }
 
   const { searchParams } = new URL(req.url);
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
@@ -74,18 +77,35 @@ export async function GET(req: Request) {
   // Fetch public Minimax voices from ai33.pro
   let publicItems: ReturnType<typeof mapToFishVoice>[] = [];
   try {
+    console.log("[ai33-voices-minimax] fetching public voice list from ai33.pro");
     const res = await fetch("https://api.ai33.pro/v1m/voice/list", {
       method: "POST",
       headers: { "Content-Type": "application/json", "xi-api-key": apiKey },
       body: JSON.stringify({ page: 1, page_size: 200, tag_list: [] }),
     });
+    const rawBody = await res.text();
+    console.log(`[ai33-voices-minimax] voice/list status=${res.status} body=${rawBody.slice(0, 600)}`);
+
     if (res.ok) {
-      const data = await res.json();
+      let data: unknown;
+      try {
+        data = JSON.parse(rawBody);
+      } catch {
+        console.error("[ai33-voices-minimax] voice/list response is not valid JSON");
+        data = {};
+      }
       const rawVoices: MinimaxVoice[] =
-        data.voices ?? data.items ?? data.list ?? (Array.isArray(data) ? data : []);
+        (data as { voices?: MinimaxVoice[] }).voices ??
+        (data as { items?: MinimaxVoice[] }).items ??
+        (data as { list?: MinimaxVoice[] }).list ??
+        (Array.isArray(data) ? (data as MinimaxVoice[]) : []);
+      console.log(`[ai33-voices-minimax] parsed ${rawVoices.length} public voices`);
       publicItems = rawVoices.map(mapToFishVoice);
+    } else {
+      console.error(`[ai33-voices-minimax] voice/list non-ok status=${res.status}`);
     }
-  } catch {
+  } catch (err) {
+    console.error("[ai33-voices-minimax] voice/list fetch error:", err);
     // Return cloned voices only if public fetch fails
   }
 

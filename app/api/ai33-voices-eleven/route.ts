@@ -69,17 +69,26 @@ export async function GET(req: Request) {
   const search = (searchParams.get("search") ?? "").toLowerCase().trim();
   const PAGE_SIZE = 20;
 
+  console.log("[ai33-voices-eleven] fetching voices from ai33.pro");
   const res = await fetch("https://api.ai33.pro/v2/voices", {
     headers: { "xi-api-key": apiKey },
   });
 
+  const rawBody = await res.text();
+  console.log(`[ai33-voices-eleven] status=${res.status} body=${rawBody.slice(0, 400)}`);
+
   if (!res.ok) {
-    const text = await res.text();
-    return NextResponse.json({ error: `ai33.pro error ${res.status}: ${text}` }, { status: res.status });
+    return NextResponse.json({ error: `ai33.pro error ${res.status}: ${rawBody}` }, { status: res.status });
   }
 
-  const data = await res.json();
-  const rawVoices: ElevenVoice[] = Array.isArray(data) ? data : (data.voices ?? []);
+  let data: unknown;
+  try {
+    data = JSON.parse(rawBody);
+  } catch {
+    console.error("[ai33-voices-eleven] response is not valid JSON");
+    return NextResponse.json({ error: "ai33.pro devolvió respuesta no-JSON" }, { status: 500 });
+  }
+  const rawVoices: ElevenVoice[] = Array.isArray(data) ? data : ((data as { voices?: ElevenVoice[] }).voices ?? []);
 
   const allItems = rawVoices.map(mapToFishVoice);
 

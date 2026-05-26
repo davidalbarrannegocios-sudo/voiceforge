@@ -10,7 +10,10 @@ export async function POST(req: Request) {
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const apiKey = process.env.SK_AI33_KEY;
-  if (!apiKey) return NextResponse.json({ error: "SK_AI33_KEY no configurada" }, { status: 500 });
+  if (!apiKey) {
+    console.error("[clone-voice-minimax] SK_AI33_KEY not configured");
+    return NextResponse.json({ error: "SK_AI33_KEY no configurada" }, { status: 500 });
+  }
 
   let formData: FormData;
   try {
@@ -40,24 +43,38 @@ export async function POST(req: Request) {
   upstream.append("gender_tag", genderTag);
   upstream.append("need_noise_reduction", String(needNoiseReduction));
 
+  console.log(`[clone-voice-minimax] sending to ai33.pro: voice_name=${voiceName} language=${languageTag} gender=${genderTag} noise=${needNoiseReduction} fileSize=${file.size}`);
+
   const res = await fetch("https://api.ai33.pro/v1m/voice/clone", {
     method: "POST",
     headers: { "xi-api-key": apiKey },
     body: upstream,
   });
 
+  const rawText = await res.text();
+  console.log(`[clone-voice-minimax] ai33.pro response status=${res.status} body=${rawText.slice(0, 500)}`);
+
   if (!res.ok) {
-    const text = await res.text();
-    return NextResponse.json({ error: `ai33.pro error ${res.status}: ${text}` }, { status: res.status });
+    return NextResponse.json({ error: `ai33.pro error ${res.status}: ${rawText}` }, { status: res.status });
   }
 
-  const data = (await res.json()) as { success?: boolean; cloned_voice_id?: number | string };
+  let data: { success?: boolean; cloned_voice_id?: number | string };
+  try {
+    data = JSON.parse(rawText);
+  } catch {
+    return NextResponse.json(
+      { error: `ai33.pro devolvió respuesta no-JSON (status ${res.status}): ${rawText.slice(0, 200)}` },
+      { status: 500 }
+    );
+  }
 
   if (!data.success || data.cloned_voice_id == null) {
+    console.error("[clone-voice-minimax] unexpected response shape:", data);
     return NextResponse.json({ error: "ai33.pro no devolvió cloned_voice_id" }, { status: 500 });
   }
 
   const minimaxVoiceId = String(data.cloned_voice_id);
+  console.log(`[clone-voice-minimax] success, minimaxVoiceId=${minimaxVoiceId}`);
 
   await prisma.clonedVoice.create({
     data: {
