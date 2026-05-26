@@ -725,8 +725,10 @@ export default function AdminPage() {
     ]);
     if (uRes.status === 403 || uRes.status === 401) { setAuthorized(false); return; }
     setAuthorized(true);
-    setUsers(await uRes.json());
-    setStats(await sRes.json());
+    const uData = await uRes.json();
+    setUsers(Array.isArray(uData) ? uData : []);
+    const sData = await sRes.json();
+    setStats(sData && !sData.error ? sData : null);
     const tData = await tRes.json();
     setTickets(Array.isArray(tData) ? tData : []);
     const aData = await aRes.json();
