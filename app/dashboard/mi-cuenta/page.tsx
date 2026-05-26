@@ -471,17 +471,14 @@ export default function MiCuentaPage() {
             </div>
 
             {/* 2FA */}
-            <div>
-              <h3 style={{ margin: "0 0 20px", fontSize: "15px", fontWeight: 600, color: "#fff" }}>Autenticación en dos pasos (2FA)</h3>
-              <div style={{ background: "#13131f", border: "1px solid #1e1e2e", borderRadius: "10px", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div>
-                  <p style={{ margin: "0 0 3px", color: "#d1d5db", fontSize: "13px", fontWeight: 500 }}>Estado actual</p>
-                  <p style={{ margin: 0, color: "#6b7280", fontSize: "12px" }}>Añade una capa extra de seguridad a tu cuenta</p>
-                </div>
-                <span style={{ fontSize: "11px", fontWeight: 700, padding: "4px 10px", borderRadius: "999px", background: "rgba(239,68,68,0.1)", color: "#f87171", whiteSpace: "nowrap" }}>
-                  Desactivado
-                </span>
+            <div className="flex items-center justify-between py-5 border-b border-white/10">
+              <div>
+                <p className="text-white font-medium">Autenticación de dos factores (2FA)</p>
+                <p className="text-gray-400 text-sm">Añade una capa extra de seguridad a tu cuenta</p>
               </div>
+              <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-white/10 text-gray-400 border border-white/10">
+                Próximamente
+              </span>
             </div>
           </div>
         )}
