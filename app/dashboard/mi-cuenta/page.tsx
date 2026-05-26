@@ -242,7 +242,7 @@ export default function MiCuentaPage() {
       </aside>
 
       {/* ── Main ── */}
-      <main style={{ flex: 1, padding: "40px 32px", maxWidth: "720px" }}>
+      <main style={{ flex: 1, padding: "40px 32px", minWidth: 0 }}>
         {/* Header */}
         <div style={{ marginBottom: "32px" }}>
           <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>Configuración</h1>
@@ -430,7 +430,7 @@ export default function MiCuentaPage() {
             <div style={{ paddingBottom: "32px", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: "32px" }}>
               <h3 style={{ margin: "0 0 20px", fontSize: "15px", fontWeight: 600, color: "#fff" }}>Contraseña</h3>
               {hasPassword ? (
-                <div style={{ maxWidth: "380px" }}>
+                <div>
                   {[
                     { label: "Contraseña actual", value: currentPassword, set: setCurrentPassword },
                     { label: "Nueva contraseña", value: newPassword, set: setNewPassword },
@@ -461,7 +461,7 @@ export default function MiCuentaPage() {
                   </button>
                 </div>
               ) : (
-                <div style={{ background: "#13131f", border: "1px solid #1e1e2e", borderRadius: "10px", padding: "16px 20px", display: "flex", alignItems: "center", gap: "12px", maxWidth: "480px" }}>
+                <div style={{ background: "#13131f", border: "1px solid #1e1e2e", borderRadius: "10px", padding: "16px 20px", display: "flex", alignItems: "center", gap: "12px" }}>
                   <Shield size={18} style={{ color: "#3b82f6", flexShrink: 0 }} />
                   <p style={{ margin: 0, color: "#9ca3af", fontSize: "13px", lineHeight: 1.5 }}>
                     Tu cuenta usa <strong style={{ color: "#fff" }}>Google</strong> para autenticarse. No es necesario gestionar una contraseña.
@@ -473,7 +473,7 @@ export default function MiCuentaPage() {
             {/* 2FA */}
             <div>
               <h3 style={{ margin: "0 0 20px", fontSize: "15px", fontWeight: 600, color: "#fff" }}>Autenticación en dos pasos (2FA)</h3>
-              <div style={{ background: "#13131f", border: "1px solid #1e1e2e", borderRadius: "10px", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: "480px" }}>
+              <div style={{ background: "#13131f", border: "1px solid #1e1e2e", borderRadius: "10px", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <p style={{ margin: "0 0 3px", color: "#d1d5db", fontSize: "13px", fontWeight: 500 }}>Estado actual</p>
                   <p style={{ margin: 0, color: "#6b7280", fontSize: "12px" }}>Añade una capa extra de seguridad a tu cuenta</p>
