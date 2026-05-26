@@ -997,6 +997,8 @@ function GenerateTab({
               : undefined
           }
           disablePremiumLock={ttsEngine === "elitelabs2"}
+          showExternalFilters={ttsEngine === "elitelabs2" && ai33Provider === "elevenlabs"}
+          defaultLanguage={ttsEngine === "elitelabs2" ? "en" : "es"}
         />
       )}
     </div>

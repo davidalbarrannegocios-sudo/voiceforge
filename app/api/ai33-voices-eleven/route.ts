@@ -23,7 +23,7 @@ function labelsToLanguages(labels: ElevenVoice["labels"]): string[] {
   const accent = (labels?.accent ?? "").toLowerCase();
   if (accent.includes("spanish") || accent.includes("espanol") || accent.includes("español")) return ["es"];
   if (accent.includes("french") || accent.includes("français")) return ["fr"];
-  if (accent.includes("german") || accent.includes("deutsch")) return ["de"];
+  if (accent.includes("german") && !accent.includes("american")) return ["de"];
   if (accent.includes("italian") || accent.includes("italiano")) return ["it"];
   if (accent.includes("portuguese") || accent.includes("português")) return ["pt"];
   if (accent.includes("japanese") || accent.includes("日本語")) return ["ja"];
@@ -67,6 +67,8 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
   const search = (searchParams.get("search") ?? "").toLowerCase().trim();
+  const langFilter = (searchParams.get("language") ?? "").toLowerCase().trim();
+  const accentFilter = (searchParams.get("accent") ?? "").toLowerCase().trim();
   const PAGE_SIZE = 20;
 
   console.log("[ai33-voices-eleven] fetching voices from ai33.pro");
@@ -90,8 +92,27 @@ export async function GET(req: Request) {
   }
   const rawVoices: ElevenVoice[] = Array.isArray(data) ? data : ((data as { voices?: ElevenVoice[] }).voices ?? []);
 
-  const allItems = rawVoices.map(mapToFishVoice);
+  // Filter by language
+  const langFiltered = langFilter && langFilter !== "all"
+    ? rawVoices.filter((v) => labelsToLanguages(v.labels).includes(langFilter))
+    : rawVoices;
 
+  // Collect available accents from language-filtered set (before accent filter)
+  const accents = [...new Set(
+    langFiltered
+      .map((v) => v.labels?.accent)
+      .filter((a): a is string => typeof a === "string" && a.length > 0)
+  )].sort();
+
+  // Filter by accent
+  const accentFiltered = accentFilter && accentFilter !== "all"
+    ? langFiltered.filter((v) => (v.labels?.accent ?? "").toLowerCase() === accentFilter)
+    : langFiltered;
+
+  // Map to FishVoice format
+  const allItems = accentFiltered.map(mapToFishVoice);
+
+  // Search filter
   const filtered = search
     ? allItems.filter(
         (v) =>
@@ -104,5 +125,5 @@ export async function GET(req: Request) {
   const total = filtered.length;
   const items = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  return NextResponse.json({ items, total });
+  return NextResponse.json({ items, total, accents });
 }

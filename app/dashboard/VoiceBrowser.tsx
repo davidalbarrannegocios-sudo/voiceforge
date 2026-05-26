@@ -105,6 +105,18 @@ const LANGS = [
   { code: "ru", label: "Ruso",      fi: "ru" },
   { code: "pt", label: "Portugués", fi: "br" },
 ];
+// language code → country flag code (for fi-flag-icon CSS)
+const LANG_TO_FLAG: Record<string, string> = Object.fromEntries(LANGS.map(({ code, fi }) => [code, fi]));
+function langFlag(code: string): string {
+  return LANG_TO_FLAG[code.toLowerCase()] ?? code.toLowerCase();
+}
+
+const ACCENT_TO_FLAG: Record<string, string> = {
+  american: "us", british: "gb", australian: "au", irish: "ie",
+  "south-african": "za", swedish: "se", indian: "in", canadian: "ca",
+  "german-american": "de", nigerian: "ng",
+};
+
 const RECENT_KEY = "vf_recent_voices";
 const MAX_RECENT = 12;
 
@@ -677,7 +689,7 @@ function VoiceCard({
         <div className="flex items-center gap-1 flex-wrap mb-2">
           {voice.languages.slice(0, 2).map((l) => (
             <span key={l} className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>
-              <span className={`fi fi-${l.toLowerCase()}`} style={{ width: "14px", height: "11px", display: "inline-block", borderRadius: "2px" }} />
+              <span className={`fi fi-${langFlag(l)}`} style={{ width: "14px", height: "11px", display: "inline-block", borderRadius: "2px" }} />
               <span>{l.toUpperCase()}</span>
             </span>
           ))}
@@ -753,6 +765,8 @@ export function VoiceBrowser({
   plan,
   voiceListEndpoint,
   disablePremiumLock,
+  showExternalFilters,
+  defaultLanguage,
 }: {
   clonedVoices: ClonedVoice[];
   onSelect: (v: SelectedVoice | null) => void;
@@ -760,13 +774,16 @@ export function VoiceBrowser({
   plan?: string;
   voiceListEndpoint?: string;
   disablePremiumLock?: boolean;
+  showExternalFilters?: boolean;
+  defaultLanguage?: string;
 }) {
   const isExternalSource = !!voiceListEndpoint;
   const effectiveEndpoint = voiceListEndpoint ?? "/api/fish-voices";
 
   const [tab, setTab] = useState<"recent" | "explore" | "default" | "favorites" | "cloned">("explore");
-  const [language, setLanguage] = useState("es");
-  const [accent, setAccent] = useState<"all" | "spain" | "mexico" | "latam">("all");
+  const [language, setLanguage] = useState(defaultLanguage ?? "es");
+  const [accent, setAccent] = useState("all");
+  const [availableAccents, setAvailableAccents] = useState<string[]>([]);
   const [tier, setTier] = useState<"all" | "free" | "premium">("all");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -818,6 +835,16 @@ export function VoiceBrowser({
   const userCanUsePremium = canUsePremium(plan);
   const activeFilterCount =
     filters.genders.length + filters.ages.length + filters.useCases.length + filters.qualities.length;
+
+  // Reset filters when the endpoint changes (e.g. provider switch while browser is open)
+  useEffect(() => {
+    setLanguage(defaultLanguage ?? "es");
+    setAccent("all");
+    setAvailableAccents([]);
+    setPage(1);
+    setPublicVoices([]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voiceListEndpoint]);
 
   // Load recently used from localStorage
   useEffect(() => {
@@ -970,7 +997,7 @@ export function VoiceBrowser({
 
             const p = new URLSearchParams({ page: String(tierFishPageRef.current), language });
             if (debouncedSearch) p.set("search", debouncedSearch);
-            if (accent !== "all" && !isExternalSource) p.set("accent", accent);
+            if (accent !== "all") p.set("accent", accent);
             const res = await fetch(`${effectiveEndpoint}?${p}`, { signal });
             if (signal.aborted) return;
             const data = await res.json();
@@ -991,13 +1018,14 @@ export function VoiceBrowser({
         } else {
           const p = new URLSearchParams({ page: String(1), language });
           if (debouncedSearch) p.set("search", debouncedSearch);
-          if (accent !== "all" && !isExternalSource) p.set("accent", accent);
+          if (accent !== "all") p.set("accent", accent);
           const res = await fetch(`${effectiveEndpoint}?${p}`, { signal });
           if (signal.aborted) return;
           const data = await res.json();
           setPublicVoices(data.items ?? []);
           setTotal(data.total ?? 0);
           setAccentNotEnough(!isExternalSource && !!data.accentNotEnough);
+          if (isExternalSource && Array.isArray(data.accents)) setAvailableAccents(data.accents);
         }
       } catch (e) {
         if ((e as Error)?.name === "AbortError") return;
@@ -1037,7 +1065,7 @@ export function VoiceBrowser({
 
             const p = new URLSearchParams({ page: String(tierFishPageRef.current), language });
             if (debouncedSearch) p.set("search", debouncedSearch);
-            if (accent !== "all" && !isExternalSource) p.set("accent", accent);
+            if (accent !== "all") p.set("accent", accent);
             const res = await fetch(`${effectiveEndpoint}?${p}`, { signal });
             if (signal.aborted) return;
             const data = await res.json();
@@ -1058,7 +1086,7 @@ export function VoiceBrowser({
         } else {
           const p = new URLSearchParams({ page: String(page), language });
           if (debouncedSearch) p.set("search", debouncedSearch);
-          if (accent !== "all" && !isExternalSource) p.set("accent", accent);
+          if (accent !== "all") p.set("accent", accent);
           const res = await fetch(`${effectiveEndpoint}?${p}`, { signal });
           if (signal.aborted) return;
           const data = await res.json();
@@ -1270,8 +1298,8 @@ export function VoiceBrowser({
                     />
                   </div>
 
-                  {/* Language dropdown — hidden for external voice sources */}
-                  {!isExternalSource && (
+                  {/* Language dropdown — Fish Audio always, external only when showExternalFilters */}
+                  {(!isExternalSource || showExternalFilters) && (
                     <CustomSelect
                       options={LANGS.map(({ code, label, fi }) => ({
                         value: code,
@@ -1284,7 +1312,7 @@ export function VoiceBrowser({
                     />
                   )}
 
-                  {/* Accent sub-filter (Spanish only) — hidden for external voice sources */}
+                  {/* Accent: Spanish sub-filter for Fish Audio */}
                   {!isExternalSource && language === "es" && (
                     <CustomSelect
                       options={[
@@ -1294,8 +1322,27 @@ export function VoiceBrowser({
                         { value: "latam", label: "Latinoamérica", icon: <span className="fi fi-un" style={{ width: "16px", height: "12px", display: "inline-block", borderRadius: "2px" }} /> },
                       ]}
                       value={accent}
-                      onChange={(v) => setAccent(v as "all" | "spain" | "mexico" | "latam")}
+                      onChange={(v) => setAccent(v)}
                       style={{ minWidth: "140px" }}
+                    />
+                  )}
+
+                  {/* Accent: dynamic filter for external sources (ElevenLabs) */}
+                  {showExternalFilters && isExternalSource && availableAccents.length > 0 && (
+                    <CustomSelect
+                      options={[
+                        { value: "all", label: "Todos los acentos" },
+                        ...availableAccents.map((a) => ({
+                          value: a,
+                          label: a.charAt(0).toUpperCase() + a.slice(1).replace(/-/g, " "),
+                          icon: ACCENT_TO_FLAG[a]
+                            ? <span className={`fi fi-${ACCENT_TO_FLAG[a]}`} style={{ width: "16px", height: "12px", display: "inline-block", borderRadius: "2px" }} />
+                            : undefined,
+                        })),
+                      ]}
+                      value={accent}
+                      onChange={(v) => setAccent(v)}
+                      style={{ minWidth: "160px" }}
                     />
                   )}
 
