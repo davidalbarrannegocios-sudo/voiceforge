@@ -4,11 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import {
-  Home, Mic2, Type, FileAudio, Globe, Clock,
-  CreditCard, Gift, Zap, User, Shield, Check, X,
-} from "lucide-react";
+import { User, Shield, Check, X } from "lucide-react";
 import { useLang } from "@/app/dashboard/LanguageContext";
 import { CustomSelect } from "@/components/CustomSelect";
 
@@ -18,17 +14,6 @@ const LANGUAGE_OPTIONS = [
   { value: "fr", label: "Français",   icon: <span className="fi fi-fr" style={{ width: "16px", height: "12px", display: "inline-block", borderRadius: "2px" }} /> },
   { value: "de", label: "Deutsch",    icon: <span className="fi fi-de" style={{ width: "16px", height: "12px", display: "inline-block", borderRadius: "2px" }} /> },
   { value: "pt", label: "Português",  icon: <span className="fi fi-br" style={{ width: "16px", height: "12px", display: "inline-block", borderRadius: "2px" }} /> },
-];
-
-const NAV_LINKS = [
-  { href: "/dashboard", label: "Inicio", Icon: Home },
-  { href: "/dashboard?tab=generate", label: "Generar voz", Icon: Type },
-  { href: "/dashboard?tab=transcribe", label: "Transcribir", Icon: FileAudio },
-  { href: "/dashboard?tab=translate", label: "Traducir", Icon: Globe },
-  { href: "/dashboard?tab=voices", label: "Mis voces", Icon: Mic2 },
-  { href: "/dashboard?tab=history", label: "Historial", Icon: Clock },
-  { href: "/dashboard?tab=billing", label: "Facturación", Icon: CreditCard },
-  { href: "/dashboard?tab=referral", label: "Referidos", Icon: Gift },
 ];
 
 type SettingsTab = "perfil" | "seguridad";
@@ -147,113 +132,12 @@ export default function MiCuentaPage() {
 
   if (!isLoaded) {
     return (
-      <div style={{ minHeight: "100vh", background: "#080811", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "#6b7280" }}>Cargando...</p>
-      </div>
+      <div style={{ padding: "40px 32px", color: "#6b7280" }}>Cargando...</div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#080811", display: "flex" }}>
-      {/* ── Sidebar ── */}
-      <aside
-        className="hidden lg:flex flex-col"
-        style={{
-          width: "240px",
-          flexShrink: 0,
-          borderRight: "1px solid #1e1e2e",
-          background: "#0d0d17",
-          position: "sticky",
-          top: 0,
-          height: "100vh",
-        }}
-      >
-        {/* Logo */}
-        <div style={{ height: "56px", display: "flex", alignItems: "center", paddingLeft: "20px", flexShrink: 0 }}>
-          <Link href="/" className="flex items-center gap-2.5">
-            <Image
-              src="/elitelabs.png"
-              alt="Elite Labs"
-              width={28}
-              height={28}
-              style={{ height: "28px", width: "auto", objectFit: "contain" }}
-              className="rounded-lg"
-            />
-            <span className="font-bold text-white tracking-tight text-sm">Elite Labs</span>
-          </Link>
-        </div>
-
-        {/* Nav */}
-        <nav style={{ flex: 1, padding: "8px 12px", overflowY: "auto" }}>
-          {NAV_LINKS.map(({ href, label, Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              style={{
-                display: "flex", alignItems: "center", gap: "10px",
-                padding: "8px 12px", borderRadius: "8px",
-                fontSize: "13px", fontWeight: 500, color: "#5a5a78",
-                textDecoration: "none", marginBottom: "2px",
-                transition: "background 0.15s, color 0.15s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-                e.currentTarget.style.color = "#d1d5db";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.color = "#5a5a78";
-              }}
-            >
-              <Icon size={15} style={{ color: "#3e3e58", flexShrink: 0 }} />
-              <span style={{ flex: 1 }}>{label}</span>
-            </Link>
-          ))}
-
-          {/* Mi cuenta — active */}
-          <div
-            style={{
-              display: "flex", alignItems: "center", gap: "10px",
-              padding: "8px 12px", borderRadius: "8px",
-              fontSize: "13px", fontWeight: 500,
-              background: "rgba(59,130,246,0.12)", color: "#93c5fd",
-              marginBottom: "2px",
-            }}
-          >
-            <User size={15} style={{ color: "#93c5fd", flexShrink: 0 }} />
-            <span style={{ flex: 1 }}>Mi cuenta</span>
-            <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#3b82f6", flexShrink: 0 }} />
-          </div>
-        </nav>
-
-        {/* Upgrade */}
-        <div style={{ padding: "0 12px 16px", flexShrink: 0 }}>
-          <Link
-            href="/dashboard?tab=billing"
-            style={{
-              display: "flex", alignItems: "center", gap: "8px",
-              padding: "10px 14px", borderRadius: "10px",
-              border: "1px solid rgba(255,255,255,0.08)",
-              background: "#0a0a14", textDecoration: "none",
-              position: "relative", overflow: "hidden",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(59,130,246,0.35)"; e.currentTarget.style.background = "#0d0d1e"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "#0a0a14"; }}
-          >
-            <div style={{ position: "absolute", inset: 0, pointerEvents: "none", backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.03) 4px, rgba(255,255,255,0.03) 8px)" }} />
-            <div style={{ position: "relative", zIndex: 1, width: "24px", height: "24px", borderRadius: "6px", background: "rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Zap size={13} style={{ color: "#93c5fd" }} />
-            </div>
-            <span style={{ position: "relative", zIndex: 1, fontSize: "13px", fontWeight: 600, color: "#c0c0d8", flex: 1 }}>Mejorar plan</span>
-            <svg style={{ position: "relative", zIndex: 1 }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555570" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </Link>
-        </div>
-      </aside>
-
-      {/* ── Main ── */}
-      <main style={{ flex: 1, padding: "40px 32px", minWidth: 0 }}>
+    <div style={{ padding: "40px 32px", minWidth: 0, maxWidth: "860px" }}>
         {/* Header */}
         <div style={{ marginBottom: "32px" }}>
           <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>{t.account.title}</h1>
@@ -510,7 +394,6 @@ export default function MiCuentaPage() {
             </div>
           </div>
         )}
-      </main>
 
       {/* ── Delete modal ── */}
       {showDeleteModal && (

@@ -4105,7 +4105,9 @@ export default function DashboardPage() {
   const { user } = useUser();
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get("tab") as Tab | null) ?? "home";
-  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
+  const router = useRouter();
+  const activeTab = (searchParams.get("tab") as Tab | null) ?? "home";
+  function setActiveTab(tab: Tab) { router.push(`/dashboard?tab=${tab}`); }
   const [credits, setCredits] = useState<number | null>(null);
   const [extraCredits, setExtraCredits] = useState<number>(0);
   const [plan, setPlan] = useState<string>("free");
@@ -4117,22 +4119,9 @@ export default function DashboardPage() {
   const [translateVoice, setTranslateVoice] = useState<SelectedVoice | null>(null);
   const [supportOpen, setSupportOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [nextRenewalDate, setNextRenewalDate] = useState<string | null>(null);
   const [daysUntilRenewal, setDaysUntilRenewal] = useState<number | null>(null);
   const { t: tt, toggle: toggleLang } = useLang();
-
-  useEffect(() => {
-    setSidebarCollapsed(localStorage.getItem("vf_sidebar_collapsed") === "true");
-  }, []);
-
-  function toggleSidebarCollapsed() {
-    setSidebarCollapsed(c => {
-      const next = !c;
-      localStorage.setItem("vf_sidebar_collapsed", String(next));
-      return next;
-    });
-  }
 
   const fetchCredits = useCallback(async () => {
     const res = await fetch("/api/credits");
@@ -4218,9 +4207,6 @@ export default function DashboardPage() {
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onClose={() => setSidebarOpen(false)} plan={plan} memberInfo={memberInfo} />
       </div>
 
-      {/* Desktop sidebar */}
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} desktop plan={plan} memberInfo={memberInfo} collapsed={sidebarCollapsed} />
-
       <main className="flex-1 overflow-auto relative min-w-0" style={{ padding: "0" }}>
         {/* Topbar */}
         {(() => {
@@ -4241,7 +4227,7 @@ export default function DashboardPage() {
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 {/* Hamburger — opens mobile drawer / collapses desktop sidebar */}
                 <button
-                  onClick={() => window.innerWidth >= 1024 ? toggleSidebarCollapsed() : setSidebarOpen(true)}
+                  onClick={() => setSidebarOpen(true)}
                   style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", cursor: "pointer", color: "#8888a8", flexShrink: 0 }}
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect y="2" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="7.25" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="12.5" width="16" height="1.5" rx="0.75" fill="currentColor"/></svg>
