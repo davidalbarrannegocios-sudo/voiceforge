@@ -135,20 +135,67 @@ const FEATURED_VOICE_IDS: string[] = [
 ];
 
 const USE_CASE_TAGS: Record<string, string[]> = {
-  "Conversacional": ["conversational", "conversation", "chat", "dialogue", "natural"],
-  "Narración": ["narration", "narrator", "storytelling", "audiobook", "narrative"],
-  "Personaje": ["character-voice", "character voice", "character", "gaming", "anime"],
-  "Educativo": ["educational", "education", "tutorial", "learning", "lecture"],
-  "Publicidad": ["advertising", "commercial", "promo", "promotion", "ad"],
-  "Redes Sociales": ["social-media", "social media", "social", "tiktok", "youtube", "shorts"],
+  "conversational":  ["conversational", "conversation", "chat", "dialogue", "natural"],
+  "narration":       ["narration", "narrator", "storytelling", "audiobook", "narrative"],
+  "character-voice": ["character-voice", "character voice", "character", "gaming", "anime"],
+  "social-media":    ["social-media", "social media", "social", "tiktok", "youtube", "shorts"],
+  "educational":     ["educational", "education", "tutorial", "learning", "lecture"],
+  "advertising":     ["advertising", "commercial", "promo", "promotion", "ad"],
+  "entertainment":   ["entertainment", "entertain", "fun", "comedy"],
 };
 
 const QUALITY_TAGS: Record<string, string[]> = {
-  "Profundo": ["deep", "bass", "low", "baritone", "powerful"],
-  "Suave": ["soft", "smooth", "gentle", "subtle"],
-  "Brillante": ["bright", "clear", "crisp", "sharp"],
-  "Energético": ["energetic", "dynamic", "lively", "vibrant", "excited"],
-  "Calmado": ["calm", "relaxed", "soothing", "peaceful", "serene"],
+  "deep":          ["deep", "bass", "baritone"],
+  "low":           ["low"],
+  "medium":        ["medium"],
+  "high":          ["high"],
+  "soft":          ["soft", "gentle", "subtle"],
+  "bright":        ["bright", "crisp", "sharp"],
+  "warm":          ["warm"],
+  "dark":          ["dark"],
+  "husky":         ["husky"],
+  "breathy":       ["breathy"],
+  "raspy":         ["raspy"],
+  "energetic":     ["energetic", "lively", "vibrant"],
+  "calm":          ["calm", "soothing", "peaceful", "serene"],
+  "relaxed":       ["relaxed"],
+  "fast":          ["fast"],
+  "slow":          ["slow"],
+  "measured":      ["measured"],
+  "dynamic":       ["dynamic"],
+  "sensual":       ["sensual", "seductive"],
+  "friendly":      ["friendly"],
+  "professional":  ["professional"],
+  "serious":       ["serious"],
+  "cheerful":      ["cheerful"],
+  "enthusiastic":  ["enthusiastic"],
+  "confident":     ["confident"],
+  "authoritative": ["authoritative"],
+  "empathetic":    ["empathetic"],
+  "playful":       ["playful"],
+  "dramatic":      ["dramatic"],
+  "intimate":      ["intimate"],
+  "mysterious":    ["mysterious"],
+  "sad":           ["sad"],
+  "angry":         ["angry"],
+  "clear":         ["clear"],
+  "neutral-tone":  ["neutral", "neutral-tone"],
+  "expressive":    ["expressive"],
+  "monotone":      ["monotone"],
+  "animated":      ["animated"],
+  "narration-q":   ["narration", "narrator"],
+  "narrative":     ["narrative"],
+  "character":     ["character"],
+  "announcer":     ["announcer"],
+  "host":          ["host"],
+  "teacher":       ["teacher"],
+  "trainer":       ["trainer"],
+  "anime":         ["anime"],
+  "video-game":    ["video-game", "gaming", "game"],
+  "cinematic":     ["cinematic"],
+  "documentary":   ["documentary"],
+  "radio":         ["radio"],
+  "podcast":       ["podcast"],
 };
 
 function saveRecentVoice(voice: FishVoice) {
@@ -317,6 +364,72 @@ function HeartIcon({ filled }: { filled: boolean }) {
   );
 }
 
+const USE_CASE_OPTIONS = [
+  { value: "conversational",  label: "Conversacional" },
+  { value: "narration",       label: "Narración" },
+  { value: "character-voice", label: "Voz del Personaje" },
+  { value: "social-media",    label: "Redes Sociales" },
+  { value: "educational",     label: "Educativo" },
+  { value: "advertising",     label: "Publicidad" },
+  { value: "entertainment",   label: "Entretenimiento" },
+];
+
+const QUALITY_OPTIONS = [
+  { value: "deep",          label: "Profundo" },
+  { value: "low",           label: "Bajo" },
+  { value: "medium",        label: "Medio" },
+  { value: "high",          label: "Alto" },
+  { value: "soft",          label: "Suave" },
+  { value: "bright",        label: "Brillante" },
+  { value: "warm",          label: "Cálido" },
+  { value: "dark",          label: "Oscuro" },
+  { value: "husky",         label: "Ronco" },
+  { value: "breathy",       label: "Soploso" },
+  { value: "raspy",         label: "Ronca" },
+  { value: "energetic",     label: "Energético" },
+  { value: "calm",          label: "Tranquilo" },
+  { value: "relaxed",       label: "Relajado" },
+  { value: "fast",          label: "Rápido" },
+  { value: "slow",          label: "Lento" },
+  { value: "measured",      label: "Medido" },
+  { value: "dynamic",       label: "Dinámico" },
+  { value: "sensual",       label: "Sensual" },
+  { value: "friendly",      label: "Amigable" },
+  { value: "professional",  label: "Profesional" },
+  { value: "serious",       label: "Serio" },
+  { value: "cheerful",      label: "Alegre" },
+  { value: "enthusiastic",  label: "Entusiasta" },
+  { value: "confident",     label: "Confiado" },
+  { value: "authoritative", label: "Autoritario" },
+  { value: "empathetic",    label: "Empático" },
+  { value: "playful",       label: "Juguetón" },
+  { value: "dramatic",      label: "Dramático" },
+  { value: "intimate",      label: "Íntimo" },
+  { value: "mysterious",    label: "Misterioso" },
+  { value: "sad",           label: "Triste" },
+  { value: "angry",         label: "Enojado" },
+  { value: "clear",         label: "Nítido" },
+  { value: "neutral-tone",  label: "Tono Neutral" },
+  { value: "expressive",    label: "Expresivo" },
+  { value: "monotone",      label: "Monótono" },
+  { value: "animated",      label: "Animado" },
+  { value: "narration-q",   label: "Narración" },
+  { value: "narrative",     label: "Narrativa" },
+  { value: "character",     label: "Personaje" },
+  { value: "announcer",     label: "Locutor" },
+  { value: "host",          label: "Anfitrión" },
+  { value: "teacher",       label: "Profesor" },
+  { value: "trainer",       label: "Entrenador" },
+  { value: "anime",         label: "Anime" },
+  { value: "video-game",    label: "Videojuegos" },
+  { value: "cinematic",     label: "Cinematográfico" },
+  { value: "documentary",   label: "Documental" },
+  { value: "radio",         label: "Radio" },
+  { value: "podcast",       label: "Podcast" },
+];
+
+const QUALITIES_INITIAL_COUNT = 8;
+
 function FilterPanel({
   filters,
   onChange,
@@ -330,6 +443,8 @@ function FilterPanel({
   onClose: () => void;
   onApply: () => void;
 }) {
+  const [showAllQualities, setShowAllQualities] = useState(false);
+
   function toggleItem(key: keyof AdvancedFilters, value: string) {
     const arr = filters[key] as string[];
     const updated = arr.includes(value) ? arr.filter((x) => x !== value) : [...arr, value];
@@ -352,6 +467,8 @@ function FilterPanel({
       </button>
     );
   }
+
+  const visibleQualities = showAllQualities ? QUALITY_OPTIONS : QUALITY_OPTIONS.slice(0, QUALITIES_INITIAL_COUNT);
 
   return (
     <div
@@ -392,7 +509,7 @@ function FilterPanel({
           <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#555570" }}>Género</p>
           <div className="flex flex-wrap gap-1.5">
             <Pill filterKey="genders" value="male" label="Masculino" />
-            <Pill filterKey="genders" value="female" label="Femenino" />
+            <Pill filterKey="genders" value="female" label="Femenina" />
             <Pill filterKey="genders" value="neutral" label="Neutral" />
           </div>
         </div>
@@ -411,20 +528,44 @@ function FilterPanel({
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#555570" }}>Caso de Uso</p>
           <div className="flex flex-wrap gap-1.5">
-            {Object.keys(USE_CASE_TAGS).map((label) => (
-              <Pill key={label} filterKey="useCases" value={label} label={label} />
+            {USE_CASE_OPTIONS.map(({ value, label }) => (
+              <Pill key={value} filterKey="useCases" value={value} label={label} />
             ))}
           </div>
         </div>
 
-        {/* Calidad de Voz */}
+        {/* Calidades de Voz */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#555570" }}>Calidad de Voz</p>
+          <div className="flex items-center justify-between mb-2.5">
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>Calidades de Voz</p>
+            {filters.qualities.length > 0 && (
+              <button
+                onClick={() => onChange({ ...filters, qualities: [] })}
+                className="text-xs transition-colors"
+                style={{ color: "#555570" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#e2e2f0")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#555570")}
+              >
+                Borrar
+              </button>
+            )}
+          </div>
           <div className="flex flex-wrap gap-1.5">
-            {Object.keys(QUALITY_TAGS).map((label) => (
-              <Pill key={label} filterKey="qualities" value={label} label={label} />
+            {visibleQualities.map(({ value, label }) => (
+              <Pill key={value} filterKey="qualities" value={value} label={label} />
             ))}
           </div>
+          {QUALITY_OPTIONS.length > QUALITIES_INITIAL_COUNT && (
+            <button
+              onClick={() => setShowAllQualities((p) => !p)}
+              className="mt-2.5 text-xs transition-colors"
+              style={{ color: "#3b82f6" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#93c5fd")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#3b82f6")}
+            >
+              {showAllQualities ? "Mostrar menos ↑" : `Mostrar más (${QUALITY_OPTIONS.length - QUALITIES_INITIAL_COUNT} más) ↓`}
+            </button>
+          )}
         </div>
       </div>
 
