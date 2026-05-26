@@ -1,7 +1,3 @@
-import createNextIntlPlugin from "next-intl/plugin";
-
-const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
@@ -20,12 +16,8 @@ const nextConfig = {
         protocol: "https",
         hostname: "**.r2.dev",
       },
-      {
-        protocol: "https",
-        hostname: "upload.wikimedia.org",
-      },
     ],
   },
 };
 
-export default withNextIntl(nextConfig);
+export default nextConfig;
