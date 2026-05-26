@@ -134,6 +134,16 @@ const FEATURED_VOICE_IDS: string[] = [
   "5063c91739b64e83bd59182d33d03ad2",
 ];
 
+const DEFAULT_VOICES: FishVoice[] = [
+  { _id: "04693bede00c431a83a0c993b0800f5e", title: "Mexican Man", description: "Voz masculina profesional con acento mexicano claro y autoritativo. Ideal para narración educativa y médica.", cover_image: null, languages: ["es"], tags: ["male", "old", "educational", "narration", "professional", "calm", "measured", "clear"], task_count: 227, like_count: 2 },
+  { _id: "c87296fac10f4ea68b8f3808f1d99805", title: "Mexican Tik Tok", description: "Voz femenina joven y enérgica con tono claro y dinámico. Perfecta para redes sociales y contenido viral.", cover_image: null, languages: ["es"], tags: ["female", "young", "social-media", "energetic", "enthusiastic", "clear"], task_count: 210, like_count: 0 },
+  { _id: "c634a542a2f34f239a164d5452a582e6", title: "MEXICAN", description: "Voz masculina mexicana amigable y clara. Excelente para viajes, lifestyle y contenido de entretenimiento.", cover_image: null, languages: ["es"], tags: ["male", "middle-aged", "social-media", "energetic", "friendly", "clear"], task_count: 290, like_count: 5 },
+  { _id: "3a485d962d2d4fb6838bc7eaf6d685a0", title: "Mexican Lopez", description: "Voz masculina joven y expresiva con energía juvenil. Ideal para personajes, entretenimiento y storytelling.", cover_image: null, languages: ["es"], tags: ["male", "young", "entertainment", "character-voice", "energetic", "cheerful", "expressive"], task_count: 537, like_count: 4 },
+  { _id: "3fd440b4ffe748dabdbaf9fe88099742", title: "Mexican", description: "Voz masculina seductora y carismática con tono profundo y suave. Perfecta para personajes y roles dramáticos.", cover_image: null, languages: ["es"], tags: ["male", "middle-aged", "character-voice", "deep", "smooth", "playful"], task_count: 103, like_count: 0 },
+  { _id: "dfa5b230c8054f429e434f4a6e9bbdec", title: "Voz Profesional ES", description: "Voz profesional en español con tono cálido y confiable. Versátil para narración, publicidad y contenido corporativo.", cover_image: null, languages: ["es"], tags: ["male", "professional", "calm", "warm", "narration"], task_count: 1200, like_count: 18 },
+  { _id: "35199d5438854f5d9157c500479ab684", title: "Voz Natural ES", description: "Voz femenina natural y cercana en español. Ideal para podcasts, tutoriales y contenido educativo.", cover_image: null, languages: ["es"], tags: ["female", "middle-aged", "conversational", "friendly", "clear", "educational"], task_count: 890, like_count: 12 },
+];
+
 const USE_CASE_TAGS: Record<string, string[]> = {
   "conversational":  ["conversational", "conversation", "chat", "dialogue", "natural"],
   "narration":       ["narration", "narrator", "storytelling", "audiobook", "narrative"],
@@ -874,7 +884,7 @@ export function VoiceBrowser({
   onClose: () => void;
   plan?: string;
 }) {
-  const [tab, setTab] = useState<"recent" | "explore" | "favorites" | "cloned">("explore");
+  const [tab, setTab] = useState<"recent" | "explore" | "default" | "favorites" | "cloned">("explore");
   const [language, setLanguage] = useState("es");
   const [accent, setAccent] = useState<"all" | "spain" | "mexico" | "latam">("all");
   const [tier, setTier] = useState<"all" | "free" | "premium">("all");
@@ -1236,10 +1246,11 @@ export function VoiceBrowser({
   const totalPages = Math.ceil(total / 20);
 
   const TABS = [
-    { key: "recent" as const, label: "Recientemente usadas" },
-    { key: "explore" as const, label: "Explorar" },
+    { key: "recent" as const,    label: "Recientemente usadas" },
+    { key: "explore" as const,   label: "Explorar" },
+    { key: "default" as const,   label: "Voces Predeterminadas" },
     { key: "favorites" as const, label: `Favoritos${favoriteVoices.length > 0 ? ` (${favoriteVoices.length})` : ""}` },
-    { key: "cloned" as const, label: `Mis voces clonadas (${clonedVoices.length})` },
+    { key: "cloned" as const,    label: `Mis voces clonadas (${clonedVoices.length})` },
   ];
 
   return (
@@ -1494,12 +1505,12 @@ export function VoiceBrowser({
                     </button>
                   </div>
                 ) : (
-                  <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #1a1a2a", background: "#0a0a12" }}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-2">
                     {filteredRecent.map((voice) => {
                       const isPremium = isPremiumVoice(voice._id);
                       const isLocked = isPremium && !userCanUsePremium;
                       return (
-                        <VoiceRow
+                        <VoiceCard
                           key={voice._id}
                           voice={voice}
                           previewingId={previewingId}
@@ -1515,6 +1526,33 @@ export function VoiceBrowser({
                     })}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* ── Default voices tab ── */}
+            {tab === "default" && (
+              <div className="px-6 py-4">
+                <p className="text-xs mb-4" style={{ color: "#555570" }}>Voces de calidad curadas y siempre disponibles.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-2">
+                  {DEFAULT_VOICES.map((voice) => {
+                    const isPremium = isPremiumVoice(voice._id);
+                    const isLocked = isPremium && !userCanUsePremium;
+                    return (
+                      <VoiceCard
+                        key={voice._id}
+                        voice={voice}
+                        previewingId={previewingId}
+                        previewLoadingId={previewLoadingId}
+                        onPreview={handlePreview}
+                        onUse={handleVoiceClick}
+                        isPremium={isPremium}
+                        isLocked={isLocked}
+                        isFavorite={favoriteIds.has(voice._id)}
+                        onToggleFavorite={toggleFavorite}
+                      />
+                    );
+                  })}
+                </div>
               </div>
             )}
 
@@ -1535,7 +1573,7 @@ export function VoiceBrowser({
                     </button>
                   </div>
                 ) : (
-                  <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #1a1a2a", background: "#0a0a12" }}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-2">
                     {favoriteVoices.map((fav) => {
                       const favVoice: FishVoice = {
                         _id: fav.voiceId,
@@ -1548,7 +1586,7 @@ export function VoiceBrowser({
                       const isPremium = isPremiumVoice(fav.voiceId);
                       const isLocked = isPremium && !userCanUsePremium;
                       return (
-                        <VoiceRow
+                        <VoiceCard
                           key={fav.id}
                           voice={favVoice}
                           previewingId={previewingId}
@@ -1593,48 +1631,30 @@ export function VoiceBrowser({
                     <p className="text-xs">Ve a &quot;Mis voces&quot; para clonar una</p>
                   </div>
                 ) : (
-                  <div className="space-y-1.5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-2">
                     {clonedVoices.map((voice) => {
-                      const modelId = voice.fishAudioModelId;
-                      const isPreviewing = previewingId === modelId;
-                      const isPreviewLoading = previewLoadingId === modelId;
+                      const clonedAsFish: FishVoice = {
+                        _id: voice.fishAudioModelId ?? voice.id,
+                        title: voice.name,
+                        description: "Voz clonada",
+                        cover_image: null,
+                        languages: [],
+                        tags: [],
+                        task_count: 0,
+                      };
                       return (
-                        <div
+                        <VoiceCard
                           key={voice.id}
-                          className="flex items-center gap-3 px-4 py-3 rounded-xl border"
-                          style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
-                        >
-                          <VoiceAvatarGenerative seed={voice.fishAudioModelId ?? voice.name} size={44} className="flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-white truncate">{voice.name}</p>
-                            <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Voz clonada</p>
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {modelId && (
-                              <button
-                                onClick={() => handlePreview(modelId)}
-                                disabled={isPreviewLoading}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60"
-                                style={{
-                                  background: isPreviewing ? "rgba(59,130,246,0.25)" : "rgba(59,130,246,0.08)",
-                                  color: "#93c5fd",
-                                  border: "1px solid rgba(59,130,246,0.2)",
-                                }}
-                              >
-                                {isPreviewLoading ? "···" : isPreviewing ? "⏹" : "▶"}
-                                <span className="hidden sm:inline">{isPreviewLoading ? "" : isPreviewing ? "Stop" : "Preview"}</span>
-                              </button>
-                            )}
-                            <button
-                              onClick={() => modelId && handleSelect({ referenceId: modelId, name: voice.name, isCloned: true })}
-                              disabled={!modelId}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white disabled:opacity-50"
-                              style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
-                            >
-                              Usar
-                            </button>
-                          </div>
-                        </div>
+                          voice={clonedAsFish}
+                          previewingId={previewingId}
+                          previewLoadingId={previewLoadingId}
+                          onPreview={handlePreview}
+                          onUse={() => voice.fishAudioModelId && handleSelect({ referenceId: voice.fishAudioModelId, name: voice.name, isCloned: true })}
+                          isPremium={false}
+                          isLocked={false}
+                          isFavorite={false}
+                          onToggleFavorite={() => {}}
+                        />
                       );
                     })}
                   </div>
