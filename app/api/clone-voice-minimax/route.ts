@@ -5,6 +5,54 @@ import { prisma } from "@/lib/prisma";
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
+const MAX_POLL_ATTEMPTS = 30;
+const POLL_INTERVAL_MS = 2000;
+
+async function pollCloneTask(taskId: string, apiKey: string): Promise<string> {
+  for (let attempt = 1; attempt <= MAX_POLL_ATTEMPTS; attempt++) {
+    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+
+    let pollRes: Response;
+    try {
+      pollRes = await fetch(`https://api.ai33.pro/v1/task/${taskId}`, {
+        headers: { "xi-api-key": apiKey },
+        signal: AbortSignal.timeout(10000),
+      });
+    } catch (e) {
+      console.warn(`[clone-voice-minimax] poll attempt ${attempt}/${MAX_POLL_ATTEMPTS} fetch error:`, e);
+      continue;
+    }
+
+    const pollText = await pollRes.text();
+    let taskData: { status?: string; metadata?: Record<string, unknown> };
+    try {
+      taskData = JSON.parse(pollText);
+    } catch {
+      console.warn(`[clone-voice-minimax] poll attempt ${attempt}/${MAX_POLL_ATTEMPTS} non-JSON: ${pollText.slice(0, 200)}`);
+      continue;
+    }
+
+    console.log(`[clone-voice-minimax] poll attempt ${attempt}/${MAX_POLL_ATTEMPTS} status=${taskData.status} metadata=${JSON.stringify(taskData.metadata ?? {}).slice(0, 200)}`);
+
+    if (taskData.status === "done") {
+      const meta = taskData.metadata ?? {};
+      const voiceId =
+        meta.cloned_voice_id ??
+        meta.voice_id ??
+        meta.id ??
+        meta.minimaxVoiceId;
+      if (!voiceId) throw new Error(`Tarea completada pero sin voice_id en metadata: ${JSON.stringify(meta)}`);
+      return String(voiceId);
+    }
+
+    if (taskData.status === "error" || taskData.status === "failed") {
+      throw new Error(`ai33.pro: clonación fallida en servidor remoto (status=${taskData.status})`);
+    }
+  }
+
+  throw new Error(`timeout_408`);
+}
+
 export async function POST(req: Request) {
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -35,7 +83,6 @@ export async function POST(req: Request) {
   const user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
   if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
-  // Build multipart payload for ai33.pro
   const upstream = new FormData();
   upstream.append("file", file);
   upstream.append("voice_name", voiceName);
@@ -45,11 +92,22 @@ export async function POST(req: Request) {
 
   console.log(`[clone-voice-minimax] sending to ai33.pro: voice_name=${voiceName} language=${languageTag} gender=${genderTag} noise=${needNoiseReduction} fileSize=${file.size}`);
 
-  const res = await fetch("https://api.ai33.pro/v1m/voice/clone", {
-    method: "POST",
-    headers: { "xi-api-key": apiKey },
-    body: upstream,
-  });
+  let res: Response;
+  try {
+    res = await fetch("https://api.ai33.pro/v1m/voice/clone", {
+      method: "POST",
+      headers: { "xi-api-key": apiKey },
+      body: upstream,
+      signal: AbortSignal.timeout(90000),
+    });
+  } catch (e) {
+    const isTimeout = e instanceof Error && e.name === "TimeoutError";
+    console.error("[clone-voice-minimax] initial fetch error:", e);
+    return NextResponse.json(
+      { error: isTimeout ? "Tiempo de espera agotado al contactar ai33.pro. Inténtalo de nuevo." : "Error de conexión con ai33.pro" },
+      { status: isTimeout ? 408 : 502 }
+    );
+  }
 
   const rawText = await res.text();
   console.log(`[clone-voice-minimax] ai33.pro response status=${res.status} body=${rawText.slice(0, 500)}`);
@@ -58,7 +116,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `ai33.pro error ${res.status}: ${rawText}` }, { status: res.status });
   }
 
-  let data: { success?: boolean; cloned_voice_id?: number | string };
+  let data: { success?: boolean; cloned_voice_id?: number | string; task_id?: string };
   try {
     data = JSON.parse(rawText);
   } catch {
@@ -68,13 +126,35 @@ export async function POST(req: Request) {
     );
   }
 
-  if (!data.success || data.cloned_voice_id == null) {
-    console.error("[clone-voice-minimax] unexpected response shape:", data);
-    return NextResponse.json({ error: "ai33.pro no devolvió cloned_voice_id" }, { status: 500 });
-  }
+  let minimaxVoiceId: string;
 
-  const minimaxVoiceId = String(data.cloned_voice_id);
-  console.log(`[clone-voice-minimax] success, minimaxVoiceId=${minimaxVoiceId}`);
+  // Sync path: api returned voice id directly
+  if (data.cloned_voice_id != null) {
+    minimaxVoiceId = String(data.cloned_voice_id);
+    console.log(`[clone-voice-minimax] sync success, minimaxVoiceId=${minimaxVoiceId}`);
+
+  // Async path: api returned a task id that needs polling
+  } else if (data.task_id) {
+    console.log(`[clone-voice-minimax] async path, polling task_id=${data.task_id}`);
+    try {
+      minimaxVoiceId = await pollCloneTask(data.task_id, apiKey);
+      console.log(`[clone-voice-minimax] polling done, minimaxVoiceId=${minimaxVoiceId}`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg === "timeout_408") {
+        return NextResponse.json(
+          { error: "Tiempo de espera agotado. La clonación está tardando demasiado, inténtalo de nuevo." },
+          { status: 408 }
+        );
+      }
+      console.error("[clone-voice-minimax] polling failed:", msg);
+      return NextResponse.json({ error: msg }, { status: 500 });
+    }
+
+  } else {
+    console.error("[clone-voice-minimax] unexpected response shape:", data);
+    return NextResponse.json({ error: "ai33.pro no devolvió cloned_voice_id ni task_id" }, { status: 500 });
+  }
 
   await prisma.clonedVoice.create({
     data: {
