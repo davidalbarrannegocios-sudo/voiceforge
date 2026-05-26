@@ -597,10 +597,16 @@ export function VoiceBrowser({
   const [tab, setTab] = useState<"recent" | "explore" | "favorites" | "cloned">("explore");
   const [language, setLanguage] = useState("es");
   const [accent, setAccent] = useState<"all" | "spain" | "mexico" | "latam">("all");
-  const [accentVoices, setAccentVoices] = useState<FishVoice[]>([]);
   const [tier, setTier] = useState<"all" | "free" | "premium">("all");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const ACCENT_SEARCH_TERMS: Record<string, string> = {
+    spain: "spain español castellano",
+    mexico: "mexican mexico mexicano",
+    latam: "latin america colombia argentina chile",
+  };
+  const accentKeyword = accent !== "all" ? (ACCENT_SEARCH_TERMS[accent] ?? "") : "";
+  const effectiveSearch = [debouncedSearch, accentKeyword].filter(Boolean).join(" ");
   const [publicVoices, setPublicVoices] = useState<FishVoice[]>([]);
   const [recentVoices, setRecentVoices] = useState<FishVoice[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
@@ -761,7 +767,7 @@ export function VoiceBrowser({
             if (tierRawRef.current.filter(matchesCriteria).length >= targetCount) break;
 
             const p = new URLSearchParams({ page: String(tierFishPageRef.current), language });
-            if (debouncedSearch) p.set("search", debouncedSearch);
+            if (effectiveSearch) p.set("search", effectiveSearch);
             const res = await fetch(`/api/fish-voices?${p}`, { signal });
             if (signal.aborted) return;
             const data = await res.json();
@@ -781,7 +787,7 @@ export function VoiceBrowser({
           setPublicVoices([...tierRawRef.current]);
         } else {
           const p = new URLSearchParams({ page: String(1), language });
-          if (debouncedSearch) p.set("search", debouncedSearch);
+          if (effectiveSearch) p.set("search", effectiveSearch);
           const res = await fetch(`/api/fish-voices?${p}`, { signal });
           if (signal.aborted) return;
           const data = await res.json();
@@ -799,7 +805,7 @@ export function VoiceBrowser({
     run();
     return () => { controller.abort(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, tier, language, debouncedSearch, appliedFilters]);
+  }, [tab, tier, language, effectiveSearch, appliedFilters]);
 
   // Separate effect for page navigation (no buffer reset — just slices into existing data)
   useEffect(() => {
@@ -825,7 +831,7 @@ export function VoiceBrowser({
             if (tierRawRef.current.filter(matchesCriteria).length >= targetCount) break;
 
             const p = new URLSearchParams({ page: String(tierFishPageRef.current), language });
-            if (debouncedSearch) p.set("search", debouncedSearch);
+            if (effectiveSearch) p.set("search", effectiveSearch);
             const res = await fetch(`/api/fish-voices?${p}`, { signal });
             if (signal.aborted) return;
             const data = await res.json();
@@ -845,7 +851,7 @@ export function VoiceBrowser({
           setPublicVoices([...tierRawRef.current]);
         } else {
           const p = new URLSearchParams({ page: String(page), language });
-          if (debouncedSearch) p.set("search", debouncedSearch);
+          if (effectiveSearch) p.set("search", effectiveSearch);
           const res = await fetch(`/api/fish-voices?${p}`, { signal });
           if (signal.aborted) return;
           const data = await res.json();
@@ -864,29 +870,6 @@ export function VoiceBrowser({
     return () => { controller.abort(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
-
-  // Accent fetch — separate lightweight request so publicVoices (base) stays intact for fallback
-  useEffect(() => {
-    if (tab !== "explore" || language !== "es" || accent === "all") {
-      setAccentVoices([]);
-      return;
-    }
-    const controller = new AbortController();
-    async function run() {
-      const p = new URLSearchParams({ page: "1", language, accent });
-      if (debouncedSearch) p.set("search", debouncedSearch);
-      try {
-        const res = await fetch(`/api/fish-voices?${p}`, { signal: controller.signal });
-        if (controller.signal.aborted) return;
-        const data = await res.json();
-        setAccentVoices(data.items ?? []);
-      } catch (e) {
-        if ((e as Error)?.name !== "AbortError") throw e;
-      }
-    }
-    run();
-    return () => controller.abort();
-  }, [tab, language, accent, debouncedSearch]);
 
   useEffect(() => () => { audioRef.current?.pause(); }, []);
 
@@ -944,9 +927,7 @@ export function VoiceBrowser({
     return matchesAdvancedFilters(v, appliedFilters);
   });
 
-  const useAccentVoices = language === "es" && accent !== "all" && accentVoices.length >= 3;
-  const accentFallback = language === "es" && accent !== "all" && accentVoices.length < 3;
-  const filteredVoices = applyTierFilters(useAccentVoices ? accentVoices : publicVoices);
+  const filteredVoices = applyTierFilters(publicVoices);
 
   const hasActiveFilters = Object.values(appliedFilters).some((arr) => arr.length > 0);
 
@@ -955,7 +936,7 @@ export function VoiceBrowser({
     ? filteredVoices.slice((page - 1) * 20, page * 20)
     : filteredVoices;
 
-  const applyFeatured = page === 1 && !debouncedSearch && !hasActiveFilters && tier === "all" && featuredVoices.length > 0;
+  const applyFeatured = page === 1 && !effectiveSearch && !hasActiveFilters && tier === "all" && featuredVoices.length > 0;
   const displayedVoices = applyFeatured
     ? [
         // applyFeatured requires tier === "all", so no tier filter needed here
@@ -1142,13 +1123,6 @@ export function VoiceBrowser({
                   </div>
                   <span className="text-xs flex-shrink-0" style={{ color: "#3b82f6" }}>Seleccionar →</span>
                 </button>
-
-                {/* Accent fallback notice */}
-                {accentFallback && (
-                  <p className="text-xs mb-3" style={{ color: "#6b7280" }}>
-                    No se encontraron suficientes voces con ese acento. Mostrando todas las voces en español.
-                  </p>
-                )}
 
                 {/* Voice list */}
                 {loading ? (

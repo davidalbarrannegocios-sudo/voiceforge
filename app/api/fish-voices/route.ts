@@ -17,16 +17,6 @@ export async function GET(req: Request) {
   const search = searchParams.get("search") ?? "";
   const page = searchParams.get("page") ?? "1";
   const tag = searchParams.get("tag") ?? "";
-  const accent = searchParams.get("accent") ?? "";
-
-  const ACCENT_SEARCH_TERMS: Record<string, string> = {
-    spain: "spain español castellano",
-    mexico: "mexican mexico mexicano",
-    latam: "latin america colombia argentina chile",
-  };
-
-  const accentQuery = accent && accent !== "all" ? ACCENT_SEARCH_TERMS[accent] ?? "" : "";
-  const titleQuery = [search, accentQuery].filter(Boolean).join(" ");
 
   const params = new URLSearchParams({
     page_size: "20",
@@ -34,7 +24,7 @@ export async function GET(req: Request) {
     sort_by: "task_count",
     language,
   });
-  if (titleQuery) params.set("title", titleQuery);
+  if (search) params.set("title", search);
   if (tag) params.set("tag", tag);
 
   const res = await fetch(`https://api.fish.audio/model?${params}`, {
