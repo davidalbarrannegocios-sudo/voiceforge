@@ -279,9 +279,19 @@ export function BillingModal({ onClose }: { onClose: () => void }) {
                       style={{ color: "#60a5fa", textDecoration: "none", cursor: "pointer" }}
                       onClick={async (e) => {
                         e.preventDefault();
-                        const res = await fetch("/api/billing/portal", { method: "POST" });
-                        const { url } = await res.json();
-                        window.open(url, "_blank");
+                        try {
+                          const res = await fetch("/api/billing/portal", { method: "POST" });
+                          if (!res.ok) {
+                            const err = await res.text();
+                            console.error("[portal] error:", err);
+                            alert("Error al abrir el portal: " + err);
+                            return;
+                          }
+                          const { url } = await res.json();
+                          window.open(url, "_blank");
+                        } catch (err) {
+                          console.error("[portal] fetch error:", err);
+                        }
                       }}
                     >
                       Portal de Stripe
