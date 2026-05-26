@@ -1022,6 +1022,13 @@ export function VoiceBrowser({
           const res = await fetch(`${effectiveEndpoint}?${p}`, { signal });
           if (signal.aborted) return;
           const data = await res.json();
+          console.log("[VoiceBrowser] fetch response:", JSON.stringify(data).slice(0, 500));
+          if (!res.ok) {
+            console.error("[VoiceBrowser] API error:", res.status, data);
+            setPublicVoices([]);
+            setTotal(0);
+            return;
+          }
           setPublicVoices(data.items ?? []);
           setTotal(data.total ?? 0);
           setAccentNotEnough(!isExternalSource && !!data.accentNotEnough);

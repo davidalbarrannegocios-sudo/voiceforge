@@ -91,6 +91,8 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "ai33.pro devolvió respuesta no-JSON" }, { status: 500 });
   }
   const rawVoices: ElevenVoice[] = Array.isArray(data) ? data : ((data as { voices?: ElevenVoice[] }).voices ?? []);
+  console.log(`[ai33-voices-eleven] rawVoices=${rawVoices.length} langFilter="${langFilter}" accentFilter="${accentFilter}" search="${search}" page=${page}`);
+  console.log(`[ai33-voices-eleven] sample raw voice:`, JSON.stringify(rawVoices[0]).slice(0, 300));
 
   // Filter by language
   const langFiltered = langFilter && langFilter !== "all"
@@ -124,6 +126,7 @@ export async function GET(req: Request) {
 
   const total = filtered.length;
   const items = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  console.log(`[ai33-voices-eleven] returning items=${items.length} total=${total} accents=${accents.length}`);
 
   return NextResponse.json({ items, total, accents });
 }
