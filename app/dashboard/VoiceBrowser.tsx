@@ -636,7 +636,7 @@ function VoiceCard({
     >
       {/* Top: avatar + name/description */}
       <div className="flex gap-3 mb-3">
-        <VoiceAvatar name={voice.title} coverImage={voice.cover_image} size="lg" id={voice._id} />
+        <VoiceAvatar name={voice.title} coverImage={voice.cover_image ?? undefined} size="lg" id={voice._id} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5">
             <span className="text-sm font-semibold text-white truncate leading-tight">{voice.title}</span>
