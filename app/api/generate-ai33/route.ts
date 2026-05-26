@@ -119,7 +119,7 @@ export async function POST(req: Request) {
     if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
     const effectivePlan = await getEffectivePlan(user.id, user.plan);
-    const charCost = calculateCharCost(trimmed.length);
+    const charCost = Math.ceil(calculateCharCost(trimmed.length) / 2); // 50% discount vs EliteLabs
     const totalAvailable = user.credits + user.extraCredits;
 
     if (totalAvailable < charCost) {

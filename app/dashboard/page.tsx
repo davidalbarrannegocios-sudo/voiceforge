@@ -549,6 +549,7 @@ function GenerateTab({
   const [elapsed, setElapsed] = useState(0);
 
   const charCost = calculateCharCost(text.length);
+  const displayCost = ttsEngine === "elitelabs2" ? Math.ceil(charCost / 2) : charCost;
   const clonedVoices = voices.filter((v) => !v.isSystem);
   const estimatedSeconds = Math.max(5, Math.ceil(text.trim().length / 120));
   const progress = submitting ? Math.min(92, (elapsed / estimatedSeconds) * 100) : 0;
@@ -731,7 +732,7 @@ function GenerateTab({
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px" }}>
               <span style={{ fontSize: "13px", color: "#6b7280" }}>
                 {text.length.toLocaleString("es-ES")} {t.generate.characters}
-                {text.length > 0 && <span style={{ marginLeft: "6px", fontSize: "11px", color: "#4b4b6a" }}>· {charCost.toLocaleString("es-ES")} {t.generate.credits}</span>}
+                {text.length > 0 && <span style={{ marginLeft: "6px", fontSize: "11px", color: "#4b4b6a" }}>· {displayCost.toLocaleString("es-ES")} {t.generate.credits}</span>}
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 {plan !== "free" && (
@@ -817,7 +818,10 @@ function GenerateTab({
                 <div style={{ position: "relative", display: "flex", background: "#12121a", borderRadius: "8px", padding: "4px" }}>
                   <div style={{ position: "absolute", top: "4px", bottom: "4px", left: "4px", width: "calc(50% - 4px)", background: "#2a2a3e", borderRadius: "6px", transform: ttsEngine === "elitelabs" ? "translateX(0)" : "translateX(100%)", transition: "transform 200ms ease-out" }} />
                   <button onClick={() => { setTtsEngine("elitelabs"); onVoiceChange(null); }} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: ttsEngine === "elitelabs" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>EliteLabs</button>
-                  <button onClick={() => { setTtsEngine("elitelabs2"); onVoiceChange(null); }} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: ttsEngine === "elitelabs2" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>EliteLabs 2</button>
+                  <button onClick={() => { setTtsEngine("elitelabs2"); onVoiceChange(null); }} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: ttsEngine === "elitelabs2" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
+                    EliteLabs 2
+                    <span style={{ fontSize: "9px", fontWeight: 700, padding: "1px 5px", borderRadius: "4px", background: "rgba(34,197,94,0.15)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)", lineHeight: 1.4 }}>½ créd.</span>
+                  </button>
                 </div>
               </div>
 
