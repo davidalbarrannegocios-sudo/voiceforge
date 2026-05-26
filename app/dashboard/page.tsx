@@ -1222,43 +1222,14 @@ function CloneMinimaxModal({ onClose, onCloned }: { onClose: () => void; onClone
     setFile(f); setFileDuration(duration); setError(null);
   }
 
-  async function saveClonedVoice(voiceId: string) {
-    await fetch("/api/save-cloned-voice", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ voiceId, voiceName: voiceName.trim(), languageTag: language, genderTag: gender }),
-    });
-  }
-
-  async function pollTaskFromClient(apiKey: string, taskId: string) {
-    for (let i = 0; i < 40; i++) {
-      await new Promise((r) => setTimeout(r, 3000));
-      const res = await fetch(`https://api.ai33.pro/v1/task/${taskId}`, {
-        headers: { "xi-api-key": apiKey },
-      });
-      const data = await res.json() as { status?: string; metadata?: Record<string, unknown> };
-      if (data.status === "done") {
-        const meta = data.metadata ?? {};
-        const voiceId = meta.cloned_voice_id ?? meta.voice_id ?? meta.id ?? meta.minimaxVoiceId;
-        if (!voiceId) throw new Error("Clonación completada pero sin voice_id");
-        await saveClonedVoice(String(voiceId));
-        return;
-      }
-      if (data.status === "error" || data.status === "failed") {
-        throw new Error("Error al clonar la voz en el servidor");
-      }
-    }
-    throw new Error("Tiempo agotado esperando la clonación");
-  }
-
   async function handleClone() {
     if (!file || !voiceName.trim()) return;
     setError(null); setLoading(true); setClonePhase("uploading");
-    try {
-      const tokenRes = await fetch("/api/ai33-clone-token");
-      const { apiKey } = await tokenRes.json() as { apiKey?: string };
-      if (!apiKey) throw new Error("No se pudo obtener el token de clonación");
 
+    // Switch to "processing" label after ~12s (upload complete, AI processing)
+    const phaseTimer = setTimeout(() => setClonePhase("processing"), 12000);
+
+    try {
       const fd = new FormData();
       fd.append("file", file);
       fd.append("voice_name", voiceName.trim());
@@ -1266,27 +1237,16 @@ function CloneMinimaxModal({ onClose, onCloned }: { onClose: () => void; onClone
       fd.append("gender_tag", gender);
       fd.append("need_noise_reduction", String(noiseReduction));
 
-      const res = await fetch("https://api.ai33.pro/v1m/voice/clone", {
-        method: "POST",
-        headers: { "xi-api-key": apiKey },
-        body: fd,
-      });
-      const data = await res.json() as { cloned_voice_id?: number | string; task_id?: string; detail?: string };
-      if (!res.ok) throw new Error(data.detail || `ai33.pro error ${res.status}`);
+      const res = await fetch("/api/clone-voice-minimax", { method: "POST", body: fd });
+      const data = await res.json() as { ok?: boolean; error?: string };
+      if (!res.ok) throw new Error(data.error || "Error al clonar la voz");
 
-      if (data.cloned_voice_id != null) {
-        await saveClonedVoice(String(data.cloned_voice_id));
-      } else if (data.task_id) {
-        setClonePhase("processing");
-        await pollTaskFromClient(apiKey, data.task_id);
-      } else {
-        throw new Error("ai33.pro no devolvió voice_id ni task_id");
-      }
-
+      clearTimeout(phaseTimer);
       setLoading(false);
       onCloned();
       onClose();
     } catch (e: unknown) {
+      clearTimeout(phaseTimer);
       setError(e instanceof Error ? e.message : "Error desconocido");
       setLoading(false);
       setClonePhase("idle");

@@ -1,152 +1,19 @@
 import { currentUser } from "@clerk/nextjs/server";
-import { after, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
-export const maxDuration = 30;
+export const maxDuration = 300;
 
-const MAX_POLL_ATTEMPTS = 40;
+const MAX_POLL_ATTEMPTS = 60; // 60 × 3s = 3 min
 const POLL_INTERVAL_MS = 3000;
-
-async function pollCloneTask(taskId: string, apiKey: string): Promise<string> {
-  for (let attempt = 1; attempt <= MAX_POLL_ATTEMPTS; attempt++) {
-    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
-
-    let pollRes: Response;
-    try {
-      pollRes = await fetch(`https://api.ai33.pro/v1/task/${taskId}`, {
-        headers: { "xi-api-key": apiKey },
-        signal: AbortSignal.timeout(15000),
-      });
-    } catch (e) {
-      console.warn(`[clone-voice-minimax] [polling] intento ${attempt}/${MAX_POLL_ATTEMPTS} fetch error:`, e);
-      continue;
-    }
-
-    const pollText = await pollRes.text();
-    let taskData: { status?: string; metadata?: Record<string, unknown> };
-    try {
-      taskData = JSON.parse(pollText);
-    } catch {
-      console.warn(`[clone-voice-minimax] [polling] intento ${attempt}/${MAX_POLL_ATTEMPTS} non-JSON: ${pollText.slice(0, 200)}`);
-      continue;
-    }
-
-    console.log(`[clone-voice-minimax] [polling] intento ${attempt}/${MAX_POLL_ATTEMPTS}, status:`, taskData.status);
-
-    if (taskData.status === "done") {
-      const meta = taskData.metadata ?? {};
-      const voiceId =
-        meta.cloned_voice_id ?? meta.voice_id ?? meta.id ?? meta.minimaxVoiceId;
-      if (!voiceId) throw new Error(`Tarea completada pero sin voice_id en metadata: ${JSON.stringify(meta)}`);
-      return String(voiceId);
-    }
-
-    if (taskData.status === "error" || taskData.status === "failed") {
-      throw new Error(`ai33.pro: clonación fallida (status=${taskData.status})`);
-    }
-  }
-
-  throw new Error("Tiempo de espera agotado tras 40 intentos de polling");
-}
-
-async function runCloneBackground(
-  jobId: string,
-  userId: string,
-  apiKey: string,
-  file: File,
-  voiceName: string,
-  languageTag: string,
-  genderTag: string,
-  needNoiseReduction: boolean,
-) {
-  try {
-    await prisma.cloneJob.update({ where: { id: jobId }, data: { status: "processing" } });
-
-    const upstream = new FormData();
-    upstream.append("file", file);
-    upstream.append("voice_name", voiceName);
-    upstream.append("language_tag", languageTag);
-    upstream.append("gender_tag", genderTag);
-    upstream.append("need_noise_reduction", String(needNoiseReduction));
-
-    console.log(`[clone-voice-minimax] [bg:${jobId}] uploading to ai33.pro fileSize=${file.size}`);
-
-    const controller = new AbortController();
-    const uploadTimeout = setTimeout(() => controller.abort(), 120000);
-    let res: Response;
-    try {
-      res = await fetch("https://api.ai33.pro/v1m/voice/clone", {
-        method: "POST",
-        headers: { "xi-api-key": apiKey },
-        body: upstream,
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(uploadTimeout);
-    }
-
-    const statusCode = res.status;
-    const responseText = await res.text();
-    console.log(`[bg:${jobId}] ai33.pro status:`, statusCode);
-    console.log(`[bg:${jobId}] ai33.pro response:`, responseText.slice(0, 500));
-
-    if (!res.ok) throw new Error(`ai33.pro error ${statusCode}: ${responseText}`);
-
-    let data: { success?: boolean; cloned_voice_id?: number | string; task_id?: string };
-    try { data = JSON.parse(responseText); }
-    catch { throw new Error(`ai33.pro respuesta no-JSON: ${responseText.slice(0, 200)}`); }
-
-    let minimaxVoiceId: string;
-    if (data.cloned_voice_id != null) {
-      minimaxVoiceId = String(data.cloned_voice_id);
-      console.log(`[clone-voice-minimax] [bg:${jobId}] sync success voiceId=${minimaxVoiceId}`);
-    } else if (data.task_id) {
-      console.log(`[clone-voice-minimax] [bg:${jobId}] async path task_id=${data.task_id}`);
-      minimaxVoiceId = await pollCloneTask(data.task_id, apiKey);
-      console.log(`[clone-voice-minimax] [bg:${jobId}] polling done voiceId=${minimaxVoiceId}`);
-    } else {
-      throw new Error("ai33.pro no devolvió cloned_voice_id ni task_id");
-    }
-
-    await prisma.clonedVoice.create({
-      data: {
-        userId,
-        name: voiceName,
-        referenceAudioUrl: "",
-        language: languageTag,
-        gender: genderTag === "female" ? "feminine" : "masculine",
-        isPublic: false,
-        provider: "minimax",
-        minimaxVoiceId,
-      },
-    });
-
-    await prisma.cloneJob.update({
-      where: { id: jobId },
-      data: { status: "done", voiceId: minimaxVoiceId },
-    });
-
-    console.log(`[clone-voice-minimax] [bg:${jobId}] completed voiceId=${minimaxVoiceId}`);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    console.error(`[clone-voice-minimax] [bg:${jobId}] failed:`, msg);
-    await prisma.cloneJob.update({
-      where: { id: jobId },
-      data: { status: "error", error: msg },
-    }).catch(() => {});
-  }
-}
 
 export async function POST(req: Request) {
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const apiKey = process.env.SK_AI33_KEY;
-  if (!apiKey) {
-    console.error("[clone-voice-minimax] SK_AI33_KEY not configured");
-    return NextResponse.json({ error: "SK_AI33_KEY no configurada" }, { status: 500 });
-  }
+  if (!apiKey) return NextResponse.json({ error: "SK_AI33_KEY no configurada" }, { status: 500 });
 
   let formData: FormData;
   try {
@@ -155,7 +22,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Formato de solicitud inválido" }, { status: 400 });
   }
 
-  const file = formData.get("audio") as File | null;
+  const file = formData.get("file") as File | null;
   const voiceName = (formData.get("voice_name") as string | null)?.trim();
   const languageTag = (formData.get("language_tag") as string | null) ?? "es";
   const genderTag = (formData.get("gender_tag") as string | null) ?? "male";
@@ -168,16 +35,94 @@ export async function POST(req: Request) {
   const user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
   if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
-  const job = await prisma.cloneJob.create({
-    data: { userId: user.id, voiceName, status: "pending" },
+  const proxyFd = new FormData();
+  proxyFd.append("file", file);
+  proxyFd.append("voice_name", voiceName);
+  proxyFd.append("language_tag", languageTag);
+  proxyFd.append("gender_tag", genderTag);
+  proxyFd.append("need_noise_reduction", String(needNoiseReduction));
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 280000);
+
+  let cloneData: { cloned_voice_id?: number | string; task_id?: string; detail?: string };
+  try {
+    const res = await fetch("https://api.ai33.pro/v1m/voice/clone", {
+      method: "POST",
+      headers: { "xi-api-key": apiKey },
+      body: proxyFd,
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+
+    const raw = await res.text();
+    console.log("[clone-minimax] ai33.pro status:", res.status, raw.slice(0, 200));
+
+    try { cloneData = JSON.parse(raw); } catch { cloneData = {}; }
+
+    if (!res.ok) {
+      return NextResponse.json(
+        { error: cloneData.detail || `ai33.pro error ${res.status}: ${raw.slice(0, 200)}` },
+        { status: 500 }
+      );
+    }
+  } catch (e) {
+    clearTimeout(timer);
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("[clone-minimax] upload error:", msg);
+    return NextResponse.json({ error: `Error subiendo a ai33.pro: ${msg}` }, { status: 500 });
+  }
+
+  let minimaxVoiceId = "";
+
+  if (cloneData.cloned_voice_id != null) {
+    minimaxVoiceId = String(cloneData.cloned_voice_id);
+    console.log("[clone-minimax] sync voiceId:", minimaxVoiceId);
+  } else if (cloneData.task_id) {
+    console.log("[clone-minimax] polling task_id:", cloneData.task_id);
+    let resolved = false;
+    for (let i = 1; i <= MAX_POLL_ATTEMPTS; i++) {
+      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+      try {
+        const pollRes = await fetch(`https://api.ai33.pro/v1/task/${cloneData.task_id}`, {
+          headers: { "xi-api-key": apiKey },
+          signal: AbortSignal.timeout(15000),
+        });
+        const pollData = await pollRes.json() as { status?: string; metadata?: Record<string, unknown> };
+        console.log(`[clone-minimax] poll ${i}/${MAX_POLL_ATTEMPTS} status:`, pollData.status);
+        if (pollData.status === "done") {
+          const meta = pollData.metadata ?? {};
+          const vid = meta.cloned_voice_id ?? meta.voice_id ?? meta.id ?? meta.minimaxVoiceId;
+          if (!vid) return NextResponse.json({ error: "Clonación completada pero sin voice_id" }, { status: 500 });
+          minimaxVoiceId = String(vid);
+          resolved = true;
+          break;
+        }
+        if (pollData.status === "error" || pollData.status === "failed") {
+          return NextResponse.json({ error: "ai33.pro: clonación fallida en el servidor" }, { status: 500 });
+        }
+      } catch (e) {
+        console.warn(`[clone-minimax] poll ${i} error:`, e instanceof Error ? e.message : e);
+      }
+    }
+    if (!resolved) return NextResponse.json({ error: "Tiempo agotado esperando la clonación (3 min)" }, { status: 504 });
+  } else {
+    return NextResponse.json({ error: "ai33.pro no devolvió cloned_voice_id ni task_id" }, { status: 500 });
+  }
+
+  await prisma.clonedVoice.create({
+    data: {
+      userId: user.id,
+      name: voiceName,
+      referenceAudioUrl: "",
+      language: languageTag,
+      gender: genderTag === "female" ? "feminine" : "masculine",
+      isPublic: false,
+      provider: "minimax",
+      minimaxVoiceId,
+    },
   });
 
-  console.log(`[clone-voice-minimax] job created jobId=${job.id} voiceName=${voiceName}`);
-
-  // after() runs after the HTTP response is sent and survives Railway's request timeout
-  after(async () => {
-    await runCloneBackground(job.id, user.id, apiKey, file, voiceName, languageTag, genderTag, needNoiseReduction);
-  });
-
-  return NextResponse.json({ jobId: job.id });
+  console.log("[clone-minimax] done voiceId:", minimaxVoiceId);
+  return NextResponse.json({ ok: true, minimaxVoiceId });
 }
