@@ -581,25 +581,6 @@ function VoiceRow({
   );
 }
 
-const ACCENT_KEYWORDS: Record<string, string[]> = {
-  spain: [
-    "spain", "españa", "español de españa", "castellano", "iberian",
-    "peninsular", "european spanish", "spaniard", "madrid", "barcelona",
-    "ibérico", "spain accent", "spanish accent from spain",
-  ],
-  mexico: [
-    "mexico", "méxico", "mexican", "mexicano", "mexico accent",
-    "mexican accent", "mexican spanish", "español de méxico",
-    "español mexicano", "from mexico",
-  ],
-  latam: [
-    "latin america", "latinoamerica", "latam", "latino", "latina",
-    "colombia", "argentina", "chile", "peru", "venezuela", "costa rica",
-    "argentino", "chileno", "colombiano", "peruano",
-    "south america", "sudamerica", "central america",
-  ],
-};
-
 /* ── Main component ─────────────────────────────────────────── */
 
 export function VoiceBrowser({
@@ -616,6 +597,7 @@ export function VoiceBrowser({
   const [tab, setTab] = useState<"recent" | "explore" | "favorites" | "cloned">("explore");
   const [language, setLanguage] = useState("es");
   const [accent, setAccent] = useState<"all" | "spain" | "mexico" | "latam">("all");
+  const [accentVoices, setAccentVoices] = useState<FishVoice[]>([]);
   const [tier, setTier] = useState<"all" | "free" | "premium">("all");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -883,6 +865,29 @@ export function VoiceBrowser({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
+  // Accent fetch — separate lightweight request so publicVoices (base) stays intact for fallback
+  useEffect(() => {
+    if (tab !== "explore" || language !== "es" || accent === "all") {
+      setAccentVoices([]);
+      return;
+    }
+    const controller = new AbortController();
+    async function run() {
+      const p = new URLSearchParams({ page: "1", language, accent });
+      if (debouncedSearch) p.set("search", debouncedSearch);
+      try {
+        const res = await fetch(`/api/fish-voices?${p}`, { signal: controller.signal });
+        if (controller.signal.aborted) return;
+        const data = await res.json();
+        setAccentVoices(data.items ?? []);
+      } catch (e) {
+        if ((e as Error)?.name !== "AbortError") throw e;
+      }
+    }
+    run();
+    return () => controller.abort();
+  }, [tab, language, accent, debouncedSearch]);
+
   useEffect(() => () => { audioRef.current?.pause(); }, []);
 
   async function handlePreview(id: string) {
@@ -933,25 +938,15 @@ export function VoiceBrowser({
     });
   }
 
-  const baseFiltered = publicVoices.filter((v) => {
+  const applyTierFilters = (voices: FishVoice[]) => voices.filter((v) => {
     if (tier === "free" && isPremiumVoice(v._id)) return false;
     if (tier === "premium" && !isPremiumVoice(v._id)) return false;
     return matchesAdvancedFilters(v, appliedFilters);
   });
 
-  const accentFiltered = language === "es" && accent !== "all"
-    ? baseFiltered.filter((v) => {
-        const searchText = [
-          v.description ?? "",
-          v.title ?? "",
-          ...(v.tags ?? []),
-        ].join(" ").toLowerCase();
-        return ACCENT_KEYWORDS[accent]?.some((kw) => searchText.includes(kw.toLowerCase()));
-      })
-    : baseFiltered;
-
-  const accentFallback = language === "es" && accent !== "all" && accentFiltered.length < 3;
-  const filteredVoices = accentFallback ? baseFiltered : accentFiltered;
+  const useAccentVoices = language === "es" && accent !== "all" && accentVoices.length >= 3;
+  const accentFallback = language === "es" && accent !== "all" && accentVoices.length < 3;
+  const filteredVoices = applyTierFilters(useAccentVoices ? accentVoices : publicVoices);
 
   const hasActiveFilters = Object.values(appliedFilters).some((arr) => arr.length > 0);
 
