@@ -2,6 +2,25 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X, FileText, CreditCard, AlertTriangle, ExternalLink, Download } from "lucide-react";
+import Link from "next/link";
+
+function CardBrandLogo({ brand }: { brand: string }) {
+  if (brand === "visa") return (
+    <svg viewBox="0 0 48 16" style={{ height: "20px", width: "auto" }}>
+      <text x="0" y="14" fontSize="16" fontWeight="bold" fill="#1A1F71" fontFamily="Arial">VISA</text>
+    </svg>
+  );
+  if (brand === "mastercard") return (
+    <div style={{ display: "flex", alignItems: "center" }}>
+      <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "#eb001b" }} />
+      <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "#f79e1b", marginLeft: "-10px", opacity: 0.95 }} />
+    </div>
+  );
+  if (brand === "amex") return (
+    <span style={{ color: "#60a5fa", fontWeight: 700, fontSize: "13px" }}>AMEX</span>
+  );
+  return <CreditCard size={20} color="#6b7280" />;
+}
 
 interface Invoice {
   id: string;
@@ -230,12 +249,12 @@ export function BillingModal({ onClose }: { onClose: () => void }) {
                       padding: "20px 24px", display: "flex", alignItems: "center", gap: "16px",
                     }}>
                       <div style={{
-                        width: "48px", height: "32px", borderRadius: "6px",
-                        background: "#1a1a2e", border: "1px solid #2a2a3e",
+                        width: "56px", height: "36px", borderRadius: "6px",
+                        background: "#fff", border: "1px solid #e5e7eb",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        flexShrink: 0,
+                        flexShrink: 0, padding: "4px 6px", boxSizing: "border-box",
                       }}>
-                        <CreditCard size={18} color="#6b7280" />
+                        <CardBrandLogo brand={subscription.paymentMethod.brand.toLowerCase()} />
                       </div>
                       <div>
                         <p style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#fff", textTransform: "capitalize" }}>
@@ -251,8 +270,22 @@ export function BillingModal({ onClose }: { onClose: () => void }) {
                       No hay método de pago registrado.
                     </p>
                   )}
-                  <p style={{ fontSize: "12px", color: "#4a4a65", marginTop: "16px" }}>
-                    Para actualizar tu método de pago, contacta con soporte o gestiona tu suscripción directamente desde el portal de Stripe.
+                  <p style={{ fontSize: "12px", color: "#4a4a65", marginTop: "16px", lineHeight: 1.6 }}>
+                    Para actualizar tu método de pago, contacta con{" "}
+                    <Link href="/dashboard/mi-cuenta" style={{ color: "#60a5fa" }} onClick={onClose}>soporte</Link>
+                    {" "}o gestiona tu suscripción directamente desde el{" "}
+                    <a
+                      href="#"
+                      style={{ color: "#60a5fa", textDecoration: "none", cursor: "pointer" }}
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        const res = await fetch("/api/billing/portal", { method: "POST" });
+                        const { url } = await res.json();
+                        window.open(url, "_blank");
+                      }}
+                    >
+                      Portal de Stripe
+                    </a>.
                   </p>
                 </div>
               )}
