@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, Info } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, Info, Settings } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { UserMenu } from "@/components/UserMenu";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, formatCount } from "./VoiceBrowser";
@@ -188,6 +188,32 @@ function Sidebar({
             </div>
           </div>
         ))}
+
+        {/* Mi cuenta */}
+        <Link
+          href="/dashboard/mi-cuenta"
+          title={collapsed && desktop ? "Mi cuenta" : undefined}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: collapsed && desktop ? "center" : "flex-start",
+            gap: collapsed && desktop ? 0 : "10px",
+            padding: collapsed && desktop ? "8px 0" : "8px 12px",
+            borderRadius: "8px",
+            fontSize: "13px",
+            fontWeight: 500,
+            textDecoration: "none",
+            marginTop: "2px",
+            transition: "background 0.15s",
+            background: "transparent",
+            color: "#5a5a78",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#d1d5db"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#5a5a78"; }}
+        >
+          <Settings size={15} style={{ color: "#3e3e58", flexShrink: 0 }} />
+          {!(collapsed && desktop) && <span style={{ flex: 1 }}>Mi cuenta</span>}
+        </Link>
       </nav>
 
       {/* Team membership section — only for non-owner members */}
