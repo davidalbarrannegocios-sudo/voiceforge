@@ -429,6 +429,7 @@ export default function MiCuentaPage() {
                 value={lang}
                 onChange={(val) => {
                   setLang(val);
+                  window.location.reload();
                 }}
                 style={{ minWidth: "140px" }}
               />
