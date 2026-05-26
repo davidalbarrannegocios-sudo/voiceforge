@@ -13,6 +13,7 @@ import { AudioPlayer } from "./AudioPlayer";
 import { PaymentModal, type BillingPlan } from "./PaymentModal";
 import { SupportModal } from "./SupportModal";
 import { CreditPackModal } from "./CreditPackModal";
+import { BillingModal } from "./BillingModal";
 import { useLang } from "./LanguageContext";
 import AudioHistoryList from "@/components/AudioHistoryList";
 import { CustomSelect } from "@/components/CustomSelect";
@@ -1745,6 +1746,7 @@ function BillingTab({
   const [successCredits, setSuccessCredits] = useState<number | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+  const [billingModalOpen, setBillingModalOpen] = useState(false);
 
   const badge = PLAN_BADGE[plan] ?? PLAN_BADGE.free;
 
@@ -1810,13 +1812,13 @@ function BillingTab({
         </div>
         {plan !== "free" && (
           <button
-            onClick={openPortal}
-            disabled={portalLoading}
-            style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", color: "#d1d5db", fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", opacity: portalLoading ? 0.6 : 1 }}
+            onClick={() => setBillingModalOpen(true)}
+            style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", color: "#d1d5db", fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
           >
-            {portalLoading ? "Cargando..." : "Gestionar suscripción →"}
+            Gestionar suscripción →
           </button>
         )}
+        {billingModalOpen && <BillingModal onClose={() => setBillingModalOpen(false)} />}
       </div>
 
       {/* ── Monthly / Annual toggle ── */}
