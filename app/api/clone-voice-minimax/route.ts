@@ -1,5 +1,5 @@
 import { currentUser } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -174,8 +174,10 @@ export async function POST(req: Request) {
 
   console.log(`[clone-voice-minimax] job created jobId=${job.id} voiceName=${voiceName}`);
 
-  // Fire and forget — Railway keeps the process alive after response
-  void runCloneBackground(job.id, user.id, apiKey, file, voiceName, languageTag, genderTag, needNoiseReduction);
+  // after() runs after the HTTP response is sent and survives Railway's request timeout
+  after(async () => {
+    await runCloneBackground(job.id, user.id, apiKey, file, voiceName, languageTag, genderTag, needNoiseReduction);
+  });
 
   return NextResponse.json({ jobId: job.id });
 }
