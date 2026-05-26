@@ -1074,26 +1074,17 @@ export function VoiceBrowser({
 
                   {/* Accent sub-filter (Spanish only) */}
                   {language === "es" && (
-                    <div className="flex gap-1.5 flex-wrap">
-                      {(["all", "spain", "mexico", "latam"] as const).map((a) => {
-                        const labels: Record<string, string> = { all: "Todos", spain: "🇪🇸 España", mexico: "🇲🇽 México", latam: "🌎 Latinoamérica" };
-                        return (
-                          <button
-                            key={a}
-                            onClick={() => setAccent(a)}
-                            className="px-3 py-1 rounded-full text-xs border transition-colors"
-                            style={accent === a
-                              ? { background: "#2563eb", borderColor: "#2563eb", color: "#fff" }
-                              : { borderColor: "rgba(255,255,255,0.2)", color: "#9ca3af" }
-                            }
-                            onMouseEnter={(e) => { if (accent !== a) e.currentTarget.style.borderColor = "rgba(255,255,255,0.4)"; }}
-                            onMouseLeave={(e) => { if (accent !== a) e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
-                          >
-                            {labels[a]}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <CustomSelect
+                      options={[
+                        { value: "all", label: "Todos los acentos" },
+                        { value: "spain", label: "España", icon: <span className="fi fi-es" style={{ width: "16px", height: "12px", display: "inline-block", borderRadius: "2px" }} /> },
+                        { value: "mexico", label: "México", icon: <span className="fi fi-mx" style={{ width: "16px", height: "12px", display: "inline-block", borderRadius: "2px" }} /> },
+                        { value: "latam", label: "Latinoamérica", icon: <span className="fi fi-un" style={{ width: "16px", height: "12px", display: "inline-block", borderRadius: "2px" }} /> },
+                      ]}
+                      value={accent}
+                      onChange={(v) => setAccent(v as "all" | "spain" | "mexico" | "latam")}
+                      style={{ minWidth: "140px" }}
+                    />
                   )}
 
                   {/* Advanced filter button */}
