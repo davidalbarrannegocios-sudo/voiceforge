@@ -13,17 +13,26 @@ function CardBrandLogo({ brand }: { brand: string }) {
   };
   if (b === "visa") return (
     <div style={wrapper}>
-      <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" style={{ height: "16px", width: "auto", objectFit: "contain" }} />
+      <svg viewBox="0 0 48 16" style={{ height: "16px", width: "auto" }}>
+        <text x="0" y="14" fontSize="16" fontWeight="900" fill="#1A1F71" fontFamily="Arial, sans-serif" letterSpacing="-1">VISA</text>
+      </svg>
     </div>
   );
   if (b === "mastercard") return (
     <div style={wrapper}>
-      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" style={{ height: "24px", width: "auto", objectFit: "contain" }} />
+      <svg viewBox="0 0 38 24" style={{ height: "24px", width: "auto" }}>
+        <circle cx="15" cy="12" r="11" fill="#EB001B" />
+        <circle cx="23" cy="12" r="11" fill="#F79E1B" />
+        <path d="M19 4.5a11 11 0 0 1 0 15A11 11 0 0 1 19 4.5z" fill="#FF5F00" />
+      </svg>
     </div>
   );
   if (b === "amex") return (
     <div style={wrapper}>
-      <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/American_Express_logo_%282018%29.svg" alt="Amex" style={{ height: "24px", width: "auto", objectFit: "contain" }} />
+      <svg viewBox="0 0 48 16" style={{ height: "16px", width: "auto" }}>
+        <rect width="48" height="16" rx="2" fill="#2E77BC" />
+        <text x="4" y="12" fontSize="10" fontWeight="700" fill="#fff" fontFamily="Arial, sans-serif" letterSpacing="0.5">AMEX</text>
+      </svg>
     </div>
   );
   return (
