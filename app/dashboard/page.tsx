@@ -541,6 +541,7 @@ function GenerateTab({
   const [providerDropdownOpen, setProviderDropdownOpen] = useState(false);
   const [ttsEngine, setTtsEngine] = useState<"elitelabs" | "elitelabs2">("elitelabs");
   const [ai33Provider, setAi33Provider] = useState<"elevenlabs" | "minimax">("elevenlabs");
+  const [elitelabs2Down, setElitelabs2Down] = useState(false);
   const modelDropdownRef = useRef<HTMLDivElement>(null);
   const providerDropdownRef = useRef<HTMLDivElement>(null);
   const [previewing, setPreviewing] = useState<"idle" | "loading" | "playing">("idle");
@@ -606,6 +607,21 @@ function GenerateTab({
   useEffect(() => {
     try { localStorage.setItem("vf_ai33_provider", ai33Provider); } catch { /* ignore */ }
   }, [ai33Provider]);
+
+  useEffect(() => {
+    fetch("/api/ai33-health")
+      .then((r) => r.json())
+      .then((data: { isDown?: boolean }) => {
+        const down = !!data.isDown;
+        setElitelabs2Down(down);
+        if (down && ttsEngine === "elitelabs2") {
+          setTtsEngine("elitelabs");
+          onVoiceChange(null);
+        }
+      })
+      .catch(() => { /* keep default false if unreachable */ });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleGenerate() {
     setFormError(null);
@@ -831,10 +847,23 @@ function GenerateTab({
                 <div style={{ position: "relative", display: "flex", background: "#12121a", borderRadius: "8px", padding: "4px" }}>
                   <div style={{ position: "absolute", top: "4px", bottom: "4px", left: "4px", width: "calc(50% - 4px)", background: "#2a2a3e", borderRadius: "6px", transform: ttsEngine === "elitelabs" ? "translateX(0)" : "translateX(100%)", transition: "transform 200ms ease-out" }} />
                   <button onClick={() => { setTtsEngine("elitelabs"); onVoiceChange(null); }} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: ttsEngine === "elitelabs" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>EliteLabs</button>
-                  <button onClick={() => { setTtsEngine("elitelabs2"); onVoiceChange(null); }} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: ttsEngine === "elitelabs2" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
-                    EliteLabs 2
-                    <span style={{ fontSize: "9px", fontWeight: 700, padding: "1px 5px", borderRadius: "4px", background: "rgba(34,197,94,0.15)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)", lineHeight: 1.4 }}>½ créd.</span>
-                  </button>
+                  <div className="relative group" style={{ flex: 1, display: "flex" }}>
+                    <button
+                      disabled={elitelabs2Down}
+                      onClick={() => { if (!elitelabs2Down) { setTtsEngine("elitelabs2"); onVoiceChange(null); } }}
+                      style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: elitelabs2Down ? "#4b5563" : ttsEngine === "elitelabs2" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: elitelabs2Down ? "not-allowed" : "pointer", transition: "color 200ms ease-out", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px", opacity: elitelabs2Down ? 0.4 : 1 }}
+                    >
+                      EliteLabs 2
+                      {!elitelabs2Down && (
+                        <span style={{ fontSize: "9px", fontWeight: 700, padding: "1px 5px", borderRadius: "4px", background: "rgba(34,197,94,0.15)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)", lineHeight: 1.4 }}>½ créd.</span>
+                      )}
+                    </button>
+                    {elitelabs2Down && (
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none" style={{ zIndex: 30 }}>
+                        Mantenimiento Temporal
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
