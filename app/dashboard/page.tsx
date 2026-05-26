@@ -1201,6 +1201,8 @@ function CloneMinimaxModal({ onClose, onCloned }: { onClose: () => void; onClone
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [clonePhase, setClonePhase] = useState<"idle" | "uploading" | "processing">("idle");
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleFile(f: File) {
@@ -1221,9 +1223,34 @@ function CloneMinimaxModal({ onClose, onCloned }: { onClose: () => void; onClone
     setFile(f); setFileDuration(duration); setError(null);
   }
 
+  // Poll job status every 3 seconds while processing
+  useEffect(() => {
+    if (!jobId || clonePhase !== "processing") return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/clone-voice-minimax/${jobId}`);
+        const data = await res.json();
+        if (data.status === "done") {
+          clearInterval(interval);
+          setLoading(false);
+          onCloned();
+          onClose();
+        } else if (data.status === "error") {
+          clearInterval(interval);
+          setError(data.error || "Error en la clonación");
+          setLoading(false);
+          setClonePhase("idle");
+        }
+      } catch {
+        // network hiccup — keep polling
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [jobId, clonePhase, onCloned, onClose]);
+
   async function handleClone() {
     if (!file || !voiceName.trim()) return;
-    setError(null); setLoading(true);
+    setError(null); setLoading(true); setClonePhase("uploading");
     try {
       const fd = new FormData();
       fd.append("audio", file);
@@ -1233,12 +1260,13 @@ function CloneMinimaxModal({ onClose, onCloned }: { onClose: () => void; onClone
       fd.append("need_noise_reduction", String(noiseReduction));
       const res = await fetch("/api/clone-voice-minimax", { method: "POST", body: fd });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al clonar");
-      onCloned(); onClose();
+      if (!res.ok) throw new Error(data.error || "Error al iniciar clonación");
+      setJobId(data.jobId);
+      setClonePhase("processing");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Error desconocido");
-    } finally {
       setLoading(false);
+      setClonePhase("idle");
     }
   }
 
@@ -1312,7 +1340,7 @@ function CloneMinimaxModal({ onClose, onCloned }: { onClose: () => void; onClone
           <button onClick={onClose} className="flex-1 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors" style={{ background: "#1a1a2e", border: "1px solid #2a2a3e" }}>Cancelar</button>
           <button onClick={handleClone} disabled={!file || !voiceName.trim() || loading} className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}>
             {loading && <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
-            {loading ? "Clonando..." : "Clonar voz"}
+            {clonePhase === "uploading" ? "Subiendo audio..." : clonePhase === "processing" ? "Procesando..." : "Clonar voz"}
           </button>
         </div>
       </div>
