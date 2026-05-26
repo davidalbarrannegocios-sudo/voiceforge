@@ -581,10 +581,23 @@ function VoiceRow({
   );
 }
 
-const ACCENT_TAGS: Record<string, string[]> = {
-  spain: ["spain", "españa", "castilian", "castellano", "european spanish", "iberian", "iberico", "peninsular"],
-  mexico: ["mexico", "méxico", "mexican", "mexicano"],
-  latam: ["latin america", "latinoamerica", "latam", "colombia", "argentina", "chile", "peru", "venezuela", "argentino", "chileno"],
+const ACCENT_KEYWORDS: Record<string, string[]> = {
+  spain: [
+    "spain", "españa", "español de españa", "castellano", "iberian",
+    "peninsular", "european spanish", "spaniard", "madrid", "barcelona",
+    "ibérico", "spain accent", "spanish accent from spain",
+  ],
+  mexico: [
+    "mexico", "méxico", "mexican", "mexicano", "mexico accent",
+    "mexican accent", "mexican spanish", "español de méxico",
+    "español mexicano", "from mexico",
+  ],
+  latam: [
+    "latin america", "latinoamerica", "latam", "latino", "latina",
+    "colombia", "argentina", "chile", "peru", "venezuela", "costa rica",
+    "argentino", "chileno", "colombiano", "peruano",
+    "south america", "sudamerica", "central america",
+  ],
 };
 
 /* ── Main component ─────────────────────────────────────────── */
@@ -928,12 +941,16 @@ export function VoiceBrowser({
 
   const accentFiltered = language === "es" && accent !== "all"
     ? baseFiltered.filter((v) => {
-        const tags = v.tags?.map((t: string) => t.toLowerCase()) ?? [];
-        return ACCENT_TAGS[accent]?.some((tag) => tags.includes(tag));
+        const searchText = [
+          v.description ?? "",
+          v.title ?? "",
+          ...(v.tags ?? []),
+        ].join(" ").toLowerCase();
+        return ACCENT_KEYWORDS[accent]?.some((kw) => searchText.includes(kw.toLowerCase()));
       })
     : baseFiltered;
 
-  const accentFallback = language === "es" && accent !== "all" && accentFiltered.length < 5;
+  const accentFallback = language === "es" && accent !== "all" && accentFiltered.length < 3;
   const filteredVoices = accentFallback ? baseFiltered : accentFiltered;
 
   const hasActiveFilters = Object.values(appliedFilters).some((arr) => arr.length > 0);
@@ -1142,10 +1159,9 @@ export function VoiceBrowser({
 
                 {/* Accent fallback notice */}
                 {accentFallback && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg mb-2 text-xs" style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)", color: "#93c5fd" }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    Mostrando todas las voces en español
-                  </div>
+                  <p className="text-xs mb-3" style={{ color: "#6b7280" }}>
+                    No se encontraron suficientes voces con ese acento. Mostrando todas las voces en español.
+                  </p>
                 )}
 
                 {/* Voice list */}
