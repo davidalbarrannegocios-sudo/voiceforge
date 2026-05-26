@@ -536,6 +536,7 @@ function GenerateTab({
   const [topP, setTopP] = useState(0.9);
   const [selectedModel, setSelectedModel] = useState("speech-1.6");
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
+  const [ttsEngine, setTtsEngine] = useState<"elitelabs" | "elitelabs2">("elitelabs");
   const modelDropdownRef = useRef<HTMLDivElement>(null);
   const [previewing, setPreviewing] = useState<"idle" | "loading" | "playing">("idle");
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -567,16 +568,35 @@ function GenerateTab({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [modelDropdownOpen]);
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("vf_tts_engine");
+      if (saved === "elitelabs2") setTtsEngine("elitelabs2");
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    try { localStorage.setItem("vf_tts_engine", ttsEngine); } catch { /* ignore */ }
+  }, [ttsEngine]);
 
   async function handleGenerate() {
     setFormError(null);
     setSubmitting(true);
     try {
-      const prosody = (speed !== 1 || volume !== 1) ? { speed, volume } : undefined;
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      let endpoint: string;
+      let body: Record<string, unknown>;
+
+      if (ttsEngine === "elitelabs2") {
+        endpoint = "/api/generate-ai33";
+        body = {
+          text,
+          reference_id: selectedVoice?.referenceId ?? undefined,
+          voiceName: selectedVoice?.name ?? "Voz por defecto",
+        };
+      } else {
+        endpoint = "/api/generate";
+        const prosody = (speed !== 1 || volume !== 1) ? { speed, volume } : undefined;
+        body = {
           text,
           reference_id: selectedVoice?.referenceId ?? undefined,
           voiceName: selectedVoice?.name ?? "Voz por defecto",
@@ -584,7 +604,13 @@ function GenerateTab({
           normalize,
           model: selectedModel,
           ...(selectedModel === "speech-1.5" && { temperature, topP }),
-        }),
+        };
+      }
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al generar");
@@ -769,8 +795,18 @@ function GenerateTab({
                 </button>
               </div>
 
-              {/* MODELO */}
+              {/* MOTOR */}
               <div>
+                <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", marginBottom: "8px" }}>Motor</p>
+                <div style={{ position: "relative", display: "flex", background: "#12121a", borderRadius: "8px", padding: "4px" }}>
+                  <div style={{ position: "absolute", top: "4px", bottom: "4px", left: "4px", width: "calc(50% - 4px)", background: "#2a2a3e", borderRadius: "6px", transform: ttsEngine === "elitelabs" ? "translateX(0)" : "translateX(100%)", transition: "transform 200ms ease-out" }} />
+                  <button onClick={() => setTtsEngine("elitelabs")} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: ttsEngine === "elitelabs" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>EliteLabs</button>
+                  <button onClick={() => setTtsEngine("elitelabs2")} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: ttsEngine === "elitelabs2" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>EliteLabs 2</button>
+                </div>
+              </div>
+
+              {/* MODELO */}
+              {ttsEngine === "elitelabs" && <div>
                 <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", marginBottom: "8px" }}>Modelo</p>
                 <div style={{ position: "relative" }} ref={modelDropdownRef}>
                   <button
@@ -803,9 +839,10 @@ function GenerateTab({
                     </div>
                   )}
                 </div>
-              </div>
+              </div>}
 
               {/* CONTROLES DE AUDIO */}
+              {ttsEngine === "elitelabs" && (
               <div>
                 <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", marginBottom: "8px" }}>{t.generate.audioControls}</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -831,6 +868,7 @@ function GenerateTab({
                   <button onClick={() => { setSpeed(1); setVolume(1); setTemperature(0.9); setTopP(0.9); }} style={{ marginTop: "10px", fontSize: "11px", color: "#6b7280", background: "none", border: "none", cursor: "pointer" }}>Restablecer valores</button>
                 )}
               </div>
+              )}
 
             </div>
           )}
