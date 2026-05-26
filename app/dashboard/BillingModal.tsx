@@ -5,21 +5,32 @@ import { X, FileText, CreditCard, AlertTriangle, ExternalLink, Download } from "
 import Link from "next/link";
 
 function CardBrandLogo({ brand }: { brand: string }) {
-  if (brand === "visa") return (
-    <svg viewBox="0 0 48 16" style={{ height: "20px", width: "auto" }}>
-      <text x="0" y="14" fontSize="16" fontWeight="bold" fill="#1A1F71" fontFamily="Arial">VISA</text>
-    </svg>
-  );
-  if (brand === "mastercard") return (
-    <div style={{ display: "flex", alignItems: "center" }}>
-      <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "#eb001b" }} />
-      <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "#f79e1b", marginLeft: "-10px", opacity: 0.95 }} />
+  const b = brand.toLowerCase();
+  const wrapper: React.CSSProperties = {
+    background: "#fff", borderRadius: "4px",
+    padding: "4px 8px", height: "32px", width: "56px",
+    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+  };
+  if (b === "visa") return (
+    <div style={wrapper}>
+      <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" style={{ height: "16px", width: "auto", objectFit: "contain" }} />
     </div>
   );
-  if (brand === "amex") return (
-    <span style={{ color: "#60a5fa", fontWeight: 700, fontSize: "13px" }}>AMEX</span>
+  if (b === "mastercard") return (
+    <div style={wrapper}>
+      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" style={{ height: "24px", width: "auto", objectFit: "contain" }} />
+    </div>
   );
-  return <CreditCard size={20} color="#6b7280" />;
+  if (b === "amex") return (
+    <div style={wrapper}>
+      <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/American_Express_logo_%282018%29.svg" alt="Amex" style={{ height: "24px", width: "auto", objectFit: "contain" }} />
+    </div>
+  );
+  return (
+    <div style={{ ...wrapper, background: "rgba(255,255,255,0.1)" }}>
+      <CreditCard size={20} color="#9ca3af" />
+    </div>
+  );
 }
 
 interface Invoice {
@@ -248,14 +259,7 @@ export function BillingModal({ onClose }: { onClose: () => void }) {
                       background: "#13131f", border: "1px solid #1e1e2e", borderRadius: "12px",
                       padding: "20px 24px", display: "flex", alignItems: "center", gap: "16px",
                     }}>
-                      <div style={{
-                        width: "56px", height: "36px", borderRadius: "6px",
-                        background: "#fff", border: "1px solid #e5e7eb",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        flexShrink: 0, padding: "4px 6px", boxSizing: "border-box",
-                      }}>
-                        <CardBrandLogo brand={subscription.paymentMethod.brand.toLowerCase()} />
-                      </div>
+                      <CardBrandLogo brand={subscription.paymentMethod.brand.toLowerCase()} />
                       <div>
                         <p style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#fff", textTransform: "capitalize" }}>
                           {subscription.paymentMethod.brand} ···· {subscription.paymentMethod.last4}
