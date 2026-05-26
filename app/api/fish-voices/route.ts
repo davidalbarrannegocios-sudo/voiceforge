@@ -52,27 +52,19 @@ export async function GET(req: Request) {
   const tag = searchParams.get("tag") ?? "";
   const accent = searchParams.get("accent") ?? "";
 
-  // Accent filter: fetch multiple pages, filter server-side
+  // Accent filter: single request with large page_size, filter server-side
+  // Fish Audio supports page_size up to 200+ and has_more is always null
   if (accent && accent !== "all") {
-    const allVoices: FishItem[] = [];
+    const accentParams = new URLSearchParams({
+      page_size: "200",
+      sort_by: "task_count",
+    });
 
-    for (let pageNum = 1; pageNum <= 8; pageNum++) {
-      const params = new URLSearchParams({
-        page_size: "20",
-        page_number: String(pageNum),
-        sort_by: "task_count",
-      });
-
-      const res = await fetch(`https://api.fish.audio/model?${params}`, {
-        headers: { Authorization: `Bearer ${apiKey}` },
-      });
-      const pageData = await res.json();
-      allVoices.push(...(pageData.items ?? []));
-
-      console.log(`Página ${pageNum}: ${pageData.items?.length} voces, has_more: ${pageData.has_more}`);
-
-      if (!pageData.has_more) break;
-    }
+    const accentRes = await fetch(`https://api.fish.audio/model?${accentParams}`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    const accentData = await accentRes.json();
+    const allVoices: FishItem[] = accentData.items ?? [];
 
     console.log("Total voces acumuladas:", allVoices.length);
 
