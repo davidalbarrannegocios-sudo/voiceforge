@@ -3,10 +3,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
-const MAX_POLL_ATTEMPTS = 30;
-const POLL_INTERVAL_MS = 2000;
+const MAX_POLL_ATTEMPTS = 40;
+const POLL_INTERVAL_MS = 3000;
 
 async function pollCloneTask(taskId: string, apiKey: string): Promise<string> {
   for (let attempt = 1; attempt <= MAX_POLL_ATTEMPTS; attempt++) {
@@ -16,10 +16,10 @@ async function pollCloneTask(taskId: string, apiKey: string): Promise<string> {
     try {
       pollRes = await fetch(`https://api.ai33.pro/v1/task/${taskId}`, {
         headers: { "xi-api-key": apiKey },
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(15000),
       });
     } catch (e) {
-      console.warn(`[clone-voice-minimax] poll attempt ${attempt}/${MAX_POLL_ATTEMPTS} fetch error:`, e);
+      console.warn(`[clone-voice-minimax] [polling] intento ${attempt}/${MAX_POLL_ATTEMPTS} fetch error:`, e);
       continue;
     }
 
@@ -28,11 +28,11 @@ async function pollCloneTask(taskId: string, apiKey: string): Promise<string> {
     try {
       taskData = JSON.parse(pollText);
     } catch {
-      console.warn(`[clone-voice-minimax] poll attempt ${attempt}/${MAX_POLL_ATTEMPTS} non-JSON: ${pollText.slice(0, 200)}`);
+      console.warn(`[clone-voice-minimax] [polling] intento ${attempt}/${MAX_POLL_ATTEMPTS} non-JSON: ${pollText.slice(0, 200)}`);
       continue;
     }
 
-    console.log(`[clone-voice-minimax] poll attempt ${attempt}/${MAX_POLL_ATTEMPTS} status=${taskData.status} metadata=${JSON.stringify(taskData.metadata ?? {}).slice(0, 200)}`);
+    console.log(`[clone-voice-minimax] [polling] intento ${attempt}/${MAX_POLL_ATTEMPTS}, status:`, taskData.status);
 
     if (taskData.status === "done") {
       const meta = taskData.metadata ?? {};
@@ -92,21 +92,26 @@ export async function POST(req: Request) {
 
   console.log(`[clone-voice-minimax] sending to ai33.pro: voice_name=${voiceName} language=${languageTag} gender=${genderTag} noise=${needNoiseReduction} fileSize=${file.size}`);
 
+  const controller = new AbortController();
+  const uploadTimeout = setTimeout(() => controller.abort(), 120000);
+
   let res: Response;
   try {
     res = await fetch("https://api.ai33.pro/v1m/voice/clone", {
       method: "POST",
       headers: { "xi-api-key": apiKey },
       body: upstream,
-      signal: AbortSignal.timeout(90000),
+      signal: controller.signal,
     });
   } catch (e) {
-    const isTimeout = e instanceof Error && e.name === "TimeoutError";
+    const isTimeout = controller.signal.aborted;
     console.error("[clone-voice-minimax] initial fetch error:", e);
     return NextResponse.json(
-      { error: isTimeout ? "Tiempo de espera agotado al contactar ai33.pro. Inténtalo de nuevo." : "Error de conexión con ai33.pro" },
+      { error: isTimeout ? "Tiempo de espera agotado al subir el audio. Inténtalo de nuevo." : "Error de conexión con ai33.pro" },
       { status: isTimeout ? 408 : 502 }
     );
+  } finally {
+    clearTimeout(uploadTimeout);
   }
 
   const rawText = await res.text();
