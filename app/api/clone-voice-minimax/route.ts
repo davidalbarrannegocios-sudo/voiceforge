@@ -86,14 +86,16 @@ async function runCloneBackground(
       clearTimeout(uploadTimeout);
     }
 
-    const rawText = await res.text();
-    console.log(`[clone-voice-minimax] [bg:${jobId}] ai33.pro status=${res.status} body=${rawText.slice(0, 500)}`);
+    const statusCode = res.status;
+    const responseText = await res.text();
+    console.log(`[bg:${jobId}] ai33.pro status:`, statusCode);
+    console.log(`[bg:${jobId}] ai33.pro response:`, responseText.slice(0, 500));
 
-    if (!res.ok) throw new Error(`ai33.pro error ${res.status}: ${rawText}`);
+    if (!res.ok) throw new Error(`ai33.pro error ${statusCode}: ${responseText}`);
 
     let data: { success?: boolean; cloned_voice_id?: number | string; task_id?: string };
-    try { data = JSON.parse(rawText); }
-    catch { throw new Error(`ai33.pro respuesta no-JSON: ${rawText.slice(0, 200)}`); }
+    try { data = JSON.parse(responseText); }
+    catch { throw new Error(`ai33.pro respuesta no-JSON: ${responseText.slice(0, 200)}`); }
 
     let minimaxVoiceId: string;
     if (data.cloned_voice_id != null) {
