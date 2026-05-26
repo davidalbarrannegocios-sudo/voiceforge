@@ -751,12 +751,19 @@ export function VoiceBrowser({
   onSelect,
   onClose,
   plan,
+  voiceListEndpoint,
+  disablePremiumLock,
 }: {
   clonedVoices: ClonedVoice[];
   onSelect: (v: SelectedVoice | null) => void;
   onClose: () => void;
   plan?: string;
+  voiceListEndpoint?: string;
+  disablePremiumLock?: boolean;
 }) {
+  const isExternalSource = !!voiceListEndpoint;
+  const effectiveEndpoint = voiceListEndpoint ?? "/api/fish-voices";
+
   const [tab, setTab] = useState<"recent" | "explore" | "default" | "favorites" | "cloned">("explore");
   const [language, setLanguage] = useState("es");
   const [accent, setAccent] = useState<"all" | "spain" | "mexico" | "latam">("all");
@@ -913,7 +920,7 @@ export function VoiceBrowser({
 
   // Fetch each featured voice individually so they're always available regardless of page
   useEffect(() => {
-    if (FEATURED_VOICE_IDS.length === 0) return;
+    if (FEATURED_VOICE_IDS.length === 0 || isExternalSource) return;
     Promise.all(
       FEATURED_VOICE_IDS.map((id) =>
         fetch(`/api/fish-voice/${id}`)
@@ -923,6 +930,7 @@ export function VoiceBrowser({
     ).then((results) => {
       setFeaturedVoices(results.filter((v): v is FishVoice => v !== null && Boolean(v._id)));
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -962,8 +970,8 @@ export function VoiceBrowser({
 
             const p = new URLSearchParams({ page: String(tierFishPageRef.current), language });
             if (debouncedSearch) p.set("search", debouncedSearch);
-            if (accent !== "all") p.set("accent", accent);
-            const res = await fetch(`/api/fish-voices?${p}`, { signal });
+            if (accent !== "all" && !isExternalSource) p.set("accent", accent);
+            const res = await fetch(`${effectiveEndpoint}?${p}`, { signal });
             if (signal.aborted) return;
             const data = await res.json();
             const items: FishVoice[] = data.items ?? [];
@@ -983,13 +991,13 @@ export function VoiceBrowser({
         } else {
           const p = new URLSearchParams({ page: String(1), language });
           if (debouncedSearch) p.set("search", debouncedSearch);
-          if (accent !== "all") p.set("accent", accent);
-          const res = await fetch(`/api/fish-voices?${p}`, { signal });
+          if (accent !== "all" && !isExternalSource) p.set("accent", accent);
+          const res = await fetch(`${effectiveEndpoint}?${p}`, { signal });
           if (signal.aborted) return;
           const data = await res.json();
           setPublicVoices(data.items ?? []);
           setTotal(data.total ?? 0);
-          setAccentNotEnough(!!data.accentNotEnough);
+          setAccentNotEnough(!isExternalSource && !!data.accentNotEnough);
         }
       } catch (e) {
         if ((e as Error)?.name === "AbortError") return;
@@ -1029,8 +1037,8 @@ export function VoiceBrowser({
 
             const p = new URLSearchParams({ page: String(tierFishPageRef.current), language });
             if (debouncedSearch) p.set("search", debouncedSearch);
-            if (accent !== "all") p.set("accent", accent);
-            const res = await fetch(`/api/fish-voices?${p}`, { signal });
+            if (accent !== "all" && !isExternalSource) p.set("accent", accent);
+            const res = await fetch(`${effectiveEndpoint}?${p}`, { signal });
             if (signal.aborted) return;
             const data = await res.json();
             const items: FishVoice[] = data.items ?? [];
@@ -1050,8 +1058,8 @@ export function VoiceBrowser({
         } else {
           const p = new URLSearchParams({ page: String(page), language });
           if (debouncedSearch) p.set("search", debouncedSearch);
-          if (accent !== "all") p.set("accent", accent);
-          const res = await fetch(`/api/fish-voices?${p}`, { signal });
+          if (accent !== "all" && !isExternalSource) p.set("accent", accent);
+          const res = await fetch(`${effectiveEndpoint}?${p}`, { signal });
           if (signal.aborted) return;
           const data = await res.json();
           setPublicVoices(data.items ?? []);
@@ -1124,7 +1132,7 @@ export function VoiceBrowser({
   }
 
   function handleVoiceClick(voice: FishVoice) {
-    if (isPremiumVoice(voice._id) && !userCanUsePremium) {
+    if (!disablePremiumLock && isPremiumVoice(voice._id) && !userCanUsePremium) {
       setShowUpgrade(true);
       return;
     }
@@ -1143,8 +1151,10 @@ export function VoiceBrowser({
   }
 
   const applyTierFilters = (voices: FishVoice[]) => voices.filter((v) => {
-    if (tier === "free" && isPremiumVoice(v._id)) return false;
-    if (tier === "premium" && !isPremiumVoice(v._id)) return false;
+    if (!disablePremiumLock) {
+      if (tier === "free" && isPremiumVoice(v._id)) return false;
+      if (tier === "premium" && !isPremiumVoice(v._id)) return false;
+    }
     return matchesAdvancedFilters(v, appliedFilters);
   });
 
@@ -1157,7 +1167,7 @@ export function VoiceBrowser({
     ? filteredVoices.slice((page - 1) * 20, page * 20)
     : filteredVoices;
 
-  const applyFeatured = page === 1 && !debouncedSearch && accent === "all" && !hasActiveFilters && tier === "all" && featuredVoices.length > 0;
+  const applyFeatured = !isExternalSource && page === 1 && !debouncedSearch && accent === "all" && !hasActiveFilters && tier === "all" && featuredVoices.length > 0;
   const displayedVoices = applyFeatured
     ? [
         // applyFeatured requires tier === "all", so no tier filter needed here
@@ -1213,22 +1223,24 @@ export function VoiceBrowser({
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b px-6 flex-shrink-0" style={{ borderColor: "#1e1e2e" }}>
-          {TABS.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className="py-3 px-1 mr-6 text-sm font-medium transition-colors border-b-2 -mb-px"
-              style={
-                tab === key
-                  ? { color: "#e2e2f0", borderColor: "#3b82f6" }
-                  : { color: "#555570", borderColor: "transparent" }
-              }
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {!isExternalSource && (
+          <div className="flex border-b px-6 flex-shrink-0" style={{ borderColor: "#1e1e2e" }}>
+            {TABS.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className="py-3 px-1 mr-6 text-sm font-medium transition-colors border-b-2 -mb-px"
+                style={
+                  tab === key
+                    ? { color: "#e2e2f0", borderColor: "#3b82f6" }
+                    : { color: "#555570", borderColor: "transparent" }
+                }
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Content */}
         <div className="flex-1 overflow-hidden relative">
@@ -1258,20 +1270,22 @@ export function VoiceBrowser({
                     />
                   </div>
 
-                  {/* Language dropdown */}
-                  <CustomSelect
-                    options={LANGS.map(({ code, label, fi }) => ({
-                      value: code,
-                      label,
-                      icon: <span className={`fi fi-${fi}`} style={{ width: "20px", height: "15px", display: "inline-block", borderRadius: "2px", flexShrink: 0 }} />,
-                    }))}
-                    value={language}
-                    onChange={(v) => { setLanguage(v); setAccent("all"); }}
-                    style={{ minWidth: "140px" }}
-                  />
+                  {/* Language dropdown — hidden for external voice sources */}
+                  {!isExternalSource && (
+                    <CustomSelect
+                      options={LANGS.map(({ code, label, fi }) => ({
+                        value: code,
+                        label,
+                        icon: <span className={`fi fi-${fi}`} style={{ width: "20px", height: "15px", display: "inline-block", borderRadius: "2px", flexShrink: 0 }} />,
+                      }))}
+                      value={language}
+                      onChange={(v) => { setLanguage(v); setAccent("all"); }}
+                      style={{ minWidth: "140px" }}
+                    />
+                  )}
 
-                  {/* Accent sub-filter (Spanish only) */}
-                  {language === "es" && (
+                  {/* Accent sub-filter (Spanish only) — hidden for external voice sources */}
+                  {!isExternalSource && language === "es" && (
                     <CustomSelect
                       options={[
                         { value: "all", label: "Todos los acentos" },
@@ -1320,31 +1334,35 @@ export function VoiceBrowser({
                   </button>
                 </div>
 
-                {/* Tier pills */}
-                <div className="flex items-center gap-2 mb-4">
-                  <TierPill active={tier === "all"} onClick={() => setTier("all")}>Todas</TierPill>
-                  <TierPill active={tier === "free"} onClick={() => setTier("free")}>Gratis</TierPill>
-                  <TierPill active={tier === "premium"} onClick={() => setTier("premium")} amber>✦ Premium</TierPill>
-                  {!userCanUsePremium && tier === "premium" && (
-                    <span className="text-xs ml-1" style={{ color: "#444460" }}>Requiere plan Starter+</span>
-                  )}
-                </div>
-
-                {/* Default voice row */}
-                <button
-                  onClick={() => handleSelect(null)}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border mb-2 transition-all text-left"
-                  style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1e1e2e")}
-                >
-                  <div className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#12121a" }}>🎙️</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white">Voz por defecto</p>
-                    <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Se generará una voz estándar</p>
+                {/* Tier pills — hidden for external voice sources */}
+                {!isExternalSource && (
+                  <div className="flex items-center gap-2 mb-4">
+                    <TierPill active={tier === "all"} onClick={() => setTier("all")}>Todas</TierPill>
+                    <TierPill active={tier === "free"} onClick={() => setTier("free")}>Gratis</TierPill>
+                    <TierPill active={tier === "premium"} onClick={() => setTier("premium")} amber>✦ Premium</TierPill>
+                    {!userCanUsePremium && tier === "premium" && (
+                      <span className="text-xs ml-1" style={{ color: "#444460" }}>Requiere plan Starter+</span>
+                    )}
                   </div>
-                  <span className="text-xs flex-shrink-0" style={{ color: "#3b82f6" }}>Seleccionar →</span>
-                </button>
+                )}
+
+                {/* Default voice row — hidden for external voice sources */}
+                {!isExternalSource && (
+                  <button
+                    onClick={() => handleSelect(null)}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border mb-2 transition-all text-left"
+                    style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1e1e2e")}
+                  >
+                    <div className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#12121a" }}>🎙️</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-white">Voz por defecto</p>
+                      <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Se generará una voz estándar</p>
+                    </div>
+                    <span className="text-xs flex-shrink-0" style={{ color: "#3b82f6" }}>Seleccionar →</span>
+                  </button>
+                )}
 
                 {/* Accent not enough notice */}
                 {accentNotEnough && (
@@ -1365,7 +1383,7 @@ export function VoiceBrowser({
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2 p-2">
                     {displayedVoices.map((voice) => {
-                      const isPremium = isPremiumVoice(voice._id);
+                      const isPremium = !disablePremiumLock && isPremiumVoice(voice._id);
                       const isLocked = isPremium && !userCanUsePremium;
                       return (
                         <VoiceCard
@@ -1438,7 +1456,7 @@ export function VoiceBrowser({
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-2">
                     {filteredRecent.map((voice) => {
-                      const isPremium = isPremiumVoice(voice._id);
+                      const isPremium = !disablePremiumLock && isPremiumVoice(voice._id);
                       const isLocked = isPremium && !userCanUsePremium;
                       return (
                         <VoiceCard
@@ -1466,7 +1484,7 @@ export function VoiceBrowser({
                 <p className="text-xs mb-4" style={{ color: "#555570" }}>Voces de calidad curadas y siempre disponibles.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-2">
                   {DEFAULT_VOICES.map((voice) => {
-                    const isPremium = isPremiumVoice(voice._id);
+                    const isPremium = !disablePremiumLock && isPremiumVoice(voice._id);
                     const isLocked = isPremium && !userCanUsePremium;
                     return (
                       <VoiceCard
@@ -1524,7 +1542,7 @@ export function VoiceBrowser({
                         tags: [],
                         task_count: 0,
                       };
-                      const isPremium = isPremiumVoice(fav.voiceId);
+                      const isPremium = !disablePremiumLock && isPremiumVoice(fav.voiceId);
                       const isLocked = isPremium && !userCanUsePremium;
                       return (
                         <VoiceCard

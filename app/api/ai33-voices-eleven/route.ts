@@ -3,12 +3,71 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+interface ElevenVoice {
+  voice_id?: string;
+  id?: string;
+  name?: string;
+  description?: string;
+  preview_url?: string;
+  category?: string;
+  labels?: {
+    accent?: string;
+    gender?: string;
+    age?: string;
+    use_case?: string;
+    description?: string;
+  };
+}
+
+function labelsToLanguages(labels: ElevenVoice["labels"]): string[] {
+  const accent = (labels?.accent ?? "").toLowerCase();
+  if (accent.includes("spanish") || accent.includes("espanol") || accent.includes("español")) return ["es"];
+  if (accent.includes("french") || accent.includes("français")) return ["fr"];
+  if (accent.includes("german") || accent.includes("deutsch")) return ["de"];
+  if (accent.includes("italian") || accent.includes("italiano")) return ["it"];
+  if (accent.includes("portuguese") || accent.includes("português")) return ["pt"];
+  if (accent.includes("japanese") || accent.includes("日本語")) return ["ja"];
+  if (accent.includes("chinese") || accent.includes("中文")) return ["zh"];
+  if (accent.includes("korean") || accent.includes("한국어")) return ["ko"];
+  if (accent.includes("arabic") || accent.includes("عربي")) return ["ar"];
+  if (accent.includes("russian") || accent.includes("русский")) return ["ru"];
+  return ["en"];
+}
+
+function mapToFishVoice(v: ElevenVoice) {
+  const labels = v.labels ?? {};
+  const tags: string[] = [
+    labels.gender,
+    labels.age,
+    labels.use_case,
+    labels.accent ? `accent-${labels.accent}` : undefined,
+    labels.description,
+  ].filter((t): t is string => typeof t === "string" && t.length > 0);
+
+  return {
+    _id: v.voice_id ?? v.id ?? "",
+    title: v.name ?? "",
+    description: v.description ?? labels.description ?? null,
+    cover_image: null,
+    languages: labelsToLanguages(labels),
+    tags,
+    task_count: 0,
+    like_count: 0,
+    samples: v.preview_url ? [{ audio: v.preview_url }] : [],
+  };
+}
+
+export async function GET(req: Request) {
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const apiKey = process.env.SK_AI33_KEY;
   if (!apiKey) return NextResponse.json({ error: "SK_AI33_KEY no configurada" }, { status: 500 });
+
+  const { searchParams } = new URL(req.url);
+  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+  const search = (searchParams.get("search") ?? "").toLowerCase().trim();
+  const PAGE_SIZE = 20;
 
   const res = await fetch("https://api.ai33.pro/v2/voices", {
     headers: { "xi-api-key": apiKey },
@@ -20,12 +79,21 @@ export async function GET() {
   }
 
   const data = await res.json();
-  const rawVoices: Record<string, unknown>[] = Array.isArray(data) ? data : (data.voices ?? []);
-  const voices = rawVoices.map((v) => ({
-    id: (v.voice_id ?? v.id ?? "") as string,
-    name: (v.name ?? "") as string,
-    sampleUrl: (v.preview_url ?? v.sample_url ?? null) as string | null,
-  }));
+  const rawVoices: ElevenVoice[] = Array.isArray(data) ? data : (data.voices ?? []);
 
-  return NextResponse.json({ voices });
+  const allItems = rawVoices.map(mapToFishVoice);
+
+  const filtered = search
+    ? allItems.filter(
+        (v) =>
+          v.title.toLowerCase().includes(search) ||
+          (v.description ?? "").toLowerCase().includes(search) ||
+          v.tags.some((t) => t.toLowerCase().includes(search))
+      )
+    : allItems;
+
+  const total = filtered.length;
+  const items = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  return NextResponse.json({ items, total });
 }
