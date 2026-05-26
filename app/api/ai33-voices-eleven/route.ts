@@ -71,28 +71,30 @@ export async function GET(req: Request) {
   const accentFilter = (searchParams.get("accent") ?? "").toLowerCase().trim();
   const PAGE_SIZE = 20;
 
-  console.log("[ai33-voices-eleven] fetching voices from ai33.pro");
-  const res = await fetch("https://api.ai33.pro/v2/voices", {
-    headers: { "xi-api-key": apiKey },
-  });
-
-  const rawBody = await res.text();
-  console.log(`[ai33-voices-eleven] status=${res.status} body=${rawBody.slice(0, 400)}`);
-
-  if (!res.ok) {
-    return NextResponse.json({ error: `ai33.pro error ${res.status}: ${rawBody}` }, { status: res.status });
-  }
-
-  let data: unknown;
-  try {
-    data = JSON.parse(rawBody);
-  } catch {
-    console.error("[ai33-voices-eleven] response is not valid JSON");
-    return NextResponse.json({ error: "ai33.pro devolvió respuesta no-JSON" }, { status: 500 });
-  }
-  const rawVoices: ElevenVoice[] = Array.isArray(data) ? data : ((data as { voices?: ElevenVoice[] }).voices ?? []);
-  console.log(`[ai33-voices-eleven] rawVoices=${rawVoices.length} langFilter="${langFilter}" accentFilter="${accentFilter}" search="${search}" page=${page}`);
-  console.log(`[ai33-voices-eleven] sample raw voice:`, JSON.stringify(rawVoices[0]).slice(0, 300));
+  // Fetch all pages using next_page_token pagination
+  console.log("[ai33-voices-eleven] fetching all pages from ai33.pro");
+  const rawVoices: ElevenVoice[] = [];
+  let nextToken: string | null = null;
+  let pageNum = 1;
+  do {
+    const url = "https://api.ai33.pro/v2/voices" + (nextToken ? `?next_page_token=${encodeURIComponent(nextToken)}` : "");
+    const res = await fetch(url, { headers: { "xi-api-key": apiKey } });
+    if (!res.ok) {
+      const errBody = await res.text();
+      return NextResponse.json({ error: `ai33.pro error ${res.status}: ${errBody}` }, { status: res.status });
+    }
+    let pageData: { voices?: ElevenVoice[]; has_more?: boolean; next_page_token?: string };
+    try {
+      pageData = await res.json() as typeof pageData;
+    } catch {
+      return NextResponse.json({ error: "ai33.pro devolvió respuesta no-JSON" }, { status: 500 });
+    }
+    const pageVoices = Array.isArray(pageData) ? (pageData as ElevenVoice[]) : (pageData.voices ?? []);
+    rawVoices.push(...pageVoices);
+    console.log(`[ai33-voices-eleven] page ${pageNum++} → ${pageVoices.length} voices, has_more=${pageData.has_more}`);
+    nextToken = pageData.has_more ? (pageData.next_page_token ?? null) : null;
+  } while (nextToken);
+  console.log(`[ai33-voices-eleven] total fetched=${rawVoices.length} langFilter="${langFilter}" accentFilter="${accentFilter}" search="${search}" page=${page}`);
 
   // Filter by language
   const langFiltered = langFilter && langFilter !== "all"
