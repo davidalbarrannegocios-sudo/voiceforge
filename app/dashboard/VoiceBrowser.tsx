@@ -781,7 +781,7 @@ export function VoiceBrowser({
   const effectiveEndpoint = voiceListEndpoint ?? "/api/fish-voices";
 
   const [tab, setTab] = useState<"recent" | "explore" | "default" | "favorites" | "cloned">("explore");
-  const [language, setLanguage] = useState(defaultLanguage ?? "es");
+  const [language, setLanguage] = useState(isExternalSource ? "" : (defaultLanguage ?? "es"));
   const [accent, setAccent] = useState("all");
   const [availableAccents, setAvailableAccents] = useState<string[]>([]);
   const [tier, setTier] = useState<"all" | "free" | "premium">("all");
@@ -838,7 +838,7 @@ export function VoiceBrowser({
 
   // Reset filters when the endpoint changes (e.g. provider switch while browser is open)
   useEffect(() => {
-    setLanguage(defaultLanguage ?? "es");
+    setLanguage(isExternalSource ? "" : (defaultLanguage ?? "es"));
     setAccent("all");
     setAvailableAccents([]);
     setPage(1);
@@ -1301,11 +1301,14 @@ export function VoiceBrowser({
                   {/* Language dropdown — Fish Audio always, external only when showExternalFilters */}
                   {(!isExternalSource || showExternalFilters) && (
                     <CustomSelect
-                      options={LANGS.map(({ code, label, fi }) => ({
-                        value: code,
-                        label,
-                        icon: <span className={`fi fi-${fi}`} style={{ width: "20px", height: "15px", display: "inline-block", borderRadius: "2px", flexShrink: 0 }} />,
-                      }))}
+                      options={[
+                        ...(isExternalSource ? [{ value: "", label: "Todos los idiomas", icon: <Globe size={16} style={{ color: "#6b7280", flexShrink: 0 }} /> }] : []),
+                        ...LANGS.map(({ code, label, fi }) => ({
+                          value: code,
+                          label,
+                          icon: <span className={`fi fi-${fi}`} style={{ width: "20px", height: "15px", display: "inline-block", borderRadius: "2px", flexShrink: 0 }} />,
+                        })),
+                      ]}
                       value={language}
                       onChange={(v) => { setLanguage(v); setAccent("all"); }}
                       style={{ minWidth: "140px" }}
