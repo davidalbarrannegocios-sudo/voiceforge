@@ -19,7 +19,6 @@ type FishItem = {
   description?: string;
   tags?: string[];
   cover_image?: string | null;
-  has_more?: boolean;
 };
 
 function normalizeCoverImage(item: FishItem): FishItem {
@@ -53,41 +52,32 @@ export async function GET(req: Request) {
   const tag = searchParams.get("tag") ?? "";
   const accent = searchParams.get("accent") ?? "";
 
-  const isAccentFilter = !!(accent && accent !== "all" && ACCENT_TERMS[accent]);
-  const headers = { Authorization: `Bearer ${apiKey}` };
-
-  if (isAccentFilter) {
-    const terms = ACCENT_TERMS[accent];
-
-    // Fetch up to 5 pages (100 voices) without language/title constraints for a broad pool
+  // Accent filter: fetch multiple pages, filter server-side
+  if (accent && accent !== "all") {
     const allVoices: FishItem[] = [];
-    for (let p = 1; p <= 5; p++) {
+
+    for (let pageNum = 1; pageNum <= 8; pageNum++) {
       const params = new URLSearchParams({
         page_size: "20",
-        page_number: String(p),
+        page_number: String(pageNum),
         sort_by: "task_count",
       });
-      if (tag) params.set("tag", tag);
 
       const res = await fetch(`https://api.fish.audio/model?${params}`, {
-        headers,
-        next: { revalidate: 300 },
+        headers: { Authorization: `Bearer ${apiKey}` },
       });
-      if (!res.ok) break;
+      const pageData = await res.json();
+      allVoices.push(...(pageData.items ?? []));
 
-      const data = await res.json();
-      const items: FishItem[] = (data.items ?? []).map(normalizeCoverImage);
-      allVoices.push(...items);
-      if (!data.has_more) break;
+      console.log(`Página ${pageNum}: ${pageData.items?.length} voces, has_more: ${pageData.has_more}`);
+
+      if (!pageData.has_more) break;
     }
 
-    console.log("Total voces antes de filtrar:", allVoices.length);
-    console.log("Terms usados:", terms);
-    console.log("Ejemplo descripción voz 0:", allVoices[0]?.description);
-    console.log("Ejemplo tags voz 0:", allVoices[0]?.tags);
+    console.log("Total voces acumuladas:", allVoices.length);
 
-    // Filter server-side: match title + description + tags
-    const filtered = allVoices.filter((v) => {
+    const terms = ACCENT_TERMS[accent] ?? [];
+    const filtered = allVoices.filter((v: FishItem) => {
       const searchText = [
         v.title ?? "",
         v.description ?? "",
@@ -98,16 +88,12 @@ export async function GET(req: Request) {
 
     console.log("Total después de filtrar:", filtered.length);
 
-    // Promote manually curated voices to the top
     const manualIds = MANUAL_ACCENT_VOICES[accent] ?? [];
-    let items = filtered;
-    if (manualIds.length > 0) {
-      const manual = filtered.filter((v) => manualIds.includes(v._id));
-      const rest = filtered.filter((v) => !manualIds.includes(v._id));
-      items = [...manual, ...rest];
-    }
+    const manualVoices = filtered.filter((v: FishItem) => manualIds.includes(v._id));
+    const restVoices = filtered.filter((v: FishItem) => !manualIds.includes(v._id));
+    const items = [...manualVoices, ...restVoices].map(normalizeCoverImage);
 
-    return NextResponse.json({ items, total: items.length });
+    return Response.json({ items, total: items.length });
   }
 
   // Normal (non-accent) fetch
@@ -121,7 +107,7 @@ export async function GET(req: Request) {
   if (tag) params.set("tag", tag);
 
   const res = await fetch(`https://api.fish.audio/model?${params}`, {
-    headers,
+    headers: { Authorization: `Bearer ${apiKey}` },
     next: { revalidate: 300 },
   });
 
