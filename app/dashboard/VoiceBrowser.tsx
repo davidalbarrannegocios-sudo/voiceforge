@@ -722,6 +722,145 @@ function VoiceRow({
   );
 }
 
+function VoiceCard({
+  voice,
+  previewingId,
+  previewLoadingId,
+  onPreview,
+  onUse,
+  isLocked,
+  isPremium,
+  isFavorite,
+  onToggleFavorite,
+}: {
+  voice: FishVoice;
+  previewingId: string | null;
+  previewLoadingId: string | null;
+  onPreview: (id: string) => void;
+  onUse: (voice: FishVoice) => void;
+  isLocked: boolean;
+  isPremium: boolean;
+  isFavorite: boolean;
+  onToggleFavorite: (voice: FishVoice) => void;
+}) {
+  const g = getGender(voice.tags);
+  const age = getAge(voice.tags);
+  const isPreviewing = previewingId === voice._id;
+  const isPreviewLoading = previewLoadingId === voice._id;
+
+  const pillStyle = { background: "rgba(255,255,255,0.05)", color: "#6b7280", border: "1px solid rgba(255,255,255,0.07)" };
+
+  return (
+    <div
+      className="relative group rounded-xl p-4 cursor-pointer transition-all duration-200 border"
+      style={{ background: "transparent", borderColor: "rgba(255,255,255,0.05)" }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "transparent";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)";
+      }}
+    >
+      {/* Top: avatar + name/description */}
+      <div className="flex gap-3 mb-3">
+        <VoiceAvatar name={voice.title} coverImage={voice.cover_image} size="lg" id={voice._id} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <span className="text-sm font-semibold text-white truncate leading-tight">{voice.title}</span>
+            {isPremium && (
+              <span
+                className="px-1.5 py-0.5 rounded text-xs font-bold flex-shrink-0"
+                style={{ background: "rgba(245,158,11,0.12)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.2)" }}
+              >
+                ✦
+              </span>
+            )}
+          </div>
+          {voice.description && (
+            <p className="text-xs line-clamp-2" style={{ color: "#555570" }}>{voice.description}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Pills */}
+      <div className="flex items-center gap-1 flex-wrap mb-2">
+        {voice.languages.slice(0, 2).map((l) => (
+          <span key={l} className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>
+            <span className={`fi fi-${l.toLowerCase()}`} style={{ width: "14px", height: "11px", display: "inline-block", borderRadius: "2px" }} />
+            <span>{l.toUpperCase()}</span>
+          </span>
+        ))}
+        {g && (
+          <span className="px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>
+            {g === "male" ? "Masculino" : "Femenino"}
+          </span>
+        )}
+        {age && (
+          <span className="px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>{age}</span>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1" style={{ color: "#444460" }}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+          </svg>
+          <span className="text-xs">{formatCount(voice.task_count)}</span>
+        </div>
+        {typeof voice.like_count === "number" && voice.like_count > 0 && (
+          <div className="flex items-center gap-1" style={{ color: "#444460" }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+            <span className="text-xs">{formatCount(voice.like_count)}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Hover actions */}
+      <div
+        className="flex items-center gap-2 mt-3 pt-3 opacity-0 group-hover:opacity-100 transition-all duration-200"
+        style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+      >
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggleFavorite(voice); }}
+          className="flex items-center justify-center w-7 h-7 rounded-lg transition-all flex-shrink-0"
+          style={{ background: "transparent" }}
+          title={isFavorite ? "Quitar de favoritos" : "Añadir a favoritos"}
+        >
+          <HeartIcon filled={isFavorite} />
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onPreview(voice._id); }}
+          disabled={isPreviewLoading}
+          className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60 flex-1"
+          style={{
+            background: isPreviewing ? "rgba(59,130,246,0.2)" : "rgba(255,255,255,0.05)",
+            color: isPreviewing ? "#93c5fd" : "#6b7280",
+            border: `1px solid ${isPreviewing ? "rgba(59,130,246,0.35)" : "rgba(255,255,255,0.08)"}`,
+          }}
+        >
+          {isPreviewLoading ? "···" : isPreviewing ? "⏹ Stop" : "▶ Vista previa"}
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onUse(voice); }}
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex-shrink-0"
+          style={
+            isLocked
+              ? { background: "#12121a", color: "#3a3a52", border: "1px solid #1a1a2a" }
+              : { background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff" }
+          }
+        >
+          Usar →
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main component ─────────────────────────────────────────── */
 
 export function VoiceBrowser({
@@ -1282,12 +1421,12 @@ export function VoiceBrowser({
                 ) : displayedVoices.length === 0 ? (
                   <p className="text-center py-16 text-sm" style={{ color: "#555570" }}>No se encontraron voces</p>
                 ) : (
-                  <div className="rounded-xl overflow-hidden mt-2" style={{ border: "1px solid #1a1a2a", background: "#0a0a12" }}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2 p-2">
                     {displayedVoices.map((voice) => {
                       const isPremium = isPremiumVoice(voice._id);
                       const isLocked = isPremium && !userCanUsePremium;
                       return (
-                        <VoiceRow
+                        <VoiceCard
                           key={voice._id}
                           voice={voice}
                           previewingId={previewingId}
