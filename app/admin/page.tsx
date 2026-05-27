@@ -82,10 +82,13 @@ const TICKET_TYPE_LABELS: Record<string, string> = {
 
 interface Generation {
   id: string;
+  status: string;
   text: string;
-  audioUrl: string;
+  voiceName: string | null;
+  audioUrl: string | null;
   creditsUsed: number;
-  durationSeconds: number;
+  durationSeconds: number | null;
+  error: string | null;
   refunded: boolean;
   createdAt: string;
 }
@@ -156,7 +159,7 @@ function Tag({ role }: { role: string }) {
 }
 
 /* ─── Audio player cell ───────────────────────────────────── */
-function AudioCell({ url }: { url: string }) {
+function AudioCell({ url }: { url?: string }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
 
@@ -486,30 +489,41 @@ function UserDetailModal({
                       </tr>
                     </thead>
                     <tbody>
-                      {detail.generations.map((g) => (
+                      {detail.generations.map((g) => {
+                        const isProcessing = g.status === "processing";
+                        const isError = g.status === "error";
+                        return (
                         <tr key={g.id} style={{ borderBottom: "1px solid #1a1a1a", opacity: g.refunded ? 0.5 : 1 }}>
                           <td style={{ padding: "0.6rem 0.75rem", color: "#555570", whiteSpace: "nowrap" }}>
                             {new Date(g.createdAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}
                           </td>
                           <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", maxWidth: "220px" }}>
                             <span title={g.text}>{g.text.slice(0, 50)}{g.text.length > 50 ? "…" : ""}</span>
+                            {g.voiceName && <span style={{ display: "block", fontSize: "0.7rem", color: "#555570", marginTop: "2px" }}>{g.voiceName}</span>}
                           </td>
                           <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", whiteSpace: "nowrap" }}>
-                            {g.durationSeconds.toFixed(1)}s
+                            {g.durationSeconds != null ? `${g.durationSeconds.toFixed(1)}s` : "—"}
                           </td>
                           <td style={{ padding: "0.6rem 0.75rem", color: "#aaaaaa", fontWeight: 600 }}>
                             {g.creditsUsed.toLocaleString("es-ES")}
                           </td>
-                          <td style={{ padding: "0.6rem 0.75rem" }}>
+                          <td style={{ padding: "0.6rem 0.75rem", maxWidth: "180px" }}>
                             {g.refunded
                               ? <span style={{ color: "#f59e0b", fontSize: "0.7rem", fontWeight: 700 }}>REEMBOLSADO</span>
+                              : isProcessing
+                              ? <span style={{ color: "#60a5fa", fontSize: "0.7rem", fontWeight: 700 }}>PROCESANDO</span>
+                              : isError
+                              ? <>
+                                  <span style={{ color: "#f87171", fontSize: "0.7rem", fontWeight: 700 }}>ERROR</span>
+                                  {g.error && <span title={g.error} style={{ display: "block", fontSize: "0.65rem", color: "#6b7280", marginTop: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.error.slice(0, 80)}</span>}
+                                </>
                               : <span style={{ color: "#4ade80", fontSize: "0.7rem", fontWeight: 700 }}>COMPLETADO</span>}
                           </td>
                           <td style={{ padding: "0.6rem 0.75rem" }}>
-                            <AudioCell url={g.audioUrl} />
+                            <AudioCell url={g.audioUrl ?? undefined} />
                           </td>
                           <td style={{ padding: "0.6rem 0.75rem" }}>
-                            {!g.refunded && (
+                            {!g.refunded && g.status === "done" && (
                               <button
                                 onClick={() => handleRefund(g)}
                                 disabled={refunding === g.id}
@@ -520,7 +534,8 @@ function UserDetailModal({
                             )}
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

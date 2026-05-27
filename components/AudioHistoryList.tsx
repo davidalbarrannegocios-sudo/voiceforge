@@ -262,8 +262,8 @@ export default function AudioHistoryList({
                               Generando...
                             </span>
                           ) : isError ? (
-                            <span style={{ fontSize: "10px", color: "#f87171" }}>
-                              {isStale ? "Tiempo agotado" : "Error al generar"}
+                            <span style={{ fontSize: "10px", color: "#f87171" }} title={gen.error ?? undefined}>
+                              {isStale ? "Tiempo agotado" : (gen.error ? gen.error.slice(0, 60) : "Error al generar")}
                             </span>
                           ) : isExpired ? (
                             <span style={{ fontSize: "10px", color: "#4b4b6a" }}>Expirado</span>

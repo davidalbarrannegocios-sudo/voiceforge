@@ -113,7 +113,13 @@ export async function POST(req: Request) {
       if (isAbort) {
         console.log(`[generate] client disconnected — refunding generationId=${generation.id}`);
       } else {
-        console.error(`[generate] Fish Audio failed:`, errMsg);
+        console.error(`[generate] Fish Audio error:`, {
+          message: errMsg,
+          voiceId: effectiveReferenceId ?? "default",
+          textLength: trimmed.length,
+          userId: user.id,
+          generationId: generation.id,
+        });
       }
 
       // ── Refund credits + mark as error ──

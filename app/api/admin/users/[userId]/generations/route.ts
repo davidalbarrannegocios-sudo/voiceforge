@@ -25,10 +25,13 @@ export async function GET(
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
+        status: true,
         text: true,
+        voiceName: true,
         audioUrl: true,
         creditsUsed: true,
         durationSeconds: true,
+        error: true,
         refunded: true,
         createdAt: true,
       },
