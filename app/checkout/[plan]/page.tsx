@@ -14,6 +14,13 @@ import { PLANS, type PlanKey } from "@/lib/stripe";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
+const CREDIT_PACKS: Record<string, { label: string; credits: number; price: number }> = {
+  "credits-100k": { label: "100.000 créditos", credits: 100_000,   price: 5  },
+  "credits-300k": { label: "300.000 créditos", credits: 300_000,   price: 12 },
+  "credits-600k": { label: "600.000 créditos", credits: 600_000,   price: 19 },
+  "credits-1m":   { label: "1.000.000 créditos", credits: 1_000_000, price: 30 },
+};
+
 const PLAN_FEATURES: Record<string, string[]> = {
   starter: [
     "200.000 caracteres/mes (x2 con EliteLabs 2)",
@@ -362,67 +369,205 @@ function CheckoutForm({
   );
 }
 
-/* ─── Data loader — fetches SetupIntent then renders form ─── */
+/* ─── Credit pack checkout form (PaymentIntent flow) ──────── */
+function CreditCheckoutForm({
+  pack,
+  packKey,
+  paymentIntentId,
+}: {
+  pack: { label: string; credits: number; price: number };
+  packKey: string;
+  paymentIntentId: string;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL ?? "");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    setError(null);
+    setLoading(true);
+
+    const { error: submitErr } = await elements.submit();
+    if (submitErr) { setError(submitErr.message ?? "Error al validar el formulario"); setLoading(false); return; }
+
+    const { error: payErr, paymentIntent } = await stripe.confirmPayment({
+      elements,
+      redirect: "if_required",
+      confirmParams: { return_url: `${baseUrl}/dashboard?creditsBought=${pack.credits}` },
+    });
+
+    if (payErr) { setError(payErr.message ?? "Error al procesar el pago"); setLoading(false); return; }
+    if (paymentIntent?.status !== "succeeded") { setError("El pago no se completó. Inténtalo de nuevo."); setLoading(false); return; }
+
+    const res = await fetch("/api/buy-credits/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paymentIntentId }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) { setError(data.error ?? "Error al acreditar los créditos. Contacta con soporte."); setLoading(false); return; }
+
+    router.push(`/dashboard?creditsBought=${pack.credits}`);
+  }
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#000000", display: "flex" }}>
+      {/* Back button */}
+      <button
+        onClick={() => router.push("/dashboard?tab=billing")}
+        style={{ position: "fixed", top: "20px", left: "20px", display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", color: "#666666", cursor: "pointer", fontSize: "13px", zIndex: 10 }}
+      >
+        <ArrowLeft size={14} /> Volver
+      </button>
+
+      {/* Left — form */}
+      <div style={{ flex: "0 0 55%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "60px 48px", minHeight: "100vh" }}>
+        <div style={{ width: "100%", maxWidth: "420px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "32px" }}>
+            <Lock size={14} style={{ color: "#444444" }} />
+            <span style={{ fontSize: "12px", color: "#444444" }}>Pago seguro con Stripe</span>
+          </div>
+          <h1 style={{ fontSize: "22px", fontWeight: 700, color: "#ffffff", marginBottom: "8px" }}>
+            {pack.label}
+          </h1>
+          <p style={{ fontSize: "14px", color: "#555555", marginBottom: "32px" }}>
+            Pago único · Créditos válidos 3 meses
+          </p>
+
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            <div>
+              <label style={{ display: "block", fontSize: "12px", color: "#666666", marginBottom: "8px", fontWeight: 500 }}>Método de pago</label>
+              <PaymentElement options={{ layout: "tabs" }} />
+            </div>
+
+            {error && (
+              <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171", fontSize: "13px" }}>
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading || !stripe}
+              style={{ width: "100%", padding: "14px", borderRadius: "10px", border: "none", background: loading ? "#333333" : "#ffffff", color: "#000000", fontSize: "15px", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", opacity: loading || !stripe ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "opacity 0.15s" }}
+            >
+              {loading ? (
+                <><svg style={{ color: "#888888" }} className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Procesando...</>
+              ) : `Pagar $${pack.price}`}
+            </button>
+
+            <p style={{ fontSize: "11px", color: "#333333", textAlign: "center" }}>
+              Pago único · No se renueva automáticamente
+            </p>
+          </form>
+        </div>
+      </div>
+
+      {/* Right — summary */}
+      <div style={{ flex: "0 0 45%", background: "#0a0a0a", display: "flex", flexDirection: "column", justifyContent: "center", padding: "60px 48px", borderLeft: "1px solid rgba(255,255,255,0.06)", minHeight: "100vh" }}>
+        <div style={{ maxWidth: "340px" }}>
+          <p style={{ fontSize: "11px", fontWeight: 700, color: "#444444", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "24px" }}>Resumen del pedido</p>
+          <div style={{ borderRadius: "14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", padding: "20px", marginBottom: "24px" }}>
+            <p style={{ fontSize: "16px", fontWeight: 700, color: "#ffffff", marginBottom: "4px" }}>{pack.label}</p>
+            <p style={{ fontSize: "13px", color: "#555555", marginBottom: "16px" }}>Créditos extra · pago único</p>
+            <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", marginBottom: "16px" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "13px", color: "#888888" }}>Total</span>
+              <span style={{ fontSize: "22px", fontWeight: 800, color: "#ffffff" }}>${pack.price}</span>
+            </div>
+          </div>
+          {[
+            "Créditos acreditados al instante",
+            "Válidos 3 meses desde la compra",
+            "Compatibles con todos los modelos",
+            "No se renuevan automáticamente",
+          ].map((f) => (
+            <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: "10px", marginBottom: "12px" }}>
+              <FeatureTick />
+              <span style={{ fontSize: "13px", color: "#888888", lineHeight: 1.5 }}>{f}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Data loader — fetches intent then renders form ─────── */
 function CheckoutContent() {
   const params = useParams<{ plan: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const planKey = params.plan as PlanKey;
-  const initialBilling = (searchParams.get("billing") ?? "monthly") as "monthly" | "annual";
+  const rawKey = params.plan;
+  const isCreditPack = rawKey in CREDIT_PACKS;
+  const isPlan = rawKey in PLANS;
 
+  const initialBilling = (searchParams.get("billing") ?? "monthly") as "monthly" | "annual";
   const [billing, setBilling] = useState<"monthly" | "annual">(initialBilling);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!(planKey in PLANS)) {
-      router.replace("/pricing");
-      return;
-    }
+    if (!isCreditPack && !isPlan) { router.replace("/pricing"); return; }
     let cancelled = false;
-    fetch("/api/create-subscription", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ planKey }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (cancelled) return;
-        if (data.clientSecret) {
-          setClientSecret(data.clientSecret);
-          setCustomerId(data.customerId);
-        } else {
-          setFetchError(data.error ?? "No se pudo iniciar el proceso de pago");
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setFetchError("Error de conexión. Inténtalo de nuevo.");
-      });
-    return () => { cancelled = true; };
-  }, [planKey, router]);
 
-  if (!(planKey in PLANS)) return null;
+    if (isCreditPack) {
+      // PaymentIntent flow for credit packs
+      fetch("/api/buy-credits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ packKey: rawKey }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (cancelled) return;
+          if (data.clientSecret) { setClientSecret(data.clientSecret); }
+          else { setFetchError(data.error ?? "No se pudo iniciar el proceso de pago"); }
+        })
+        .catch(() => { if (!cancelled) setFetchError("Error de conexión. Inténtalo de nuevo."); });
+    } else {
+      // SetupIntent flow for subscriptions
+      fetch("/api/create-subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planKey: rawKey }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (cancelled) return;
+          if (data.clientSecret) { setClientSecret(data.clientSecret); setCustomerId(data.customerId); }
+          else { setFetchError(data.error ?? "No se pudo iniciar el proceso de pago"); }
+        })
+        .catch(() => { if (!cancelled) setFetchError("Error de conexión. Inténtalo de nuevo."); });
+    }
+
+    return () => { cancelled = true; };
+  }, [rawKey, isCreditPack, isPlan, router]);
+
+  if (!isCreditPack && !isPlan) return null;
 
   if (fetchError) {
     return (
       <div style={{ minHeight: "100vh", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ maxWidth: "400px", padding: "24px", borderRadius: "12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171", fontSize: "14px", textAlign: "center" }}>
           {fetchError}
-          <button
-            type="button"
-            onClick={() => router.push("/pricing")}
-            style={{ display: "block", margin: "16px auto 0", padding: "8px 20px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.2)", background: "transparent", color: "#ffffff", cursor: "pointer", fontSize: "13px" }}
-          >
-            ← Volver a precios
+          <button type="button" onClick={() => router.push(isCreditPack ? "/dashboard?tab=billing" : "/pricing")} style={{ display: "block", margin: "16px auto 0", padding: "8px 20px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.2)", background: "transparent", color: "#ffffff", cursor: "pointer", fontSize: "13px" }}>
+            ← Volver
           </button>
         </div>
       </div>
     );
   }
 
-  if (!clientSecret || !customerId) {
+  if (!clientSecret || (!isCreditPack && !customerId)) {
     return (
       <div style={{ minHeight: "100vh", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "16px" }}>
         <svg style={{ color: "#444444" }} className="animate-spin h-8 w-8" fill="none" viewBox="0 0 24 24">
@@ -434,17 +579,19 @@ function CheckoutContent() {
     );
   }
 
+  if (isCreditPack) {
+    const pack = CREDIT_PACKS[rawKey];
+    const paymentIntentId = clientSecret.split("_secret_")[0];
+    return (
+      <Elements stripe={stripePromise} options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}>
+        <CreditCheckoutForm pack={pack} packKey={rawKey} paymentIntentId={paymentIntentId} />
+      </Elements>
+    );
+  }
+
   return (
-    <Elements
-      stripe={stripePromise}
-      options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}
-    >
-      <CheckoutForm
-        planKey={planKey}
-        billing={billing}
-        setBilling={setBilling}
-        customerId={customerId}
-      />
+    <Elements stripe={stripePromise} options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}>
+      <CheckoutForm planKey={rawKey as PlanKey} billing={billing} setBilling={setBilling} customerId={customerId!} />
     </Elements>
   );
 }

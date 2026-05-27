@@ -10,9 +10,7 @@ import { calculateCharCost, formatDate } from "@/lib/utils";
 import { UserMenu } from "@/components/UserMenu";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, formatCount } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
-import { PaymentModal, type BillingPlan } from "./PaymentModal";
 import { SupportModal } from "./SupportModal";
-import { CreditPackModal } from "./CreditPackModal";
 import { BillingModal } from "./BillingModal";
 import { useLang } from "./LanguageContext";
 import AudioHistoryList from "@/components/AudioHistoryList";
@@ -2103,11 +2101,9 @@ function BillingTab({
   daysUntilRenewal: number | null;
   onRefresh: () => void;
 }) {
-  const [activePlan, setActivePlan] = useState<BillingPlan | null>(null);
-  const [activePack, setActivePack] = useState<string | null>(null);
-  const [successCredits, setSuccessCredits] = useState<number | null>(null);
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [billingModalOpen, setBillingModalOpen] = useState(false);
+  const router = useRouter();
 
   const badge = PLAN_BADGE[plan] ?? PLAN_BADGE.free;
 
@@ -2261,7 +2257,7 @@ function BillingTab({
                 onClick={() => {
                   if (isCurrent) return;
                   if (isDowngrade || p.key === "free") { openPortal(); return; }
-                  setActivePlan(p);
+                  router.push(`/checkout/${p.key}?billing=${billing}`);
                 }}
                 disabled={isCurrent}
                 style={
@@ -2340,7 +2336,7 @@ function BillingTab({
             <div style={{ display: "flex", alignItems: "center", gap: "14px", flexShrink: 0 }}>
               <span style={{ fontSize: "20px", fontWeight: 800, color: "#fff" }}>${pack.price}</span>
               <button
-                onClick={() => setActivePack(pack.key)}
+                onClick={() => router.push(`/checkout/credits-${pack.key}?type=credits`)}
                 style={{ padding: "8px 18px", borderRadius: "9px", border: "none", cursor: "pointer", background: "#ffffff", color: "#000000", fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap" }}
               >
                 Comprar →
@@ -2350,38 +2346,6 @@ function BillingTab({
         ))}
       </div>
 
-      {successCredits !== null && (
-        <div className="mt-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
-          <Check size={18} className="text-green-400 flex-shrink-0" />
-          <p className="text-green-400 font-medium text-sm">
-            ¡Recarga exitosa! Se han añadido <strong>{successCredits.toLocaleString("es-ES")}</strong> créditos extra a tu cuenta.
-          </p>
-        </div>
-      )}
-
-      {activePlan && (
-        <PaymentModal
-          plan={activePlan}
-          billing={billing}
-          onClose={() => setActivePlan(null)}
-          onSuccess={() => {
-            setActivePlan(null);
-            onRefresh();
-          }}
-        />
-      )}
-
-      {activePack && (
-        <CreditPackModal
-          packKey={activePack}
-          onClose={() => setActivePack(null)}
-          onSuccess={(credits) => {
-            setActivePack(null);
-            setSuccessCredits(credits);
-            onRefresh();
-          }}
-        />
-      )}
     </div>
   );
 }
