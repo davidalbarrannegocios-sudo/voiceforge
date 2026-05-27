@@ -890,20 +890,21 @@ function GenerateTab({
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
                       <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {selectedModel === "speech-1.6" ? "Elite Labs E2 Pro" : selectedModel === "speech-1.5" ? "Elite Labs E1" : "Elite Labs E1 Turbo"}
+                        Elite Labs
                       </span>
-                      {selectedModel === "speech-1.6" && <span className="badge-shimmer-purple" style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", flexShrink: 0 }}>El más nuevo</span>}
-                      {selectedModel === "turbo" && <span style={{ fontSize: "11px", fontWeight: 500, padding: "1px 8px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.5)", background: "transparent", color: "white", flexShrink: 0 }}>Turbo</span>}
+                      {selectedModel === "speech-1.6" && <span className="badge-shimmer-purple" style={{ fontSize: "12px", fontWeight: 600, padding: "2px 8px", borderRadius: "6px", flexShrink: 0 }}>Pro</span>}
+                      {selectedModel === "speech-1.5" && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>Legacy</span>}
+                      {selectedModel === "turbo"      && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "white", flexShrink: 0 }}>Turbo</span>}
                     </div>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", flexShrink: 0, transform: modelDropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
                   </button>
                   {modelDropdownOpen && (
                     <div style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "4px", padding: "4px", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
                       {([
-                        { value: "speech-1.6", label: "Elite Labs E2 Pro",   sub: "Nuestro modelo insignia",   badge: "El más nuevo" as string | null, badgeClass: "badge-shimmer-purple", turbo: false },
-                        { value: "speech-1.5", label: "Elite Labs E1",       sub: "Heredado",                  badge: null,                            badgeClass: "",                     turbo: false },
-                        { value: "turbo",      label: "Elite Labs E1 Turbo", sub: "+12k voces con ElevenLabs", badge: "Turbo" as string | null,        badgeClass: "",                     turbo: true  },
-                      ]).map(({ value, label, sub, badge, badgeClass, turbo }) => (
+                        { value: "speech-1.6", sub: "Nuestro modelo insignia"   },
+                        { value: "speech-1.5", sub: "Heredado"                  },
+                        { value: "turbo",      sub: "+12k voces con ElevenLabs" },
+                      ]).map(({ value, sub }) => (
                         <button
                           key={value}
                           onClick={() => {
@@ -917,11 +918,10 @@ function GenerateTab({
                         >
                           <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <span style={{ fontWeight: 500 }}>{label}</span>
-                              {badge && (turbo
-                                ? <span style={{ fontSize: "11px", fontWeight: 500, padding: "1px 8px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.5)", background: "transparent", color: "white", flexShrink: 0 }}>{badge}</span>
-                                : <span className={badgeClass || undefined} style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", flexShrink: 0 }}>{badge}</span>
-                              )}
+                              <span style={{ fontWeight: 500 }}>Elite Labs</span>
+                              {value === "speech-1.6" && <span className="badge-shimmer-purple" style={{ fontSize: "12px", fontWeight: 600, padding: "2px 8px", borderRadius: "6px", flexShrink: 0 }}>Pro</span>}
+                              {value === "speech-1.5" && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>Legacy</span>}
+                              {value === "turbo"      && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "white", flexShrink: 0 }}>Turbo</span>}
                             </div>
                             <span style={{ fontSize: "11px", marginTop: "2px", color: "#4b4b6a" }}>{sub}</span>
                           </div>
