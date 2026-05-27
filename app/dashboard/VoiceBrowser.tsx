@@ -105,16 +105,73 @@ const LANGS = [
   { code: "ru", label: "Ruso",      fi: "ru" },
   { code: "pt", label: "Portugués", fi: "br" },
 ];
+
+const LANG_MAP: Record<string, { name: string; flag: string }> = {
+  en: { name: "Inglés",      flag: "us" },
+  es: { name: "Español",     flag: "es" },
+  zh: { name: "Chino",       flag: "cn" },
+  de: { name: "Alemán",      flag: "de" },
+  fr: { name: "Francés",     flag: "fr" },
+  pt: { name: "Portugués",   flag: "pt" },
+  it: { name: "Italiano",    flag: "it" },
+  ja: { name: "Japonés",     flag: "jp" },
+  ko: { name: "Coreano",     flag: "kr" },
+  hi: { name: "Hindi",       flag: "in" },
+  ar: { name: "Árabe",       flag: "sa" },
+  ru: { name: "Ruso",        flag: "ru" },
+  pl: { name: "Polaco",      flag: "pl" },
+  tr: { name: "Turco",       flag: "tr" },
+  nl: { name: "Holandés",    flag: "nl" },
+  sv: { name: "Sueco",       flag: "se" },
+  id: { name: "Indonesio",   flag: "id" },
+  tl: { name: "Filipino",    flag: "ph" },
+  ms: { name: "Malayo",      flag: "my" },
+  ro: { name: "Rumano",      flag: "ro" },
+  uk: { name: "Ucraniano",   flag: "ua" },
+  el: { name: "Griego",      flag: "gr" },
+  cs: { name: "Checo",       flag: "cz" },
+  da: { name: "Danés",       flag: "dk" },
+  fi: { name: "Finlandés",   flag: "fi" },
+  hu: { name: "Húngaro",     flag: "hu" },
+  no: { name: "Noruego",     flag: "no" },
+  sk: { name: "Eslovaco",    flag: "sk" },
+  hr: { name: "Croata",      flag: "hr" },
+  bn: { name: "Bengalí",     flag: "bd" },
+  ta: { name: "Tamil",       flag: "in" },
+  vi: { name: "Vietnamita",  flag: "vn" },
+  ca: { name: "Catalán",     flag: "es" },
+};
+
 // language code → country flag code (for fi-flag-icon CSS)
-const LANG_TO_FLAG: Record<string, string> = Object.fromEntries(LANGS.map(({ code, fi }) => [code, fi]));
+const LANG_TO_FLAG: Record<string, string> = {
+  ...Object.fromEntries(LANGS.map(({ code, fi }) => [code, fi])),
+  ...Object.fromEntries(Object.entries(LANG_MAP).map(([code, { flag }]) => [code, flag])),
+};
 function langFlag(code: string): string {
   return LANG_TO_FLAG[code.toLowerCase()] ?? code.toLowerCase();
 }
 
-const ACCENT_TO_FLAG: Record<string, string> = {
-  american: "us", british: "gb", australian: "au", irish: "ie",
-  "south-african": "za", swedish: "se", indian: "in", canadian: "ca",
-  "german-american": "de", nigerian: "ng",
+const ACCENT_FLAGS: Record<string, string> = {
+  american: "us", british: "gb", australian: "au", canadian: "ca",
+  irish: "ie", scottish: "gb-sct",
+  "african american": "us", "us southern": "us",
+  "latin american": "mx", mexican: "mx", peruvian: "pe",
+  spanish: "es", peninsular: "es",
+  french: "fr", parisian: "fr",
+  german: "de", austrian: "at",
+  italian: "it", milanese: "it",
+  portuguese: "pt", brazilian: "br",
+  indian: "in", chinese: "cn",
+  "beijing mandarin": "cn", japanese: "jp",
+  korean: "kr", seoul: "kr",
+  kanto: "jp", kansai: "jp",
+  norwegian: "no", oslo: "no",
+  ukrainian: "ua", russian: "ru",
+  malay: "my", bhojpuri: "in",
+  moravian: "cz", northern: "gb",
+  standard: "us",
+  // legacy entries kept for Fish Audio
+  "south-african": "za", swedish: "se", "german-american": "de", nigerian: "ng",
 };
 
 const RECENT_KEY = "vf_recent_voices";
@@ -1310,11 +1367,18 @@ export function VoiceBrowser({
                     <CustomSelect
                       options={[
                         ...(isExternalSource ? [{ value: "", label: "Todos los idiomas", icon: <Globe size={16} style={{ color: "#6b7280", flexShrink: 0 }} /> }] : []),
-                        ...LANGS.map(({ code, label, fi }) => ({
-                          value: code,
-                          label,
-                          icon: <span className={`fi fi-${fi}`} style={{ width: "20px", height: "15px", display: "inline-block", borderRadius: "2px", flexShrink: 0 }} />,
-                        })),
+                        ...(isExternalSource
+                          ? Object.entries(LANG_MAP).map(([code, { name, flag }]) => ({
+                              value: code,
+                              label: name,
+                              icon: <span className={`fi fi-${flag}`} style={{ width: "20px", height: "15px", display: "inline-block", borderRadius: "2px", flexShrink: 0 }} />,
+                            }))
+                          : LANGS.map(({ code, label, fi }) => ({
+                              value: code,
+                              label,
+                              icon: <span className={`fi fi-${fi}`} style={{ width: "20px", height: "15px", display: "inline-block", borderRadius: "2px", flexShrink: 0 }} />,
+                            }))
+                        ),
                       ]}
                       value={language}
                       onChange={(v) => { setLanguage(v); setAccent("all"); }}
@@ -1342,13 +1406,16 @@ export function VoiceBrowser({
                     <CustomSelect
                       options={[
                         { value: "all", label: "Todos los acentos" },
-                        ...availableAccents.map((a) => ({
-                          value: a,
-                          label: a.charAt(0).toUpperCase() + a.slice(1).replace(/-/g, " "),
-                          icon: ACCENT_TO_FLAG[a]
-                            ? <span className={`fi fi-${ACCENT_TO_FLAG[a]}`} style={{ width: "16px", height: "12px", display: "inline-block", borderRadius: "2px" }} />
-                            : undefined,
-                        })),
+                        ...availableAccents.map((a) => {
+                          const flagCode = ACCENT_FLAGS[a.toLowerCase()];
+                          return {
+                            value: a,
+                            label: a.charAt(0).toUpperCase() + a.slice(1).replace(/-/g, " "),
+                            icon: flagCode
+                              ? <span className={`fi fi-${flagCode}`} style={{ width: "16px", height: "12px", display: "inline-block", borderRadius: "2px" }} />
+                              : undefined,
+                          };
+                        }),
                       ]}
                       value={accent}
                       onChange={(v) => setAccent(v)}
