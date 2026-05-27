@@ -512,6 +512,39 @@ function CompactSlider({
   );
 }
 
+function M1Slider({
+  label, leftLabel, rightLabel, value, onChange, min, max, step, defaultValue,
+}: {
+  label: string; leftLabel: string; rightLabel: string;
+  value: number; onChange: (v: number) => void;
+  min: number; max: number; step: number; defaultValue: number;
+}) {
+  const pct = ((value - min) / (max - min)) * 100;
+  const decimals = step < 0.1 ? 2 : step < 1 ? 2 : 0;
+  const isDefault = value === defaultValue;
+  return (
+    <div style={{ background: "#12121a", borderRadius: "10px", padding: "8px 14px", display: "flex", flexDirection: "column", gap: "5px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "12px", fontWeight: 500, color: "#8888a8" }}>{label}</span>
+        <span style={{ fontSize: "11px", fontFamily: "monospace", color: isDefault ? "#e5e7eb" : "#93c5fd" }}>{value.toFixed(decimals)}</span>
+      </div>
+      <div style={{ position: "relative", height: "4px", display: "flex", alignItems: "center" }}>
+        <div style={{ width: "100%", height: "100%", borderRadius: "9999px", background: "#2a2a3e" }} />
+        <div style={{ position: "absolute", left: 0, width: `${pct}%`, height: "100%", borderRadius: "9999px", background: "linear-gradient(90deg, #3b82f6, #2563eb)" }} />
+        <input
+          type="range" min={min} max={max} step={step} value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
+          style={{ position: "absolute", inset: 0, width: "100%", opacity: 0, cursor: "pointer", height: "100%", margin: 0 }}
+        />
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <span style={{ fontSize: "10px", color: "#555570" }}>{leftLabel}</span>
+        <span style={{ fontSize: "10px", color: "#555570" }}>{rightLabel}</span>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Generate Tab ────────────────────────────────────────── */
 function GenerateTab({
   voices,
@@ -543,6 +576,16 @@ function GenerateTab({
   const [elitelabs2Down, setElitelabs2Down] = useState(false);
   const modelDropdownRef = useRef<HTMLDivElement>(null);
   const engineDropdownRef = useRef<HTMLDivElement>(null);
+  // M1 (ElevenLabs) controls
+  const [m1Speed, setM1Speed] = useState(1.0);
+  const [m1Stability, setM1Stability] = useState(0.5);
+  const [m1Similarity, setM1Similarity] = useState(0.75);
+  const [m1StyleExag, setM1StyleExag] = useState(0);
+  const [m1LangOverride, setM1LangOverride] = useState(false);
+  const [m1OutputFormat, setM1OutputFormat] = useState("mp3_44100_128");
+  const [m1SpeakerBoost, setM1SpeakerBoost] = useState(true);
+  const [m1OutDropOpen, setM1OutDropOpen] = useState(false);
+  const m1OutDropRef = useRef<HTMLDivElement>(null);
   const [previewing, setPreviewing] = useState<"idle" | "loading" | "playing">("idle");
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const [rightTab, setRightTab] = useState<"ajustes" | "historial">("ajustes");
@@ -586,6 +629,45 @@ function GenerateTab({
   }, [engineDropdownOpen]);
 
   useEffect(() => {
+    if (!m1OutDropOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (m1OutDropRef.current && !m1OutDropRef.current.contains(e.target as Node)) {
+        setM1OutDropOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [m1OutDropOpen]);
+
+  // Load M1 settings from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("elitelabs_m1_settings");
+      if (saved) {
+        const s = JSON.parse(saved);
+        if (typeof s.speed === "number") setM1Speed(s.speed);
+        if (typeof s.stability === "number") setM1Stability(s.stability);
+        if (typeof s.similarity === "number") setM1Similarity(s.similarity);
+        if (typeof s.styleExag === "number") setM1StyleExag(s.styleExag);
+        if (typeof s.langOverride === "boolean") setM1LangOverride(s.langOverride);
+        if (typeof s.outputFormat === "string") setM1OutputFormat(s.outputFormat);
+        if (typeof s.speakerBoost === "boolean") setM1SpeakerBoost(s.speakerBoost);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  // Save M1 settings to localStorage on change
+  useEffect(() => {
+    try {
+      localStorage.setItem("elitelabs_m1_settings", JSON.stringify({
+        speed: m1Speed, stability: m1Stability, similarity: m1Similarity,
+        styleExag: m1StyleExag, langOverride: m1LangOverride,
+        outputFormat: m1OutputFormat, speakerBoost: m1SpeakerBoost,
+      }));
+    } catch { /* ignore */ }
+  }, [m1Speed, m1Stability, m1Similarity, m1StyleExag, m1LangOverride, m1OutputFormat, m1SpeakerBoost]);
+
+  useEffect(() => {
     try {
       const saved = localStorage.getItem("vf_tts_engine");
       if (saved === "elitelabs2") setTtsEngine("elitelabs2");
@@ -625,6 +707,16 @@ function GenerateTab({
           voice_id: selectedVoice?.referenceId ?? undefined,
           voiceName: selectedVoice?.name ?? "Voz por defecto",
           provider: "elevenlabs",
+          model_id: "eleven_multilingual_v2",
+          voice_settings: {
+            stability: m1Stability,
+            similarity_boost: m1Similarity,
+            style: m1StyleExag,
+            use_speaker_boost: m1SpeakerBoost,
+          },
+          speed: m1Speed,
+          language_code: m1LangOverride ? "auto" : undefined,
+          output_format: m1OutputFormat,
         };
       } else {
         endpoint = "/api/generate";
@@ -972,6 +1064,81 @@ function GenerateTab({
                 {(speed !== 1 || volume !== 1 || (selectedModel === "speech-1.5" && (temperature !== 0.9 || topP !== 0.9))) && (
                   <button onClick={() => { setSpeed(1); setVolume(1); setTemperature(0.9); setTopP(0.9); }} style={{ marginTop: "10px", fontSize: "11px", color: "#6b7280", background: "none", border: "none", cursor: "pointer" }}>Restablecer valores</button>
                 )}
+              </div>
+              )}
+
+              {/* CONTROLES DE AUDIO — M1 (ElevenLabs) */}
+              {ttsEngine === "elitelabs2" && (
+              <div>
+                <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", marginBottom: "8px" }}>Controles de Audio</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <M1Slider label="Speed"              leftLabel="Slower"        rightLabel="Faster"       value={m1Speed}     onChange={setM1Speed}     min={0.7}  max={1.2}  step={0.01} defaultValue={1.0} />
+                  <M1Slider label="Stability"          leftLabel="More variable" rightLabel="More stable"  value={m1Stability} onChange={setM1Stability} min={0}    max={1}    step={0.01} defaultValue={0.5} />
+                  <M1Slider label="Similarity"         leftLabel="Low"           rightLabel="High"         value={m1Similarity} onChange={setM1Similarity} min={0} max={1}    step={0.01} defaultValue={0.75} />
+                  <M1Slider label="Style Exaggeration" leftLabel="None"          rightLabel="Exaggerated"  value={m1StyleExag} onChange={setM1StyleExag} min={0}    max={1}    step={0.01} defaultValue={0} />
+
+                  {/* Language Override toggle */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#12121a", borderRadius: "10px", height: "40px" }}>
+                    <span style={{ fontSize: "12px", fontWeight: 500, color: "#8888a8" }}>Language Override</span>
+                    <div style={{ position: "relative", display: "flex", background: "#0d0f14", borderRadius: "6px", padding: "2px" }}>
+                      <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#2a2a3e", borderRadius: "4px", transform: m1LangOverride ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
+                      <button onClick={() => setM1LangOverride(false)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: !m1LangOverride ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>Off</button>
+                      <button onClick={() => setM1LangOverride(true)}  style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color:  m1LangOverride ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>On</button>
+                    </div>
+                  </div>
+
+                  {/* Output Format dropdown */}
+                  <div style={{ position: "relative" }} ref={m1OutDropRef}>
+                    <button
+                      onClick={() => setM1OutDropOpen((o) => !o)}
+                      style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", height: "40px", fontSize: "12px", background: "#12121a", border: "none", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
+                    >
+                      <span style={{ fontWeight: 500, color: "#8888a8" }}>Output Format</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ fontSize: "11px", color: m1OutputFormat !== "mp3_44100_128" ? "#93c5fd" : "#6b7280" }}>
+                          {m1OutputFormat === "mp3_44100_128" ? "MP3 44.1kHz 128k" : m1OutputFormat === "mp3_44100_192" ? "MP3 44.1kHz 192k" : m1OutputFormat === "pcm_16000" ? "PCM 16kHz" : m1OutputFormat === "pcm_22050" ? "PCM 22kHz" : "PCM 44.1kHz"}
+                        </span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", transform: m1OutDropOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
+                      </div>
+                    </button>
+                    {m1OutDropOpen && (
+                      <div style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "2px", padding: "4px", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
+                        {([
+                          { value: "mp3_44100_128", label: "MP3 44.1 kHz (128kbps)" },
+                          { value: "mp3_44100_192", label: "MP3 44.1 kHz (192kbps)" },
+                          { value: "pcm_16000",     label: "PCM 16kHz" },
+                          { value: "pcm_22050",     label: "PCM 22kHz" },
+                          { value: "pcm_44100",     label: "PCM 44.1kHz" },
+                        ] as const).map(({ value, label }) => (
+                          <button key={value} onClick={() => { setM1OutputFormat(value); setM1OutDropOpen(false); }}
+                            style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", fontSize: "12px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: m1OutputFormat === value ? "#e2e2f0" : "#6b7280", cursor: "pointer" }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                          >
+                            {label}
+                            {m1OutputFormat === value && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Speaker Boost toggle + Reset */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#12121a", borderRadius: "10px", height: "40px" }}>
+                    <span style={{ fontSize: "12px", fontWeight: 500, color: "#8888a8" }}>Speaker Boost</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <div style={{ position: "relative", display: "flex", background: "#0d0f14", borderRadius: "6px", padding: "2px" }}>
+                        <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#2a2a3e", borderRadius: "4px", transform: m1SpeakerBoost ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
+                        <button onClick={() => setM1SpeakerBoost(false)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: !m1SpeakerBoost ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>Off</button>
+                        <button onClick={() => setM1SpeakerBoost(true)}  style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color:  m1SpeakerBoost ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>On</button>
+                      </div>
+                      <button
+                        onClick={() => { setM1Speed(1.0); setM1Stability(0.5); setM1Similarity(0.75); setM1StyleExag(0); setM1LangOverride(false); setM1OutputFormat("mp3_44100_128"); setM1SpeakerBoost(true); }}
+                        style={{ fontSize: "11px", color: "#6b7280", background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
+                      >Reset values</button>
+                    </div>
+                  </div>
+                </div>
               </div>
               )}
 
