@@ -21,7 +21,7 @@
     "flag-icons": "^7.5.0",
     "lucide-react": "^1.16.0",
     "next": "^15.3.0",
-"prisma": "^5.22.0",
+    "prisma": "^5.22.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "resend": "^6.12.3",
@@ -34,6 +34,7 @@
     "@types/react-dom": "^19.0.0",
     "eslint": "^9",
     "eslint-config-next": "^15.3.0",
+    "lamejs": "^1.2.1",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"

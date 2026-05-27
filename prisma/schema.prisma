@@ -246,13 +246,3 @@ model PayoutRequest {
   updatedAt   DateTime @updatedAt
 }
 
-model CloneJob {
-  id        String   @id @default(cuid())
-  userId    String
-  status    String   @default("pending")
-  voiceId   String?
-  voiceName String
-  error     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
