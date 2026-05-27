@@ -6,12 +6,14 @@ import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 
 interface Generation {
   id: string;
+  status: string;
   text: string;
   audioUrl: string | null;
   creditsUsed: number;
-  durationSeconds: number;
+  durationSeconds: number | null;
   voiceId: string;
   voiceName: string | null;
+  error: string | null;
   createdAt: string;
   expiresAt: string | null;
 }
@@ -222,7 +224,10 @@ export default function AudioHistoryList({
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                   {group.items.map((gen) => {
                     const expiry = formatExpiry(gen.expiresAt ?? null);
-                    const isExpired = expiry?.expired || !gen.audioUrl;
+                    const isProcessing = gen.status === "processing";
+                    const isStale = isProcessing && (Date.now() - new Date(gen.createdAt).getTime()) > 10 * 60 * 1000;
+                    const isError = gen.status === "error" || isStale;
+                    const isExpired = !isProcessing && !isError && (expiry?.expired || !gen.audioUrl);
                     const isRemoving = removingIds.has(gen.id);
                     const isDeleting = deletingIds.has(gen.id);
                     const isConfirming = confirmId === gen.id;
@@ -248,7 +253,19 @@ export default function AudioHistoryList({
 
                         {/* Row 3: action buttons */}
                         <div style={{ display: "flex", alignItems: "center", gap: "4px", paddingLeft: "32px" }}>
-                          {isExpired ? (
+                          {isProcessing && !isStale ? (
+                            <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "10px", color: "#6b7280" }}>
+                              <svg style={{ color: "#6b7280", flexShrink: 0, animation: "spin 1s linear infinite" }} width="10" height="10" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25" />
+                                <path fill="currentColor" fillOpacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                              </svg>
+                              Generando...
+                            </span>
+                          ) : isError ? (
+                            <span style={{ fontSize: "10px", color: "#f87171" }}>
+                              {isStale ? "Tiempo agotado" : "Error al generar"}
+                            </span>
+                          ) : isExpired ? (
                             <span style={{ fontSize: "10px", color: "#4b4b6a" }}>Expirado</span>
                           ) : (
                             <>
@@ -362,7 +379,10 @@ export default function AudioHistoryList({
           <div className="space-y-3">
             {generations.map((gen) => {
               const expiry = formatExpiry(gen.expiresAt ?? null);
-              const isExpired = expiry?.expired || !gen.audioUrl;
+              const isProcessing = gen.status === "processing";
+              const isStale = isProcessing && (Date.now() - new Date(gen.createdAt).getTime()) > 10 * 60 * 1000;
+              const isError = gen.status === "error" || isStale;
+              const isExpired = !isProcessing && !isError && (expiry?.expired || !gen.audioUrl);
               const isRemoving = removingIds.has(gen.id);
               const isDeleting = deletingIds.has(gen.id);
               const isConfirming = confirmId === gen.id;
@@ -378,13 +398,24 @@ export default function AudioHistoryList({
                         <span>{new Date(gen.createdAt).toLocaleDateString("es-ES")}</span>
                         <span>·</span>
                         <span>{gen.creditsUsed.toLocaleString("es-ES")} chars</span>
-                        <span>·</span>
-                        <span>{gen.durationSeconds.toFixed(1)}s</span>
+                        {gen.durationSeconds != null && <><span>·</span><span>{gen.durationSeconds.toFixed(1)}s</span></>}
                         {expiry && <><span>·</span><span style={{ color: expiry.expired ? "#6b7280" : expiry.label.includes("h") ? "#f59e0b" : "#555555" }}>{expiry.label}</span></>}
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                      {isExpired ? (
+                      {isProcessing && !isStale ? (
+                        <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs" style={{ background: "#111111", color: "#6b7280", border: "1px solid #222222" }}>
+                          <svg style={{ animation: "spin 1s linear infinite", flexShrink: 0 }} width="10" height="10" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25" />
+                            <path fill="currentColor" fillOpacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          Generando...
+                        </span>
+                      ) : isError ? (
+                        <span className="px-2 py-1 rounded-lg text-xs font-medium" style={{ background: "rgba(239,68,68,0.08)", color: "#f87171", border: "1px solid rgba(239,68,68,0.2)" }}>
+                          {isStale ? "Tiempo agotado" : "Error"}
+                        </span>
+                      ) : isExpired ? (
                         <span className="px-2 py-1 rounded-lg text-xs font-medium" style={{ background: "#111111", color: "#555555", border: "1px solid #222222" }}>Audio expirado</span>
                       ) : (
                         <button onClick={() => handlePlayToggle(gen)} className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium" style={{ background: playingId === gen.id ? "rgba(255,255,255,0.12)" : "#1a1a1a", color: playingId === gen.id ? "#ffffff" : "#888888", border: `1px solid ${playingId === gen.id ? "rgba(255,255,255,0.4)" : "#222222"}`, transition: "all 0.15s" }}>
