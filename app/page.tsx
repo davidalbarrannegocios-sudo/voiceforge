@@ -624,7 +624,7 @@ export default function LandingPage() {
                     <p style={{ color: "#e5e7eb", fontSize: "15px", fontWeight: 600, marginBottom: "6px" }}>
                       Función exclusiva para miembros
                     </p>
-                    <p style={{ color: "#555570", fontSize: "13px", marginBottom: "20px", maxWidth: "300px" }}>
+                    <p style={{ color: "#666666", fontSize: "13px", marginBottom: "20px", maxWidth: "300px" }}>
                       Crea una cuenta gratis para acceder a esta función
                     </p>
                     <Link
@@ -664,7 +664,7 @@ export default function LandingPage() {
                                 <VoiceAvatarGenerative seed={voice._id} size={30} />
                                 <span
                                   className="truncate font-medium"
-                                  style={{ fontSize: "13px", color: active ? "#e5e7eb" : "#555570" }}
+                                  style={{ fontSize: "13px", color: active ? "#e5e7eb" : "#666666" }}
                                 >
                                   {voice.title}
                                 </span>
@@ -677,7 +677,7 @@ export default function LandingPage() {
                       <Link
                         href="/dashboard"
                         className="transition-colors hover:text-gray-300"
-                        style={{ fontSize: "12px", color: "#555570" }}
+                        style={{ fontSize: "12px", color: "#666666" }}
                       >
                         2.000.000+ voces <span style={{ color: "#aaaaaa" }}>↗</span>
                       </Link>
@@ -690,7 +690,7 @@ export default function LandingPage() {
                       value={demoText}
                       onChange={(e) => setDemoText(e.target.value.slice(0, 30000))}
                       placeholder="Introduce tu propio texto"
-                      className="w-full outline-none resize-none leading-relaxed placeholder-[#555570]"
+                      className="w-full outline-none resize-none leading-relaxed placeholder-[#666666]"
                       style={{
                         flex: 1,
                         padding: "20px 22px",
@@ -711,7 +711,7 @@ export default function LandingPage() {
                       className="flex items-center gap-3 flex-shrink-0"
                       style={{ padding: "12px 22px", borderTop: "1px solid #1a1a1a" }}
                     >
-                      <span className="flex-1" style={{ fontSize: "12px", color: "#555570" }}>
+                      <span className="flex-1" style={{ fontSize: "12px", color: "#666666" }}>
                         {demoText.length}/30000 characters
                       </span>
                       <button
@@ -1094,14 +1094,14 @@ export default function LandingPage() {
                 />
                 <span className="font-bold text-white">Elite Labs</span>
               </Link>
-              <p className="text-sm leading-relaxed" style={{ color: "#555570" }}>
+              <p className="text-sm leading-relaxed" style={{ color: "#666666" }}>
                 Síntesis de voz con IA de calidad profesional.
               </p>
             </div>
 
             {/* Producto */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>Producto</p>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#666666" }}>Producto</p>
               <ul className="space-y-3">
                 {[
                   { label: "Texto a voz", href: "/dashboard" },
@@ -1111,7 +1111,7 @@ export default function LandingPage() {
                   { label: "Precios", href: "/pricing" },
                 ].map(({ label, href }) => (
                   <li key={label}>
-                    <Link href={href} className="text-sm transition-colors hover:text-gray-200" style={{ color: "#888888" }}>
+                    <Link href={href} className="text-sm transition-colors hover:text-white" style={{ color: "#888888" }}>
                       {label}
                     </Link>
                   </li>
@@ -1121,7 +1121,7 @@ export default function LandingPage() {
 
             {/* Empresa */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>Empresa</p>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#666666" }}>Empresa</p>
               <ul className="space-y-3">
                 {[
                   { label: "Sobre nosotros", href: "/about" },
@@ -1129,7 +1129,7 @@ export default function LandingPage() {
                   { label: "Soporte", href: "/support" },
                 ].map(({ label, href }) => (
                   <li key={label}>
-                    <Link href={href} className="text-sm transition-colors hover:text-gray-200" style={{ color: "#888888" }}>
+                    <Link href={href} className="text-sm transition-colors hover:text-white" style={{ color: "#888888" }}>
                       {label}
                     </Link>
                   </li>
@@ -1139,14 +1139,14 @@ export default function LandingPage() {
 
             {/* Legal */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#555570" }}>Legal</p>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#666666" }}>Legal</p>
               <ul className="space-y-3">
                 {[
                   { label: "Política de privacidad", href: "/privacy" },
                   { label: "Términos de uso", href: "/terms" },
                 ].map(({ label, href }) => (
                   <li key={label}>
-                    <Link href={href} className="text-sm transition-colors hover:text-gray-200" style={{ color: "#888888" }}>
+                    <Link href={href} className="text-sm transition-colors hover:text-white" style={{ color: "#888888" }}>
                       {label}
                     </Link>
                   </li>
@@ -1156,11 +1156,11 @@ export default function LandingPage() {
           </div>
 
           {/* Divider */}
-          <div className="border-t mb-6" style={{ borderColor: "#1a1a1a" }} />
+          <div className="border-t mb-6" style={{ borderColor: "rgba(255,255,255,0.06)" }} />
 
           {/* Bottom bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs order-last sm:order-first" style={{ color: "#555570" }}>
+            <p className="text-xs order-last sm:order-first" style={{ color: "#666666" }}>
               © 2026 Elite Tube LLC. All rights reserved.
             </p>
 
@@ -1171,7 +1171,7 @@ export default function LandingPage() {
                 { label: "Contacto", href: "/support" },
               ].map(({ label, href }, i, arr) => (
                 <span key={label} className="flex items-center gap-4">
-                  <a href={href} className="text-xs transition-colors hover:text-gray-300" style={{ color: "#555570" }}>
+                  <a href={href} className="text-xs transition-colors hover:text-white/70" style={{ color: "#666666" }}>
                     {label}
                   </a>
                   {i < arr.length - 1 && <span style={{ color: "#222222" }}>|</span>}
@@ -1185,7 +1185,7 @@ export default function LandingPage() {
                 href="#"
                 aria-label="X (Twitter)"
                 className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
-                style={{ color: "#555570" }}
+                style={{ color: "#666666" }}
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L2.013 2.25H8.08l4.253 5.623L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" />
@@ -1196,7 +1196,7 @@ export default function LandingPage() {
                 href="#"
                 aria-label="YouTube"
                 className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
-                style={{ color: "#555570" }}
+                style={{ color: "#666666" }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
