@@ -2404,37 +2404,55 @@ function BillingTab({
       </div>
 
       {/* ── Extra credits section ── */}
-      <div id="creditos-extra" style={{ marginTop: "44px", marginBottom: "16px" }}>
-        <p style={{ fontSize: "16px", fontWeight: 700, color: "#e5e7eb", marginBottom: "3px" }}>Créditos extra</p>
-        <p style={{ fontSize: "13px", color: "#444444" }}>Compra créditos adicionales a tu plan. Válidos 3 meses, pago único.</p>
+      <div id="creditos-extra" style={{ marginTop: "44px", marginBottom: "20px" }}>
+        <p style={{ fontSize: "16px", fontWeight: 700, color: "#e5e7eb", marginBottom: "4px" }}>Créditos extra</p>
+        <p style={{ fontSize: "13px", color: "#444444" }}>Compra caracteres adicionales · Válidos 3 meses · Pago único</p>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 w-full">
+        {/* Empty first column — aligns the 4 packs under plans 2–5 */}
+        <div className="hidden lg:block" />
         {[
-          { key: "100k", credits: 100_000,   price: 5,  label: "100.000 créditos" },
-          { key: "300k", credits: 300_000,   price: 12, label: "300.000 créditos" },
-          { key: "600k", credits: 600_000,   price: 19, label: "600.000 créditos" },
-          { key: "1m",   credits: 1_000_000, price: 30, label: "1.000.000 créditos" },
+          { key: "100k", credits: 100_000,   price: 5,  label: "100.000" },
+          { key: "300k", credits: 300_000,   price: 12, label: "300.000" },
+          { key: "600k", credits: 600_000,   price: 19, label: "600.000" },
+          { key: "1m",   credits: 1_000_000, price: 30, label: "1.000.000" },
         ].map((pack) => (
           <div
             key={pack.key}
-            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderRadius: "12px", border: "1px solid #1a1a1a", background: "#111111" }}
+            style={{
+              background: "#0a0a0a",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: "12px",
+              padding: "24px",
+              display: "flex",
+              flexDirection: "column",
+            }}
           >
-            <div>
-              <p style={{ fontSize: "14px", fontWeight: 700, color: "#e5e7eb" }}>{pack.label}</p>
-              <p style={{ fontSize: "11px", color: "#444444", marginTop: "2px" }}>
-                {costPer10k(pack.price, pack.credits)} · Válidos 3 meses
-              </p>
+            {/* Credits amount */}
+            <div style={{ marginBottom: "14px" }}>
+              <p style={{ fontSize: "26px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>{pack.label}</p>
+              <p style={{ fontSize: "12px", color: "#555555", marginTop: "4px" }}>créditos</p>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "14px", flexShrink: 0 }}>
-              <span style={{ fontSize: "20px", fontWeight: 800, color: "#fff" }}>${pack.price}</span>
-              <button
-                onClick={() => router.push(`/checkout/credits-${pack.key}?type=credits`)}
-                style={{ padding: "8px 18px", borderRadius: "9px", border: "none", cursor: "pointer", background: "#ffffff", color: "#000000", fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap" }}
-              >
-                Comprar →
-              </button>
+
+            {/* Price */}
+            <div style={{ marginBottom: "10px" }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
+                <span style={{ fontSize: "32px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>${pack.price}</span>
+              </div>
+              <p style={{ fontSize: "11px", color: "#444444", marginTop: "4px" }}>{costPer10k(pack.price, pack.credits)} chars</p>
             </div>
+
+            {/* Validity */}
+            <p style={{ fontSize: "11px", color: "#444444", flex: 1, marginBottom: "16px" }}>Válidos 3 meses</p>
+
+            {/* CTA */}
+            <button
+              onClick={() => router.push(`/checkout/credits-${pack.key}?type=credits`)}
+              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #333333", cursor: "pointer", background: "#1a1a1a", color: "#e5e7eb", fontSize: "13px", fontWeight: 600 }}
+            >
+              Comprar →
+            </button>
           </div>
         ))}
       </div>
