@@ -1315,27 +1315,32 @@ export function VoiceBrowser({
     audioRef.current?.pause();
     setPreviewingId(null);
 
-    // Fast path: try pre-generated sample URL, then CDN shortcut
-    const fastUrl = sampleUrl ?? `https://cdn.fish.audio/voices/${id}.mp3`;
-    const playedFast = await new Promise<boolean>((resolve) => {
-      const audio = new Audio(fastUrl);
-      let done = false;
-      const finish = (ok: boolean) => { if (!done) { done = true; resolve(ok); } };
-      audio.onerror = () => finish(false);
-      audio.onplaying = () => {
-        audio.onended = () => setPreviewingId(null);
-        audioRef.current = audio;
-        setPreviewingId(id);
-        finish(true);
-      };
-      audio.play().catch(() => finish(false));
-      // Abort fast path after 3s if it hasn't started
-      setTimeout(() => { audio.src = ""; finish(false); }, 3000);
-    });
+    // Fast path: try each URL in order — sampleUrl may be stale (localStorage), so always try CDN too
+    const tryPlay = (url: string) =>
+      new Promise<boolean>((resolve) => {
+        const audio = new Audio(url);
+        let done = false;
+        const finish = (ok: boolean) => { if (!done) { done = true; resolve(ok); } };
+        audio.onerror = () => finish(false);
+        audio.onplaying = () => {
+          audio.onended = () => setPreviewingId(null);
+          audioRef.current = audio;
+          setPreviewingId(id);
+          finish(true);
+        };
+        audio.play().catch(() => finish(false));
+        setTimeout(() => { audio.src = ""; finish(false); }, 3000);
+      });
 
-    if (playedFast) return;
+    const fastUrls = [
+      ...(sampleUrl ? [sampleUrl] : []),
+      `https://cdn.fish.audio/voices/${id}.mp3`,
+    ];
+    for (const url of fastUrls) {
+      if (await tryPlay(url)) return;
+    }
 
-    // Slow path: generate on-demand
+    // Slow path: generate on-demand via TTS
     setPreviewLoadingId(id);
     try {
       const res = await fetch(`/api/voice-preview/${id}`);
