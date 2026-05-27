@@ -874,6 +874,42 @@ function GenerateTab({
               </div>
 
 
+              {/* M1 BANNER — ElevenLabs promo card */}
+              {ttsEngine === "elitelabs2" && (
+                <div className="el-banner" style={{ position: "relative", borderRadius: "12px", overflow: "hidden" }}>
+                  {/* animated pastel gradient background */}
+                  <div className="el-banner-grad" style={{ position: "absolute", inset: 0 }} />
+                  {/* clockwise border trace: top → right → bottom (rtl) → left (btt) */}
+                  <div className="el-trace-top" />
+                  <div className="el-trace-right" />
+                  <div className="el-trace-bottom" />
+                  <div className="el-trace-left" />
+                  {/* content fades in after trace completes */}
+                  <div className="el-banner-content" style={{ position: "relative", padding: "10px 12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {/* row 1: badge + title + arrow */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 7px", borderRadius: "20px", background: "rgba(0,0,0,0.55)", color: "#fff", letterSpacing: "0.02em", flexShrink: 0 }}>V2</span>
+                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#0a0a0a" }}>Eleven Multilingual v2</span>
+                      </div>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </div>
+                    {/* row 2: description + CTA button */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                      <span style={{ fontSize: "11px", color: "rgba(0,0,0,0.5)", fontStyle: "italic" }}>The most expressive Text to Speech</span>
+                      <a
+                        href="https://elevenlabs.io"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: "10px", fontWeight: 700, padding: "4px 10px", borderRadius: "6px", background: "#fff", color: "#0a0a0a", textDecoration: "none", whiteSpace: "nowrap", boxShadow: "0 1px 4px rgba(0,0,0,0.15)", flexShrink: 0 }}
+                      >
+                        Try Eleven v3
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* MODELO */}
               {ttsEngine === "elitelabs" && <div>
                 <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", marginBottom: "8px" }}>Modelo</p>
