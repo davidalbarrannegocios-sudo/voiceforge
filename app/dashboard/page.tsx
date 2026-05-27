@@ -314,7 +314,7 @@ function Sidebar({
             {!(collapsed && desktop) && (
               <>
                 <span style={{ position: "relative", zIndex: 1, fontSize: "13px", fontWeight: 600, color: "#cccccc", flex: 1, textAlign: "left" }}>Mejorar plan</span>
-                <svg style={{ position: "relative", zIndex: 1 }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555570" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg style={{ position: "relative", zIndex: 1 }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666666" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </>
@@ -538,8 +538,8 @@ function M1Slider({
         />
       </div>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <span style={{ fontSize: "10px", color: "#555570" }}>{leftLabel}</span>
-        <span style={{ fontSize: "10px", color: "#555570" }}>{rightLabel}</span>
+        <span style={{ fontSize: "10px", color: "#666666" }}>{leftLabel}</span>
+        <span style={{ fontSize: "10px", color: "#666666" }}>{rightLabel}</span>
       </div>
     </div>
   );
@@ -1958,7 +1958,7 @@ function HistoryTab({ plan }: { plan: string }) {
                                 onClick={(e) => e.stopPropagation()}
                                 style={{
                                   position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: 50,
-                                  background: "#12121e", border: "1px solid #1a1a1a", borderRadius: 8,
+                                  background: "#111111", border: "1px solid #1a1a1a", borderRadius: 8,
                                   padding: 4, minWidth: 120, boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
                                 }}
                               >
@@ -2287,7 +2287,7 @@ function BillingTab({
               <div style={{ height: "1px", background: "#1a1a1a", marginBottom: "12px" }} />
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "7px" }}>
                 {p.features.map((f) => (
-                  <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "6px", fontSize: "11px", color: "#6b6b88", lineHeight: 1.4 }}>
+                  <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "6px", fontSize: "11px", color: "#666666", lineHeight: 1.4 }}>
                     <Check size={11} style={{ color: p.key === "enterprise" ? "#34d399" : "#ffffff", flexShrink: 0, marginTop: "1px" }} />
                     {f}
                   </li>
@@ -2300,7 +2300,7 @@ function BillingTab({
                     <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", fontWeight: 700, color: "#fff" }}>
                       <Users size={12} style={{ color: "#fff", flexShrink: 0 }} /> Seats
                     </span>
-                    <span style={{ fontSize: "10px", color: "#555570", textDecoration: "line-through" }}>$5/seat/mes</span>
+                    <span style={{ fontSize: "10px", color: "#666666", textDecoration: "line-through" }}>$5/seat/mes</span>
                   </div>
                   <div style={{ textAlign: "center" }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.35)", borderRadius: "6px", padding: "3px 8px", fontSize: "10px", fontWeight: 700, color: "#4ade80" }}>
@@ -2637,7 +2637,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
               )}
               <h3 className="text-base font-semibold text-white mb-1">Subir audio fuente</h3>
               <p className="text-sm mb-1" style={{ color: "#9ca3af" }}>Sube el audio que quieres traducir</p>
-              <p className="text-xs mb-6" style={{ color: "#555570" }}>MP3, WAV, M4A · MAX 50MB</p>
+              <p className="text-xs mb-6" style={{ color: "#666666" }}>MP3, WAV, M4A · MAX 50MB</p>
 
               {file ? (
                 <div className="flex items-center gap-3 rounded-xl px-4 py-3 mx-auto max-w-sm" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
@@ -2757,9 +2757,9 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                     className="w-full flex flex-col items-center gap-2 px-4 py-6 rounded-xl cursor-pointer transition-all hover:border-white/15"
                     style={{ background: "#111111", border: "1px dashed #222222" }}
                   >
-                    <Mic2 size={20} style={{ color: "#555570" }} />
+                    <Mic2 size={20} style={{ color: "#666666" }} />
                     <p className="text-sm" style={{ color: "#888888" }}>Sube un audio de referencia de voz</p>
-                    <p className="text-xs" style={{ color: "#555570" }}>MP3, WAV, M4A</p>
+                    <p className="text-xs" style={{ color: "#666666" }}>MP3, WAV, M4A</p>
                   </div>
                 )}
                 <input ref={refInputRef} type="file" className="hidden" accept=".mp3,.wav,.m4a,audio/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) setReferenceFile(f); e.target.value = ""; }} />
@@ -2818,11 +2818,11 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
               <AudioPlayer src={result.audioUrl} filename={`traduccion-${result.targetLanguageName.toLowerCase()}.mp3`} />
               <div className="grid gap-3">
                 <div className="rounded-xl p-4" style={{ background: "#111111", border: "1px solid #222222" }}>
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555570" }}>Transcripción (español)</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#666666" }}>Transcripción (español)</p>
                   <p className="text-sm leading-relaxed" style={{ color: "#9ca3af" }}>{result.transcribedText}</p>
                 </div>
                 <div className="rounded-xl p-4" style={{ background: "#111111", border: "1px solid #222222" }}>
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555570" }}>Traducción ({result.targetLanguageName})</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#666666" }}>Traducción ({result.targetLanguageName})</p>
                   <p className="text-sm leading-relaxed" style={{ color: "#9ca3af" }}>{result.translatedText}</p>
                 </div>
               </div>
@@ -2870,10 +2870,10 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
               <table className="w-full" style={{ borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ background: "#111111", borderBottom: "1px solid #222222" }}>
-                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>Archivo</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>Idioma destino</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>Estado</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>Fecha</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>Archivo</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>Idioma destino</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>Estado</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>Fecha</th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
@@ -2887,7 +2887,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                       >
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <Globe size={13} style={{ color: "#555570", flexShrink: 0 }} />
+                            <Globe size={13} style={{ color: "#666666", flexShrink: 0 }} />
                             <span className="text-sm text-white truncate" style={{ maxWidth: 160 }}>{task.fileName}</span>
                           </div>
                         </td>
@@ -3089,7 +3089,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
   const thStyle: React.CSSProperties = {
     padding: "10px 16px", fontSize: 11, fontWeight: 600,
     textTransform: "uppercase", letterSpacing: "0.06em",
-    color: "#555570", textAlign: "left", whiteSpace: "nowrap",
+    color: "#666666", textAlign: "left", whiteSpace: "nowrap",
   };
   const tdStyle: React.CSSProperties = {
     padding: "12px 16px", fontSize: 13, color: "#c9cad4", verticalAlign: "middle",
@@ -3175,7 +3175,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
               <tr>
                 <td colSpan={6} style={{ ...tdStyle, textAlign: "center", padding: "48px 16px", color: "#444444" }}>
                   <FileAudio size={32} style={{ margin: "0 auto 10px", color: "#222222" }} />
-                  <p style={{ margin: 0, fontWeight: 500, color: "#555570" }}>{search ? "Sin resultados" : "No hay tareas aún"}</p>
+                  <p style={{ margin: 0, fontWeight: 500, color: "#666666" }}>{search ? "Sin resultados" : "No hay tareas aún"}</p>
                   {!search && <p style={{ margin: "4px 0 0", fontSize: 12 }}>Haz click en &ldquo;Crear tarea&rdquo; para transcribir tu primer audio</p>}
                 </td>
               </tr>
@@ -3192,7 +3192,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                 return (
                   <tr
                     key={task.id}
-                    style={{ background: isRemoving ? "rgba(239,68,68,0.05)" : rowBg, borderBottom: "1px solid #111118", transition: "background 0.15s, opacity 0.3s", opacity: isRemoving ? 0.4 : 1 }}
+                    style={{ background: isRemoving ? "rgba(239,68,68,0.05)" : rowBg, borderBottom: "1px solid #111111", transition: "background 0.15s, opacity 0.3s", opacity: isRemoving ? 0.4 : 1 }}
                     onMouseEnter={(e) => { if (!isRemoving) e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
                     onMouseLeave={(e) => { if (!isRemoving) e.currentTarget.style.background = isRemoving ? "rgba(239,68,68,0.05)" : rowBg; }}
                   >
@@ -3205,7 +3205,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                         <div style={{ minWidth: 0 }}>
                           <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: "#e5e7eb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>{task.fileName}</p>
                           {task.durationSeconds && (
-                            <p style={{ margin: 0, fontSize: 11, color: "#555570" }}>{fmtDur(task.durationSeconds)}</p>
+                            <p style={{ margin: 0, fontSize: 11, color: "#666666" }}>{fmtDur(task.durationSeconds)}</p>
                           )}
                         </div>
                       </div>
@@ -3377,7 +3377,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#e5e7eb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{viewerTask.fileName}</p>
-                <p style={{ margin: 0, fontSize: 11, color: "#555570" }}>
+                <p style={{ margin: 0, fontSize: 11, color: "#666666" }}>
                   {viewerTask.creditsUsed.toLocaleString("es-ES")} créditos · {fmtRelative(viewerTask.createdAt)}
                 </p>
               </div>
@@ -3720,7 +3720,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
             </span>
             <div style={{ position: "relative", display: "inline-flex" }}>
               <button
-                style={{ background: "none", border: "none", cursor: "default", color: "#555570", padding: 0, display: "flex" }}
+                style={{ background: "none", border: "none", cursor: "default", color: "#666666", padding: 0, display: "flex" }}
                 title="Comparte tu enlace y cuando alguien pague recibirás saldo que puedes canjear por caracteres."
               >
                 <Info size={13} />
@@ -3784,7 +3784,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
 
           {/* Right: Canjear column */}
           <div>
-            <p style={{ fontSize: 11, fontWeight: 700, color: "#555570", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#666666", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>
               Canjear
             </p>
 
@@ -3934,7 +3934,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
             </span>
           )}
           <div style={{ display: "inline-flex" }}>
-            <button style={{ background: "none", border: "none", cursor: "default", color: "#555570", padding: 0, display: "flex" }} title="Gana un 5% en efectivo por cada pago de tus referidos. Requiere aprobación previa del equipo.">
+            <button style={{ background: "none", border: "none", cursor: "default", color: "#666666", padding: 0, display: "flex" }} title="Gana un 5% en efectivo por cada pago de tus referidos. Requiere aprobación previa del equipo.">
               <Info size={13} />
             </button>
           </div>
@@ -3969,7 +3969,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
             >
               Más información y solicitar
             </a>
-            <span style={{ fontSize: 13, color: "#555570" }}>
+            <span style={{ fontSize: 13, color: "#666666" }}>
               ¿Ya estás aprobado?{" "}
               <a href="/dashboard/afiliados" style={{ color: "#6b7280", textDecoration: "underline" }}>
                 Ver tu panel →
@@ -4146,7 +4146,7 @@ function TeamTab() {
           </p>
         </div>
         <div className="rounded-2xl border p-6 space-y-4" style={cardStyle}>
-          <label className="block text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>
+          <label className="block text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>
             Nombre del equipo
           </label>
           <input
@@ -4181,26 +4181,26 @@ function TeamTab() {
         </div>
         <div>
           <h2 className="text-base font-bold text-white">{team.name}</h2>
-          <p className="text-xs" style={{ color: "#555570" }}>{team.members.length} miembro{team.members.length !== 1 ? "s" : ""}</p>
+          <p className="text-xs" style={{ color: "#666666" }}>{team.members.length} miembro{team.members.length !== 1 ? "s" : ""}</p>
         </div>
       </div>
 
       {/* Credits summary */}
       <div className="rounded-2xl border p-5 space-y-3" style={cardStyle}>
-        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>
+        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>
           Resumen de créditos este mes
         </p>
         <div className="grid grid-cols-3 gap-3">
           <div className="rounded-xl p-3 text-center" style={{ background: "#111111", border: "1px solid #1a1a1a" }}>
-            <p className="text-xs mb-1" style={{ color: "#555570" }}>Total equipo</p>
+            <p className="text-xs mb-1" style={{ color: "#666666" }}>Total equipo</p>
             <p className="text-sm font-bold text-white">{ENTERPRISE_CREDITS.toLocaleString("es-ES")}</p>
           </div>
           <div className="rounded-xl p-3 text-center" style={{ background: "#111111", border: "1px solid #1a1a1a" }}>
-            <p className="text-xs mb-1" style={{ color: "#555570" }}>Tu parte ({ownerPercent}%)</p>
+            <p className="text-xs mb-1" style={{ color: "#666666" }}>Tu parte ({ownerPercent}%)</p>
             <p className="text-sm font-bold" style={{ color: "#aaaaaa" }}>{ownerCredits.toLocaleString("es-ES")}</p>
           </div>
           <div className="rounded-xl p-3 text-center" style={{ background: "#111111", border: "1px solid #1a1a1a" }}>
-            <p className="text-xs mb-1" style={{ color: "#555570" }}>Distribuidos</p>
+            <p className="text-xs mb-1" style={{ color: "#666666" }}>Distribuidos</p>
             <p className="text-sm font-bold" style={{ color: totalAssigned > 100 ? "#f87171" : "#4ade80" }}>{totalAssigned}%</p>
           </div>
         </div>
@@ -4213,12 +4213,12 @@ function TeamTab() {
 
       {/* Members */}
       <div className="rounded-2xl border p-5 space-y-4" style={cardStyle}>
-        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>
+        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>
           Miembros y distribución
         </p>
 
         {team.members.length === 0 ? (
-          <p className="text-sm text-center py-6" style={{ color: "#555570" }}>
+          <p className="text-sm text-center py-6" style={{ color: "#666666" }}>
             Aún no hay miembros. Invita a alguien abajo.
           </p>
         ) : (
@@ -4236,15 +4236,15 @@ function TeamTab() {
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-white truncate">{member.name ?? member.email}</p>
-                        <p className="text-xs truncate" style={{ color: "#555570" }}>{member.email}</p>
+                        <p className="text-xs truncate" style={{ color: "#666666" }}>{member.email}</p>
                       </div>
                     </div>
                     <button
                       onClick={() => handleRemove(member.id)}
                       className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ml-2"
-                      style={{ color: "#555570", background: "transparent" }}
+                      style={{ color: "#666666", background: "transparent" }}
                       onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = "#555570")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "#666666")}
                       title="Eliminar miembro"
                     >
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -4269,12 +4269,12 @@ function TeamTab() {
                         value={pct}
                         onChange={(e) => setPercentages((p) => ({ ...p, [member.id]: Math.min(100, Math.max(0, Number(e.target.value))) }))}
                         className="w-14 px-2 py-1 rounded-lg text-sm text-center text-white focus:outline-none"
-                        style={{ background: "#0a0a12", border: "1px solid #222222" }}
+                        style={{ background: "#0a0a0a", border: "1px solid #222222" }}
                       />
-                      <span className="text-xs" style={{ color: "#555570" }}>%</span>
+                      <span className="text-xs" style={{ color: "#666666" }}>%</span>
                     </div>
                   </div>
-                  <p className="text-xs" style={{ color: "#555570" }}>
+                  <p className="text-xs" style={{ color: "#666666" }}>
                     {chars.toLocaleString("es-ES")} caracteres / mes
                   </p>
                 </div>
@@ -4296,7 +4296,7 @@ function TeamTab() {
             >
               {saving ? "Guardando..." : "Guardar distribución"}
             </button>
-            <p className="text-xs text-center leading-relaxed" style={{ color: "#555570" }}>
+            <p className="text-xs text-center leading-relaxed" style={{ color: "#666666" }}>
               Los cambios se aplican inmediatamente. En cada renovación mensual los créditos se redistribuyen automáticamente.
             </p>
           </>
@@ -4305,10 +4305,10 @@ function TeamTab() {
 
       {/* Invite */}
       <div className="rounded-2xl border p-5 space-y-3" style={cardStyle}>
-        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>
+        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>
           Invitar miembro
         </p>
-        <p className="text-xs" style={{ color: "#555570" }}>
+        <p className="text-xs" style={{ color: "#666666" }}>
           El usuario debe tener cuenta activa en Elite Labs.
         </p>
         <div className="flex gap-2">
@@ -4338,7 +4338,7 @@ function TeamTab() {
           Zona de peligro
         </p>
         <div className="flex items-center justify-between gap-4">
-          <p className="text-xs" style={{ color: "#555570" }}>
+          <p className="text-xs" style={{ color: "#666666" }}>
             Al eliminar el equipo los créditos asignados a los miembros se devolverán a tu cuenta.
           </p>
           <button

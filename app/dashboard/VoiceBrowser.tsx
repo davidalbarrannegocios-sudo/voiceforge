@@ -386,10 +386,10 @@ function TierPill({
   const style = amber
     ? active
       ? { background: "rgba(245,158,11,0.2)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.4)" }
-      : { background: "transparent", color: "#6b6b88", border: "1px solid #2a2a3e" }
+      : { background: "transparent", color: "#666666", border: "1px solid #2a2a2a" }
     : active
     ? { background: "rgba(255,255,255,0.1)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.2)" }
-    : { background: "transparent", color: "#6b6b88", border: "1px solid #2a2a3e" };
+    : { background: "transparent", color: "#666666", border: "1px solid #2a2a2a" };
 
   return (
     <button onClick={onClick} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" style={style}>
@@ -406,19 +406,19 @@ function UpgradePrompt({ onClose }: { onClose: () => void }) {
       style={{ background: "rgba(0,0,0,0.75)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="rounded-2xl p-6 w-72 text-center border" style={{ background: "#0d0d17", borderColor: "#222222" }}>
+      <div className="rounded-2xl p-6 w-72 text-center border" style={{ background: "#0d0d0d", borderColor: "#222222" }}>
         <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(245,158,11,0.12)" }}>
           <span className="text-2xl">🔒</span>
         </div>
         <h3 className="text-white font-bold text-base mb-1">Voz Premium</h3>
-        <p className="text-sm mb-5" style={{ color: "#8888a8" }}>
+        <p className="text-sm mb-5" style={{ color: "#888888" }}>
           Esta voz requiere plan Starter o superior
         </p>
         <div className="flex gap-2">
           <button
             onClick={onClose}
             className="flex-1 py-2 rounded-lg text-sm font-medium"
-            style={{ background: "#111111", color: "#8888a8", border: "1px solid #2a2a3e" }}
+            style={{ background: "#111111", color: "#888888", border: "1px solid #2a2a2a" }}
           >
             Cancelar
           </button>
@@ -439,7 +439,7 @@ function HeartIcon({ filled }: { filled: boolean }) {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24"
       fill={filled ? "#ef4444" : "none"}
-      stroke={filled ? "#ef4444" : "#555570"}
+      stroke={filled ? "#ef4444" : "#666666"}
       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
     >
       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -552,7 +552,7 @@ function ElevenFilterPanel({
         style={
           active
             ? { background: "rgba(255,255,255,0.1)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.2)" }
-            : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a3e" }
+            : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a2a" }
         }
       >
         {label}
@@ -563,18 +563,18 @@ function ElevenFilterPanel({
   return (
     <div
       className="absolute inset-y-0 right-0 w-72 flex flex-col z-20 overflow-y-auto"
-      style={{ background: "#0d0d17", borderLeft: "1px solid #1e1e2e" }}
+      style={{ background: "#0d0d0d", borderLeft: "1px solid #1a1a1a" }}
     >
-      <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0" style={{ borderColor: "#1e1e2e" }}>
+      <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0" style={{ borderColor: "#1a1a1a" }}>
         <span className="text-sm font-semibold text-white">Filtros</span>
         <div className="flex items-center gap-3">
-          <button onClick={onReset} className="text-xs font-medium transition-colors" style={{ color: "#555570" }}
+          <button onClick={onReset} className="text-xs font-medium transition-colors" style={{ color: "#666666" }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "#e2e2f0")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#555570")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#666666")}
           >Restablecer</button>
           <button onClick={onClose} className="w-6 h-6 rounded-md flex items-center justify-center transition-colors flex-shrink-0"
-            style={{ color: "#555570", background: "transparent" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#1e1e2e")}
+            style={{ color: "#666666", background: "transparent" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#1a1a1a")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -586,7 +586,7 @@ function ElevenFilterPanel({
 
       <div className="px-4 py-4 flex flex-col gap-5 flex-1">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#555570" }}>Género</p>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#666666" }}>Género</p>
           <div className="flex flex-wrap gap-1.5">
             <Pill field="gender" value="male"    label="Masculino" />
             <Pill field="gender" value="female"  label="Femenina" />
@@ -595,7 +595,7 @@ function ElevenFilterPanel({
         </div>
 
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#555570" }}>Edad</p>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#666666" }}>Edad</p>
           <div className="flex flex-wrap gap-1.5">
             <Pill field="age" value="young"       label="Joven" />
             <Pill field="age" value="middle_aged" label="Mediana Edad" />
@@ -604,7 +604,7 @@ function ElevenFilterPanel({
         </div>
 
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#555570" }}>Caso de Uso</p>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#666666" }}>Caso de Uso</p>
           <div className="flex flex-wrap gap-1.5">
             {ELEVEN_USE_CASE_OPTIONS.map(({ value, label }) => (
               <Pill key={value} field="useCase" value={value} label={label} />
@@ -613,7 +613,7 @@ function ElevenFilterPanel({
         </div>
       </div>
 
-      <div className="px-4 py-4 border-t flex-shrink-0" style={{ borderColor: "#1e1e2e" }}>
+      <div className="px-4 py-4 border-t flex-shrink-0" style={{ borderColor: "#1a1a1a" }}>
         <button
           onClick={onApply}
           className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
@@ -656,7 +656,7 @@ function FilterPanel({
         style={
           active
             ? { background: "rgba(255,255,255,0.1)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.2)" }
-            : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a3e" }
+            : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a2a" }
         }
       >
         {label}
@@ -669,26 +669,26 @@ function FilterPanel({
   return (
     <div
       className="absolute inset-y-0 right-0 w-72 flex flex-col z-20 overflow-y-auto"
-      style={{ background: "#0d0d17", borderLeft: "1px solid #1e1e2e" }}
+      style={{ background: "#0d0d0d", borderLeft: "1px solid #1a1a1a" }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0" style={{ borderColor: "#1e1e2e" }}>
+      <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0" style={{ borderColor: "#1a1a1a" }}>
         <span className="text-sm font-semibold text-white">Filtros</span>
         <div className="flex items-center gap-3">
           <button
             onClick={onReset}
             className="text-xs font-medium transition-colors"
-            style={{ color: "#555570" }}
+            style={{ color: "#666666" }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "#e2e2f0")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#555570")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#666666")}
           >
             Restablecer
           </button>
           <button
             onClick={onClose}
             className="w-6 h-6 rounded-md flex items-center justify-center transition-colors flex-shrink-0"
-            style={{ color: "#555570", background: "transparent" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#1e1e2e")}
+            style={{ color: "#666666", background: "transparent" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#1a1a1a")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -702,7 +702,7 @@ function FilterPanel({
       <div className="px-4 py-4 flex flex-col gap-5 flex-1">
         {/* Género */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#555570" }}>Género</p>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#666666" }}>Género</p>
           <div className="flex flex-wrap gap-1.5">
             <Pill filterKey="genders" value="male" label="Masculino" />
             <Pill filterKey="genders" value="female" label="Femenina" />
@@ -712,7 +712,7 @@ function FilterPanel({
 
         {/* Edad */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#555570" }}>Edad</p>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#666666" }}>Edad</p>
           <div className="flex flex-wrap gap-1.5">
             <Pill filterKey="ages" value="young" label="Joven" />
             <Pill filterKey="ages" value="middleage" label="Mediana Edad" />
@@ -722,7 +722,7 @@ function FilterPanel({
 
         {/* Caso de Uso */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#555570" }}>Caso de Uso</p>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#666666" }}>Caso de Uso</p>
           <div className="flex flex-wrap gap-1.5">
             {USE_CASE_OPTIONS.map(({ value, label }) => (
               <Pill key={value} filterKey="useCases" value={value} label={label} />
@@ -733,14 +733,14 @@ function FilterPanel({
         {/* Calidades de Voz */}
         <div>
           <div className="flex items-center justify-between mb-2.5">
-            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>Calidades de Voz</p>
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>Calidades de Voz</p>
             {filters.qualities.length > 0 && (
               <button
                 onClick={() => onChange({ ...filters, qualities: [] })}
                 className="text-xs transition-colors"
-                style={{ color: "#555570" }}
+                style={{ color: "#666666" }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#e2e2f0")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#555570")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#666666")}
               >
                 Borrar
               </button>
@@ -766,7 +766,7 @@ function FilterPanel({
       </div>
 
       {/* Apply button */}
-      <div className="px-4 py-4 border-t flex-shrink-0" style={{ borderColor: "#1e1e2e" }}>
+      <div className="px-4 py-4 border-t flex-shrink-0" style={{ borderColor: "#1a1a1a" }}>
         <button
           onClick={onApply}
           className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
@@ -852,7 +852,7 @@ function VoiceCard({
               <p className="text-xs mb-0.5" style={{ color: "#6b7280" }}>· {authorName}</p>
             )}
             {voice.description && (
-              <p className="text-xs line-clamp-2" style={{ color: "#555570" }}>{voice.description}</p>
+              <p className="text-xs line-clamp-2" style={{ color: "#666666" }}>{voice.description}</p>
             )}
           </div>
         </div>
@@ -917,7 +917,7 @@ function VoiceCard({
           className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex-shrink-0"
           style={
             isLocked
-              ? { background: "rgba(30,30,46,0.9)", color: "#3a3a52", border: "1px solid #1a1a2a" }
+              ? { background: "rgba(20,20,20,0.9)", color: "#3a3a3a", border: "1px solid #1a1a1a" }
               : { background: "#ffffff", color: "#000000" }
           }
         >
@@ -1428,18 +1428,18 @@ export function VoiceBrowser({
     >
       <div
         className="w-[90vw] max-w-5xl flex flex-col rounded-2xl border relative"
-        style={{ background: "#0a0a12", borderColor: "#1e1e2e", height: "88vh" }}
+        style={{ background: "#0a0a0a", borderColor: "#1a1a1a", height: "88vh" }}
       >
         {showUpgrade && <UpgradePrompt onClose={() => setShowUpgrade(false)} />}
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "#1e1e2e" }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "#1a1a1a" }}>
           <h2 className="text-base font-bold text-white">Seleccionar voz</h2>
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-            style={{ color: "#6b6b88", background: "transparent" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#1e1e2e")}
+            style={{ color: "#666666", background: "transparent" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#1a1a1a")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -1450,7 +1450,7 @@ export function VoiceBrowser({
 
         {/* Tabs */}
         {!isExternalSource && (
-          <div className="flex border-b px-6 flex-shrink-0" style={{ borderColor: "#1e1e2e" }}>
+          <div className="flex border-b px-6 flex-shrink-0" style={{ borderColor: "#1a1a1a" }}>
             {TABS.map(({ key, label }) => (
               <button
                 key={key}
@@ -1459,7 +1459,7 @@ export function VoiceBrowser({
                 style={
                   tab === key
                     ? { color: "#ffffff", borderColor: "rgba(255,255,255,0.4)" }
-                    : { color: "#555570", borderColor: "transparent" }
+                    : { color: "#666666", borderColor: "transparent" }
                 }
               >
                 {label}
@@ -1482,7 +1482,7 @@ export function VoiceBrowser({
                     <svg
                       className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
                       width="15" height="15" viewBox="0 0 24 24" fill="none"
-                      stroke="#555570" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                      stroke="#666666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                     >
                       <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
@@ -1492,7 +1492,7 @@ export function VoiceBrowser({
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Buscar voces..."
                       className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-gray-200 focus:outline-none"
-                      style={{ background: "#0d0d17", border: "1px solid #1e1e2e" }}
+                      style={{ background: "#0d0d0d", border: "1px solid #1a1a1a" }}
                     />
                   </div>
 
@@ -1564,7 +1564,7 @@ export function VoiceBrowser({
                     style={
                       showFilterPanel || activeFilterCount > 0
                         ? { background: "rgba(255,255,255,0.08)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.2)" }
-                        : { background: "#0d0d17", color: "#c0c0d8", border: "1px solid #1e1e2e" }
+                        : { background: "#0d0d0d", color: "#cccccc", border: "1px solid #1a1a1a" }
                     }
                     title="Filtros avanzados"
                   >
@@ -1609,14 +1609,14 @@ export function VoiceBrowser({
                   <button
                     onClick={() => handleSelect(null)}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border mb-2 transition-all text-left"
-                    style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
+                    style={{ background: "#0d0d0d", borderColor: "#1a1a1a" }}
                     onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1e1e2e")}
+                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1a1a1a")}
                   >
                     <div className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#111111" }}>🎙️</div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white">Voz por defecto</p>
-                      <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Se generará una voz estándar</p>
+                      <p className="text-xs mt-0.5" style={{ color: "#666666" }}>Se generará una voz estándar</p>
                     </div>
                     <span className="text-xs flex-shrink-0" style={{ color: "#aaaaaa" }}>Seleccionar →</span>
                   </button>
@@ -1631,13 +1631,13 @@ export function VoiceBrowser({
 
                 {/* Voice list */}
                 {loading ? (
-                  <div className="rounded-xl overflow-hidden mt-2" style={{ border: "1px solid #1a1a2a" }}>
+                  <div className="rounded-xl overflow-hidden mt-2" style={{ border: "1px solid #1a1a1a" }}>
                     {Array.from({ length: 8 }).map((_, i) => (
-                      <div key={i} className="h-[72px] animate-pulse" style={{ background: i % 2 === 0 ? "#0d0d17" : "#0b0b15", borderBottom: "1px solid #111118" }} />
+                      <div key={i} className="h-[72px] animate-pulse" style={{ background: i % 2 === 0 ? "#0d0d0d" : "#0b0b0b", borderBottom: "1px solid #111111" }} />
                     ))}
                   </div>
                 ) : displayedVoices.length === 0 ? (
-                  <p className="text-center py-16 text-sm" style={{ color: "#555570" }}>No se encontraron voces</p>
+                  <p className="text-center py-16 text-sm" style={{ color: "#666666" }}>No se encontraron voces</p>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2 p-2">
                     {displayedVoices.map((voice) => {
@@ -1668,16 +1668,16 @@ export function VoiceBrowser({
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page === 1}
                       className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
-                      style={{ background: "#0d0d17", color: "#c0c0d8", border: "1px solid #1e1e2e" }}
+                      style={{ background: "#0d0d0d", color: "#cccccc", border: "1px solid #1a1a1a" }}
                     >
                       ← Anterior
                     </button>
-                    <span className="text-sm" style={{ color: "#555570" }}>{page} / {totalPages}</span>
+                    <span className="text-sm" style={{ color: "#666666" }}>{page} / {totalPages}</span>
                     <button
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                       disabled={page >= totalPages}
                       className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
-                      style={{ background: "#0d0d17", color: "#c0c0d8", border: "1px solid #1e1e2e" }}
+                      style={{ background: "#0d0d0d", color: "#cccccc", border: "1px solid #1a1a1a" }}
                     >
                       Siguiente →
                     </button>
@@ -1697,7 +1697,7 @@ export function VoiceBrowser({
                 </div>
 
                 {filteredRecent.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-24" style={{ color: "#555570" }}>
+                  <div className="flex flex-col items-center justify-center py-24" style={{ color: "#666666" }}>
                     <svg className="mb-4" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                     </svg>
@@ -1739,7 +1739,7 @@ export function VoiceBrowser({
             {/* ── Default voices tab ── */}
             {tab === "default" && (
               <div className="px-6 py-4">
-                <p className="text-xs mb-4" style={{ color: "#555570" }}>Voces de calidad curadas y siempre disponibles.</p>
+                <p className="text-xs mb-4" style={{ color: "#666666" }}>Voces de calidad curadas y siempre disponibles.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-2">
                   {DEFAULT_VOICES.map((voice) => {
                     const isPremium = !disablePremiumLock && isPremiumVoice(voice._id);
@@ -1767,7 +1767,7 @@ export function VoiceBrowser({
             {tab === "favorites" && (
               <div className="px-6 py-4">
                 {favoriteVoices.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-24" style={{ color: "#555570" }}>
+                  <div className="flex flex-col items-center justify-center py-24" style={{ color: "#666666" }}>
                     <HeartIcon filled={false} />
                     <p className="font-medium mb-1 text-sm mt-4">No tienes voces favoritas</p>
                     <p className="text-xs mb-4">Haz clic en el corazón de cualquier voz para guardarla aquí</p>
@@ -1785,7 +1785,7 @@ export function VoiceBrowser({
                       <div
                         key={i}
                         className="rounded-xl animate-pulse"
-                        style={{ background: "#0d0d17", border: "1px solid #1e1e2e", height: "152px" }}
+                        style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", height: "152px" }}
                       />
                     ))}
                   </div>
@@ -1829,20 +1829,20 @@ export function VoiceBrowser({
                 <button
                   onClick={() => handleSelect(null)}
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border mb-3 transition-all text-left"
-                  style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
+                  style={{ background: "#0d0d0d", borderColor: "#1a1a1a" }}
                   onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1e1e2e")}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1a1a1a")}
                 >
                   <div className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#111111" }}>🎙️</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-white">Voz por defecto</p>
-                    <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Se generará una voz estándar</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#666666" }}>Se generará una voz estándar</p>
                   </div>
                   <span className="text-xs flex-shrink-0" style={{ color: "#aaaaaa" }}>Seleccionar →</span>
                 </button>
 
                 {clonedVoices.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20" style={{ color: "#555570" }}>
+                  <div className="flex flex-col items-center justify-center py-20" style={{ color: "#666666" }}>
                     <span className="text-4xl mb-3">🎤</span>
                     <p className="font-medium mb-1 text-sm">No tienes voces clonadas</p>
                     <p className="text-xs">Ve a &quot;Mis voces&quot; para clonar una</p>
@@ -1894,7 +1894,7 @@ export function VoiceBrowser({
                         onChange={(e) => setCommunitySearch(e.target.value)}
                         placeholder="Buscar por nombre o ID..."
                         className="w-full rounded-lg pl-8 pr-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-white/20"
-                        style={{ background: "#0a0a12", border: "1px solid #1e1e2e", color: "#d1d5db" }}
+                        style={{ background: "#0a0a0a", border: "1px solid #1a1a1a", color: "#d1d5db" }}
                       />
                     </div>
                     {communitySearch.length > 15 && !communitySearch.includes(" ") && (
@@ -1905,7 +1905,7 @@ export function VoiceBrowser({
                   {communityLoading ? (
                     <div className="space-y-1.5">
                       {[1, 2].map((i) => (
-                        <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: "#0d0d17" }} />
+                        <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: "#0d0d0d" }} />
                       ))}
                     </div>
                   ) : (() => {
@@ -1927,7 +1927,7 @@ export function VoiceBrowser({
 
                     if (sorted.length === 0) {
                       return (
-                        <p className="text-xs text-center py-6" style={{ color: "#3a3a52" }}>
+                        <p className="text-xs text-center py-6" style={{ color: "#3a3a3a" }}>
                           {communitySearchDebounced ? "Sin resultados" : "No hay voces públicas aún"}
                         </p>
                       );
@@ -1942,8 +1942,8 @@ export function VoiceBrowser({
                               key={voice.id}
                               className="flex items-center gap-3 px-4 py-3 rounded-xl border"
                               style={{
-                                background: isExact ? "rgba(124,58,237,0.06)" : "#0d0d17",
-                                borderColor: isExact ? "rgba(124,58,237,0.3)" : "#1e1e2e",
+                                background: isExact ? "rgba(124,58,237,0.06)" : "#0d0d0d",
+                                borderColor: isExact ? "rgba(124,58,237,0.3)" : "#1a1a1a",
                               }}
                             >
                               <VoiceAvatarGenerative seed={voice.fishAudioModelId ?? voice.name} size={44} className="flex-shrink-0" />
@@ -1952,7 +1952,7 @@ export function VoiceBrowser({
                                   <p className="text-sm font-semibold text-white truncate">{voice.name}</p>
                                   <span className="text-sm leading-none flex-shrink-0">{<span className={`fi fi-${voice.language}`} style={{width:"16px",height:"12px",display:"inline-block",borderRadius:"2px"}} />}</span>
                                   {voice.gender && (
-                                    <span className="text-xs flex-shrink-0" style={{ color: "#3a3a52" }}>
+                                    <span className="text-xs flex-shrink-0" style={{ color: "#3a3a3a" }}>
                                       {voice.gender === "masculine" ? "♂" : voice.gender === "feminine" ? "♀" : ""}
                                     </span>
                                   )}
@@ -1965,7 +1965,7 @@ export function VoiceBrowser({
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-xs mt-0.5" style={{ color: "#555570" }}>por {voice.creatorName}</p>
+                                <p className="text-xs mt-0.5" style={{ color: "#666666" }}>por {voice.creatorName}</p>
                               </div>
                               <button
                                 onClick={() => handleSelect({ referenceId: voice.fishAudioModelId, name: voice.name, isCloned: true })}
