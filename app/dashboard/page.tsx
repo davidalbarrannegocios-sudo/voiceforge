@@ -572,6 +572,7 @@ function GenerateTab({
   const [temperature, setTemperature] = useState(0.9);
   const [topP, setTopP] = useState(0.9);
   const [selectedModel, setSelectedModel] = useState("speech-1.6");
+  const [turboDown, setTurboDown] = useState(false);
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   const modelDropdownRef = useRef<HTMLDivElement>(null);
   // M1 (ElevenLabs) controls
@@ -653,6 +654,21 @@ function GenerateTab({
       }));
     } catch { /* ignore */ }
   }, [m1Speed, m1Stability, m1Similarity, m1StyleExag, m1LangOverride, m1OutputFormat, m1SpeakerBoost]);
+
+  useEffect(() => {
+    fetch("/api/ai33-health")
+      .then((r) => r.json())
+      .then((data: { isDown?: boolean }) => {
+        const down = !!data.isDown;
+        setTurboDown(down);
+        if (down && selectedModel === "turbo") {
+          setSelectedModel("speech-1.6");
+          onVoiceChange(null);
+        }
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleGenerate() {
     setFormError(null);
@@ -900,38 +916,42 @@ function GenerateTab({
                       </span>
                       {selectedModel === "speech-1.6" && <span className="badge-shimmer-purple" style={{ fontSize: "12px", fontWeight: 600, padding: "2px 8px", borderRadius: "6px", flexShrink: 0 }}>Pro</span>}
                       {selectedModel === "speech-1.5" && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>Legacy</span>}
-                      {selectedModel === "turbo"      && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "white", flexShrink: 0 }}>Turbo</span>}
+                      {selectedModel === "turbo" && !turboDown && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "white", flexShrink: 0 }}>Turbo</span>}
+                      {selectedModel === "turbo" && turboDown  && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", background: "rgba(251,191,36,0.15)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)", flexShrink: 0 }}>Mantenimiento</span>}
                     </div>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", flexShrink: 0, transform: modelDropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
                   </button>
                   {modelDropdownOpen && (
                     <div style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "4px", padding: "4px", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
                       {([
-                        { value: "speech-1.6", sub: "Nuestro modelo insignia"   },
-                        { value: "speech-1.5", sub: "Heredado"                  },
-                        { value: "turbo",      sub: "Voces premium · 2x rendimiento de caracteres" },
-                      ]).map(({ value, sub }) => (
+                        { value: "speech-1.6", sub: "Nuestro modelo insignia",                    disabled: false },
+                        { value: "speech-1.5", sub: "Heredado",                                    disabled: false },
+                        { value: "turbo",      sub: "Voces premium · 2x rendimiento de caracteres", disabled: turboDown },
+                      ]).map(({ value, sub, disabled }) => (
                         <button
                           key={value}
+                          disabled={disabled}
                           onClick={() => {
+                            if (disabled) return;
                             if (value === "turbo" || selectedModel === "turbo") onVoiceChange(null);
                             setSelectedModel(value);
                             setModelDropdownOpen(false);
                           }}
-                          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: selectedModel === value ? "#e2e2f0" : "#6b7280", cursor: "pointer" }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
-                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: disabled ? "#4b5563" : selectedModel === value ? "#e2e2f0" : "#6b7280", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.55 : 1 }}
+                          onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                         >
                           <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                               <span style={{ fontWeight: 500 }}>Elite Labs</span>
                               {value === "speech-1.6" && <span className="badge-shimmer-purple" style={{ fontSize: "12px", fontWeight: 600, padding: "2px 8px", borderRadius: "6px", flexShrink: 0 }}>Pro</span>}
                               {value === "speech-1.5" && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>Legacy</span>}
-                              {value === "turbo"      && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "white", flexShrink: 0 }}>Turbo</span>}
+                              {value === "turbo" && !turboDown && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "white", flexShrink: 0 }}>Turbo</span>}
+                              {value === "turbo" && turboDown  && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", background: "rgba(251,191,36,0.12)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)", flexShrink: 0 }}>Mantenimiento</span>}
                             </div>
                             <span style={{ fontSize: "11px", marginTop: "2px", color: "#4b4b6a" }}>{sub}</span>
                           </div>
-                          {selectedModel === value && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginLeft: "8px" }}><polyline points="20 6 9 17 4 12" /></svg>}
+                          {selectedModel === value && !disabled && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginLeft: "8px" }}><polyline points="20 6 9 17 4 12" /></svg>}
                         </button>
                       ))}
                     </div>

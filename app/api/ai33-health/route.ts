@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
@@ -21,10 +22,21 @@ async function probe(url: string, apiKey: string, init: RequestInit): Promise<Se
 }
 
 export async function GET() {
+  // Admin override takes priority over health probe
+  const config = await prisma.systemConfig.findUnique({ where: { id: "singleton" } });
+  const adminStatus = config?.elitelabsTurboStatus ?? "active";
+
+  if (adminStatus !== "active") {
+    return NextResponse.json(
+      { elevenlabs: "overloaded" as ServiceStatus, minimax: "good" as ServiceStatus, isDown: true, adminStatus },
+      { headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=30" } }
+    );
+  }
+
   const apiKey = process.env.SK_AI33_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      { elevenlabs: "overloaded" as ServiceStatus, minimax: "overloaded" as ServiceStatus, isDown: true },
+      { elevenlabs: "overloaded" as ServiceStatus, minimax: "overloaded" as ServiceStatus, isDown: true, adminStatus },
       { headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=30" } }
     );
   }
@@ -38,11 +50,11 @@ export async function GET() {
     }),
   ]);
 
-  console.log(`[ai33-health] elevenlabs=${elevenlabs} minimax=${minimax}`);
+  console.log(`[ai33-health] elevenlabs=${elevenlabs} minimax=${minimax} adminStatus=${adminStatus}`);
 
-  const isDown = elevenlabs !== "good" || minimax !== "good";
+  const isDown = elevenlabs !== "good";
   return NextResponse.json(
-    { elevenlabs, minimax, isDown },
+    { elevenlabs, minimax, isDown, adminStatus },
     { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=60" } }
   );
 }

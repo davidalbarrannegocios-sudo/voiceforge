@@ -710,18 +710,24 @@ export default function AdminPage() {
   const [roleValue, setRoleValue] = useState<"admin" | "user">("admin");
   const [roleLoading, setRoleLoading] = useState(false);
 
+  // TTS engine config
+  const [turboStatus, setTurboStatus] = useState<"active" | "maintenance" | "disabled">("active");
+  const [turboStatusPending, setTurboStatusPending] = useState<"active" | "maintenance" | "disabled">("active");
+  const [turboStatusSaving, setTurboStatusSaving] = useState(false);
+
   const toast = useCallback((msg: string, ok = true) => {
     setFeedback({ msg, ok });
     setTimeout(() => setFeedback(null), 3500);
   }, []);
 
   const fetchAll = useCallback(async () => {
-    const [uRes, sRes, tRes, aRes, wRes] = await Promise.all([
+    const [uRes, sRes, tRes, aRes, wRes, cfgRes] = await Promise.all([
       fetch("/api/admin/users"),
       fetch("/api/admin/stats"),
       fetch("/api/admin/support"),
       fetch("/api/admin/affiliate-applications"),
       fetch("/api/admin/withdrawal-requests"),
+      fetch("/api/admin/system-config"),
     ]);
     if (uRes.status === 403 || uRes.status === 401) { setAuthorized(false); return; }
     setAuthorized(true);
@@ -735,6 +741,12 @@ export default function AdminPage() {
     setAffiliateApps(Array.isArray(aData) ? aData : []);
     const wData = await wRes.json();
     setWithdrawalRequests(Array.isArray(wData) ? wData : []);
+    if (cfgRes.ok) {
+      const cfgData = await cfgRes.json();
+      const s = cfgData.elitelabsTurboStatus ?? "active";
+      setTurboStatus(s);
+      setTurboStatusPending(s);
+    }
   }, []);
 
   async function handleWithdrawal(id: string, status: "paid" | "rejected") {
@@ -771,6 +783,27 @@ export default function AdminPage() {
     setAffiliateApps((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)));
     // update detail if open
     setAffiliateDetailApp((prev) => (prev?.id === id ? { ...prev, status } : prev));
+  }
+
+  async function saveTurboStatus() {
+    setTurboStatusSaving(true);
+    try {
+      const res = await fetch("/api/admin/system-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ elitelabsTurboStatus: turboStatusPending }),
+      });
+      if (res.ok) {
+        setTurboStatus(turboStatusPending);
+        toast("Estado de Elite Labs Turbo guardado", true);
+      } else {
+        toast("Error al guardar", false);
+      }
+    } catch {
+      toast("Error al guardar", false);
+    } finally {
+      setTurboStatusSaving(false);
+    }
   }
 
   useEffect(() => { if (isLoaded && user) fetchAll(); }, [isLoaded, user, fetchAll]);
@@ -911,6 +944,7 @@ export default function AdminPage() {
               { label: "Tickets soporte", anchor: "#section-tickets", badge: openTickets },
               { label: "Solicitudes Afiliados", anchor: "#section-affiliates", badge: pendingAff },
               { label: "Solicitudes de Retiro", anchor: "#section-withdrawals", badge: pendingWithdrawals },
+              { label: "Motores TTS", anchor: "#section-tts", badge: 0 },
             ].map(({ label, anchor, badge }) => (
               <a
                 key={anchor}
@@ -1368,6 +1402,50 @@ export default function AdminPage() {
             </div>
           );
         })()}
+
+        {/* TTS Engines */}
+        <div id="section-tts" style={{ ...card, marginTop: "1.5rem" }}>
+          <p style={{ fontWeight: 700, marginBottom: "1rem" }}>Motores TTS</p>
+          <div style={{ background: "#12121a", borderRadius: "10px", padding: "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontWeight: 600, fontSize: "14px", color: "#e2e2f0" }}>Elite Labs Turbo</span>
+                  <span style={{ fontSize: "10px", fontWeight: 500, padding: "1px 7px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)" }}>ElevenLabs · ai33.pro</span>
+                </div>
+                <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "3px" }}>Voces premium · 2x rendimiento de caracteres</p>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: turboStatus === "active" ? "#4ade80" : turboStatus === "maintenance" ? "#fbbf24" : "#6b7280", flexShrink: 0 }} />
+                <span style={{ fontSize: "12px", fontWeight: 500, color: turboStatus === "active" ? "#4ade80" : turboStatus === "maintenance" ? "#fbbf24" : "#6b7280" }}>
+                  {turboStatus === "active" ? "Activo" : turboStatus === "maintenance" ? "Mantenimiento" : "Desactivado"}
+                </span>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: "8px", marginBottom: "14px", flexWrap: "wrap" }}>
+              {(["active", "maintenance", "disabled"] as const).map((s) => {
+                const cfg = {
+                  active:      { bg: "rgba(74,222,128,0.15)",  border: "rgba(74,222,128,0.4)",  text: "#4ade80",  label: "● Activo" },
+                  maintenance: { bg: "rgba(251,191,36,0.15)",  border: "rgba(251,191,36,0.4)",  text: "#fbbf24",  label: "● Mantenimiento temporal" },
+                  disabled:    { bg: "rgba(107,114,128,0.15)", border: "rgba(107,114,128,0.4)", text: "#9ca3af",  label: "● Desactivado" },
+                }[s];
+                const selected = turboStatusPending === s;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setTurboStatusPending(s)}
+                    style={{ padding: "6px 14px", fontSize: "12px", fontWeight: 500, borderRadius: "6px", cursor: "pointer", transition: "all 150ms", background: selected ? cfg.bg : "transparent", border: `1px solid ${selected ? cfg.border : "rgba(255,255,255,0.08)"}`, color: selected ? cfg.text : "#6b7280" }}
+                  >{cfg.label}</button>
+                );
+              })}
+            </div>
+            <button
+              onClick={saveTurboStatus}
+              disabled={turboStatusSaving || turboStatusPending === turboStatus}
+              style={{ padding: "6px 18px", fontSize: "12px", fontWeight: 600, borderRadius: "6px", cursor: turboStatusPending === turboStatus ? "default" : "pointer", background: turboStatusPending === turboStatus ? "rgba(255,255,255,0.05)" : "#3b82f6", color: turboStatusPending === turboStatus ? "#6b7280" : "#fff", border: "none", opacity: turboStatusSaving ? 0.6 : 1, transition: "all 150ms" }}
+            >{turboStatusSaving ? "Guardando..." : "Guardar"}</button>
+          </div>
+        </div>
 
       </div>
     </div>
