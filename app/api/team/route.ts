@@ -107,7 +107,7 @@ export async function DELETE() {
             <p>El administrador ha eliminado el equipo <strong>"${team.name}"</strong>. Los créditos asignados a tu cuenta han sido devueltos al administrador.</p>
             <p>Puedes suscribirte a un plan propio para seguir usando Elite Labs.</p>
             <a href="https://elitelabs.es/pricing"
-               style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: #3b82f6; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600;">
+               style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: #ffffff; color: #000000; border-radius: 8px; text-decoration: none; font-weight: 600;">
               Ver planes
             </a>
             <p style="margin-top: 24px; font-size: 12px; color: #6b7280;">Elite Labs · elitelabs.es</p>

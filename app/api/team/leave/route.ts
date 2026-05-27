@@ -44,7 +44,7 @@ export async function POST() {
           <p><strong>${memberName}</strong> ha abandonado tu equipo <strong>"${membership.team.name}"</strong>.</p>
           ${creditsToDeduct > 0 ? `<p>Se han devuelto <strong>${creditsToDeduct.toLocaleString("es-ES")} créditos</strong> a tu cuenta.</p>` : ""}
           <a href="https://elitelabs.es/dashboard"
-             style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: #3b82f6; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600;">
+             style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: #ffffff; color: #000000; border-radius: 8px; text-decoration: none; font-weight: 600;">
             Gestionar equipo
           </a>
           <p style="margin-top: 24px; font-size: 12px; color: #6b7280;">Elite Labs · elitelabs.es</p>

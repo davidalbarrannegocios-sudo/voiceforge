@@ -674,7 +674,7 @@ export default function LandingPage() {
                     <div style={{ padding: "10px 18px", borderTop: "1px solid #1a1a1a", flexShrink: 0 }}>
                       <Link
                         href="/dashboard"
-                        className="transition-colors hover:text-blue-400"
+                        className="transition-colors hover:text-gray-300"
                         style={{ fontSize: "12px", color: "#555570" }}
                       >
                         2.000.000+ voces <span style={{ color: "#aaaaaa" }}>↗</span>
@@ -740,7 +740,7 @@ export default function LandingPage() {
               {/* Bottom footer bar */}
               <div className="flex items-center justify-between" style={{ paddingTop: "18px" }}>
                 <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse flex-shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse flex-shrink-0" />
                   <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>
                     Powered by Elite Labs E2 Pro
                   </span>

@@ -222,7 +222,7 @@ function PricingContent() {
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "6px", marginBottom: "4px" }}>
                 <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{plan.name}</span>
                 {plan.popular && (
-                  <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 7px", borderRadius: "999px", border: "1px solid rgba(59,130,246,0.45)", color: "#93c5fd", background: "transparent", whiteSpace: "nowrap", flexShrink: 0 }}>
+                  <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 7px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.2)", color: "#aaaaaa", background: "transparent", whiteSpace: "nowrap", flexShrink: 0 }}>
                     Popular
                   </span>
                 )}
@@ -340,16 +340,16 @@ function PricingContent() {
                     ))}
                   </tr>
                 ))}
-                <tr style={{ background: "rgba(59,130,246,0.08)", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-                  <td style={{ padding: "11px 16px", fontWeight: 700, color: "#93c5fd" }}>⭐ Elite Labs</td>
+                <tr style={{ background: "rgba(255,255,255,0.05)", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                  <td style={{ padding: "11px 16px", fontWeight: 700, color: "#aaaaaa" }}>⭐ Elite Labs</td>
                   {["200.000 chars", "500.000 chars", "1.000.000 chars", "5.000.000 chars"].map((c) => (
-                    <td key={c} style={{ padding: "11px 10px", textAlign: "center", fontWeight: 600, color: "#93c5fd" }}>{c}</td>
+                    <td key={c} style={{ padding: "11px 10px", textAlign: "center", fontWeight: 600, color: "#aaaaaa" }}>{c}</td>
                   ))}
                 </tr>
               </tbody>
             </table>
           </div>
-          <p style={{ marginTop: "12px", textAlign: "center", fontSize: "13px", fontWeight: 600, color: "#93c5fd" }}>
+          <p style={{ marginTop: "12px", textAlign: "center", fontSize: "13px", fontWeight: 600, color: "#aaaaaa" }}>
             Hasta 6× más caracteres que la competencia al mismo precio.{" "}
             <span style={{ color: "#444444", fontWeight: 400 }}>Sin límite por generación.</span>
           </p>

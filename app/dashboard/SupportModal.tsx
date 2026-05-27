@@ -264,9 +264,9 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
                       <span style={{ fontSize: "12px", fontWeight: 600, color: "#9ca3af" }}>{typeLabel(ticket.type)}</span>
                       <span style={{
                         fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px",
-                        background: ticket.status === "closed" ? "rgba(107,114,128,0.12)" : "rgba(59,130,246,0.12)",
-                        color: ticket.status === "closed" ? "#6b7280" : "#93c5fd",
-                        border: `1px solid ${ticket.status === "closed" ? "#2a2a3e" : "rgba(59,130,246,0.25)"}`,
+                        background: ticket.status === "closed" ? "rgba(107,114,128,0.12)" : "rgba(255,255,255,0.07)",
+                        color: ticket.status === "closed" ? "#6b7280" : "#aaaaaa",
+                        border: `1px solid ${ticket.status === "closed" ? "#2a2a3e" : "rgba(255,255,255,0.12)"}`,
                       }}>
                         {ticket.status === "closed" ? "CERRADO" : "ABIERTO"}
                       </span>
@@ -275,9 +275,9 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
                       {ticket.description.length > 120 ? ticket.description.slice(0, 120) + "…" : ticket.description}
                     </p>
                     {ticket.adminReply && (
-                      <div style={{ padding: "10px 12px", borderRadius: "8px", background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)", marginTop: "10px" }}>
+                      <div style={{ padding: "10px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", marginTop: "10px" }}>
                         <p style={{ fontSize: "10px", fontWeight: 700, color: "#aaaaaa", marginBottom: "4px", letterSpacing: "0.05em" }}>RESPUESTA DEL EQUIPO</p>
-                        <p style={{ fontSize: "13px", color: "#93c5fd", lineHeight: 1.5 }}>{ticket.adminReply}</p>
+                        <p style={{ fontSize: "13px", color: "#aaaaaa", lineHeight: 1.5 }}>{ticket.adminReply}</p>
                       </div>
                     )}
                     <p style={{ fontSize: "11px", color: "#2e2e48", marginTop: "8px" }}>

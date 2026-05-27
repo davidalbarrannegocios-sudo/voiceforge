@@ -54,7 +54,7 @@ function FaqItem({ item, open, onToggle }: { item: typeof FAQ[0]; open: boolean;
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between px-5 py-4 text-left transition-colors"
-        style={{ color: open ? "#93c5fd" : "white" }}
+        style={{ color: open ? "#aaaaaa" : "white" }}
       >
         <span className="font-medium pr-4 text-sm">{item.q}</span>
         <ChevronDown
@@ -167,8 +167,8 @@ export default function SupportPage() {
           <p className="text-xs mb-4" style={{ color: "#888888" }}>Escríbenos y te ayudamos personalmente.</p>
           <a
             href="mailto:soporte@elitelabs.es"
-            className="text-sm font-semibold transition-colors hover:text-blue-300"
-            style={{ color: "#93c5fd" }}
+            className="text-sm font-semibold transition-colors hover:text-gray-300"
+            style={{ color: "#aaaaaa" }}
           >
             soporte@elitelabs.es →
           </a>

@@ -228,7 +228,7 @@ export default function SignUpPage() {
               </button>
               <button
                 onClick={handleResend}
-                className="text-blue-400 text-sm hover:text-blue-300 transition-colors bg-transparent border-none cursor-pointer"
+                className="text-gray-300 text-sm hover:text-gray-300 transition-colors bg-transparent border-none cursor-pointer"
               >
                 Reenviar código
               </button>
@@ -238,7 +238,7 @@ export default function SignUpPage() {
 
         <p className="text-center text-gray-400 text-sm mt-8">
           ¿Ya tienes cuenta?{" "}
-          <Link href="/sign-in" className="text-blue-400 hover:text-blue-300">
+          <Link href="/sign-in" className="text-gray-300 hover:text-gray-300">
             Inicia sesión
           </Link>
         </p>

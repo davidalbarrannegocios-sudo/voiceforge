@@ -122,7 +122,7 @@ export default function PrivacyPage() {
         <div className="mt-14 pt-8 border-t" style={{ borderColor: "#222222" }}>
           <p className="text-sm" style={{ color: "#888888" }}>
             ¿Preguntas? Escríbenos a{" "}
-            <a href="mailto:soporte@elitelabs.es" className="text-blue-400 hover:text-blue-300 transition-colors">
+            <a href="mailto:soporte@elitelabs.es" className="text-gray-300 hover:text-gray-300 transition-colors">
               soporte@elitelabs.es
             </a>
           </p>

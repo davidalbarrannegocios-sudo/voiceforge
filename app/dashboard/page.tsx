@@ -2558,7 +2558,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             <div className="relative p-8 text-center">
               {dragging && (
                 <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.3)", borderRadius: "inherit", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <p className="text-blue-400 font-medium">Suelta el archivo aquí</p>
+                  <p className="text-gray-300 font-medium">Suelta el archivo aquí</p>
                 </div>
               )}
               <h3 className="text-base font-semibold text-white mb-1">Subir audio fuente</h3>

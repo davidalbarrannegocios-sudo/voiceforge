@@ -47,7 +47,7 @@ export async function POST(req: Request) {
           <h2 style="color: #fff; margin-top: 0;">Nueva solicitud de afiliado</h2>
           <table style="width: 100%; border-collapse: collapse;">
             <tr><td style="padding: 8px 0; color: #9ca3af;">Nombre:</td><td style="padding: 8px 0; color: #fff;">${body.name}</td></tr>
-            <tr><td style="padding: 8px 0; color: #9ca3af;">Email:</td><td style="padding: 8px 0; color: #93c5fd;">${body.email}</td></tr>
+            <tr><td style="padding: 8px 0; color: #9ca3af;">Email:</td><td style="padding: 8px 0; color: #aaaaaa;">${body.email}</td></tr>
             <tr><td style="padding: 8px 0; color: #9ca3af;">Canal/Web:</td><td style="padding: 8px 0; color: #fff;">${body.platform}</td></tr>
             <tr><td style="padding: 8px 0; color: #9ca3af;">Audiencia:</td><td style="padding: 8px 0; color: #fff;">${body.audience}</td></tr>
             <tr><td style="padding: 8px 0; color: #9ca3af;">Pago preferido:</td><td style="padding: 8px 0; color: #fff;">${body.paymentMethod}</td></tr>

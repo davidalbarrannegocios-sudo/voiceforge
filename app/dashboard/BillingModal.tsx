@@ -283,11 +283,11 @@ export function BillingModal({ onClose }: { onClose: () => void }) {
                   )}
                   <p style={{ fontSize: "12px", color: "#4a4a65", marginTop: "16px", lineHeight: 1.6 }}>
                     Para actualizar tu método de pago, contacta con{" "}
-                    <Link href="/dashboard/mi-cuenta" style={{ color: "#60a5fa" }} onClick={onClose}>soporte</Link>
+                    <Link href="/dashboard/mi-cuenta" style={{ color: "#aaaaaa" }} onClick={onClose}>soporte</Link>
                     {" "}o gestiona tu suscripción directamente desde el{" "}
                     <a
                       href="#"
-                      style={{ color: "#60a5fa", textDecoration: "none", cursor: "pointer" }}
+                      style={{ color: "#aaaaaa", textDecoration: "none", cursor: "pointer" }}
                       onClick={async (e) => {
                         e.preventDefault();
                         try {

@@ -270,7 +270,7 @@ export async function POST(req: Request) {
                   <p>El plan Enterprise del equipo <strong>"${team.name}"</strong> ha sido cancelado.</p>
                   <p>Los créditos asignados a tu cuenta por este equipo han sido eliminados. Puedes suscribirte a un plan propio para seguir usando Elite Labs.</p>
                   <a href="https://elitelabs.es/pricing"
-                     style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: #3b82f6; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                     style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: #ffffff; color: #000000; border-radius: 8px; text-decoration: none; font-weight: 600;">
                     Ver planes
                   </a>
                   <p style="margin-top: 24px; font-size: 12px; color: #6b7280;">Elite Labs · elitelabs.es</p>

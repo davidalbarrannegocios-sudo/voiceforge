@@ -209,7 +209,7 @@ export default function SignInPage() {
 
         <p className="text-center text-gray-400 text-sm mt-8">
           ¿No tienes cuenta?{" "}
-          <Link href="/sign-up" className="text-blue-400 hover:text-blue-300">
+          <Link href="/sign-up" className="text-gray-300 hover:text-gray-300">
             Regístrate gratis
           </Link>
         </p>

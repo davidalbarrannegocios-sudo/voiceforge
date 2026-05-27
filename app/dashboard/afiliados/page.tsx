@@ -120,7 +120,7 @@ function AplicarModal({ onClose }: { onClose: () => void }) {
                         cursor: "pointer",
                         transition: "all 150ms",
                         ...(form.paymentMethod === v
-                          ? { background: "rgba(59,130,246,0.2)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
+                          ? { background: "rgba(255,255,255,0.1)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.2)" }
                           : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a3e" }
                         ),
                       }}
@@ -181,9 +181,9 @@ export default function AfiliadosPage() {
 
         {/* ── Hero ── */}
         <div style={{ textAlign: "center", marginBottom: "64px" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "6px 16px", borderRadius: "9999px", background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.2)", marginBottom: "24px" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "6px 16px", borderRadius: "9999px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", marginBottom: "24px" }}>
             <DollarSign size={13} style={{ color: "#aaaaaa" }} />
-            <span style={{ fontSize: "12px", fontWeight: 600, color: "#93c5fd" }}>Programa de Afiliados</span>
+            <span style={{ fontSize: "12px", fontWeight: 600, color: "#aaaaaa" }}>Programa de Afiliados</span>
           </div>
           <h1 style={{ fontSize: "clamp(28px, 5vw, 48px)", fontWeight: 800, color: "#fff", margin: "0 0 16px", lineHeight: 1.15 }}>
             Únete al programa de<br />
@@ -192,7 +192,7 @@ export default function AfiliadosPage() {
             </span>
           </h1>
           <p style={{ fontSize: "18px", color: "#8888a8", margin: "0 0 36px", maxWidth: "540px", marginInline: "auto" }}>
-            Gana un <strong style={{ color: "#93c5fd" }}>5% de comisión en efectivo</strong> por cada usuario que pague a través de tu enlace
+            Gana un <strong style={{ color: "#aaaaaa" }}>5% de comisión en efectivo</strong> por cada usuario que pague a través de tu enlace
           </p>
           <button
             onClick={() => setShowModal(true)}
@@ -247,7 +247,7 @@ export default function AfiliadosPage() {
         </div>
 
         {/* ── CTA ── */}
-        <div style={{ textAlign: "center", background: "linear-gradient(135deg, #0f1a2e 0%, #12121a 100%)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: "24px", padding: "56px 32px" }}>
+        <div style={{ textAlign: "center", background: "linear-gradient(135deg, #0f1a2e 0%, #12121a 100%)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "24px", padding: "56px 32px" }}>
           <h2 style={{ fontSize: "28px", fontWeight: 800, color: "#fff", margin: "0 0 12px" }}>Comienza a ganar hoy</h2>
           <p style={{ color: "#8888a8", fontSize: "16px", margin: "0 0 32px" }}>
             Únete a nuestro programa y empieza a ganar comisiones por cada usuario que refieras

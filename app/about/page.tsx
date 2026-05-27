@@ -50,7 +50,7 @@ export default function AboutPage() {
         <div className="text-center mb-20">
           <div
             className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full mb-6 border"
-            style={{ background: "rgba(59,130,246,0.1)", borderColor: "rgba(59,130,246,0.3)", color: "#93c5fd" }}
+            style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.15)", color: "#aaaaaa" }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-white" />
             Elite Tube LLC · nombre comercial Elite Labs

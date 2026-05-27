@@ -388,7 +388,7 @@ function TierPill({
       ? { background: "rgba(245,158,11,0.2)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.4)" }
       : { background: "transparent", color: "#6b6b88", border: "1px solid #2a2a3e" }
     : active
-    ? { background: "rgba(59,130,246,0.2)", color: "#aaaaaa", border: "1px solid rgba(59,130,246,0.4)" }
+    ? { background: "rgba(255,255,255,0.1)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.2)" }
     : { background: "transparent", color: "#6b6b88", border: "1px solid #2a2a3e" };
 
   return (
@@ -551,7 +551,7 @@ function ElevenFilterPanel({
         className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
         style={
           active
-            ? { background: "rgba(59,130,246,0.2)", color: "#aaaaaa", border: "1px solid rgba(59,130,246,0.4)" }
+            ? { background: "rgba(255,255,255,0.1)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.2)" }
             : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a3e" }
         }
       >
@@ -655,7 +655,7 @@ function FilterPanel({
         className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
         style={
           active
-            ? { background: "rgba(59,130,246,0.2)", color: "#aaaaaa", border: "1px solid rgba(59,130,246,0.4)" }
+            ? { background: "rgba(255,255,255,0.1)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.2)" }
             : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a3e" }
         }
       >
@@ -904,7 +904,7 @@ function VoiceCard({
           disabled={isPreviewLoading}
           className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60"
           style={{
-            background: isPreviewing ? "rgba(59,130,246,0.35)" : "rgba(255,255,255,0.12)",
+            background: isPreviewing ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.12)",
             color: isPreviewing ? "#aaaaaa" : "#e2e2f0",
             border: `1px solid ${isPreviewing ? "rgba(59,130,246,0.5)" : "rgba(255,255,255,0.15)"}`,
             backdropFilter: "blur(4px)",
@@ -918,7 +918,7 @@ function VoiceCard({
           style={
             isLocked
               ? { background: "rgba(30,30,46,0.9)", color: "#3a3a52", border: "1px solid #1a1a2a" }
-              : { background: "#ffffff", color: "#fff" }
+              : { background: "#ffffff", color: "#000000" }
           }
         >
           Usar →
@@ -1563,7 +1563,7 @@ export function VoiceBrowser({
                     className="relative flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
                     style={
                       showFilterPanel || activeFilterCount > 0
-                        ? { background: "rgba(255,255,255,0.08)", color: "#aaaaaa", border: "1px solid rgba(59,130,246,0.4)" }
+                        ? { background: "rgba(255,255,255,0.08)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.2)" }
                         : { background: "#0d0d17", color: "#c0c0d8", border: "1px solid #1e1e2e" }
                     }
                     title="Filtros avanzados"
@@ -1610,7 +1610,7 @@ export function VoiceBrowser({
                     onClick={() => handleSelect(null)}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border mb-2 transition-all text-left"
                     style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
+                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)")}
                     onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1e1e2e")}
                   >
                     <div className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#111111" }}>🎙️</div>
@@ -1830,7 +1830,7 @@ export function VoiceBrowser({
                   onClick={() => handleSelect(null)}
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border mb-3 transition-all text-left"
                   style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)")}
                   onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1e1e2e")}
                 >
                   <div className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#111111" }}>🎙️</div>

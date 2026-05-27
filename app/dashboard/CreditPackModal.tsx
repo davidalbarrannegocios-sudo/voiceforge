@@ -23,7 +23,7 @@ const ELEMENTS_APPEARANCE = {
     ".Input:focus": { border: "1px solid #ffffff", boxShadow: "0 0 0 2px rgba(255,255,255,0.1)" },
     ".Label": { color: "#6b7280", fontSize: "12px", fontWeight: "500" },
     ".Tab": { border: "1px solid #2a2a3e", backgroundColor: "#0d0d17" },
-    ".Tab--selected": { border: "1px solid #ffffff", backgroundColor: "rgba(59,130,246,0.08)" },
+    ".Tab--selected": { border: "1px solid #ffffff", backgroundColor: "rgba(255,255,255,0.05)" },
     ".Tab:hover": { backgroundColor: "#12121a" },
   },
 };
@@ -148,7 +148,7 @@ function CreditPaymentForm({
       >
         {loading ? (
           <>
-            <svg style={{ color: "#93c5fd", flexShrink: 0 }} className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+            <svg style={{ color: "#aaaaaa", flexShrink: 0 }} className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
@@ -221,7 +221,7 @@ export function CreditPackModal({
         {/* Header */}
         <div style={{ padding: "20px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <Zap size={15} style={{ color: "#aaaaaa" }} />
             </div>
             <div>

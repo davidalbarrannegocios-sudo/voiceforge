@@ -69,7 +69,7 @@ export async function POST(req: Request) {
             <p><strong>${ownerName}</strong> te ha añadido a su equipo <strong>"${team.name}"</strong> en Elite Labs.</p>
             <p>Recibirás caracteres mensuales automáticamente según la distribución configurada por el administrador del equipo.</p>
             <a href="https://elitelabs.es/dashboard"
-               style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: #3b82f6; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600;">
+               style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: #ffffff; color: #000000; border-radius: 8px; text-decoration: none; font-weight: 600;">
               Acceder al dashboard
             </a>
             <p style="margin-top: 24px; font-size: 12px; color: #6b7280;">Elite Labs · elitelabs.es</p>

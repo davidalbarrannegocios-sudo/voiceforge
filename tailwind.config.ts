@@ -19,7 +19,7 @@ const config: Config = {
           800: "#5B21B6",
         },
         blue: {
-          400: "#60a5fa",
+          400: "#aaaaaa",
           500: "#3B82F6",
         },
       },
