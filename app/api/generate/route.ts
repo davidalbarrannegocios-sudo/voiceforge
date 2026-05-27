@@ -50,18 +50,31 @@ export async function POST(req: Request) {
     const fromPlan  = Math.min(user.credits, charCost);
     const fromExtra = charCost - fromPlan;
 
-    // Free plan: only allow voices from the free tier; ignore premium voice IDs
+    // Free plan: only allow voices from the free tier
     let effectiveReferenceId: string | undefined = reference_id || undefined;
     if (effectivePlan === "free" && effectiveReferenceId && !FREE_VOICE_IDS.has(effectiveReferenceId)) {
       effectiveReferenceId = undefined;
     }
 
     const expiresAt = getExpiresAt(effectivePlan);
+    const resolvedVoiceName = (voiceName as string | undefined) ?? "Voz por defecto";
 
-    const [, job] = await prisma.$transaction([
+    // ── Step 1: deduct credits + create records atomically BEFORE Fish Audio ──
+    const [, generation, job] = await prisma.$transaction([
       prisma.user.update({
         where: { id: user.id },
         data: { credits: { decrement: fromPlan }, extraCredits: { decrement: fromExtra } },
+      }),
+      prisma.generation.create({
+        data: {
+          userId: user.id,
+          status: "processing",
+          text: trimmed,
+          voiceId: effectiveReferenceId ?? "default",
+          voiceName: resolvedVoiceName,
+          creditsUsed: charCost,
+          expiresAt,
+        },
       }),
       prisma.job.create({
         data: {
@@ -69,15 +82,16 @@ export async function POST(req: Request) {
           status: "processing",
           text: trimmed,
           voiceId: effectiveReferenceId ?? "default",
-          voiceName: (voiceName as string | undefined) ?? "Voz por defecto",
+          voiceName: resolvedVoiceName,
           creditsUsed: charCost,
           expiresAt,
         },
       }),
     ]);
 
-    console.log(`[generate] jobId=${job.id} chars=${trimmed.length} plan=${user.plan}`);
+    console.log(`[generate] generationId=${generation.id} jobId=${job.id} chars=${trimmed.length} plan=${user.plan}`);
 
+    // ── Step 2: call Fish Audio ──────────────────────────────────────────────
     let result;
     try {
       result = await fishAudioGenerate({
@@ -97,14 +111,27 @@ export async function POST(req: Request) {
       const isAbort = req.signal.aborted;
       const errMsg = isAbort ? "Generación cancelada" : (fishErr instanceof Error ? fishErr.message : String(fishErr));
       if (isAbort) {
-        console.log(`[generate] client disconnected — refunding jobId=${job.id}`);
+        console.log(`[generate] client disconnected — refunding generationId=${generation.id}`);
       } else {
         console.error(`[generate] Fish Audio failed:`, errMsg);
       }
+
+      // ── Refund credits + mark as error ──
       await prisma.$transaction([
-        prisma.user.update({ where: { id: user.id }, data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } } }),
-        prisma.job.update({ where: { id: job.id }, data: { status: "failed", error: errMsg } }),
+        prisma.user.update({
+          where: { id: user.id },
+          data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } },
+        }),
+        prisma.generation.update({
+          where: { id: generation.id },
+          data: { status: "error", error: errMsg },
+        }),
+        prisma.job.update({
+          where: { id: job.id },
+          data: { status: "failed", error: errMsg },
+        }),
       ]);
+
       console.log(`[generate] Créditos devueltos: plan=${fromPlan} extra=${fromExtra} usuario=${user.id}`);
       return NextResponse.json({
         error: isAbort
@@ -114,7 +141,16 @@ export async function POST(req: Request) {
       }, { status: 500 });
     }
 
+    // ── Step 3: Fish Audio succeeded — update both records ───────────────────
     await prisma.$transaction([
+      prisma.generation.update({
+        where: { id: generation.id },
+        data: {
+          status: "done",
+          audioUrl: result.audio_url,
+          durationSeconds: result.duration_seconds,
+        },
+      }),
       prisma.job.update({
         where: { id: job.id },
         data: {
@@ -123,20 +159,10 @@ export async function POST(req: Request) {
           durationSeconds: result.duration_seconds,
         },
       }),
-      prisma.generation.create({
-        data: {
-          userId: user.id,
-          text: trimmed,
-          voiceId: effectiveReferenceId ?? "default",
-          audioUrl: result.audio_url,
-          durationSeconds: result.duration_seconds,
-          creditsUsed: charCost,
-          expiresAt,
-        },
-      }),
     ]);
 
     return NextResponse.json({
+      generationId: generation.id,
       jobId: job.id,
       audioUrl: result.audio_url,
       durationSeconds: result.duration_seconds,

@@ -1638,12 +1638,14 @@ function VoicesTab({
 /* ─── History Tab ─────────────────────────────────────────── */
 interface HistoryGen {
   id: string;
+  status: string;
   text: string;
   audioUrl: string | null;
   creditsUsed: number;
   durationSeconds: number | null;
   voiceId: string | null;
   voiceName: string | null;
+  error: string | null;
   createdAt: string;
   expiresAt: string | null;
 }
@@ -1801,11 +1803,17 @@ function HistoryTab({ plan }: { plan: string }) {
                     const isPlaying = playingId === gen.id;
                     const seed = gen.voiceId ?? gen.id;
 
+                    const isProcessing = gen.status === "processing";
+                    const isStale = isProcessing && (Date.now() - new Date(gen.createdAt).getTime()) > 10 * 60 * 1000;
+                    const isError = gen.status === "error" || isStale;
+
                     return (
                       <div
                         key={gen.id}
                         style={{
-                          background: "#111111", border: "1px solid #1a1a1a", borderRadius: 10,
+                          background: "#111111",
+                          border: isError ? "1px solid rgba(239,68,68,0.2)" : isProcessing ? "1px solid rgba(255,255,255,0.08)" : "1px solid #1a1a1a",
+                          borderRadius: 10,
                           padding: 14, position: "relative",
                           transition: "opacity 0.3s, transform 0.3s",
                           opacity: isRemoving ? 0 : 1,
@@ -1830,8 +1838,28 @@ function HistoryTab({ plan }: { plan: string }) {
                           {gen.text}
                         </p>
 
-                        {/* Actions */}
-                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        {/* Processing state */}
+                        {isProcessing && !isStale && (
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0" }}>
+                            <svg style={{ color: "#6b7280", flexShrink: 0 }} className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                            <span style={{ fontSize: 11, color: "#6b7280" }}>Generando audio...</span>
+                          </div>
+                        )}
+
+                        {/* Error state */}
+                        {isError && (
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 0" }}>
+                            <span style={{ fontSize: 11, color: "#f87171" }}>
+                              {isStale ? "Tiempo de espera agotado — contacta con soporte" : (gen.error ? gen.error.slice(0, 80) : "Error al generar el audio")}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Actions — only for done generations */}
+                        {!isProcessing && !isError && <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                           <button
                             onClick={() => togglePlay(gen)}
                             disabled={!gen.audioUrl}
@@ -1920,7 +1948,7 @@ function HistoryTab({ plan }: { plan: string }) {
                               </div>
                             )}
                           </div>
-                        </div>
+                        </div>}
                       </div>
                     );
                   })}

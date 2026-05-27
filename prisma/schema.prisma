@@ -67,11 +67,14 @@ model Generation {
   id              String    @id @default(cuid())
   userId          String
   user            User      @relation(fields: [userId], references: [id])
+  status          String    @default("done")
   text            String
   voiceId         String
+  voiceName       String?
   audioUrl        String?
-  durationSeconds Float
-  creditsUsed     Int
+  durationSeconds Float?
+  creditsUsed     Int       @default(0)
+  error           String?
   refunded        Boolean   @default(false)
   expiresAt       DateTime?
   createdAt       DateTime  @default(now())
