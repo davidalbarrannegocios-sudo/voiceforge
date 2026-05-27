@@ -62,6 +62,15 @@ audio::-webkit-media-controls-panel {
   background: #ffffff;
 }
 
+/* Prevent browser autofill from applying its own blue background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #111111 inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff;
+}
+
 /* Slider */
 input[type="range"] {
   -webkit-appearance: none;

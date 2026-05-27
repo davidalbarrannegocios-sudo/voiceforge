@@ -84,8 +84,8 @@ export default function SignUpPage() {
     }
   }
 
-  const inputClass = "w-full h-12 px-4 rounded-lg border text-white placeholder:text-gray-500 focus:outline-none focus:border-white/40 transition-colors text-sm";
-  const inputStyle = { background: "#111122", borderColor: "rgba(255,255,255,0.15)" };
+  const inputClass = "w-full h-12 px-4 rounded-lg border text-white placeholder:text-white/40 focus:outline-none focus:border-white/40 transition-colors text-sm";
+  const inputStyle = { background: "#111111", borderColor: "rgba(255,255,255,0.10)" };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: "#0a0a0f" }}>
