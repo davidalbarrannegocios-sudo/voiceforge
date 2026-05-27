@@ -85,9 +85,45 @@ export default function AudioHistoryList({
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const pageRef = useRef(page);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const generationsRef = useRef<Generation[]>([]);
+  generationsRef.current = generations;
   const [playTime, setPlayTime] = useState<{ current: number; duration: number }>({ current: 0, duration: 0 });
 
   useEffect(() => { pageRef.current = page; }, [page]);
+
+  // Poll processing generations every 3s until they resolve
+  const hasProcessing = generations.some((g) => g.status === "processing");
+  useEffect(() => {
+    if (!hasProcessing) return;
+    const timer = setInterval(async () => {
+      const pending = generationsRef.current.filter((g) => g.status === "processing");
+      if (pending.length === 0) return;
+      const results = await Promise.allSettled(
+        pending.map((g) => fetch(`/api/generation/${g.id}`).then((r) => r.json()))
+      );
+      setGenerations((prev) => {
+        let changed = false;
+        const next = prev.map((g) => {
+          const idx = pending.findIndex((p) => p.id === g.id);
+          if (idx === -1) return g;
+          const res = results[idx];
+          if (res.status === "fulfilled" && res.value.status !== "processing") {
+            changed = true;
+            return {
+              ...g,
+              status: res.value.status,
+              audioUrl: res.value.audioUrl ?? g.audioUrl,
+              durationSeconds: res.value.durationSeconds ?? g.durationSeconds,
+              error: res.value.error ?? g.error,
+            };
+          }
+          return g;
+        });
+        return changed ? next : prev;
+      });
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [hasProcessing]);
 
   const fetchHistory = useCallback(async (p: number) => {
     setLoading(true);

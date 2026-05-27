@@ -91,14 +91,15 @@ export async function POST(req: Request) {
 
     console.log(`[generate] generationId=${generation.id} jobId=${job.id} chars=${trimmed.length} plan=${user.plan}`);
 
-    // ── Step 2: call Fish Audio ──────────────────────────────────────────────
+    // ── Step 2: call Fish Audio (no client signal — completes even if client disconnects) ──
     let result;
     try {
       result = await fishAudioGenerate({
         text: trimmed,
         referenceId: effectiveReferenceId,
         userId: user.id,
-        signal: req.signal,
+        // Intentionally no req.signal: Fish Audio must finish even if client navigates away.
+        // The generation record in DB will be updated to status="done" regardless.
         prosody: prosody ?? undefined,
         model: typeof model === "string" ? model : undefined,
         temperature: typeof temperature === "number" ? temperature : undefined,
@@ -108,19 +109,14 @@ export async function POST(req: Request) {
         mp3Bitrate: typeof mp3Bitrate === "number" ? mp3Bitrate : undefined,
       });
     } catch (fishErr) {
-      const isAbort = req.signal.aborted;
-      const errMsg = isAbort ? "Generación cancelada" : (fishErr instanceof Error ? fishErr.message : String(fishErr));
-      if (isAbort) {
-        console.log(`[generate] client disconnected — refunding generationId=${generation.id}`);
-      } else {
-        console.error(`[generate] Fish Audio error:`, {
-          message: errMsg,
-          voiceId: effectiveReferenceId ?? "default",
-          textLength: trimmed.length,
-          userId: user.id,
-          generationId: generation.id,
-        });
-      }
+      const errMsg = fishErr instanceof Error ? fishErr.message : String(fishErr);
+      console.error(`[generate] Fish Audio error:`, {
+        message: errMsg,
+        voiceId: effectiveReferenceId ?? "default",
+        textLength: trimmed.length,
+        userId: user.id,
+        generationId: generation.id,
+      });
 
       // ── Refund credits + mark as error ──
       await prisma.$transaction([
@@ -140,9 +136,7 @@ export async function POST(req: Request) {
 
       console.log(`[generate] Créditos devueltos: plan=${fromPlan} extra=${fromExtra} usuario=${user.id}`);
       return NextResponse.json({
-        error: isAbort
-          ? "Generación cancelada. Tus créditos han sido devueltos automáticamente."
-          : "Error al generar el audio. Tus créditos han sido devueltos automáticamente.",
+        error: "Error al generar el audio. Tus créditos han sido devueltos automáticamente.",
         detail: errMsg,
       }, { status: 500 });
     }
