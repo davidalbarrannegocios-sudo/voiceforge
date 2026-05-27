@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { Users } from "lucide-react";
-import { PaymentModal, type BillingPlan } from "@/app/dashboard/PaymentModal";
 
 type Plan = {
   key: string;
@@ -142,14 +141,13 @@ function PricingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
-  const [activePlan, setActivePlan] = useState<BillingPlan | null>(null);
   const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
 
   useEffect(() => {
     const planKey = searchParams.get("plan");
     if (planKey && isSignedIn) {
       const found = PLANS.find((p) => p.key === planKey);
-      if (found && !found.free) setActivePlan(found);
+      if (found && !found.free) router.push(`/checkout/${planKey}?billing=${billing}`);
     }
   }, [isSignedIn, searchParams]);
 
@@ -159,10 +157,10 @@ function PricingContent() {
       return;
     }
     if (!isSignedIn) {
-      router.push(`/sign-in?redirect_url=/pricing?plan=${plan.key}`);
+      router.push(`/sign-in?redirect_url=/checkout/${plan.key}?billing=${billing}`);
       return;
     }
-    setActivePlan(plan);
+    router.push(`/checkout/${plan.key}?billing=${billing}`);
   }
 
   function annualMonthly(price: number) {
@@ -454,17 +452,6 @@ function PricingContent() {
 
       </main>
 
-      {activePlan && (
-        <PaymentModal
-          plan={activePlan}
-          billing={billing}
-          onClose={() => setActivePlan(null)}
-          onSuccess={() => {
-            setActivePlan(null);
-            router.push("/dashboard");
-          }}
-        />
-      )}
     </div>
   );
 }

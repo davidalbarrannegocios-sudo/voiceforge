@@ -1,0 +1,468 @@
+"use client";
+
+import { useState, useEffect, useRef, Suspense } from "react";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { loadStripe } from "@stripe/stripe-js";
+import {
+  Elements,
+  PaymentElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
+import { ArrowLeft, Lock } from "lucide-react";
+import { PLANS, type PlanKey } from "@/lib/stripe";
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+
+const PLAN_FEATURES: Record<string, string[]> = {
+  starter: [
+    "200.000 caracteres/mes (x2 con EliteLabs 2)",
+    "Selección de voz completa",
+    "Transcripciones y traducciones ilimitadas",
+    "3 voces clonadas",
+    "Audios disponibles 14 días",
+  ],
+  pro: [
+    "500.000 caracteres/mes (x2 con EliteLabs 2)",
+    "Selección de voz completa",
+    "Transcripciones y traducciones ilimitadas",
+    "10 voces clonadas",
+    "Generación prioritaria",
+    "Audios disponibles 30 días",
+  ],
+  elite: [
+    "1.000.000 caracteres/mes (x2 con EliteLabs 2)",
+    "Selección de voz completa",
+    "Transcripciones y traducciones ilimitadas",
+    "20 voces clonadas",
+    "Prioridad máxima",
+    "Soporte preferente",
+    "Audios disponibles 30 días",
+  ],
+  enterprise: [
+    "5.000.000 caracteres/mes (x2 con EliteLabs 2)",
+    "Voces clonadas ilimitadas",
+    "Transcripciones y traducciones ilimitadas",
+    "Traducción de audio +10%",
+    "Generación prioritaria",
+    "Soporte preferente",
+    "Audios disponibles 90 días",
+  ],
+};
+
+const ELEMENTS_APPEARANCE = {
+  theme: "night" as const,
+  variables: {
+    colorPrimary: "#ffffff",
+    colorBackground: "#0a0a0a",
+    colorText: "#e5e7eb",
+    colorDanger: "#f87171",
+    fontFamily: "system-ui, -apple-system, sans-serif",
+    borderRadius: "10px",
+    colorTextPlaceholder: "#555555",
+  },
+  rules: {
+    ".Input": { border: "1px solid #222222", backgroundColor: "#0a0a0a" },
+    ".Input:focus": { border: "1px solid #ffffff", boxShadow: "0 0 0 2px rgba(255,255,255,0.08)" },
+    ".Label": { color: "#666666", fontSize: "12px", fontWeight: "500" },
+    ".Tab": { border: "1px solid #222222", backgroundColor: "#0a0a0a" },
+    ".Tab--selected": { border: "1px solid #ffffff", backgroundColor: "rgba(255,255,255,0.05)" },
+    ".Tab:hover": { backgroundColor: "#111111" },
+    ".TabLabel": { color: "#e5e7eb" },
+    ".Block": { border: "1px solid #222222", backgroundColor: "#0a0a0a" },
+  },
+};
+
+function FeatureTick() {
+  return (
+    <div style={{
+      width: 16, height: 16, borderRadius: "50%",
+      background: "linear-gradient(135deg, #1d4ed8, #60a5fa)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      flexShrink: 0, marginTop: "2px",
+    }}>
+      <svg width="8" height="6" viewBox="0 0 10 8" fill="none">
+        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
+/* ─── Inner form (must be inside <Elements>) ──────────────── */
+function CheckoutForm({
+  planKey,
+  billing,
+  setBilling,
+  customerId,
+}: {
+  planKey: PlanKey;
+  billing: "monthly" | "annual";
+  setBilling: (b: "monthly" | "annual") => void;
+  customerId: string;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const plan = PLANS[planKey];
+  const features = PLAN_FEATURES[planKey] ?? [];
+
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL ?? "");
+
+  const monthlyPrice = billing === "annual"
+    ? Math.round(plan.price * 0.83 * 10) / 10
+    : plan.price;
+  const annualTotal = Math.round(monthlyPrice * 12);
+  const displayPrice = billing === "annual" ? `$${annualTotal}/año` : `$${plan.price}/mes`;
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    setError(null);
+    setLoading(true);
+
+    const { error: submitErr } = await elements.submit();
+    if (submitErr) {
+      setError(submitErr.message ?? "Error al validar el formulario");
+      setLoading(false);
+      return;
+    }
+
+    const { error: setupErr, setupIntent } = await stripe.confirmSetup({
+      elements,
+      redirect: "if_required",
+      confirmParams: {
+        return_url: `${baseUrl}/dashboard?success=true&plan=${planKey}`,
+      },
+    });
+
+    if (setupErr) {
+      setError(setupErr.message ?? "Error al guardar el método de pago");
+      setLoading(false);
+      return;
+    }
+
+    const paymentMethodId =
+      typeof setupIntent?.payment_method === "string"
+        ? setupIntent.payment_method
+        : setupIntent?.payment_method?.id;
+
+    if (!paymentMethodId) {
+      setError("No se pudo obtener el método de pago. Inténtalo de nuevo.");
+      setLoading(false);
+      return;
+    }
+
+    const res = await fetch("/api/activate-subscription", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customerId, planKey, paymentMethodId, billing }),
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      setError(data.error ?? "Error al activar la suscripción");
+      setLoading(false);
+      return;
+    }
+
+    router.push("/dashboard?success=true");
+  }
+
+  return (
+    <div style={{ display: "flex", height: "100vh", background: "#000000", overflow: "hidden" }}>
+
+      {/* ── LEFT COLUMN ── */}
+      <div style={{ flex: "0 0 55%", height: "100vh", overflowY: "auto", padding: "48px 56px", display: "flex", flexDirection: "column", gap: "32px" }}>
+
+        {/* Back + title */}
+        <div>
+          <button
+            type="button"
+            onClick={() => router.push("/pricing")}
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "none", border: "none", cursor: "pointer", color: "#555555", fontSize: "13px", padding: 0, marginBottom: "28px" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#ffffff"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "#555555"; }}
+          >
+            <ArrowLeft size={14} />
+            Volver
+          </button>
+          <h1 style={{ fontSize: "28px", fontWeight: 800, color: "#ffffff", margin: 0, lineHeight: 1.1 }}>
+            Configura tu plan
+          </h1>
+          <p style={{ fontSize: "14px", color: "#555555", marginTop: "6px" }}>
+            {plan.characters.toLocaleString("es-ES")} caracteres/mes
+          </p>
+        </div>
+
+        {/* Billing toggle — two cards */}
+        <div>
+          <p style={{ fontSize: "12px", fontWeight: 600, color: "#555555", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "12px" }}>
+            Detalles del plan
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+            {/* Monthly card */}
+            <button
+              type="button"
+              onClick={() => setBilling("monthly")}
+              style={{
+                padding: "14px 16px", borderRadius: "12px", border: billing === "monthly" ? "2px solid #ffffff" : "1px solid #222222",
+                background: billing === "monthly" ? "rgba(255,255,255,0.04)" : "#0a0a0a",
+                cursor: "pointer", textAlign: "left", transition: "all 0.15s",
+              }}
+            >
+              <p style={{ fontSize: "12px", color: billing === "monthly" ? "#cccccc" : "#555555", margin: "0 0 4px", fontWeight: 500 }}>
+                Facturación mensual
+              </p>
+              <p style={{ fontSize: "20px", fontWeight: 800, color: billing === "monthly" ? "#ffffff" : "#666666", margin: 0 }}>
+                ${plan.price}<span style={{ fontSize: "12px", fontWeight: 400, color: "#555555" }}>/mes</span>
+              </p>
+            </button>
+
+            {/* Annual card */}
+            <button
+              type="button"
+              onClick={() => setBilling("annual")}
+              style={{
+                padding: "14px 16px", borderRadius: "12px", border: billing === "annual" ? "2px solid #ffffff" : "1px solid #222222",
+                background: billing === "annual" ? "rgba(255,255,255,0.04)" : "#0a0a0a",
+                cursor: "pointer", textAlign: "left", transition: "all 0.15s", position: "relative",
+              }}
+            >
+              <div style={{ position: "absolute", top: "10px", right: "10px", fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e" }}>
+                AHORRA 17%
+              </div>
+              <p style={{ fontSize: "12px", color: billing === "annual" ? "#cccccc" : "#555555", margin: "0 0 4px", fontWeight: 500 }}>
+                Facturación anual
+              </p>
+              <p style={{ fontSize: "20px", fontWeight: 800, color: billing === "annual" ? "#ffffff" : "#666666", margin: 0 }}>
+                ${Math.round(plan.price * 0.83 * 10) / 10}<span style={{ fontSize: "12px", fontWeight: 400, color: "#555555" }}>/mes</span>
+              </p>
+            </button>
+          </div>
+        </div>
+
+        {/* Payment form */}
+        <form ref={formRef} onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+            <Lock size={12} style={{ color: "#555555" }} />
+            <p style={{ fontSize: "12px", fontWeight: 600, color: "#555555", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
+              Método de pago
+            </p>
+          </div>
+          <PaymentElement options={{ layout: "tabs" }} />
+
+          {error && (
+            <div style={{ padding: "10px 12px", borderRadius: "8px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171", fontSize: "13px", marginTop: "8px" }}>
+              {error}
+            </div>
+          )}
+        </form>
+
+        <p style={{ fontSize: "11px", color: "#333333", marginTop: "auto" }}>
+          Pago seguro cifrado con SSL · Cancela en cualquier momento
+        </p>
+      </div>
+
+      {/* ── RIGHT COLUMN ── */}
+      <div style={{ flex: "0 0 45%", height: "100vh", overflowY: "auto", background: "#0a0a0a", borderLeft: "1px solid #1a1a1a", padding: "48px 40px", display: "flex", flexDirection: "column" }}>
+
+        {/* Plan header */}
+        <div style={{ marginBottom: "24px" }}>
+          <p style={{ fontSize: "12px", fontWeight: 600, color: "#555555", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "6px" }}>
+            Plan seleccionado
+          </p>
+          <h2 style={{ fontSize: "22px", fontWeight: 800, color: "#ffffff", margin: "0 0 2px" }}>
+            {plan.name}
+          </h2>
+          <p style={{ fontSize: "13px", color: "#555555" }}>
+            {plan.characters.toLocaleString("es-ES")} caracteres/mes
+          </p>
+        </div>
+
+        {/* Features */}
+        <div style={{ marginBottom: "28px", flex: 1 }}>
+          <p style={{ fontSize: "12px", fontWeight: 600, color: "#555555", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "4px" }}>
+            Funciones destacadas
+          </p>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {features.map((f, i) => (
+              <li
+                key={f}
+                style={{
+                  display: "flex", alignItems: "flex-start", gap: "10px",
+                  fontSize: "13px", color: "rgba(255,255,255,0.75)", lineHeight: 1.5,
+                  paddingTop: "10px", paddingBottom: "10px",
+                  borderBottom: i < features.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                }}
+              >
+                <FeatureTick />
+                {f}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Price breakdown */}
+        <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: "20px", marginTop: "auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", color: "#555555", marginBottom: "8px" }}>
+            <span>Suscripción {billing === "annual" ? "anual" : "mensual"}</span>
+            <span>${billing === "annual" ? `${monthlyPrice}/mes` : `${plan.price}/mes`}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", color: "#555555", marginBottom: "16px" }}>
+            <span>Impuesto estimado</span>
+            <span>$0.00</span>
+          </div>
+          <div style={{ height: "1px", background: "#1a1a1a", marginBottom: "16px" }} />
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "15px", fontWeight: 700, color: "#ffffff", marginBottom: "20px" }}>
+            <span>Importe a pagar hoy</span>
+            <span>{displayPrice}</span>
+          </div>
+
+          {/* Submit */}
+          <button
+            type="button"
+            onClick={() => formRef.current?.requestSubmit()}
+            disabled={loading || !stripe}
+            style={{
+              width: "100%", padding: "14px", borderRadius: "10px", border: "none",
+              background: loading ? "#333333" : "#ffffff",
+              color: "#000000", fontSize: "15px", fontWeight: 700,
+              cursor: loading ? "not-allowed" : "pointer",
+              opacity: loading || !stripe ? 0.7 : 1,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+              transition: "background 0.15s, opacity 0.15s",
+              marginBottom: "12px",
+            }}
+            onMouseEnter={(e) => { if (!loading && stripe) (e.currentTarget as HTMLElement).style.background = "#e5e5e5"; }}
+            onMouseLeave={(e) => { if (!loading && stripe) (e.currentTarget as HTMLElement).style.background = "#ffffff"; }}
+          >
+            {loading ? (
+              <>
+                <svg style={{ color: "#666666", flexShrink: 0 }} className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Procesando...
+              </>
+            ) : (
+              `Suscribirme — ${displayPrice}`
+            )}
+          </button>
+
+          <p style={{ fontSize: "11px", color: "#333333", textAlign: "center" }}>
+            Se renueva {billing === "annual" ? "anualmente" : "mensualmente"} · Cancela cuando quieras
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Data loader — fetches SetupIntent then renders form ─── */
+function CheckoutContent() {
+  const params = useParams<{ plan: string }>();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const planKey = params.plan as PlanKey;
+  const initialBilling = (searchParams.get("billing") ?? "monthly") as "monthly" | "annual";
+
+  const [billing, setBilling] = useState<"monthly" | "annual">(initialBilling);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!(planKey in PLANS)) {
+      router.replace("/pricing");
+      return;
+    }
+    let cancelled = false;
+    fetch("/api/create-subscription", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ planKey }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (data.clientSecret) {
+          setClientSecret(data.clientSecret);
+          setCustomerId(data.customerId);
+        } else {
+          setFetchError(data.error ?? "No se pudo iniciar el proceso de pago");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setFetchError("Error de conexión. Inténtalo de nuevo.");
+      });
+    return () => { cancelled = true; };
+  }, [planKey, router]);
+
+  if (!(planKey in PLANS)) return null;
+
+  if (fetchError) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ maxWidth: "400px", padding: "24px", borderRadius: "12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171", fontSize: "14px", textAlign: "center" }}>
+          {fetchError}
+          <button
+            type="button"
+            onClick={() => router.push("/pricing")}
+            style={{ display: "block", margin: "16px auto 0", padding: "8px 20px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.2)", background: "transparent", color: "#ffffff", cursor: "pointer", fontSize: "13px" }}
+          >
+            ← Volver a precios
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!clientSecret || !customerId) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "16px" }}>
+        <svg style={{ color: "#444444" }} className="animate-spin h-8 w-8" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        <p style={{ fontSize: "14px", color: "#444444" }}>Preparando formulario de pago...</p>
+      </div>
+    );
+  }
+
+  return (
+    <Elements
+      stripe={stripePromise}
+      options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}
+    >
+      <CheckoutForm
+        planKey={planKey}
+        billing={billing}
+        setBilling={setBilling}
+        customerId={customerId}
+      />
+    </Elements>
+  );
+}
+
+/* ─── Page export ─────────────────────────────────────────── */
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <div style={{ minHeight: "100vh", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg style={{ color: "#444444" }} className="animate-spin h-8 w-8" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+        </div>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
+  );
+}
