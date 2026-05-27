@@ -909,7 +909,7 @@ function GenerateTab({
                       {([
                         { value: "speech-1.6", sub: "Nuestro modelo insignia"   },
                         { value: "speech-1.5", sub: "Heredado"                  },
-                        { value: "turbo",      sub: "+12k voces con ElevenLabs" },
+                        { value: "turbo",      sub: "Voces premium · 2x rendimiento de caracteres" },
                       ]).map(({ value, sub }) => (
                         <button
                           key={value}
