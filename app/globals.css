@@ -214,22 +214,25 @@ input[type="range"]::-moz-range-thumb {
   color: #aaa !important;
 }
 
-/* ── M1 banner animations ─────────────────────────────────────── */
-@keyframes el-fade-in {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes el-content-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-@keyframes drawBorder {
-  to { stroke-dashoffset: 0; }
+/* ── Shimmer badge animation ──────────────────────────────────── */
+@keyframes shimmerBadge {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
 }
 
-.el-banner {
-  animation: el-fade-in 0.35s cubic-bezier(0.22,1,0.36,1) both;
+.badge-shimmer-purple {
+  background: linear-gradient(135deg, #7c3aed, #a855f7, #6366f1, #8b5cf6);
+  background-size: 300% 300%;
+  animation: shimmerBadge 3s ease infinite;
+  color: white !important;
+  border: none !important;
 }
-.el-banner-content {
-  animation: el-content-in 0.3s ease 0.7s both;
+
+.badge-shimmer-blue {
+  background: linear-gradient(135deg, #0ea5e9, #38bdf8, #06b6d4, #0284c7);
+  background-size: 300% 300%;
+  animation: shimmerBadge 3s ease infinite;
+  color: white !important;
+  border: none !important;
 }

@@ -931,17 +931,17 @@ function GenerateTab({
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
                       <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ttsEngine === "elitelabs" ? "Elite Labs M2" : "Elite Labs M1"}</span>
-                      {ttsEngine === "elitelabs"  && <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", background: "rgba(59,130,246,0.15)", color: "#3b82f6", border: "1px solid rgba(59,130,246,0.3)", flexShrink: 0 }}>Recomendado</span>}
-                      {ttsEngine === "elitelabs2" && <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", background: "rgba(139,92,246,0.15)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.3)", flexShrink: 0 }}>+12k voces</span>}
+                      {ttsEngine === "elitelabs"  && <span className="badge-shimmer-blue"   style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", flexShrink: 0 }}>Recomendado</span>}
+                      {ttsEngine === "elitelabs2" && <span className="badge-shimmer-purple" style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", flexShrink: 0 }}>+12k voces</span>}
                     </div>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", flexShrink: 0, transform: engineDropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
                   </button>
                   {engineDropdownOpen && (
                     <div style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "4px", padding: "4px", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
                       {([
-                        { value: "elitelabs",  label: "Elite Labs M2", sub: "+500k voces en español", badge: "Recomendado", badgeColor: "#3b82f6", disabled: false },
-                        { value: "elitelabs2", label: "Elite Labs M1", sub: "Buenas voces para videos",  badge: "+12k voces",  badgeColor: "#8b5cf6", disabled: elitelabs2Down },
-                      ] as const).map(({ value, label, sub, badge, badgeColor, disabled }) => (
+                        { value: "elitelabs",  label: "Elite Labs M2", sub: "+500k voces en español", badge: "Recomendado", badgeClass: "badge-shimmer-blue",   disabled: false },
+                        { value: "elitelabs2", label: "Elite Labs M1", sub: "Buenas voces para videos", badge: "+12k voces",  badgeClass: "badge-shimmer-purple", disabled: elitelabs2Down },
+                      ] as const).map(({ value, label, sub, badge, badgeClass, disabled }) => (
                         <button
                           key={value}
                           disabled={disabled}
@@ -953,7 +953,7 @@ function GenerateTab({
                           <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                               <span style={{ fontWeight: 500 }}>{label}</span>
-                              <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", background: `${badgeColor}22`, color: badgeColor, border: `1px solid ${badgeColor}44`, flexShrink: 0 }}>{disabled ? "Mantenimiento" : badge}</span>
+                              <span className={disabled ? undefined : badgeClass} style={disabled ? { fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", background: "#374151", color: "#9ca3af", flexShrink: 0 } : { fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", flexShrink: 0 }}>{disabled ? "Mantenimiento" : badge}</span>
                             </div>
                             <span style={{ fontSize: "11px", marginTop: "2px", color: "#4b4b6a" }}>{sub}</span>
                           </div>
@@ -976,21 +976,21 @@ function GenerateTab({
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
                       <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{selectedModel === "speech-1.6" ? "Elite Labs E2 Pro" : "Elite Labs E1"}</span>
-                      {selectedModel === "speech-1.6" && <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", background: "rgba(59,130,246,0.15)", color: "#3b82f6", border: "1px solid rgba(59,130,246,0.3)", flexShrink: 0 }}>El más nuevo</span>}
+                      {selectedModel === "speech-1.6" && <span className="badge-shimmer-purple" style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", flexShrink: 0 }}>El más nuevo</span>}
                     </div>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", flexShrink: 0, transform: modelDropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
                   </button>
                   {modelDropdownOpen && (
                     <div style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "4px", padding: "4px", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
                       {([
-                        { value: "speech-1.6", label: "Elite Labs E2 Pro", sub: "Nuestro modelo insignia", badge: "El más nuevo", badgeColor: "#3b82f6" },
-                        { value: "speech-1.5", label: "Elite Labs E1",     sub: "Heredado",                badge: null,           badgeColor: "" },
-                      ] as const).map(({ value, label, sub, badge, badgeColor }) => (
+                        { value: "speech-1.6", label: "Elite Labs E2 Pro", sub: "Nuestro modelo insignia", badge: "El más nuevo", badgeClass: "badge-shimmer-purple" },
+                        { value: "speech-1.5", label: "Elite Labs E1",     sub: "Heredado",                badge: null,           badgeClass: "" },
+                      ] as const).map(({ value, label, sub, badge, badgeClass }) => (
                         <button key={value} onClick={() => { setSelectedModel(value); setModelDropdownOpen(false); }} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: selectedModel === value ? "#e2e2f0" : "#6b7280", cursor: "pointer" }} onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
                           <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                               <span style={{ fontWeight: 500 }}>{label}</span>
-                              {badge && <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", background: `${badgeColor}22`, color: badgeColor, border: `1px solid ${badgeColor}44`, flexShrink: 0 }}>{badge}</span>}
+                              {badge && <span className={badgeClass} style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", flexShrink: 0 }}>{badge}</span>}
                             </div>
                             <span style={{ fontSize: "11px", marginTop: "2px", color: "#4b4b6a" }}>{sub}</span>
                           </div>
