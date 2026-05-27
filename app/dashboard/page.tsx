@@ -968,36 +968,24 @@ function GenerateTab({
 
               {/* M1 BANNER — switch-to-M2 promo card */}
               {ttsEngine === "elitelabs2" && (
-                <div className="el-banner" style={{ position: "relative", borderRadius: "12px", background: "linear-gradient(135deg, #1a1200, #2a1f00, #1a1200)", border: "1px solid rgba(251,191,36,0.3)" }}>
-                  {/* SVG border trace animation */}
-                  <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", borderRadius: "12px", pointerEvents: "none", overflow: "visible" }}>
-                    <rect x="0.5" y="0.5" width="99%" height="99%" rx="11" fill="none"
-                      stroke="rgba(251,191,36,0.8)" strokeWidth="1.5"
-                      strokeDasharray="1000" strokeDashoffset="1000"
-                      style={{ animation: "drawBorder 0.6s ease forwards" }}
-                    />
-                  </svg>
-                  {/* content fades in after trace completes */}
-                  <div className="el-banner-content" style={{ position: "relative", padding: "10px 12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                    {/* row 1: badge + title + arrow */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 7px", borderRadius: "20px", background: "rgba(251,191,36,0.2)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.4)", letterSpacing: "0.02em", flexShrink: 0 }}>M2</span>
-                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#fde68a" }}>Elite Labs M2</span>
-                      </div>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                    </div>
-                    {/* row 2: description + CTA button */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
-                      <span style={{ fontSize: "11px", color: "rgba(253,230,138,0.6)" }}>El motor recomendado · +2M voces · Clonación incluida</span>
-                      <button
-                        onClick={() => { setTtsEngine("elitelabs"); onVoiceChange(null); }}
-                        style={{ fontSize: "10px", fontWeight: 700, padding: "4px 10px", borderRadius: "6px", background: "rgba(251,191,36,0.15)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.4)", whiteSpace: "nowrap", cursor: "pointer", flexShrink: 0 }}
-                      >
-                        Probar →
-                      </button>
-                    </div>
-                  </div>
+                <div style={{ background: "#2a1f0a", borderRadius: "12px", padding: "12px", border: "1px solid #3d2e0f", display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {/* Inner "dropdown" row — click to switch to M2 */}
+                  <button
+                    onClick={() => { setTtsEngine("elitelabs"); onVoiceChange(null); }}
+                    style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#1a1200", borderRadius: "8px", padding: "10px 14px", border: "none", cursor: "pointer" }}
+                  >
+                    <span style={{ fontSize: "13px", fontWeight: 500, color: "#e2e2f0" }}>Elite Labs M2</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                  </button>
+                  {/* Promo row */}
+                  <p style={{ fontSize: "12px", color: "#6b7280", margin: 0, display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                    Probar
+                    <button
+                      onClick={() => { /* already on M1 */ }}
+                      style={{ fontSize: "10px", fontWeight: 700, padding: "1px 7px", borderRadius: "4px", background: "rgba(139,92,246,0.15)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.3)", cursor: "default" }}
+                    >M1</button>
+                    — +12k voces con ElevenLabs
+                  </p>
                 </div>
               )}
 
