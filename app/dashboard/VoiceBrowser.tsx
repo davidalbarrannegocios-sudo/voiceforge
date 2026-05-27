@@ -156,6 +156,8 @@ const ACCENT_FLAGS: Record<string, string> = {
   irish: "ie", scottish: "gb-sct",
   "african american": "us", "us southern": "us",
   "latin american": "mx", mexican: "mx", peruvian: "pe",
+  argentine: "ar", chilean: "cl", colombian: "co",
+  venezuelan: "ve", cuban: "cu", "puerto rican": "pr", dominican: "do",
   spanish: "es", peninsular: "es",
   french: "fr", parisian: "fr",
   german: "de", austrian: "at",
