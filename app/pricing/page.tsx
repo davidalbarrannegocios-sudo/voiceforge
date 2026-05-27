@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import { Check, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { PaymentModal, type BillingPlan } from "@/app/dashboard/PaymentModal";
 
 type Plan = {
@@ -114,6 +114,21 @@ const PLANS: Plan[] = [
   },
 ];
 
+function FeatureTick() {
+  return (
+    <div style={{
+      width: 18, height: 18, borderRadius: "50%",
+      background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      flexShrink: 0, marginTop: "1px",
+    }}>
+      <svg width="9" height="7" viewBox="0 0 10 8" fill="none">
+        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
 export default function PricingPage() {
   return (
     <Suspense>
@@ -128,6 +143,7 @@ function PricingContent() {
   const searchParams = useSearchParams();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [activePlan, setActivePlan] = useState<BillingPlan | null>(null);
+  const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
 
   useEffect(() => {
     const planKey = searchParams.get("plan");
@@ -156,10 +172,46 @@ function PricingContent() {
     return Math.round(annualMonthly(price) * 12);
   }
 
+  function fmtChars(n: number) {
+    return n.toLocaleString("es-ES");
+  }
+
+  function cardBg(plan: Plan) {
+    if (plan.popular) return "linear-gradient(135deg, #0a0f1e, #0d1529)";
+    return "#0a0a0a";
+  }
+
+  function cardBorder(plan: Plan) {
+    if (plan.popular) return "1px solid rgba(99,102,241,0.25)";
+    return "1px solid #1a1a1a";
+  }
+
+  function btnStyle(plan: Plan, hovered: boolean): React.CSSProperties {
+    if (plan.free) return {
+      width: "100%", padding: "10px", borderRadius: "8px",
+      border: "1px solid rgba(255,255,255,0.2)",
+      cursor: "pointer", background: hovered ? "rgba(255,255,255,0.05)" : "transparent",
+      color: "#ffffff", fontSize: "13px", fontWeight: 600, marginBottom: "16px",
+      transition: "all 0.15s",
+    };
+    if (plan.popular) return {
+      width: "100%", padding: "10px", borderRadius: "8px", border: "none",
+      cursor: "pointer", background: hovered ? "#e5e5e5" : "#ffffff",
+      color: "#000000", fontSize: "13px", fontWeight: 600, marginBottom: "16px",
+      transition: "all 0.15s",
+    };
+    return {
+      width: "100%", padding: "10px", borderRadius: "8px",
+      border: "1px solid #333333",
+      cursor: "pointer", background: hovered ? "#222222" : "#1a1a1a",
+      color: "#e5e7eb", fontSize: "13px", fontWeight: 600, marginBottom: "16px",
+      transition: "all 0.15s",
+    };
+  }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0f" }}>
-      <header style={{ borderBottom: "1px solid #1a1a28", padding: "0 16px", height: "60px", display: "flex", alignItems: "center" }}>
+    <div style={{ minHeight: "100vh", background: "#000000" }}>
+      <header style={{ borderBottom: "1px solid #1a1a1a", padding: "0 16px", height: "60px", display: "flex", alignItems: "center" }}>
         <div style={{ maxWidth: "1536px", width: "100%", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none" }}>
             <Image src="/elitelabs.png" alt="Elite Labs" width={28} height={28} className="rounded-lg" />
@@ -184,69 +236,82 @@ function PricingContent() {
         </div>
 
         {/* Monthly / Annual toggle */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: "32px" }}>
-          <div style={{ position: "relative", display: "inline-grid", gridTemplateColumns: "1fr 1fr", background: "#111111", border: "1px solid #222222", borderRadius: "10px", padding: "3px" }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "40px" }}>
+          <div style={{ position: "relative", display: "inline-grid", gridTemplateColumns: "1fr 1fr", background: "#000000", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "3px" }}>
             {/* Sliding pill */}
-            <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#ffffff", borderRadius: "7px", pointerEvents: "none", transition: "transform 0.2s ease", transform: `translateX(${billing === "annual" ? "100%" : "0%"})` }} />
+            <div style={{
+              position: "absolute", top: "3px", left: "3px",
+              width: "calc(50% - 3px)", height: "calc(100% - 6px)",
+              background: "#ffffff", borderRadius: "7px",
+              pointerEvents: "none", transition: "transform 0.2s ease",
+              transform: `translateX(${billing === "annual" ? "100%" : "0%"})`,
+            }} />
             <button
               onClick={() => setBilling("monthly")}
-              style={{ position: "relative", zIndex: 1, padding: "8px 24px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: 600, background: "transparent", color: billing === "monthly" ? "#000000" : "#888888", transition: "color 0.2s ease" }}
+              style={{ position: "relative", zIndex: 1, padding: "8px 28px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: 600, background: "transparent", color: billing === "monthly" ? "#000000" : "#666666", transition: "color 0.2s ease" }}
             >
               Mensual
             </button>
             <button
               onClick={() => setBilling("annual")}
-              style={{ position: "relative", zIndex: 1, padding: "8px 24px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: 600, background: "transparent", color: billing === "annual" ? "#000000" : "#888888", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "color 0.2s ease" }}
+              style={{ position: "relative", zIndex: 1, padding: "8px 28px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: 600, background: "transparent", color: billing === "annual" ? "#000000" : "#666666", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "color 0.2s ease" }}
             >
               Anual
-              <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e" }}>−17%</span>
+              <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e", whiteSpace: "nowrap" }}>−17%</span>
             </button>
           </div>
         </div>
 
         {/* Plans — 5 col grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px", marginBottom: "60px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px", marginBottom: "60px", alignItems: "start" }}>
           {PLANS.map((plan) => (
             <div
               key={plan.key}
               style={{
-                borderRadius: "14px",
-                padding: "22px 16px",
-                border: "1px solid #222222",
-                background: "#111111",
+                borderRadius: "16px",
+                padding: "22px 16px 18px",
+                border: cardBorder(plan),
+                background: cardBg(plan),
                 display: "flex",
                 flexDirection: "column",
+                position: "relative",
+                transition: "transform 0.15s",
               }}
             >
               {/* Name + badge */}
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "6px", marginBottom: "4px" }}>
                 <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{plan.name}</span>
                 {plan.popular && (
-                  <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 7px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.2)", color: "#aaaaaa", background: "transparent", whiteSpace: "nowrap", flexShrink: 0 }}>
+                  <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.2)", color: "#ffffff", background: "rgba(255,255,255,0.05)", whiteSpace: "nowrap", flexShrink: 0 }}>
                     Popular
                   </span>
                 )}
                 {plan.key === "enterprise" && (
-                  <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 7px", borderRadius: "999px", border: "1px solid rgba(16,185,129,0.45)", color: "#6ee7b7", background: "transparent", whiteSpace: "nowrap", flexShrink: 0 }}>
+                  <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(16,185,129,0.45)", color: "#6ee7b7", background: "rgba(16,185,129,0.05)", whiteSpace: "nowrap", flexShrink: 0 }}>
                     Equipos
                   </span>
                 )}
               </div>
 
               {/* Description */}
-              <p style={{ fontSize: "12px", color: "#555555", marginBottom: "14px", lineHeight: 1.4 }}>
+              <p style={{ fontSize: "12px", color: "#555555", marginBottom: "16px", lineHeight: 1.4 }}>
                 {plan.description}
               </p>
 
               {/* Price */}
-              <div style={{ marginBottom: "16px" }}>
+              <div style={{ marginBottom: "16px", minHeight: "58px" }}>
                 {plan.free ? (
-                  <div>
-                    <span style={{ fontSize: "38px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>Gratis</span>
-                    <p style={{ fontSize: "11px", color: "transparent", marginTop: "3px", userSelect: "none" }}>·</p>
-                  </div>
+                  <>
+                    <span style={{ fontSize: "38px", fontWeight: 800, color: "#fff", lineHeight: 1, display: "block" }}>Gratis</span>
+                    <p style={{ fontSize: "11px", color: "transparent", marginTop: "4px", userSelect: "none" }}>·</p>
+                  </>
                 ) : (
-                  <div>
+                  <>
+                    {billing === "annual" && (
+                      <p style={{ fontSize: "13px", color: "#444444", textDecoration: "line-through", marginBottom: "0px", lineHeight: 1 }}>
+                        ${plan.price}/mes
+                      </p>
+                    )}
                     <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
                       <span style={{ fontSize: "38px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
                         ${billing === "annual" ? annualMonthly(plan.price) : plan.price}
@@ -254,48 +319,47 @@ function PricingContent() {
                       <span style={{ fontSize: "12px", color: "#444444", marginLeft: "2px" }}>/mes</span>
                     </div>
                     {billing === "annual" ? (
-                      <p style={{ fontSize: "11px", color: "#444444", marginTop: "3px" }}>
+                      <p style={{ fontSize: "11px", color: "#555555", marginTop: "3px" }}>
                         ${annualTotal(plan.price)} facturado anualmente
                       </p>
                     ) : (
                       <p style={{ fontSize: "11px", color: "transparent", marginTop: "3px", userSelect: "none" }}>·</p>
                     )}
-                  </div>
+                  </>
                 )}
               </div>
 
               {/* CTA */}
               <button
                 onClick={() => handleSelect(plan)}
-                style={
-                  plan.free
-                    ? { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #222222", cursor: "pointer", background: "transparent", color: "#6b7280", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
-                    : plan.popular
-                    ? { width: "100%", padding: "10px", borderRadius: "8px", border: "none", cursor: "pointer", background: "#ffffff", color: "#000000", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
-                    : { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #222222", cursor: "pointer", background: "#1a1a1a", color: "#e5e7eb", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
-                }
+                onMouseEnter={() => setHoveredPlan(plan.key)}
+                onMouseLeave={() => setHoveredPlan(null)}
+                style={btnStyle(plan, hoveredPlan === plan.key)}
               >
                 {plan.cta}
               </button>
 
+              {/* Divider */}
+              <div style={{ height: "1px", background: plan.popular ? "rgba(255,255,255,0.08)" : "#1a1a1a", marginBottom: "14px" }} />
+
               {/* Features */}
-              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "7px", flex: 1 }}>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
                 {plan.features.map((f) => (
-                  <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "7px", fontSize: "12px", color: "#6b6b88" }}>
-                    <Check size={11} style={{ color: "#444444", flexShrink: 0, marginTop: "2px" }} />
+                  <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "12px", color: plan.popular ? "#b0b0c0" : "#666666", lineHeight: 1.4 }}>
+                    <FeatureTick />
                     {f}
                   </li>
                 ))}
               </ul>
 
-              {/* Enterprise seats */}
+              {/* Enterprise seats block */}
               {plan.key === "enterprise" && (
                 <div style={{ marginTop: "14px", background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "8px", padding: "10px" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
                     <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 700, color: "#fff" }}>
                       <Users size={12} style={{ color: "#fff", flexShrink: 0 }} /> Seats
                     </span>
-                    <span style={{ fontSize: "11px", color: "#555570", textDecoration: "line-through" }}>$5/seat/mes</span>
+                    <span style={{ fontSize: "11px", color: "#555555", textDecoration: "line-through" }}>$5/seat/mes</span>
                   </div>
                   <div style={{ textAlign: "center" }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: "6px", padding: "3px 8px", fontSize: "11px", fontWeight: 700, color: "#4ade80" }}>
@@ -304,6 +368,13 @@ function PricingContent() {
                   </div>
                 </div>
               )}
+
+              {/* Card footer — character count */}
+              <div style={{ marginTop: "14px", paddingTop: "10px", borderTop: plan.popular ? "1px solid rgba(255,255,255,0.06)" : "1px solid #1a1a1a" }}>
+                <p style={{ fontSize: "11px", color: "#444444", textAlign: "center" }}>
+                  {fmtChars(plan.characters)} caracteres/mes
+                </p>
+              </div>
             </div>
           ))}
         </div>
@@ -313,13 +384,13 @@ function PricingContent() {
           <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "4px", textAlign: "center" }}>
             Comparativa con la competencia
           </h2>
-          <p style={{ fontSize: "13px", color: "#2e2e48", textAlign: "center", marginBottom: "20px" }}>
+          <p style={{ fontSize: "13px", color: "#444444", textAlign: "center", marginBottom: "20px" }}>
             Caracteres incluidos por precio mensual similar
           </p>
-          <div style={{ borderRadius: "14px", border: "1px solid #1a1a28", overflow: "hidden" }}>
+          <div style={{ borderRadius: "14px", border: "1px solid #1a1a1a", overflow: "hidden" }}>
             <table style={{ width: "100%", fontSize: "13px", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ background: "#111111", borderBottom: "1px solid #1a1a28" }}>
+                <tr style={{ background: "#0a0a0a", borderBottom: "1px solid #1a1a1a" }}>
                   <th style={{ textAlign: "left", padding: "11px 16px", fontWeight: 600, color: "#444444" }}>Plataforma</th>
                   <th style={{ padding: "11px 10px", fontWeight: 600, color: "#444444", textAlign: "center" }}>~$7/mes</th>
                   <th style={{ padding: "11px 10px", fontWeight: 600, color: "#444444", textAlign: "center" }}>~$13/mes</th>
@@ -333,23 +404,23 @@ function PricingContent() {
                   { name: "Minimax",    cols: ["100.000 chars",  "330.000 chars",  "~540.000 chars",  "~1.800.000 chars"] },
                   { name: "Fish Audio", cols: ["~117.000 chars", "~217.000 chars", "~417.000 chars",  "~1.800.000 chars"] },
                 ].map((row) => (
-                  <tr key={row.name} style={{ borderBottom: "1px solid #1a1a28" }}>
+                  <tr key={row.name} style={{ borderBottom: "1px solid #1a1a1a" }}>
                     <td style={{ padding: "11px 16px", color: "#555555", fontWeight: 500 }}>{row.name}</td>
                     {row.cols.map((c, i) => (
-                      <td key={i} style={{ padding: "11px 10px", textAlign: "center", color: "#2e2e48" }}>{c}</td>
+                      <td key={i} style={{ padding: "11px 10px", textAlign: "center", color: "#444444" }}>{c}</td>
                     ))}
                   </tr>
                 ))}
-                <tr style={{ background: "rgba(255,255,255,0.05)", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-                  <td style={{ padding: "11px 16px", fontWeight: 700, color: "#aaaaaa" }}>⭐ Elite Labs</td>
+                <tr style={{ background: "rgba(255,255,255,0.03)", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                  <td style={{ padding: "11px 16px", fontWeight: 700, color: "#ffffff" }}>⭐ Elite Labs</td>
                   {["200.000 chars", "500.000 chars", "1.000.000 chars", "5.000.000 chars"].map((c) => (
-                    <td key={c} style={{ padding: "11px 10px", textAlign: "center", fontWeight: 600, color: "#aaaaaa" }}>{c}</td>
+                    <td key={c} style={{ padding: "11px 10px", textAlign: "center", fontWeight: 600, color: "#ffffff" }}>{c}</td>
                   ))}
                 </tr>
               </tbody>
             </table>
           </div>
-          <p style={{ marginTop: "12px", textAlign: "center", fontSize: "13px", fontWeight: 600, color: "#aaaaaa" }}>
+          <p style={{ marginTop: "12px", textAlign: "center", fontSize: "13px", fontWeight: 600, color: "#888888" }}>
             Hasta 6× más caracteres que la competencia al mismo precio.{" "}
             <span style={{ color: "#444444", fontWeight: 400 }}>Sin límite por generación.</span>
           </p>
@@ -367,9 +438,9 @@ function PricingContent() {
               { q: "¿Puedo cambiar de plan?", a: "Sí, puedes hacer upgrade o downgrade en cualquier momento desde el portal de facturación." },
               { q: "¿Qué formatos acepta la clonación?", a: "WAV, MP3 y M4A. Recomendamos entre 10 y 30 segundos de audio limpio sin ruido." },
             ].map((faq) => (
-              <div key={faq.q} style={{ padding: "14px 18px", borderRadius: "10px", border: "1px solid #1a1a28", background: "#111111" }}>
+              <div key={faq.q} style={{ padding: "14px 18px", borderRadius: "10px", border: "1px solid #1a1a1a", background: "#0a0a0a" }}>
                 <p style={{ fontWeight: 600, color: "#e5e7eb", marginBottom: "3px", fontSize: "13px" }}>{faq.q}</p>
-                <p style={{ fontSize: "12px", color: "#444444" }}>{faq.a}</p>
+                <p style={{ fontSize: "12px", color: "#555555" }}>{faq.a}</p>
               </div>
             ))}
           </div>
