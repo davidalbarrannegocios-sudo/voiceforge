@@ -71,30 +71,19 @@ export async function GET(req: Request) {
   const accentFilter = (searchParams.get("accent") ?? "").toLowerCase().trim();
   const PAGE_SIZE = 20;
 
-  // Fetch all pages using next_page_token pagination
-  console.log("[ai33-voices-eleven] fetching all pages from ai33.pro");
-  const rawVoices: ElevenVoice[] = [];
-  let nextToken: string | null = null;
-  let pageNum = 1;
-  do {
-    const url = "https://api.ai33.pro/v2/voices" + (nextToken ? `?next_page_token=${encodeURIComponent(nextToken)}` : "");
-    const res = await fetch(url, { headers: { "xi-api-key": apiKey } });
-    if (!res.ok) {
-      const errBody = await res.text();
-      return NextResponse.json({ error: `ai33.pro error ${res.status}: ${errBody}` }, { status: res.status });
-    }
-    let pageData: { voices?: ElevenVoice[]; has_more?: boolean; next_page_token?: string };
-    try {
-      pageData = await res.json() as typeof pageData;
-    } catch {
-      return NextResponse.json({ error: "ai33.pro devolvió respuesta no-JSON" }, { status: 500 });
-    }
-    const pageVoices = Array.isArray(pageData) ? (pageData as ElevenVoice[]) : (pageData.voices ?? []);
-    rawVoices.push(...pageVoices);
-    console.log(`[ai33-voices-eleven] page ${pageNum++} → ${pageVoices.length} voices, has_more=${pageData.has_more}`);
-    nextToken = pageData.has_more ? (pageData.next_page_token ?? null) : null;
-  } while (nextToken);
-  console.log(`[ai33-voices-eleven] total fetched=${rawVoices.length} langFilter="${langFilter}" accentFilter="${accentFilter}" search="${search}" page=${page}`);
+  // page_size=500 returns all voices in one request (confirmed: API supports this param)
+  console.log("[ai33-voices-eleven] fetching voices from ai33.pro");
+  const res = await fetch("https://api.ai33.pro/v2/voices?page_size=500", { headers: { "xi-api-key": apiKey } });
+  if (!res.ok) {
+    const errBody = await res.text();
+    return NextResponse.json({ error: `ai33.pro error ${res.status}: ${errBody}` }, { status: res.status });
+  }
+  let parsed: { voices?: ElevenVoice[] } | ElevenVoice[];
+  try { parsed = await res.json() as typeof parsed; } catch {
+    return NextResponse.json({ error: "ai33.pro devolvió respuesta no-JSON" }, { status: 500 });
+  }
+  const rawVoices: ElevenVoice[] = Array.isArray(parsed) ? parsed : (parsed.voices ?? []);
+  console.log(`[ai33-voices-eleven] fetched=${rawVoices.length} langFilter="${langFilter}" accentFilter="${accentFilter}" search="${search}" page=${page}`);
 
   // Filter by language
   const langFiltered = langFilter && langFilter !== "all"
