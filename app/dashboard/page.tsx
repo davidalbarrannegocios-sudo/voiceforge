@@ -563,15 +563,15 @@ function GenerateTab({
   const [showBrowser, setShowBrowser] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [speed, setSpeed] = useState(1.0);
-  const [volume, setVolume] = useState(1.0);
+  const [speed, setSpeed] = useState<number>(() => { try { const s = localStorage.getItem("elitelabs_fish_settings"); return s ? (JSON.parse(s).speed ?? 1.0) : 1.0; } catch { return 1.0; } });
+  const [volume, setVolume] = useState<number>(() => { try { const s = localStorage.getItem("elitelabs_fish_settings"); return s ? (JSON.parse(s).volume ?? 1.0) : 1.0; } catch { return 1.0; } });
 
-  const [normalize, setNormalize] = useState(true);
-  const [proNormText, setProNormText] = useState(false);
-  const [proHighBitrate, setProHighBitrate] = useState(false);
-  const [temperature, setTemperature] = useState(0.9);
-  const [topP, setTopP] = useState(0.9);
-  const [selectedModel, setSelectedModel] = useState("speech-1.6");
+  const [normalize, setNormalize] = useState<boolean>(() => { try { const s = localStorage.getItem("elitelabs_fish_settings"); return s ? (JSON.parse(s).normalize ?? true) : true; } catch { return true; } });
+  const [proNormText, setProNormText] = useState<boolean>(() => { try { const s = localStorage.getItem("elitelabs_fish_settings"); return s ? (JSON.parse(s).normalizeText ?? false) : false; } catch { return false; } });
+  const [proHighBitrate, setProHighBitrate] = useState<boolean>(() => { try { const s = localStorage.getItem("elitelabs_fish_settings"); return s ? (JSON.parse(s).highBitrate ?? false) : false; } catch { return false; } });
+  const [temperature, setTemperature] = useState<number>(() => { try { const s = localStorage.getItem("elitelabs_fish_settings"); return s ? (JSON.parse(s).temperature ?? 0.9) : 0.9; } catch { return 0.9; } });
+  const [topP, setTopP] = useState<number>(() => { try { const s = localStorage.getItem("elitelabs_fish_settings"); return s ? (JSON.parse(s).topP ?? 0.9) : 0.9; } catch { return 0.9; } });
+  const [selectedModel, setSelectedModel] = useState<string>(() => { try { return localStorage.getItem("elitelabs_selected_model") ?? "speech-1.6"; } catch { return "speech-1.6"; } });
   const [turboAdminStatus, setTurboAdminStatus] = useState("active");
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   const modelDropdownRef = useRef<HTMLDivElement>(null);
@@ -654,6 +654,21 @@ function GenerateTab({
       }));
     } catch { /* ignore */ }
   }, [m1Speed, m1Stability, m1Similarity, m1StyleExag, m1LangOverride, m1OutputFormat, m1SpeakerBoost]);
+
+  // Save Fish Audio settings to localStorage on change
+  useEffect(() => {
+    try {
+      localStorage.setItem("elitelabs_fish_settings", JSON.stringify({
+        speed, volume, normalize, normalizeText: proNormText,
+        highBitrate: proHighBitrate, temperature, topP,
+      }));
+    } catch { /* ignore */ }
+  }, [speed, volume, normalize, proNormText, proHighBitrate, temperature, topP]);
+
+  // Save selected model to localStorage on change
+  useEffect(() => {
+    try { localStorage.setItem("elitelabs_selected_model", selectedModel); } catch { /* ignore */ }
+  }, [selectedModel]);
 
   useEffect(() => {
     const cached = localStorage.getItem("turboStatusCache");
