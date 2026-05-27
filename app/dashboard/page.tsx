@@ -707,12 +707,9 @@ function GenerateTab({
     }
     setSubmitting(true);
     try {
-      let endpoint: string;
-      let body: Record<string, unknown>;
-
       if (selectedModel === "turbo") {
-        endpoint = "/api/generate-ai33";
-        body = {
+        // Turbo (ElevenLabs) — synchronous, waits for audio
+        const turboBody = {
           text,
           voice_id: selectedVoice?.referenceId ?? undefined,
           voiceName: selectedVoice?.name ?? "Voz por defecto",
@@ -728,36 +725,70 @@ function GenerateTab({
           language_code: m1LangOverride ? "auto" : undefined,
           output_format: m1OutputFormat,
         };
+        const res = await fetch("/api/generate-ai33", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(turboBody),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Error al generar");
+        window.dispatchEvent(new CustomEvent("audio-history-changed"));
+        onGenerated();
+        setText("");
+        setRightTab("historial");
       } else {
-        endpoint = "/api/generate";
+        // Fish Audio — async background job
         const prosody = (speed !== 1 || volume !== 1) ? { speed, volume } : undefined;
-        body = {
-          text,
-          reference_id: selectedVoice?.referenceId ?? undefined,
-          voiceName: selectedVoice?.name ?? "Voz por defecto",
-          prosody,
-          normalizeLoudness: normalize,
-          model: selectedModel,
-          ...(selectedModel === "speech-1.5" && { temperature, topP }),
-          ...(selectedModel === "speech-1.6" && {
-            normalizeText: proNormText,
-            mp3Bitrate: proHighBitrate ? 192 : 128,
+        const res = await fetch("/api/tts-job", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text,
+            reference_id: selectedVoice?.referenceId ?? undefined,
+            voiceName: selectedVoice?.name ?? "Voz por defecto",
+            prosody,
+            normalizeLoudness: normalize,
+            model: selectedModel,
+            ...(selectedModel === "speech-1.5" && { temperature, topP }),
+            ...(selectedModel === "speech-1.6" && {
+              normalizeText: proNormText,
+              mp3Bitrate: proHighBitrate ? 192 : 128,
+            }),
           }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Error al generar");
+
+        const { jobId } = data as { jobId: string };
+        const jobEntry = {
+          jobId,
+          voiceName: selectedVoice?.name ?? "Voz por defecto",
+          voiceId: selectedVoice?.referenceId ?? "default",
+          text: text.slice(0, 80),
+          createdAt: Date.now(),
         };
+
+        // Persist so polling survives navigation/reload
+        try {
+          const stored = JSON.parse(localStorage.getItem("pendingTtsJobs") || "[]");
+          stored.push(jobEntry);
+          localStorage.setItem("pendingTtsJobs", JSON.stringify(stored));
+        } catch { /* ignore */ }
+
+        // Notify AudioHistoryList to show spinner card and start polling
+        window.dispatchEvent(new CustomEvent("tts-job-created", { detail: jobEntry }));
+
+        // Fire and forget — Railway keeps running even when client disconnects
+        fetch("/api/tts-job/process", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jobId }),
+        });
+
+        onGenerated();
+        setText("");
+        setRightTab("historial");
       }
-
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al generar");
-
-      window.dispatchEvent(new CustomEvent("audio-history-changed"));
-      onGenerated();
-      setText("");
-      setRightTab("historial");
     } catch (e: unknown) {
       setFormError(e instanceof Error ? e.message : "Error desconocido");
     } finally {

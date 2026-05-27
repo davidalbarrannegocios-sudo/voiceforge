@@ -44,6 +44,7 @@ model User {
   payoutRequests        PayoutRequest[]
   withdrawalRequests    WithdrawalRequest[]
   affiliateApplications AffiliateApplication[]
+  generationJobs        GenerationJob[]
 }
 
 model Job {
@@ -245,6 +246,24 @@ model PayoutRequest {
   amountCents Int
   method      String
   status      String   @default("pending")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model GenerationJob {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  status      String   @default("pending")
+  voiceId     String   @default("default")
+  voiceName   String
+  text        String
+  fishParams  Json?
+  audioUrl    String?
+  errorMsg    String?
+  creditsUsed Int      @default(0)
+  fromPlan    Int      @default(0)
+  fromExtra   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

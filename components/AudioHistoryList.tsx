@@ -4,6 +4,15 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Clock, Trash2, Play, Pause, Download, RefreshCw, Share2, FileText } from "lucide-react";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 
+interface PendingJob {
+  jobId: string;
+  voiceName: string;
+  voiceId: string;
+  text: string;
+  createdAt: number; // unix ms
+  errorMsg?: string;
+}
+
 interface Generation {
   id: string;
   status: string;
@@ -83,6 +92,8 @@ export default function AudioHistoryList({
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  const [pendingJobs, setPendingJobs] = useState<PendingJob[]>([]);
+  const pendingIntervals = useRef<Record<string, ReturnType<typeof setInterval>>>({});
   const pageRef = useRef(page);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const generationsRef = useRef<Generation[]>([]);
@@ -90,6 +101,68 @@ export default function AudioHistoryList({
   const [playTime, setPlayTime] = useState<{ current: number; duration: number }>({ current: 0, duration: 0 });
 
   useEffect(() => { pageRef.current = page; }, [page]);
+
+  function removePendingFromStorage(jobId: string) {
+    try {
+      const existing: PendingJob[] = JSON.parse(localStorage.getItem("pendingTtsJobs") || "[]");
+      localStorage.setItem("pendingTtsJobs", JSON.stringify(existing.filter((j) => j.jobId !== jobId)));
+    } catch { /* ignore */ }
+  }
+
+  const startPolling = useCallback((job: PendingJob) => {
+    if (pendingIntervals.current[job.jobId]) return;
+    const timer = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/tts-job/${job.jobId}`);
+        const data = await res.json();
+        if (data.status === "done") {
+          clearInterval(timer);
+          delete pendingIntervals.current[job.jobId];
+          removePendingFromStorage(job.jobId);
+          setPendingJobs((prev) => prev.filter((j) => j.jobId !== job.jobId));
+          window.dispatchEvent(new CustomEvent("audio-history-changed"));
+        } else if (data.status === "error") {
+          clearInterval(timer);
+          delete pendingIntervals.current[job.jobId];
+          removePendingFromStorage(job.jobId);
+          setPendingJobs((prev) =>
+            prev.map((j) => j.jobId === job.jobId ? { ...j, errorMsg: data.errorMsg ?? "Error al generar" } : j)
+          );
+        }
+      } catch { /* network error — keep polling */ }
+    }, 3000);
+    pendingIntervals.current[job.jobId] = timer;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // On mount: call cleanup, recover pending jobs from localStorage
+  useEffect(() => {
+    fetch("/api/tts-job/cleanup").catch(() => {});
+
+    try {
+      const stored: PendingJob[] = JSON.parse(localStorage.getItem("pendingTtsJobs") || "[]");
+      const active = stored.filter((j) => Date.now() - j.createdAt < 600_000);
+      localStorage.setItem("pendingTtsJobs", JSON.stringify(active));
+      if (active.length > 0) {
+        setPendingJobs(active);
+        active.forEach((j) => startPolling(j));
+      }
+    } catch { /* ignore */ }
+
+    return () => {
+      Object.values(pendingIntervals.current).forEach(clearInterval);
+    };
+  }, [startPolling]);
+
+  // Listen for new jobs created in the dashboard
+  useEffect(() => {
+    function onJobCreated(e: Event) {
+      const job = (e as CustomEvent<PendingJob>).detail;
+      setPendingJobs((prev) => (prev.some((j) => j.jobId === job.jobId) ? prev : [job, ...prev]));
+      startPolling(job);
+    }
+    window.addEventListener("tts-job-created", onJobCreated);
+    return () => window.removeEventListener("tts-job-created", onJobCreated);
+  }, [startPolling]);
 
   // Poll processing generations every 3s until they resolve
   const hasProcessing = generations.some((g) => g.status === "processing");
@@ -252,6 +325,47 @@ export default function AudioHistoryList({
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {/* Pending job cards */}
+            {pendingJobs.length > 0 && (
+              <div>
+                <p style={{ fontSize: "11px", color: "#6b7280", marginBottom: "6px", fontWeight: 500 }}>En proceso</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  {pendingJobs.map((job) => (
+                    <div key={job.jobId} style={{ borderRadius: "12px", background: "rgba(255,255,255,0.04)", padding: "10px 10px 8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                        <VoiceAvatarGenerative seed={job.voiceId} size={24} className="flex-shrink-0" />
+                        <span style={{ fontSize: "12px", fontWeight: 500, color: "#e2e8f0", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{job.voiceName}</span>
+                        <span style={{ fontSize: "11px", color: "#6b7280", flexShrink: 0 }}>{new Date(job.createdAt).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}</span>
+                      </div>
+                      <p style={{ fontSize: "11px", color: "#9ca3af", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "8px", paddingLeft: "32px" }}>
+                        {job.text}
+                      </p>
+                      <div style={{ paddingLeft: "32px" }}>
+                        {job.errorMsg ? (
+                          <span style={{ fontSize: "10px", color: "#f87171" }} title={job.errorMsg}>
+                            {job.errorMsg.slice(0, 60)}
+                          </span>
+                        ) : (
+                          <>
+                            <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "10px", color: "#6b7280" }}>
+                              <svg style={{ flexShrink: 0, animation: "spin 1s linear infinite" }} width="10" height="10" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25" />
+                                <path fill="currentColor" fillOpacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                              </svg>
+                              Generando audio...
+                            </span>
+                            <div style={{ height: "2px", borderRadius: "9999px", background: "rgba(255,255,255,0.06)", marginTop: "6px", overflow: "hidden" }}>
+                              <div className="animate-pulse" style={{ height: "100%", width: "60%", borderRadius: "9999px", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent)" }} />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {groups.map((group) => (
               <div key={group.label}>
                 {/* Date label */}
@@ -411,6 +525,43 @@ export default function AudioHistoryList({
             <input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(selectableIds))} className="rounded" style={{ accentColor: "#ffffff", width: "14px", height: "14px", cursor: "pointer" }} />
             <span className="text-xs" style={{ color: "#555555" }}>Seleccionar todo</span>
           </div>
+
+          {/* Pending job cards — full mode */}
+          {pendingJobs.length > 0 && (
+            <div className="space-y-2 mb-3">
+              {pendingJobs.map((job) => (
+                <div key={job.jobId} className="rounded-xl border" style={{ background: "#111111", borderColor: "#1e2a3b" }}>
+                  <div className="p-4 flex items-start gap-3">
+                    <VoiceAvatarGenerative seed={job.voiceId} size={32} className="flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium" style={{ color: "#e2e8f0" }}>{job.voiceName}</p>
+                      <p className="text-xs truncate mt-0.5" style={{ color: "#6b7280" }}>{job.text}</p>
+                      <div className="mt-2">
+                        {job.errorMsg ? (
+                          <span className="text-xs" style={{ color: "#f87171" }} title={job.errorMsg}>
+                            {job.errorMsg.slice(0, 80)}
+                          </span>
+                        ) : (
+                          <>
+                            <span className="flex items-center gap-1.5 text-xs" style={{ color: "#6b7280" }}>
+                              <svg style={{ animation: "spin 1s linear infinite", flexShrink: 0 }} width="10" height="10" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25" />
+                                <path fill="currentColor" fillOpacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                              </svg>
+                              Generando audio...
+                            </span>
+                            <div className="mt-1.5 overflow-hidden rounded-full" style={{ height: "2px", background: "rgba(255,255,255,0.06)" }}>
+                              <div className="animate-pulse h-full rounded-full" style={{ width: "60%", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)" }} />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="space-y-3">
             {generations.map((gen) => {
