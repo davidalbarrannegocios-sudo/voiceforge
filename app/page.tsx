@@ -297,11 +297,12 @@ export default function LandingPage() {
                   pointerEvents: activeNav === "products" ? "auto" : "none",
                   transition: "opacity 150ms ease-out, transform 150ms ease-out",
                   width: "500px",
-                  background: "#13131d",
-                  border: "1px solid #222222",
+                  background: "#0a0a0a",
+                  border: "1px solid rgba(255,255,255,0.08)",
                   borderRadius: "16px",
                   padding: "10px",
                   boxShadow: "0 20px 60px rgba(0,0,0,0.8)",
+                  backdropFilter: "blur(20px)",
                   zIndex: 60,
                 }}
               >
@@ -319,7 +320,7 @@ export default function LandingPage() {
                       </Link>
                     ))}
                   </div>
-                  <div style={{ width: "1px", background: "#1a1a1a", flexShrink: 0, margin: "8px 0" }} />
+                  <div style={{ width: "1px", background: "rgba(255,255,255,0.06)", flexShrink: 0, margin: "8px 0" }} />
                   <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
                     {NAV_PRODUCTS_RIGHT.map((item) => (
                       <Link
@@ -361,11 +362,12 @@ export default function LandingPage() {
                   pointerEvents: activeNav === "empresa" ? "auto" : "none",
                   transition: "opacity 150ms ease-out, transform 150ms ease-out",
                   width: "240px",
-                  background: "#13131d",
-                  border: "1px solid #222222",
+                  background: "#0a0a0a",
+                  border: "1px solid rgba(255,255,255,0.08)",
                   borderRadius: "16px",
                   padding: "10px",
                   boxShadow: "0 20px 60px rgba(0,0,0,0.8)",
+                  backdropFilter: "blur(20px)",
                   zIndex: 60,
                 }}
               >
