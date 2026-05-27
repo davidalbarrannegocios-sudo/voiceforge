@@ -117,12 +117,12 @@ const PLANS: Plan[] = [
 function FeatureTick() {
   return (
     <div style={{
-      width: 18, height: 18, borderRadius: "50%",
-      background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+      width: 16, height: 16, borderRadius: "50%",
+      background: "linear-gradient(135deg, #1d4ed8, #60a5fa)",
       display: "flex", alignItems: "center", justifyContent: "center",
-      flexShrink: 0, marginTop: "1px",
+      flexShrink: 0, marginTop: "2px",
     }}>
-      <svg width="9" height="7" viewBox="0 0 10 8" fill="none">
+      <svg width="8" height="6" viewBox="0 0 10 8" fill="none">
         <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </div>
@@ -370,8 +370,8 @@ function PricingContent() {
               )}
 
               {/* Card footer — character count */}
-              <div style={{ marginTop: "14px", paddingTop: "10px", borderTop: plan.popular ? "1px solid rgba(255,255,255,0.06)" : "1px solid #1a1a1a" }}>
-                <p style={{ fontSize: "11px", color: "#444444", textAlign: "center" }}>
+              <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: plan.popular ? "1px solid rgba(255,255,255,0.10)" : "1px solid rgba(255,255,255,0.06)" }}>
+                <p style={{ fontSize: "14px", fontWeight: 500, color: "rgba(255,255,255,0.60)", textAlign: "center" }}>
                   {fmtChars(plan.characters)} caracteres/mes
                 </p>
               </div>
