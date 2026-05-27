@@ -2034,7 +2034,13 @@ const BILLING_PLANS = [
     price: 0,
     characters: 5_000,
     popular: false,
-    features: ["5.000 caracteres/mes", "Voces del sistema", "Transcripciones (30 min/mes)", "Historial 7 días"],
+    features: [
+      "5.000 caracteres al registrarte",
+      "Voz aleatoria (sin selección)",
+      "2 transcripciones/traducciones",
+      "Sin clonación de voz",
+      "Audios disponibles 72 horas",
+    ],
   },
   {
     key: "starter",
@@ -2043,7 +2049,13 @@ const BILLING_PLANS = [
     price: 7,
     characters: 200_000,
     popular: false,
-    features: ["200.000 caracteres/mes", "Selección de voz completa", "Transcripciones ilimitadas", "3 voces clonadas", "Audios 14 días"],
+    features: [
+      "200.000 caracteres/mes (x2 con EliteLabs 2)",
+      "Selección de voz completa",
+      "Transcripciones y traducciones ilimitadas",
+      "3 voces clonadas",
+      "Audios disponibles 14 días",
+    ],
   },
   {
     key: "pro",
@@ -2052,7 +2064,14 @@ const BILLING_PLANS = [
     price: 13,
     characters: 500_000,
     popular: true,
-    features: ["500.000 caracteres/mes", "Selección de voz completa", "Transcripciones ilimitadas", "10 voces clonadas", "Generación prioritaria", "Audios 30 días"],
+    features: [
+      "500.000 caracteres/mes (x2 con EliteLabs 2)",
+      "Selección de voz completa",
+      "Transcripciones y traducciones ilimitadas",
+      "10 voces clonadas",
+      "Generación prioritaria",
+      "Audios disponibles 30 días",
+    ],
   },
   {
     key: "elite",
@@ -2061,7 +2080,15 @@ const BILLING_PLANS = [
     price: 25,
     characters: 1_000_000,
     popular: false,
-    features: ["1.000.000 caracteres/mes", "Selección de voz completa", "Transcripciones ilimitadas", "20 voces clonadas", "Soporte preferente", "Audios 30 días"],
+    features: [
+      "1.000.000 caracteres/mes (x2 con EliteLabs 2)",
+      "Selección de voz completa",
+      "Transcripciones y traducciones ilimitadas",
+      "20 voces clonadas",
+      "Prioridad máxima",
+      "Soporte preferente",
+      "Audios disponibles 30 días",
+    ],
   },
   {
     key: "enterprise",
@@ -2070,7 +2097,15 @@ const BILLING_PLANS = [
     price: 110,
     characters: 5_000_000,
     popular: false,
-    features: ["5.000.000 caracteres/mes", "Voces clonadas ilimitadas", "Transcripciones ilimitadas", "Traducción +10% (vs +20%)", "Generación prioritaria", "Soporte preferente", "Audios 90 días"],
+    features: [
+      "5.000.000 caracteres/mes (x2 con EliteLabs 2)",
+      "Voces clonadas ilimitadas",
+      "Transcripciones y traducciones ilimitadas",
+      "Traducción de audio +10%",
+      "Generación prioritaria",
+      "Soporte preferente",
+      "Audios disponibles 90 días",
+    ],
   },
 ];
 
@@ -2084,6 +2119,21 @@ const PLAN_BADGE: Record<string, { label: string; color: string; bg: string }> =
 
 function costPer10k(price: number, characters: number): string {
   return `$${((price / characters) * 10_000).toFixed(2)}/10k`;
+}
+
+function FeatureTick() {
+  return (
+    <div style={{
+      width: 16, height: 16, borderRadius: "50%",
+      background: "linear-gradient(135deg, #1d4ed8, #60a5fa)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      flexShrink: 0, marginTop: "2px",
+    }}>
+      <svg width="8" height="6" viewBox="0 0 10 8" fill="none">
+        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
 }
 
 function BillingTab({
@@ -2205,50 +2255,75 @@ function BillingTab({
             ? Math.round(p.price * 0.83 * 10) / 10
             : p.price;
           const borderColor = isCurrent ? (planBadge?.color ?? "#888888") : p.popular ? "#333333" : "#1a1a1a";
-          const bgColor = isCurrent
-            ? "rgba(255,255,255,0.03)"
-            : p.popular ? "rgba(30,58,138,0.12)" : "#111111";
           const isDowngrade = plan !== "free" && p.key === "free";
 
           return (
             <div
               key={p.key}
-              style={{ borderRadius: "14px", border: `1px solid ${borderColor}`, background: bgColor, padding: "18px 14px", display: "flex", flexDirection: "column" }}
+              style={{
+                borderRadius: "16px",
+                border: `1px solid ${borderColor}`,
+                background: isCurrent ? "rgba(255,255,255,0.03)" : "#0a0a0a",
+                padding: "22px 16px 18px",
+                display: "flex",
+                flexDirection: "column",
+                position: "relative",
+              }}
             >
-              {/* Card header */}
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "14px", minHeight: "28px" }}>
-                <p style={{ fontSize: "15px", fontWeight: 700, color: "#fff", margin: 0 }}>{p.name}</p>
+              {/* Name + badge */}
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "6px", marginBottom: "4px" }}>
+                <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{p.name}</span>
                 {isCurrent ? (
                   <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px", color: planBadge?.color, background: planBadge?.bg, letterSpacing: "0.05em", whiteSpace: "nowrap", flexShrink: 0 }}>
                     ACTUAL
                   </span>
                 ) : p.popular ? (
-                  <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px", color: "#aaaaaa", background: "rgba(255,255,255,0.08)", letterSpacing: "0.05em", whiteSpace: "nowrap", flexShrink: 0 }}>
-                    POPULAR
+                  <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.2)", color: "#ffffff", background: "rgba(255,255,255,0.05)", whiteSpace: "nowrap", flexShrink: 0 }}>
+                    Popular
+                  </span>
+                ) : p.key === "enterprise" ? (
+                  <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(16,185,129,0.45)", color: "#6ee7b7", background: "rgba(16,185,129,0.05)", whiteSpace: "nowrap", flexShrink: 0 }}>
+                    Equipos
                   </span>
                 ) : null}
               </div>
 
+              {/* Description */}
+              <p style={{ fontSize: "12px", color: "#555555", marginBottom: "16px", lineHeight: 1.4 }}>
+                {p.description}
+              </p>
+
               {/* Price */}
-              <div style={{ marginBottom: "14px" }}>
-                <div style={{ display: "flex", alignItems: "baseline", gap: "3px" }}>
-                  <span style={{ fontSize: "26px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
-                    {p.price === 0 ? "Gratis" : `$${monthlyPrice}`}
-                  </span>
-                  {p.price > 0 && <span style={{ fontSize: "11px", color: "#444444" }}>/mes</span>}
-                </div>
-                {billing === "annual" && p.price > 0 && (
-                  <p style={{ fontSize: "10px", color: "#444444", marginTop: "2px" }}>
-                    ${Math.round(monthlyPrice * 12)}/año
-                  </p>
-                )}
-                <p style={{ fontSize: "11px", color: "#444444", marginTop: "5px" }}>
-                  {p.characters.toLocaleString("es-ES")} chars/mes
-                </p>
-                {p.price > 0 && (
-                  <p style={{ fontSize: "10px", color: "#444444", marginTop: "2px" }}>
-                    {costPer10k(monthlyPrice, p.characters)}
-                  </p>
+              <div style={{ marginBottom: "16px", minHeight: "58px" }}>
+                {p.price === 0 ? (
+                  <>
+                    <span style={{ fontSize: "32px", fontWeight: 800, color: "#fff", lineHeight: 1, display: "block" }}>Gratis</span>
+                    <p style={{ fontSize: "11px", color: "transparent", marginTop: "4px", userSelect: "none" }}>·</p>
+                  </>
+                ) : (
+                  <>
+                    {billing === "annual" && (
+                      <p style={{ fontSize: "13px", color: "#444444", textDecoration: "line-through", marginBottom: "0px", lineHeight: 1 }}>
+                        ${p.price}/mes
+                      </p>
+                    )}
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
+                      <span style={{ fontSize: "32px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
+                        ${monthlyPrice}
+                      </span>
+                      <span style={{ fontSize: "12px", color: "#444444", marginLeft: "2px" }}>/mes</span>
+                    </div>
+                    {billing === "annual" ? (
+                      <p style={{ fontSize: "11px", color: "#555555", marginTop: "3px" }}>
+                        ${Math.round(monthlyPrice * 12)} facturado anualmente
+                      </p>
+                    ) : (
+                      <p style={{ fontSize: "11px", color: "transparent", marginTop: "3px", userSelect: "none" }}>·</p>
+                    )}
+                    <p style={{ fontSize: "10px", color: "#444444", marginTop: "2px" }}>
+                      {costPer10k(monthlyPrice, p.characters)}
+                    </p>
+                  </>
                 )}
               </div>
 
@@ -2262,10 +2337,10 @@ function BillingTab({
                 disabled={isCurrent}
                 style={
                   isCurrent
-                    ? { width: "100%", padding: "9px 8px", borderRadius: "9px", border: "1px solid #222222", background: "transparent", color: "#444444", fontSize: "12px", fontWeight: 600, marginBottom: "14px", cursor: "not-allowed" }
+                    ? { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #222222", background: "transparent", color: "#444444", fontSize: "13px", fontWeight: 600, marginBottom: "16px", cursor: "not-allowed" }
                     : p.popular
-                    ? { width: "100%", padding: "9px 8px", borderRadius: "9px", border: "none", cursor: "pointer", background: "#ffffff", color: "#000000", fontSize: "12px", fontWeight: 600, marginBottom: "14px" }
-                    : { width: "100%", padding: "9px 8px", borderRadius: "9px", border: "1px solid #222222", cursor: "pointer", background: "transparent", color: "#d1d5db", fontSize: "12px", fontWeight: 600, marginBottom: "14px" }
+                    ? { width: "100%", padding: "10px", borderRadius: "8px", border: "none", cursor: "pointer", background: "#ffffff", color: "#000000", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
+                    : { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #333333", cursor: "pointer", background: "#1a1a1a", color: "#e5e7eb", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
                 }
               >
                 {isCurrent
@@ -2279,32 +2354,50 @@ function BillingTab({
                   : "Suscribirse"}
               </button>
 
+              {/* Divider */}
+              <div style={{ height: "1px", background: "#1a1a1a", marginBottom: "14px" }} />
+
               {/* Features */}
-              <div style={{ height: "1px", background: "#1a1a1a", marginBottom: "12px" }} />
-              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "7px" }}>
-                {p.features.map((f) => (
-                  <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "6px", fontSize: "11px", color: "#666666", lineHeight: 1.4 }}>
-                    <Check size={11} style={{ color: p.key === "enterprise" ? "#34d399" : "#ffffff", flexShrink: 0, marginTop: "1px" }} />
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, flex: 1 }}>
+                {p.features.map((f, i) => (
+                  <li
+                    key={f}
+                    style={{
+                      display: "flex", alignItems: "flex-start", gap: "10px",
+                      fontSize: "13px", lineHeight: 1.6, color: "rgba(255,255,255,0.80)",
+                      paddingTop: "10px", paddingBottom: "10px",
+                      borderBottom: i < p.features.length - 1 ? "1px solid rgba(255,255,255,0.07)" : "none",
+                    }}
+                  >
+                    <FeatureTick />
                     {f}
                   </li>
                 ))}
               </ul>
 
+              {/* Enterprise seats block */}
               {p.key === "enterprise" && (
-                <div style={{ marginTop: "12px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "10px", padding: "12px" }}>
+                <div style={{ marginTop: "14px", background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "8px", padding: "10px" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", fontWeight: 700, color: "#fff" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 700, color: "#fff" }}>
                       <Users size={12} style={{ color: "#fff", flexShrink: 0 }} /> Seats
                     </span>
-                    <span style={{ fontSize: "10px", color: "#666666", textDecoration: "line-through" }}>$5/seat/mes</span>
+                    <span style={{ fontSize: "11px", color: "#555555", textDecoration: "line-through" }}>$5/seat/mes</span>
                   </div>
                   <div style={{ textAlign: "center" }}>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.35)", borderRadius: "6px", padding: "3px 8px", fontSize: "10px", fontWeight: 700, color: "#4ade80" }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: "6px", padding: "3px 8px", fontSize: "11px", fontWeight: 700, color: "#4ade80" }}>
                       EliteLabs lo patrocina · GRATIS
                     </span>
                   </div>
                 </div>
               )}
+
+              {/* Card footer — character count */}
+              <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <p style={{ fontSize: "14px", fontWeight: 500, color: "rgba(255,255,255,0.60)", textAlign: "center" }}>
+                  {p.characters.toLocaleString("es-ES")} caracteres/mes
+                </p>
+              </div>
             </div>
           );
         })}
