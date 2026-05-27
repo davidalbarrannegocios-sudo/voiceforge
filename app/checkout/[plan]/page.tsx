@@ -687,7 +687,7 @@ function CheckoutContent() {
       fetch("/api/buy-credits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packKey: rawKey }),
+        body: JSON.stringify({ packKey: rawKey.replace(/^credits-/, "") }),
       })
         .then((r) => r.json())
         .then((data) => {
