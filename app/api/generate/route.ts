@@ -105,7 +105,13 @@ export async function POST(req: Request) {
         prisma.user.update({ where: { id: user.id }, data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } } }),
         prisma.job.update({ where: { id: job.id }, data: { status: "failed", error: errMsg } }),
       ]);
-      return NextResponse.json({ error: isAbort ? "Generación cancelada" : "Error al generar audio", detail: errMsg }, { status: 500 });
+      console.log(`[generate] Créditos devueltos: plan=${fromPlan} extra=${fromExtra} usuario=${user.id}`);
+      return NextResponse.json({
+        error: isAbort
+          ? "Generación cancelada. Tus créditos han sido devueltos automáticamente."
+          : "Error al generar el audio. Tus créditos han sido devueltos automáticamente.",
+        detail: errMsg,
+      }, { status: 500 });
     }
 
     await prisma.$transaction([
