@@ -247,8 +247,9 @@ model PayoutRequest {
 }
 
 model SystemConfig {
-  id                   String   @id @default("singleton")
-  elitelabsTurboStatus String   @default("active")
-  updatedAt            DateTime @updatedAt
+  id                          String   @id @default("singleton")
+  elitelabsTurboStatus        String   @default("active")
+  elitelabsTurboManualOverride Boolean  @default(false)
+  updatedAt                   DateTime @updatedAt
 }
 

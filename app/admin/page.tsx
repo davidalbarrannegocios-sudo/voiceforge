@@ -713,7 +713,10 @@ export default function AdminPage() {
   // TTS engine config
   const [turboStatus, setTurboStatus] = useState<"active" | "maintenance" | "disabled">("active");
   const [turboStatusPending, setTurboStatusPending] = useState<"active" | "maintenance" | "disabled">("active");
+  const [turboManualOverride, setTurboManualOverride] = useState(false);
+  const [turboManualOverridePending, setTurboManualOverridePending] = useState(false);
   const [turboStatusSaving, setTurboStatusSaving] = useState(false);
+  const [ai33Health, setAi33Health] = useState<{ elevenlabs: string; isDown: boolean } | null>(null);
 
   const toast = useCallback((msg: string, ok = true) => {
     setFeedback({ msg, ok });
@@ -744,8 +747,11 @@ export default function AdminPage() {
     if (cfgRes.ok) {
       const cfgData = await cfgRes.json();
       const s = cfgData.elitelabsTurboStatus ?? "active";
+      const m = !!cfgData.elitelabsTurboManualOverride;
       setTurboStatus(s);
       setTurboStatusPending(s);
+      setTurboManualOverride(m);
+      setTurboManualOverridePending(m);
     }
   }, []);
 
@@ -791,11 +797,15 @@ export default function AdminPage() {
       const res = await fetch("/api/admin/system-config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ elitelabsTurboStatus: turboStatusPending }),
+        body: JSON.stringify({
+          elitelabsTurboStatus: turboStatusPending,
+          elitelabsTurboManualOverride: turboManualOverridePending,
+        }),
       });
       if (res.ok) {
         setTurboStatus(turboStatusPending);
-        toast("Estado de Elite Labs Turbo guardado", true);
+        setTurboManualOverride(turboManualOverridePending);
+        toast("Configuración de motores guardada", true);
       } else {
         toast("Error al guardar", false);
       }
@@ -806,8 +816,24 @@ export default function AdminPage() {
     }
   }
 
+  async function fetchAi33Health() {
+    try {
+      const r = await fetch("/api/ai33-health");
+      const d = await r.json();
+      setAi33Health({ elevenlabs: d.elevenlabs ?? "unknown", isDown: !!d.isDown });
+    } catch {
+      setAi33Health({ elevenlabs: "unknown", isDown: true });
+    }
+  }
+
   useEffect(() => { if (isLoaded && user) fetchAll(); }, [isLoaded, user, fetchAll]);
   useEffect(() => { if (isLoaded && !user) router.push("/sign-in"); }, [isLoaded, user, router]);
+  useEffect(() => {
+    fetchAi33Health();
+    const id = setInterval(fetchAi33Health, 30_000);
+    return () => clearInterval(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleCredits(e: React.FormEvent) {
     e.preventDefault();
@@ -944,7 +970,6 @@ export default function AdminPage() {
               { label: "Tickets soporte", anchor: "#section-tickets", badge: openTickets },
               { label: "Solicitudes Afiliados", anchor: "#section-affiliates", badge: pendingAff },
               { label: "Solicitudes de Retiro", anchor: "#section-withdrawals", badge: pendingWithdrawals },
-              { label: "Motores TTS", anchor: "#section-tts", badge: 0 },
             ].map(({ label, anchor, badge }) => (
               <a
                 key={anchor}
@@ -983,6 +1008,68 @@ export default function AdminPage() {
             ))}
           </div>
         )}
+
+        {/* Control de Motores */}
+        <div style={{ ...card, marginBottom: "2rem" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem", flexWrap: "wrap", gap: "8px" }}>
+            <p style={{ fontWeight: 700, fontSize: "15px" }}>Control de Motores</p>
+            {/* Live health badge */}
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px" }}>
+              <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: ai33Health === null ? "#6b7280" : ai33Health.isDown ? "#f87171" : "#4ade80", flexShrink: 0 }} />
+              <span style={{ color: ai33Health === null ? "#6b7280" : ai33Health.isDown ? "#f87171" : "#4ade80", fontWeight: 500 }}>
+                {ai33Health === null ? "Comprobando…" : ai33Health.isDown ? "Degradado / Caído" : "Operativo"}
+              </span>
+              <span style={{ color: "#4b5563" }}>— Estado ai33.pro</span>
+            </div>
+          </div>
+
+          {/* Elite Labs Turbo row */}
+          <div style={{ background: "#12121a", borderRadius: "10px", padding: "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontWeight: 600, fontSize: "14px", color: "#e2e2f0" }}>Elite Labs Turbo</span>
+                  <span style={{ fontSize: "10px", fontWeight: 500, padding: "1px 7px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)" }}>ElevenLabs · ai33.pro</span>
+                </div>
+                <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "3px" }}>Estado guardado: <span style={{ color: turboStatus === "active" ? "#4ade80" : turboStatus === "maintenance" ? "#fbbf24" : "#9ca3af", fontWeight: 600 }}>{turboStatus === "active" ? "Activo" : turboStatus === "maintenance" ? "Mantenimiento" : "Desactivado"}</span></p>
+              </div>
+            </div>
+
+            {/* 3-state selector */}
+            <div style={{ display: "flex", gap: "8px", marginBottom: "14px", flexWrap: "wrap" }}>
+              {(["active", "maintenance", "disabled"] as const).map((s) => {
+                const cfg = {
+                  active:      { bg: "rgba(74,222,128,0.15)",  border: "rgba(74,222,128,0.4)",  text: "#4ade80",  label: "● Activo" },
+                  maintenance: { bg: "rgba(251,191,36,0.15)",  border: "rgba(251,191,36,0.4)",  text: "#fbbf24",  label: "● Mantenimiento Temporal" },
+                  disabled:    { bg: "rgba(107,114,128,0.15)", border: "rgba(107,114,128,0.4)", text: "#9ca3af",  label: "● Desactivado" },
+                }[s];
+                const selected = turboStatusPending === s;
+                return (
+                  <button key={s} onClick={() => setTurboStatusPending(s)} style={{ padding: "6px 14px", fontSize: "12px", fontWeight: 500, borderRadius: "6px", cursor: "pointer", transition: "all 150ms", background: selected ? cfg.bg : "transparent", border: `1px solid ${selected ? cfg.border : "rgba(255,255,255,0.08)"}`, color: selected ? cfg.text : "#6b7280" }}>
+                    {cfg.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Manual override checkbox */}
+            <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px", cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={turboManualOverridePending}
+                onChange={(e) => setTurboManualOverridePending(e.target.checked)}
+                style={{ width: "14px", height: "14px", accentColor: "#3b82f6", cursor: "pointer" }}
+              />
+              <span style={{ fontSize: "12px", color: "#8888a8" }}>Anular control automático <span style={{ color: "#4b5563" }}>(el health check no sobreescribirá este estado)</span></span>
+            </label>
+
+            <button
+              onClick={saveTurboStatus}
+              disabled={turboStatusSaving || (turboStatusPending === turboStatus && turboManualOverridePending === turboManualOverride)}
+              style={{ padding: "6px 18px", fontSize: "12px", fontWeight: 600, borderRadius: "6px", border: "none", transition: "all 150ms", cursor: (turboStatusPending === turboStatus && turboManualOverridePending === turboManualOverride) ? "default" : "pointer", background: (turboStatusPending === turboStatus && turboManualOverridePending === turboManualOverride) ? "rgba(255,255,255,0.05)" : "#3b82f6", color: (turboStatusPending === turboStatus && turboManualOverridePending === turboManualOverride) ? "#6b7280" : "#fff", opacity: turboStatusSaving ? 0.6 : 1 }}
+            >{turboStatusSaving ? "Guardando..." : "Guardar cambios"}</button>
+          </div>
+        </div>
 
         {/* Management row */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "2rem" }}>
@@ -1403,49 +1490,6 @@ export default function AdminPage() {
           );
         })()}
 
-        {/* TTS Engines */}
-        <div id="section-tts" style={{ ...card, marginTop: "1.5rem" }}>
-          <p style={{ fontWeight: 700, marginBottom: "1rem" }}>Motores TTS</p>
-          <div style={{ background: "#12121a", borderRadius: "10px", padding: "16px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span style={{ fontWeight: 600, fontSize: "14px", color: "#e2e2f0" }}>Elite Labs Turbo</span>
-                  <span style={{ fontSize: "10px", fontWeight: 500, padding: "1px 7px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)" }}>ElevenLabs · ai33.pro</span>
-                </div>
-                <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "3px" }}>Voces premium · 2x rendimiento de caracteres</p>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: turboStatus === "active" ? "#4ade80" : turboStatus === "maintenance" ? "#fbbf24" : "#6b7280", flexShrink: 0 }} />
-                <span style={{ fontSize: "12px", fontWeight: 500, color: turboStatus === "active" ? "#4ade80" : turboStatus === "maintenance" ? "#fbbf24" : "#6b7280" }}>
-                  {turboStatus === "active" ? "Activo" : turboStatus === "maintenance" ? "Mantenimiento" : "Desactivado"}
-                </span>
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: "8px", marginBottom: "14px", flexWrap: "wrap" }}>
-              {(["active", "maintenance", "disabled"] as const).map((s) => {
-                const cfg = {
-                  active:      { bg: "rgba(74,222,128,0.15)",  border: "rgba(74,222,128,0.4)",  text: "#4ade80",  label: "● Activo" },
-                  maintenance: { bg: "rgba(251,191,36,0.15)",  border: "rgba(251,191,36,0.4)",  text: "#fbbf24",  label: "● Mantenimiento temporal" },
-                  disabled:    { bg: "rgba(107,114,128,0.15)", border: "rgba(107,114,128,0.4)", text: "#9ca3af",  label: "● Desactivado" },
-                }[s];
-                const selected = turboStatusPending === s;
-                return (
-                  <button
-                    key={s}
-                    onClick={() => setTurboStatusPending(s)}
-                    style={{ padding: "6px 14px", fontSize: "12px", fontWeight: 500, borderRadius: "6px", cursor: "pointer", transition: "all 150ms", background: selected ? cfg.bg : "transparent", border: `1px solid ${selected ? cfg.border : "rgba(255,255,255,0.08)"}`, color: selected ? cfg.text : "#6b7280" }}
-                  >{cfg.label}</button>
-                );
-              })}
-            </div>
-            <button
-              onClick={saveTurboStatus}
-              disabled={turboStatusSaving || turboStatusPending === turboStatus}
-              style={{ padding: "6px 18px", fontSize: "12px", fontWeight: 600, borderRadius: "6px", cursor: turboStatusPending === turboStatus ? "default" : "pointer", background: turboStatusPending === turboStatus ? "rgba(255,255,255,0.05)" : "#3b82f6", color: turboStatusPending === turboStatus ? "#6b7280" : "#fff", border: "none", opacity: turboStatusSaving ? 0.6 : 1, transition: "all 150ms" }}
-            >{turboStatusSaving ? "Guardando..." : "Guardar"}</button>
-          </div>
-        </div>
 
       </div>
     </div>

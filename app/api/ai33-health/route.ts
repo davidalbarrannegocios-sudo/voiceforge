@@ -22,13 +22,15 @@ async function probe(url: string, apiKey: string, init: RequestInit): Promise<Se
 }
 
 export async function GET() {
-  // Admin override takes priority over health probe
   const config = await prisma.systemConfig.findUnique({ where: { id: "singleton" } });
   const adminStatus = config?.elitelabsTurboStatus ?? "active";
+  const manualOverride = config?.elitelabsTurboManualOverride ?? false;
 
-  if (adminStatus !== "active") {
+  // Manual override: trust admin status, skip external probe
+  if (manualOverride || adminStatus !== "active") {
+    const isDown = adminStatus !== "active";
     return NextResponse.json(
-      { elevenlabs: "overloaded" as ServiceStatus, minimax: "good" as ServiceStatus, isDown: true, adminStatus },
+      { elevenlabs: isDown ? "overloaded" as ServiceStatus : "good" as ServiceStatus, minimax: "good" as ServiceStatus, isDown, adminStatus, manualOverride },
       { headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=30" } }
     );
   }
@@ -36,7 +38,7 @@ export async function GET() {
   const apiKey = process.env.SK_AI33_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      { elevenlabs: "overloaded" as ServiceStatus, minimax: "overloaded" as ServiceStatus, isDown: true, adminStatus },
+      { elevenlabs: "overloaded" as ServiceStatus, minimax: "overloaded" as ServiceStatus, isDown: true, adminStatus, manualOverride },
       { headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=30" } }
     );
   }
@@ -50,11 +52,11 @@ export async function GET() {
     }),
   ]);
 
-  console.log(`[ai33-health] elevenlabs=${elevenlabs} minimax=${minimax} adminStatus=${adminStatus}`);
+  console.log(`[ai33-health] elevenlabs=${elevenlabs} minimax=${minimax} adminStatus=${adminStatus} manualOverride=${manualOverride}`);
 
   const isDown = elevenlabs !== "good";
   return NextResponse.json(
-    { elevenlabs, minimax, isDown, adminStatus },
+    { elevenlabs, minimax, isDown, adminStatus, manualOverride },
     { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=60" } }
   );
 }

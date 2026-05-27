@@ -11,6 +11,7 @@ export async function GET() {
   const config = await prisma.systemConfig.findUnique({ where: { id: "singleton" } });
   return NextResponse.json({
     elitelabsTurboStatus: (config?.elitelabsTurboStatus ?? "active") as TurboStatus,
+    elitelabsTurboManualOverride: config?.elitelabsTurboManualOverride ?? false,
   });
 }
 
@@ -23,16 +24,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { elitelabsTurboStatus } = await req.json();
+  const { elitelabsTurboStatus, elitelabsTurboManualOverride } = await req.json();
   if (!VALID_STATUSES.includes(elitelabsTurboStatus)) {
     return NextResponse.json({ error: "Estado inválido" }, { status: 400 });
   }
 
   const config = await prisma.systemConfig.upsert({
     where: { id: "singleton" },
-    update: { elitelabsTurboStatus },
-    create: { id: "singleton", elitelabsTurboStatus },
+    update: { elitelabsTurboStatus, elitelabsTurboManualOverride: !!elitelabsTurboManualOverride },
+    create: { id: "singleton", elitelabsTurboStatus, elitelabsTurboManualOverride: !!elitelabsTurboManualOverride },
   });
 
-  return NextResponse.json({ elitelabsTurboStatus: config.elitelabsTurboStatus });
+  return NextResponse.json({
+    elitelabsTurboStatus: config.elitelabsTurboStatus,
+    elitelabsTurboManualOverride: config.elitelabsTurboManualOverride,
+  });
 }
