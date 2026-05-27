@@ -391,41 +391,45 @@ function PricingContent() {
           <p style={{ fontSize: "13px", color: "#444444", textAlign: "center", marginBottom: "20px" }}>
             Caracteres incluidos por precio mensual similar
           </p>
-          <div style={{ borderRadius: "14px", border: "1px solid #1a1a1a", overflow: "hidden" }}>
+          <div style={{ borderRadius: "12px", border: "1px solid rgba(255,255,255,0.10)", overflow: "hidden" }}>
             <table style={{ width: "100%", fontSize: "13px", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ background: "#0a0a0a", borderBottom: "1px solid #1a1a1a" }}>
-                  <th style={{ textAlign: "left", padding: "11px 16px", fontWeight: 600, color: "#444444" }}>Plataforma</th>
-                  <th style={{ padding: "11px 10px", fontWeight: 600, color: "#444444", textAlign: "center" }}>~$7/mes</th>
-                  <th style={{ padding: "11px 10px", fontWeight: 600, color: "#444444", textAlign: "center" }}>~$13/mes</th>
-                  <th style={{ padding: "11px 10px", fontWeight: 600, color: "#444444", textAlign: "center" }}>~$25/mes</th>
-                  <th style={{ padding: "11px 10px", fontWeight: 600, color: "#444444", textAlign: "center" }}>~$110/mes</th>
+                <tr style={{ background: "#111111" }}>
+                  <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "#555555", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    Plataforma
+                  </th>
+                  {["~$7/mes", "~$13/mes", "~$25/mes", "~$110/mes"].map((col) => (
+                    <th key={col} style={{ padding: "12px 10px", fontWeight: 600, color: "#555555", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      {col}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {[
-                  { name: "ElevenLabs", cols: ["30.000 chars",   "121.000 chars",  "~200.000 chars",  "~2.200.000 chars"] },
-                  { name: "Minimax",    cols: ["100.000 chars",  "330.000 chars",  "~540.000 chars",  "~1.800.000 chars"] },
-                  { name: "Fish Audio", cols: ["~117.000 chars", "~217.000 chars", "~417.000 chars",  "~1.800.000 chars"] },
-                ].map((row) => (
-                  <tr key={row.name} style={{ borderBottom: "1px solid #1a1a1a" }}>
-                    <td style={{ padding: "11px 16px", color: "#555555", fontWeight: 500 }}>{row.name}</td>
-                    {row.cols.map((c, i) => (
-                      <td key={i} style={{ padding: "11px 10px", textAlign: "center", color: "#444444" }}>{c}</td>
+                  { name: "ElevenLabs", cols: ["30.000 chars",  "121.000 chars",  "~200.000 chars",  "~2.200.000 chars"] },
+                  { name: "Minimax",    cols: ["100.000 chars", "330.000 chars",  "~540.000 chars",  "~1.800.000 chars"] },
+                ].map((row, i) => (
+                  <tr key={row.name} style={{ background: i % 2 === 0 ? "transparent" : "#0a0a0a", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <td style={{ padding: "12px 16px", color: "#555555", fontWeight: 500 }}>{row.name}</td>
+                    {row.cols.map((c, j) => (
+                      <td key={j} style={{ padding: "12px 10px", textAlign: "center", color: "#444444" }}>{c}</td>
                     ))}
                   </tr>
                 ))}
-                <tr style={{ background: "rgba(255,255,255,0.03)", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-                  <td style={{ padding: "11px 16px", fontWeight: 700, color: "#ffffff" }}>⭐ Elite Labs</td>
+                {/* Elite Labs row */}
+                <tr style={{ background: "rgba(255,255,255,0.03)", borderLeft: "3px solid #ffffff" }}>
+                  <td style={{ padding: "12px 16px", fontWeight: 700, color: "#ffffff" }}>Elite Labs</td>
                   {["200.000 chars", "500.000 chars", "1.000.000 chars", "5.000.000 chars"].map((c) => (
-                    <td key={c} style={{ padding: "11px 10px", textAlign: "center", fontWeight: 600, color: "#ffffff" }}>{c}</td>
+                    <td key={c} style={{ padding: "12px 10px", textAlign: "center", fontWeight: 600, color: "#ffffff" }}>{c}</td>
                   ))}
                 </tr>
               </tbody>
             </table>
           </div>
-          <p style={{ marginTop: "12px", textAlign: "center", fontSize: "13px", fontWeight: 600, color: "#888888" }}>
-            Hasta 6× más caracteres que la competencia al mismo precio.{" "}
+          <p style={{ marginTop: "12px", textAlign: "center", fontSize: "13px" }}>
+            <span style={{ color: "#ffffff", fontWeight: 600 }}>Hasta 6× más caracteres que la competencia al mismo precio.</span>
+            {" "}
             <span style={{ color: "#444444", fontWeight: 400 }}>Sin límite por generación.</span>
           </p>
         </div>
