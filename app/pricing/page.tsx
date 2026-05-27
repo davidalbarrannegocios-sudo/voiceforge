@@ -176,13 +176,11 @@ function PricingContent() {
     return n.toLocaleString("es-ES");
   }
 
-  function cardBg(plan: Plan) {
-    if (plan.popular) return "linear-gradient(135deg, #0a0f1e, #0d1529)";
+  function cardBg(_plan: Plan) {
     return "#0a0a0a";
   }
 
-  function cardBorder(plan: Plan) {
-    if (plan.popular) return "1px solid rgba(99,102,241,0.25)";
+  function cardBorder(_plan: Plan) {
     return "1px solid #1a1a1a";
   }
 
@@ -340,7 +338,7 @@ function PricingContent() {
               </button>
 
               {/* Divider */}
-              <div style={{ height: "1px", background: plan.popular ? "rgba(255,255,255,0.08)" : "#1a1a1a", marginBottom: "14px" }} />
+              <div style={{ height: "1px", background: "#1a1a1a", marginBottom: "14px" }} />
 
               {/* Features */}
               <ul style={{ listStyle: "none", padding: 0, margin: 0, flex: 1 }}>
@@ -378,7 +376,7 @@ function PricingContent() {
               )}
 
               {/* Card footer — character count */}
-              <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: plan.popular ? "1px solid rgba(255,255,255,0.10)" : "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                 <p style={{ fontSize: "14px", fontWeight: 500, color: "rgba(255,255,255,0.60)", textAlign: "center" }}>
                   {fmtChars(plan.characters)} caracteres/mes
                 </p>
