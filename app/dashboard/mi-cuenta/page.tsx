@@ -158,7 +158,7 @@ export default function MiCuentaPage() {
                 padding: "10px 16px", border: "none", cursor: "pointer",
                 background: "transparent", fontSize: "14px", fontWeight: 600,
                 color: settingsTab === key ? "#fff" : "#6b7280",
-                borderBottom: settingsTab === key ? "2px solid #3b82f6" : "2px solid transparent",
+                borderBottom: settingsTab === key ? "2px solid #ffffff" : "2px solid transparent",
                 marginBottom: "-1px",
                 transition: "color 0.15s ease",
               }}
@@ -208,7 +208,7 @@ export default function MiCuentaPage() {
                     <button
                       onClick={saveName}
                       disabled={nameSaving}
-                      style={{ padding: "7px 16px", borderRadius: "7px", border: "none", background: "#3b82f6", color: "#fff", fontSize: "12px", fontWeight: 600, cursor: "pointer", opacity: nameSaving ? 0.7 : 1 }}
+                      style={{ padding: "7px 16px", borderRadius: "7px", border: "none", background: "#ffffff", color: "#000000", fontSize: "12px", fontWeight: 600, cursor: "pointer", opacity: nameSaving ? 0.7 : 1 }}
                     >
                       {nameSaving ? t.account.saving : t.account.save}
                     </button>
@@ -365,7 +365,7 @@ export default function MiCuentaPage() {
                     disabled={passwordSaving || !currentPassword || !newPassword || !confirmPassword}
                     style={{
                       padding: "8px 20px", borderRadius: "8px", border: "none",
-                      background: "#3b82f6", color: "#fff", fontSize: "13px", fontWeight: 600, cursor: "pointer",
+                      background: "#ffffff", color: "#000000", fontSize: "13px", fontWeight: 600, cursor: "pointer",
                       opacity: passwordSaving || !currentPassword || !newPassword || !confirmPassword ? 0.5 : 1,
                     }}
                   >
@@ -374,7 +374,7 @@ export default function MiCuentaPage() {
                 </div>
               ) : (
                 <div style={{ background: "#13131f", border: "1px solid #1e1e2e", borderRadius: "10px", padding: "16px 20px", display: "flex", alignItems: "center", gap: "12px" }}>
-                  <Shield size={18} style={{ color: "#3b82f6", flexShrink: 0 }} />
+                  <Shield size={18} style={{ color: "#aaaaaa", flexShrink: 0 }} />
                   <p style={{ margin: 0, color: "#9ca3af", fontSize: "13px", lineHeight: 1.5 }}>
                     {t.account.googleAuth}
                   </p>
@@ -432,7 +432,7 @@ export default function MiCuentaPage() {
               disabled={deleteInput !== t.account.deleteConfirmWord || deleting}
               style={{
                 width: "100%", padding: "11px", borderRadius: "8px", border: "none",
-                background: deleteInput === "ELIMINAR" ? "#ef4444" : "#1a1a2e",
+                background: deleteInput === "ELIMINAR" ? "#ef4444" : "#1a1a1a",
                 color: deleteInput === "ELIMINAR" ? "#fff" : "#4a4a65",
                 fontSize: "13px", fontWeight: 700,
                 cursor: deleteInput !== t.account.deleteConfirmWord || deleting ? "not-allowed" : "pointer",

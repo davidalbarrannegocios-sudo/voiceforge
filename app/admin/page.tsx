@@ -462,7 +462,7 @@ function UserDetailModal({
                     padding: "0.6rem 1.25rem", fontSize: "0.85rem", fontWeight: 600,
                     background: "none", border: "none", cursor: "pointer",
                     color: modalTab === t ? "#fff" : "#555570",
-                    borderBottom: modalTab === t ? "2px solid #3b82f6" : "2px solid transparent",
+                    borderBottom: modalTab === t ? "2px solid #ffffff" : "2px solid transparent",
                     textTransform: "capitalize",
                   }}
                 >

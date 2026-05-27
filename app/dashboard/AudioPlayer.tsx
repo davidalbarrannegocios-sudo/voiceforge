@@ -57,16 +57,16 @@ export function AudioPlayer({
         <button
           onClick={togglePlay}
           className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95"
-          style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", boxShadow: "0 0 12px rgba(59,130,246,0.4)" }}
+          style={{ background: "#ffffff", boxShadow: "0 0 12px rgba(255,255,255,0.15)" }}
           aria-label={playing ? "Pausar" : "Reproducir"}
         >
           {playing ? (
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="white">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="#000000">
               <rect x="2" y="1" width="4" height="12" rx="1" />
               <rect x="8" y="1" width="4" height="12" rx="1" />
             </svg>
           ) : (
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="white">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="#000000">
               <path d="M3 1.5L12.5 7 3 12.5V1.5z" />
             </svg>
           )}
@@ -78,15 +78,15 @@ export function AudioPlayer({
           onClick={handleSeek}
           aria-label="Barra de progreso"
         >
-          <div className="relative h-1.5 rounded-full" style={{ background: "#2a2a3e" }}>
+          <div className="relative h-1.5 rounded-full" style={{ background: "#333333" }}>
             <div
               className="absolute inset-y-0 left-0 rounded-full transition-all"
-              style={{ width: `${progress * 100}%`, background: "linear-gradient(90deg, #3b82f6, #93c5fd)" }}
+              style={{ width: `${progress * 100}%`, background: "#ffffff" }}
             />
             {/* Thumb */}
             <div
               className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ left: `calc(${progress * 100}% - 6px)`, background: "#93c5fd", boxShadow: "0 0 6px rgba(147,197,253,0.8)" }}
+              style={{ left: `calc(${progress * 100}% - 6px)`, background: "#ffffff", boxShadow: "0 0 6px rgba(255,255,255,0.5)" }}
             />
           </div>
         </div>

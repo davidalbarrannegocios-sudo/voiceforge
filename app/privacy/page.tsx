@@ -72,13 +72,13 @@ const SECTIONS = [
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen" style={{ background: "#0a0a0f", color: "white" }}>
-      <header className="border-b sticky top-0 z-10" style={{ background: "rgba(10,10,15,0.95)", backdropFilter: "blur(12px)", borderColor: "#2a2a3e" }}>
+      <header className="border-b sticky top-0 z-10" style={{ background: "rgba(10,10,15,0.95)", backdropFilter: "blur(12px)", borderColor: "#222222" }}>
         <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Image src="/elitelabs.png" alt="Elite Labs" width={28} height={28} style={{ height: "28px", width: "auto", objectFit: "contain" }} className="rounded-lg" />
             <span className="font-bold text-white">Elite Labs</span>
           </Link>
-          <Link href="/" className="text-sm transition-colors hover:text-white" style={{ color: "#8888a8" }}>
+          <Link href="/" className="text-sm transition-colors hover:text-white" style={{ color: "#888888" }}>
             ← Inicio
           </Link>
         </div>
@@ -86,14 +86,14 @@ export default function PrivacyPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <div className="mb-12">
-          <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#3b82f6" }}>Legal</p>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#888888" }}>Legal</p>
           <h1 className="text-4xl font-bold text-white mb-4">Política de Privacidad</h1>
-          <p className="text-sm" style={{ color: "#8888a8" }}>Última actualización: 1 de enero de 2026</p>
+          <p className="text-sm" style={{ color: "#888888" }}>Última actualización: 1 de enero de 2026</p>
         </div>
 
         <div
           className="p-5 rounded-xl border mb-10 text-sm leading-relaxed"
-          style={{ background: "rgba(59,130,246,0.06)", borderColor: "rgba(59,130,246,0.2)", color: "#93c5fd" }}
+          style={{ background: "#1a1a1a", borderLeft: "3px solid rgba(255,255,255,0.3)", borderColor: "#222222", color: "#cccccc" }}
         >
           En Elite Labs nos tomamos tu privacidad en serio. Esta política explica qué datos recopilamos, por qué y cómo los protegemos.
         </div>
@@ -109,7 +109,7 @@ export default function PrivacyPage() {
                 <ul className="space-y-2 mt-2">
                   {s.items.map((item) => (
                     <li key={item} className="flex items-start gap-3 text-sm" style={{ color: "#9ca3af" }}>
-                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#3b82f6" }} />
+                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#ffffff" }} />
                       {item}
                     </li>
                   ))}
@@ -119,8 +119,8 @@ export default function PrivacyPage() {
           ))}
         </div>
 
-        <div className="mt-14 pt-8 border-t" style={{ borderColor: "#2a2a3e" }}>
-          <p className="text-sm" style={{ color: "#8888a8" }}>
+        <div className="mt-14 pt-8 border-t" style={{ borderColor: "#222222" }}>
+          <p className="text-sm" style={{ color: "#888888" }}>
             ¿Preguntas? Escríbenos a{" "}
             <a href="mailto:soporte@elitelabs.es" className="text-blue-400 hover:text-blue-300 transition-colors">
               soporte@elitelabs.es
@@ -129,7 +129,7 @@ export default function PrivacyPage() {
         </div>
       </main>
 
-      <footer className="border-t mt-16 py-6 px-6" style={{ borderColor: "#2a2a3e" }}>
+      <footer className="border-t mt-16 py-6 px-6" style={{ borderColor: "#222222" }}>
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs" style={{ color: "#555570" }}>© 2026 Elite Tube LLC. All rights reserved.</p>
           <div className="flex gap-5">

@@ -25,7 +25,7 @@ export function VoiceAvatarGenerative({
   const config = useMemo(() => {
     const h = hashCode(seed);
     const palettes = [
-      ["#60a5fa", "#3b82f6", "#1d4ed8"],
+      ["#888888", "#aaaaaa", "#cccccc"],
       ["#f472b6", "#ec4899", "#be185d"],
       ["#34d399", "#10b981", "#047857"],
       ["#67e8f9", "#06b6d4", "#0e7490"],

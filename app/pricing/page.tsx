@@ -165,7 +165,7 @@ function PricingContent() {
             <Image src="/elitelabs.png" alt="Elite Labs" width={28} height={28} className="rounded-lg" />
             <span style={{ fontWeight: 700, fontSize: "15px", color: "#fff" }}>Elite Labs</span>
           </Link>
-          <Link href={isSignedIn ? "/dashboard" : "/"} style={{ fontSize: "13px", color: "#4a4a65", textDecoration: "none" }}>
+          <Link href={isSignedIn ? "/dashboard" : "/"} style={{ fontSize: "13px", color: "#555555", textDecoration: "none" }}>
             {isSignedIn ? "← Dashboard" : "← Inicio"}
           </Link>
         </div>
@@ -178,25 +178,25 @@ function PricingContent() {
           <h1 style={{ fontSize: "40px", fontWeight: 800, color: "#fff", marginBottom: "10px", lineHeight: 1.1 }}>
             Elige tu plan
           </h1>
-          <p style={{ fontSize: "15px", color: "#4a4a65" }}>
+          <p style={{ fontSize: "15px", color: "#555555" }}>
             Cancela cuando quieras · Los caracteres se renuevan cada período
           </p>
         </div>
 
         {/* Monthly / Annual toggle */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "32px" }}>
-          <div style={{ position: "relative", display: "inline-grid", gridTemplateColumns: "1fr 1fr", background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: "10px", padding: "3px" }}>
+          <div style={{ position: "relative", display: "inline-grid", gridTemplateColumns: "1fr 1fr", background: "#111111", border: "1px solid #222222", borderRadius: "10px", padding: "3px" }}>
             {/* Sliding pill */}
-            <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#1a1a2e", borderRadius: "7px", pointerEvents: "none", transition: "transform 0.2s ease", transform: `translateX(${billing === "annual" ? "100%" : "0%"})` }} />
+            <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#ffffff", borderRadius: "7px", pointerEvents: "none", transition: "transform 0.2s ease", transform: `translateX(${billing === "annual" ? "100%" : "0%"})` }} />
             <button
               onClick={() => setBilling("monthly")}
-              style={{ position: "relative", zIndex: 1, padding: "8px 24px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: 600, background: "transparent", color: billing === "monthly" ? "#e5e7eb" : "#4a4a65", transition: "color 0.2s ease" }}
+              style={{ position: "relative", zIndex: 1, padding: "8px 24px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: 600, background: "transparent", color: billing === "monthly" ? "#000000" : "#888888", transition: "color 0.2s ease" }}
             >
               Mensual
             </button>
             <button
               onClick={() => setBilling("annual")}
-              style={{ position: "relative", zIndex: 1, padding: "8px 24px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: 600, background: "transparent", color: billing === "annual" ? "#e5e7eb" : "#4a4a65", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "color 0.2s ease" }}
+              style={{ position: "relative", zIndex: 1, padding: "8px 24px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: 600, background: "transparent", color: billing === "annual" ? "#000000" : "#888888", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "color 0.2s ease" }}
             >
               Anual
               <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e" }}>−17%</span>
@@ -212,8 +212,8 @@ function PricingContent() {
               style={{
                 borderRadius: "14px",
                 padding: "22px 16px",
-                border: "1px solid #1e1e2e",
-                background: "#0d0d17",
+                border: "1px solid #222222",
+                background: "#111111",
                 display: "flex",
                 flexDirection: "column",
               }}
@@ -234,7 +234,7 @@ function PricingContent() {
               </div>
 
               {/* Description */}
-              <p style={{ fontSize: "12px", color: "#4a4a65", marginBottom: "14px", lineHeight: 1.4 }}>
+              <p style={{ fontSize: "12px", color: "#555555", marginBottom: "14px", lineHeight: 1.4 }}>
                 {plan.description}
               </p>
 
@@ -251,10 +251,10 @@ function PricingContent() {
                       <span style={{ fontSize: "38px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
                         ${billing === "annual" ? annualMonthly(plan.price) : plan.price}
                       </span>
-                      <span style={{ fontSize: "12px", color: "#3a3a52", marginLeft: "2px" }}>/mes</span>
+                      <span style={{ fontSize: "12px", color: "#444444", marginLeft: "2px" }}>/mes</span>
                     </div>
                     {billing === "annual" ? (
-                      <p style={{ fontSize: "11px", color: "#3a3a52", marginTop: "3px" }}>
+                      <p style={{ fontSize: "11px", color: "#444444", marginTop: "3px" }}>
                         ${annualTotal(plan.price)} facturado anualmente
                       </p>
                     ) : (
@@ -269,10 +269,10 @@ function PricingContent() {
                 onClick={() => handleSelect(plan)}
                 style={
                   plan.free
-                    ? { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #2a2a3e", cursor: "pointer", background: "transparent", color: "#6b7280", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
+                    ? { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #222222", cursor: "pointer", background: "transparent", color: "#6b7280", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
                     : plan.popular
-                    ? { width: "100%", padding: "10px", borderRadius: "8px", border: "none", cursor: "pointer", background: "#2563eb", color: "#fff", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
-                    : { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #2a2a3e", cursor: "pointer", background: "#1a1a2e", color: "#e5e7eb", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
+                    ? { width: "100%", padding: "10px", borderRadius: "8px", border: "none", cursor: "pointer", background: "#ffffff", color: "#000000", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
+                    : { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #222222", cursor: "pointer", background: "#1a1a1a", color: "#e5e7eb", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
                 }
               >
                 {plan.cta}
@@ -282,7 +282,7 @@ function PricingContent() {
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "7px", flex: 1 }}>
                 {plan.features.map((f) => (
                   <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "7px", fontSize: "12px", color: "#6b6b88" }}>
-                    <Check size={11} style={{ color: "#3a3a52", flexShrink: 0, marginTop: "2px" }} />
+                    <Check size={11} style={{ color: "#444444", flexShrink: 0, marginTop: "2px" }} />
                     {f}
                   </li>
                 ))}
@@ -319,12 +319,12 @@ function PricingContent() {
           <div style={{ borderRadius: "14px", border: "1px solid #1a1a28", overflow: "hidden" }}>
             <table style={{ width: "100%", fontSize: "13px", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ background: "#0d0d17", borderBottom: "1px solid #1a1a28" }}>
-                  <th style={{ textAlign: "left", padding: "11px 16px", fontWeight: 600, color: "#3a3a52" }}>Plataforma</th>
-                  <th style={{ padding: "11px 10px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$7/mes</th>
-                  <th style={{ padding: "11px 10px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$13/mes</th>
-                  <th style={{ padding: "11px 10px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$25/mes</th>
-                  <th style={{ padding: "11px 10px", fontWeight: 600, color: "#3a3a52", textAlign: "center" }}>~$110/mes</th>
+                <tr style={{ background: "#111111", borderBottom: "1px solid #1a1a28" }}>
+                  <th style={{ textAlign: "left", padding: "11px 16px", fontWeight: 600, color: "#444444" }}>Plataforma</th>
+                  <th style={{ padding: "11px 10px", fontWeight: 600, color: "#444444", textAlign: "center" }}>~$7/mes</th>
+                  <th style={{ padding: "11px 10px", fontWeight: 600, color: "#444444", textAlign: "center" }}>~$13/mes</th>
+                  <th style={{ padding: "11px 10px", fontWeight: 600, color: "#444444", textAlign: "center" }}>~$25/mes</th>
+                  <th style={{ padding: "11px 10px", fontWeight: 600, color: "#444444", textAlign: "center" }}>~$110/mes</th>
                 </tr>
               </thead>
               <tbody>
@@ -334,13 +334,13 @@ function PricingContent() {
                   { name: "Fish Audio", cols: ["~117.000 chars", "~217.000 chars", "~417.000 chars",  "~1.800.000 chars"] },
                 ].map((row) => (
                   <tr key={row.name} style={{ borderBottom: "1px solid #1a1a28" }}>
-                    <td style={{ padding: "11px 16px", color: "#4a4a65", fontWeight: 500 }}>{row.name}</td>
+                    <td style={{ padding: "11px 16px", color: "#555555", fontWeight: 500 }}>{row.name}</td>
                     {row.cols.map((c, i) => (
                       <td key={i} style={{ padding: "11px 10px", textAlign: "center", color: "#2e2e48" }}>{c}</td>
                     ))}
                   </tr>
                 ))}
-                <tr style={{ background: "rgba(59,130,246,0.08)", borderTop: "1px solid rgba(59,130,246,0.2)" }}>
+                <tr style={{ background: "rgba(59,130,246,0.08)", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
                   <td style={{ padding: "11px 16px", fontWeight: 700, color: "#93c5fd" }}>⭐ Elite Labs</td>
                   {["200.000 chars", "500.000 chars", "1.000.000 chars", "5.000.000 chars"].map((c) => (
                     <td key={c} style={{ padding: "11px 10px", textAlign: "center", fontWeight: 600, color: "#93c5fd" }}>{c}</td>
@@ -351,7 +351,7 @@ function PricingContent() {
           </div>
           <p style={{ marginTop: "12px", textAlign: "center", fontSize: "13px", fontWeight: 600, color: "#93c5fd" }}>
             Hasta 6× más caracteres que la competencia al mismo precio.{" "}
-            <span style={{ color: "#3a3a52", fontWeight: 400 }}>Sin límite por generación.</span>
+            <span style={{ color: "#444444", fontWeight: 400 }}>Sin límite por generación.</span>
           </p>
         </div>
 
@@ -367,9 +367,9 @@ function PricingContent() {
               { q: "¿Puedo cambiar de plan?", a: "Sí, puedes hacer upgrade o downgrade en cualquier momento desde el portal de facturación." },
               { q: "¿Qué formatos acepta la clonación?", a: "WAV, MP3 y M4A. Recomendamos entre 10 y 30 segundos de audio limpio sin ruido." },
             ].map((faq) => (
-              <div key={faq.q} style={{ padding: "14px 18px", borderRadius: "10px", border: "1px solid #1a1a28", background: "#0d0d17" }}>
+              <div key={faq.q} style={{ padding: "14px 18px", borderRadius: "10px", border: "1px solid #1a1a28", background: "#111111" }}>
                 <p style={{ fontWeight: 600, color: "#e5e7eb", marginBottom: "3px", fontSize: "13px" }}>{faq.q}</p>
-                <p style={{ fontSize: "12px", color: "#3a3a52" }}>{faq.a}</p>
+                <p style={{ fontSize: "12px", color: "#444444" }}>{faq.a}</p>
               </div>
             ))}
           </div>

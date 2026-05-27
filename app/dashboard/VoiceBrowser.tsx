@@ -388,7 +388,7 @@ function TierPill({
       ? { background: "rgba(245,158,11,0.2)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.4)" }
       : { background: "transparent", color: "#6b6b88", border: "1px solid #2a2a3e" }
     : active
-    ? { background: "rgba(59,130,246,0.2)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
+    ? { background: "rgba(59,130,246,0.2)", color: "#aaaaaa", border: "1px solid rgba(59,130,246,0.4)" }
     : { background: "transparent", color: "#6b6b88", border: "1px solid #2a2a3e" };
 
   return (
@@ -406,7 +406,7 @@ function UpgradePrompt({ onClose }: { onClose: () => void }) {
       style={{ background: "rgba(0,0,0,0.75)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="rounded-2xl p-6 w-72 text-center border" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+      <div className="rounded-2xl p-6 w-72 text-center border" style={{ background: "#0d0d17", borderColor: "#222222" }}>
         <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(245,158,11,0.12)" }}>
           <span className="text-2xl">🔒</span>
         </div>
@@ -418,14 +418,14 @@ function UpgradePrompt({ onClose }: { onClose: () => void }) {
           <button
             onClick={onClose}
             className="flex-1 py-2 rounded-lg text-sm font-medium"
-            style={{ background: "#12121a", color: "#8888a8", border: "1px solid #2a2a3e" }}
+            style={{ background: "#111111", color: "#8888a8", border: "1px solid #2a2a3e" }}
           >
             Cancelar
           </button>
           <button
             onClick={() => router.push("/pricing")}
             className="flex-1 py-2 rounded-lg text-sm font-semibold text-white"
-            style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+            style={{ background: "#ffffff" }}
           >
             Ver planes
           </button>
@@ -551,7 +551,7 @@ function ElevenFilterPanel({
         className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
         style={
           active
-            ? { background: "rgba(59,130,246,0.2)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
+            ? { background: "rgba(59,130,246,0.2)", color: "#aaaaaa", border: "1px solid rgba(59,130,246,0.4)" }
             : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a3e" }
         }
       >
@@ -617,7 +617,7 @@ function ElevenFilterPanel({
         <button
           onClick={onApply}
           className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
-          style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+          style={{ background: "#ffffff" }}
         >
           Aplicar filtros
         </button>
@@ -655,7 +655,7 @@ function FilterPanel({
         className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
         style={
           active
-            ? { background: "rgba(59,130,246,0.2)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
+            ? { background: "rgba(59,130,246,0.2)", color: "#aaaaaa", border: "1px solid rgba(59,130,246,0.4)" }
             : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a3e" }
         }
       >
@@ -755,9 +755,9 @@ function FilterPanel({
             <button
               onClick={() => setShowAllQualities((p) => !p)}
               className="mt-2.5 text-xs transition-colors"
-              style={{ color: "#3b82f6" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#93c5fd")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#3b82f6")}
+              style={{ color: "#aaaaaa" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#aaaaaa")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#aaaaaa")}
             >
               {showAllQualities ? "Mostrar menos ↑" : `Mostrar más (${QUALITY_OPTIONS.length - QUALITIES_INITIAL_COUNT} más) ↓`}
             </button>
@@ -770,7 +770,7 @@ function FilterPanel({
         <button
           onClick={onApply}
           className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
-          style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+          style={{ background: "#ffffff" }}
         >
           Aplicar filtros
         </button>
@@ -905,7 +905,7 @@ function VoiceCard({
           className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60"
           style={{
             background: isPreviewing ? "rgba(59,130,246,0.35)" : "rgba(255,255,255,0.12)",
-            color: isPreviewing ? "#93c5fd" : "#e2e2f0",
+            color: isPreviewing ? "#aaaaaa" : "#e2e2f0",
             border: `1px solid ${isPreviewing ? "rgba(59,130,246,0.5)" : "rgba(255,255,255,0.15)"}`,
             backdropFilter: "blur(4px)",
           }}
@@ -918,7 +918,7 @@ function VoiceCard({
           style={
             isLocked
               ? { background: "rgba(30,30,46,0.9)", color: "#3a3a52", border: "1px solid #1a1a2a" }
-              : { background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff" }
+              : { background: "#ffffff", color: "#fff" }
           }
         >
           Usar →
@@ -1458,7 +1458,7 @@ export function VoiceBrowser({
                 className="py-3 px-1 mr-6 text-sm font-medium transition-colors border-b-2 -mb-px"
                 style={
                   tab === key
-                    ? { color: "#e2e2f0", borderColor: "#3b82f6" }
+                    ? { color: "#ffffff", borderColor: "rgba(255,255,255,0.4)" }
                     : { color: "#555570", borderColor: "transparent" }
                 }
               >
@@ -1563,7 +1563,7 @@ export function VoiceBrowser({
                     className="relative flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
                     style={
                       showFilterPanel || activeFilterCount > 0
-                        ? { background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
+                        ? { background: "rgba(255,255,255,0.08)", color: "#aaaaaa", border: "1px solid rgba(59,130,246,0.4)" }
                         : { background: "#0d0d17", color: "#c0c0d8", border: "1px solid #1e1e2e" }
                     }
                     title="Filtros avanzados"
@@ -1584,7 +1584,7 @@ export function VoiceBrowser({
                     {activeFilterCount > 0 && (
                       <span
                         className="flex items-center justify-center w-4 h-4 rounded-full text-xs font-bold text-white"
-                        style={{ background: "#3b82f6", fontSize: "10px" }}
+                        style={{ background: "#ffffff", color: "#000000", fontSize: "10px" }}
                       >
                         {activeFilterCount}
                       </span>
@@ -1613,12 +1613,12 @@ export function VoiceBrowser({
                     onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
                     onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1e1e2e")}
                   >
-                    <div className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#12121a" }}>🎙️</div>
+                    <div className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#111111" }}>🎙️</div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white">Voz por defecto</p>
                       <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Se generará una voz estándar</p>
                     </div>
-                    <span className="text-xs flex-shrink-0" style={{ color: "#3b82f6" }}>Seleccionar →</span>
+                    <span className="text-xs flex-shrink-0" style={{ color: "#aaaaaa" }}>Seleccionar →</span>
                   </button>
                 )}
 
@@ -1706,7 +1706,7 @@ export function VoiceBrowser({
                     <button
                       onClick={() => setTab("explore")}
                       className="px-4 py-2 rounded-lg text-xs font-semibold text-white"
-                      style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+                      style={{ background: "#ffffff" }}
                     >
                       Explorar voces
                     </button>
@@ -1774,7 +1774,7 @@ export function VoiceBrowser({
                     <button
                       onClick={() => setTab("explore")}
                       className="px-4 py-2 rounded-lg text-xs font-semibold text-white"
-                      style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+                      style={{ background: "#ffffff" }}
                     >
                       Explorar voces
                     </button>
@@ -1833,12 +1833,12 @@ export function VoiceBrowser({
                   onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
                   onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1e1e2e")}
                 >
-                  <div className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#12121a" }}>🎙️</div>
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#111111" }}>🎙️</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-white">Voz por defecto</p>
                     <p className="text-xs mt-0.5" style={{ color: "#555570" }}>Se generará una voz estándar</p>
                   </div>
-                  <span className="text-xs flex-shrink-0" style={{ color: "#3b82f6" }}>Seleccionar →</span>
+                  <span className="text-xs flex-shrink-0" style={{ color: "#aaaaaa" }}>Seleccionar →</span>
                 </button>
 
                 {clonedVoices.length === 0 ? (
@@ -1893,7 +1893,7 @@ export function VoiceBrowser({
                         value={communitySearch}
                         onChange={(e) => setCommunitySearch(e.target.value)}
                         placeholder="Buscar por nombre o ID..."
-                        className="w-full rounded-lg pl-8 pr-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/30"
+                        className="w-full rounded-lg pl-8 pr-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-white/20"
                         style={{ background: "#0a0a12", border: "1px solid #1e1e2e", color: "#d1d5db" }}
                       />
                     </div>

@@ -6,7 +6,7 @@ export const metadata = { title: "Blog — Elite Labs" };
 export default function BlogPage() {
   return (
     <div className="min-h-screen" style={{ background: "#0a0a0f", color: "white" }}>
-      <header className="border-b sticky top-0 z-10" style={{ background: "rgba(10,10,15,0.95)", backdropFilter: "blur(12px)", borderColor: "#2a2a3e" }}>
+      <header className="border-b sticky top-0 z-10" style={{ background: "rgba(10,10,15,0.95)", backdropFilter: "blur(12px)", borderColor: "#222222" }}>
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Image src="/elitelabs.png" alt="Elite Labs" width={28} height={28} style={{ height: "28px", width: "auto", objectFit: "contain" }} className="rounded-lg" />
@@ -34,7 +34,7 @@ export default function BlogPage() {
 
         <div
           className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full mb-6 border"
-          style={{ background: "rgba(59,130,246,0.1)", borderColor: "rgba(59,130,246,0.3)", color: "#93c5fd" }}
+          style={{ background: "rgba(59,130,246,0.1)", borderColor: "rgba(255,255,255,0.15)", color: "#93c5fd" }}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
           Próximamente
@@ -57,7 +57,7 @@ export default function BlogPage() {
             <div
               key={title}
               className="rounded-2xl border p-5 text-left"
-              style={{ background: "#12121a", borderColor: "#2a2a3e" }}
+              style={{ background: "#12121a", borderColor: "#222222" }}
             >
               <span className="text-2xl mb-3 block">{icon}</span>
               <p className="font-semibold text-white text-sm mb-1">{title}</p>
@@ -72,13 +72,13 @@ export default function BlogPage() {
         <a
           href="mailto:soporte@elitelabs.es?subject=Avísame%20cuando%20abra%20el%20blog"
           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:-translate-y-0.5"
-          style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 15px rgba(59,130,246,0.3)" }}
+          style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)" }}
         >
           Avísame cuando esté listo
         </a>
       </main>
 
-      <footer className="border-t py-6 px-6" style={{ borderColor: "#2a2a3e" }}>
+      <footer className="border-t py-6 px-6" style={{ borderColor: "#222222" }}>
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs" style={{ color: "#555570" }}>© 2026 Elite Tube LLC. All rights reserved.</p>
           <div className="flex gap-5">

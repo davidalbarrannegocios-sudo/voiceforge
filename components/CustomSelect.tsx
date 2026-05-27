@@ -108,7 +108,7 @@ export function CustomSelect({ options, value, onChange, placeholder, className,
       <button
         type="button"
         onClick={handleOpen}
-        className="w-full flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+        className="w-full flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-white/20"
         style={{ background: "#000000", border: "1px solid #222222" }}
       >
         {selected?.icon && <span className="flex-shrink-0 flex items-center">{selected.icon}</span>}
@@ -151,13 +151,13 @@ export function CustomSelect({ options, value, onChange, placeholder, className,
                 type="button"
                 onClick={() => { onChange(opt.value); close(); }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left"
-                style={{ color: isSelected ? "#93c5fd" : "#d1d5db" }}
-                onMouseEnter={(e) => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = "rgba(59,130,246,0.08)"; }}
+                style={{ color: isSelected ? "#ffffff" : "#d1d5db" }}
+                onMouseEnter={(e) => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
               >
                 {opt.icon && <span className="flex-shrink-0 flex items-center">{opt.icon}</span>}
                 <span className="flex-1">{opt.label}</span>
-                {isSelected && <Check size={12} style={{ color: "#93c5fd", flexShrink: 0 }} />}
+                {isSelected && <Check size={12} style={{ color: "#ffffff", flexShrink: 0 }} />}
               </button>
             );
           })}

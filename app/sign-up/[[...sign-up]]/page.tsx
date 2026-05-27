@@ -84,7 +84,7 @@ export default function SignUpPage() {
     }
   }
 
-  const inputClass = "w-full h-12 px-4 rounded-lg border text-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 transition-colors text-sm";
+  const inputClass = "w-full h-12 px-4 rounded-lg border text-white placeholder:text-gray-500 focus:outline-none focus:border-white/40 transition-colors text-sm";
   const inputStyle = { background: "#111122", borderColor: "rgba(255,255,255,0.15)" };
 
   return (
@@ -179,7 +179,7 @@ export default function SignUpPage() {
               <button
                 type="submit"
                 disabled={loading || !isLoaded}
-                className="h-12 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold text-sm transition-colors"
+                className="h-12 rounded-lg bg-white hover:bg-gray-200 disabled:opacity-50 text-black font-semibold text-sm transition-colors"
               >
                 {loading ? "Creando cuenta..." : "Crear cuenta"}
               </button>
@@ -213,7 +213,7 @@ export default function SignUpPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="h-12 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold text-sm transition-colors"
+                className="h-12 rounded-lg bg-white hover:bg-gray-200 disabled:opacity-50 text-black font-semibold text-sm transition-colors"
               >
                 {loading ? "Verificando..." : "Verificar email"}
               </button>

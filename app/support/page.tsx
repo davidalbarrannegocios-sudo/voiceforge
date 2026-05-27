@@ -50,7 +50,7 @@ const FAQ = [
 
 function FaqItem({ item, open, onToggle }: { item: typeof FAQ[0]; open: boolean; onToggle: () => void }) {
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ background: "#12121a", borderColor: "#2a2a3e" }}>
+    <div className="rounded-xl border overflow-hidden" style={{ background: "#111111", borderColor: "#222222" }}>
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between px-5 py-4 text-left transition-colors"
@@ -60,11 +60,11 @@ function FaqItem({ item, open, onToggle }: { item: typeof FAQ[0]; open: boolean;
         <ChevronDown
           size={17}
           className="flex-shrink-0 transition-transform duration-200"
-          style={{ transform: open ? "rotate(180deg)" : "none", color: "#8888a8" }}
+          style={{ transform: open ? "rotate(180deg)" : "none", color: "#888888" }}
         />
       </button>
       {open && (
-        <div className="px-5 pb-5 text-sm text-gray-400 leading-relaxed border-t" style={{ borderColor: "#2a2a3e" }}>
+        <div className="px-5 pb-5 text-sm text-gray-400 leading-relaxed border-t" style={{ borderColor: "#222222" }}>
           {item.a}
         </div>
       )}
@@ -77,13 +77,13 @@ export default function SupportPage() {
 
   return (
     <div className="min-h-screen" style={{ background: "#0a0a0f", color: "white" }}>
-      <header className="border-b sticky top-0 z-10" style={{ background: "rgba(10,10,15,0.95)", backdropFilter: "blur(12px)", borderColor: "#2a2a3e" }}>
+      <header className="border-b sticky top-0 z-10" style={{ background: "rgba(10,10,15,0.95)", backdropFilter: "blur(12px)", borderColor: "#222222" }}>
         <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Image src="/elitelabs.png" alt="Elite Labs" width={28} height={28} style={{ height: "28px", width: "auto", objectFit: "contain" }} className="rounded-lg" />
             <span className="font-bold text-white">Elite Labs</span>
           </Link>
-          <Link href="/" className="text-sm transition-colors hover:text-white" style={{ color: "#8888a8" }}>
+          <Link href="/" className="text-sm transition-colors hover:text-white" style={{ color: "#888888" }}>
             ← Inicio
           </Link>
         </div>
@@ -91,7 +91,7 @@ export default function SupportPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <div className="mb-12 text-center">
-          <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#3b82f6" }}>Ayuda</p>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#888888" }}>Ayuda</p>
           <h1 className="text-4xl font-bold text-white mb-4">Centro de soporte</h1>
           <p className="text-base" style={{ color: "#9ca3af" }}>
             Encuentra respuestas rápidas o contáctanos directamente.
@@ -101,13 +101,13 @@ export default function SupportPage() {
         {/* Contact card */}
         <div
           className="rounded-2xl border p-7 mb-14 flex flex-col sm:flex-row items-center gap-6"
-          style={{ background: "linear-gradient(135deg,rgba(59,130,246,0.08),rgba(59,130,246,0.03))", borderColor: "rgba(59,130,246,0.25)" }}
+          style={{ background: "#111111", borderColor: "#222222" }}
         >
           <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
-            style={{ background: "rgba(59,130,246,0.15)" }}
+            style={{ background: "rgba(255,255,255,0.06)" }}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#aaaaaa" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
               <rect width="20" height="16" x="2" y="4" rx="2" />
               <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
             </svg>
@@ -120,7 +120,7 @@ export default function SupportPage() {
             <a
               href="mailto:soporte@elitelabs.es"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:-translate-y-0.5"
-              style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 12px rgba(59,130,246,0.3)" }}
+              style={{ background: "#ffffff", color: "#000000" }}
             >
               soporte@elitelabs.es
             </a>
@@ -138,11 +138,11 @@ export default function SupportPage() {
             <Link
               key={label}
               href={href}
-              className="rounded-xl border p-4 transition-all hover:border-blue-700 group"
-              style={{ background: "#12121a", borderColor: "#2a2a3e" }}
+              className="rounded-xl border p-4 transition-all hover:border-white/30 group"
+              style={{ background: "#111111", borderColor: "#222222" }}
             >
-              <p className="text-sm font-medium text-white mb-0.5 group-hover:text-blue-400 transition-colors">{label}</p>
-              <p className="text-xs" style={{ color: "#8888a8" }}>{desc}</p>
+              <p className="text-sm font-medium text-white mb-0.5 group-hover:text-white transition-colors">{label}</p>
+              <p className="text-xs" style={{ color: "#888888" }}>{desc}</p>
             </Link>
           ))}
         </div>
@@ -162,9 +162,9 @@ export default function SupportPage() {
           </div>
         </div>
 
-        <div className="mt-12 p-5 rounded-xl border text-center" style={{ background: "#12121a", borderColor: "#2a2a3e" }}>
+        <div className="mt-12 p-5 rounded-xl border text-center" style={{ background: "#111111", borderColor: "#222222" }}>
           <p className="text-sm text-white font-medium mb-1">¿No encuentras lo que buscas?</p>
-          <p className="text-xs mb-4" style={{ color: "#8888a8" }}>Escríbenos y te ayudamos personalmente.</p>
+          <p className="text-xs mb-4" style={{ color: "#888888" }}>Escríbenos y te ayudamos personalmente.</p>
           <a
             href="mailto:soporte@elitelabs.es"
             className="text-sm font-semibold transition-colors hover:text-blue-300"
@@ -175,7 +175,7 @@ export default function SupportPage() {
         </div>
       </main>
 
-      <footer className="border-t mt-16 py-6 px-6" style={{ borderColor: "#2a2a3e" }}>
+      <footer className="border-t mt-16 py-6 px-6" style={{ borderColor: "#222222" }}>
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs" style={{ color: "#555570" }}>© 2026 Elite Tube LLC. All rights reserved.</p>
           <div className="flex gap-5">

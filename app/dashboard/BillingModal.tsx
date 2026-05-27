@@ -178,9 +178,9 @@ export function BillingModal({ onClose }: { onClose: () => void }) {
                 display: "flex", alignItems: "center", gap: "6px",
                 padding: "8px 14px", borderRadius: "8px 8px 0 0",
                 border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600,
-                background: tab === key ? "#1a1a2e" : "transparent",
+                background: tab === key ? "#1a1a1a" : "transparent",
                 color: tab === key ? "#fff" : "#6b7280",
-                borderBottom: tab === key ? "2px solid #3b82f6" : "2px solid transparent",
+                borderBottom: tab === key ? "2px solid #ffffff" : "2px solid transparent",
                 transition: "color 0.15s ease, background 0.15s ease",
               }}
             >
@@ -402,7 +402,7 @@ export function BillingModal({ onClose }: { onClose: () => void }) {
                         style={{
                           width: "100%", padding: "11px", borderRadius: "8px",
                           border: "none", cursor: cancelInput !== "CANCELAR" || cancelling ? "not-allowed" : "pointer",
-                          background: cancelInput === "CANCELAR" ? "#ef4444" : "#1a1a2e",
+                          background: cancelInput === "CANCELAR" ? "#ef4444" : "#1a1a1a",
                           color: cancelInput === "CANCELAR" ? "#fff" : "#4a4a65",
                           fontSize: "13px", fontWeight: 700,
                           transition: "background 0.2s ease, color 0.2s ease",

@@ -77,7 +77,7 @@ function AplicarModal({ onClose }: { onClose: () => void }) {
             <p style={{ color: "#8888a8", fontSize: "14px", margin: "0 0 24px" }}>
               Revisaremos tu solicitud y te contactaremos en los próximos días.
             </p>
-            <button onClick={onClose} style={{ padding: "10px 24px", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", border: "none", borderRadius: "10px", fontWeight: 600, cursor: "pointer", fontSize: "14px" }}>
+            <button onClick={onClose} style={{ padding: "10px 24px", background: "#ffffff", color: "#000000", border: "none", borderRadius: "10px", fontWeight: 600, cursor: "pointer", fontSize: "14px" }}>
               Cerrar
             </button>
           </div>
@@ -136,7 +136,7 @@ function AplicarModal({ onClose }: { onClose: () => void }) {
               <button
                 type="submit"
                 disabled={loading}
-                style={{ padding: "12px", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", border: "none", borderRadius: "12px", fontWeight: 700, fontSize: "14px", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+                style={{ padding: "12px", background: "#ffffff", color: "#000000", border: "none", borderRadius: "12px", fontWeight: 700, fontSize: "14px", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
               >
                 {loading && (
                   <svg style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} fill="none" viewBox="0 0 24 24">
@@ -182,12 +182,12 @@ export default function AfiliadosPage() {
         {/* ── Hero ── */}
         <div style={{ textAlign: "center", marginBottom: "64px" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "6px 16px", borderRadius: "9999px", background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.2)", marginBottom: "24px" }}>
-            <DollarSign size={13} style={{ color: "#3b82f6" }} />
+            <DollarSign size={13} style={{ color: "#aaaaaa" }} />
             <span style={{ fontSize: "12px", fontWeight: 600, color: "#93c5fd" }}>Programa de Afiliados</span>
           </div>
           <h1 style={{ fontSize: "clamp(28px, 5vw, 48px)", fontWeight: 800, color: "#fff", margin: "0 0 16px", lineHeight: 1.15 }}>
             Únete al programa de<br />
-            <span style={{ background: "linear-gradient(135deg, #3b82f6, #8b5cf6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            <span style={{ color: "#ffffff" }}>
               afiliados de Elite Labs
             </span>
           </h1>
@@ -196,7 +196,7 @@ export default function AfiliadosPage() {
           </p>
           <button
             onClick={() => setShowModal(true)}
-            style={{ padding: "14px 36px", background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff", border: "none", borderRadius: "9999px", fontWeight: 700, fontSize: "16px", cursor: "pointer", boxShadow: "0 8px 24px rgba(59,130,246,0.35)" }}
+            style={{ padding: "14px 36px", background: "#ffffff", color: "#000000", border: "none", borderRadius: "9999px", fontWeight: 700, fontSize: "16px", cursor: "pointer", boxShadow: "0 4px 16px rgba(255,255,255,0.1)" }}
           >
             Aplicar ahora
           </button>
@@ -239,7 +239,7 @@ export default function AfiliadosPage() {
             { Icon: Link2, value: "30 días", label: "Duración de cookie" },
           ].map(({ Icon, value, label }) => (
             <div key={label} style={{ background: "#12121a", border: "1px solid #2a2a3e", borderRadius: "16px", padding: "24px", textAlign: "center" }}>
-              <Icon size={24} style={{ color: "#3b82f6", margin: "0 auto 10px" }} />
+              <Icon size={24} style={{ color: "#aaaaaa", margin: "0 auto 10px" }} />
               <p style={{ fontSize: "28px", fontWeight: 800, color: "#fff", margin: "0 0 4px" }}>{value}</p>
               <p style={{ fontSize: "12px", color: "#8888a8", margin: 0 }}>{label}</p>
             </div>
@@ -254,7 +254,7 @@ export default function AfiliadosPage() {
           </p>
           <button
             onClick={() => setShowModal(true)}
-            style={{ padding: "14px 40px", background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff", border: "none", borderRadius: "9999px", fontWeight: 700, fontSize: "16px", cursor: "pointer", boxShadow: "0 8px 24px rgba(59,130,246,0.35)" }}
+            style={{ padding: "14px 40px", background: "#ffffff", color: "#000000", border: "none", borderRadius: "9999px", fontWeight: 700, fontSize: "16px", cursor: "pointer", boxShadow: "0 4px 16px rgba(255,255,255,0.1)" }}
           >
             Comienza a ganar →
           </button>

@@ -144,8 +144,8 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
                 <ChevronLeft size={16} />
               </button>
             )}
-            <HelpCircle size={15} style={{ color: "#3b82f6" }} />
-            <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>
+            <HelpCircle size={15} style={{ color: "#aaaaaa" }} />
+            <span style={{ fontSize: "15px", fontWeight: 700, color: "#000000" }}>
               {view === "menu" ? "Soporte" : view === "new" ? "Nuevo ticket" : "Mis tickets"}
             </span>
           </div>
@@ -167,7 +167,7 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
                 style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid #2a2a3e", background: "#12121a", cursor: "pointer", textAlign: "left" }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#e5e7eb", fontSize: "14px", fontWeight: 500 }}>
-                  <Send size={14} style={{ color: "#3b82f6", flexShrink: 0 }} />
+                  <Send size={14} style={{ color: "#aaaaaa", flexShrink: 0 }} />
                   Crear nuevo ticket
                 </div>
                 <p style={{ fontSize: "12px", color: "#4a4a65", marginTop: "4px", marginLeft: "24px" }}>Contacta con nuestro equipo</p>
@@ -177,7 +177,7 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
                 style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid #2a2a3e", background: "#12121a", cursor: "pointer", textAlign: "left" }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#e5e7eb", fontSize: "14px", fontWeight: 500 }}>
-                  <MessageSquare size={14} style={{ color: "#3b82f6", flexShrink: 0 }} />
+                  <MessageSquare size={14} style={{ color: "#aaaaaa", flexShrink: 0 }} />
                   Ver mis tickets
                 </div>
                 <p style={{ fontSize: "12px", color: "#4a4a65", marginTop: "4px", marginLeft: "24px" }}>Consulta el estado de tus solicitudes</p>
@@ -192,11 +192,11 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
                 <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
                   <Send size={20} style={{ color: "#4ade80" }} />
                 </div>
-                <p style={{ fontSize: "15px", fontWeight: 700, color: "#fff", marginBottom: "8px" }}>¡Ticket enviado!</p>
+                <p style={{ fontSize: "15px", fontWeight: 700, color: "#000000", marginBottom: "8px" }}>¡Ticket enviado!</p>
                 <p style={{ fontSize: "13px", color: "#4a4a65" }}>Te responderemos lo antes posible.</p>
                 <button
                   onClick={goBack}
-                  style={{ marginTop: "20px", padding: "10px 24px", borderRadius: "10px", border: "none", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}
+                  style={{ marginTop: "20px", padding: "10px 24px", borderRadius: "10px", border: "none", background: "#ffffff", color: "#000000", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}
                 >
                   Volver
                 </button>
@@ -230,7 +230,7 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
                 <button
                   type="submit"
                   disabled={loading || !description.trim()}
-                  style={{ padding: "12px", borderRadius: "10px", border: "none", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: loading || !description.trim() ? "not-allowed" : "pointer", opacity: loading || !description.trim() ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+                  style={{ padding: "12px", borderRadius: "10px", border: "none", background: "#ffffff", color: "#000000", fontSize: "14px", fontWeight: 600, cursor: loading || !description.trim() ? "not-allowed" : "pointer", opacity: loading || !description.trim() ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
                 >
                   <Send size={13} />
                   {loading ? "Enviando..." : "Enviar solicitud"}
@@ -248,7 +248,7 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
                 <p style={{ color: "#4a4a65", fontSize: "13px" }}>No tienes tickets abiertos.</p>
                 <button
                   onClick={() => setView("new")}
-                  style={{ marginTop: "12px", padding: "8px 20px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", color: "#3b82f6", fontSize: "13px", cursor: "pointer" }}
+                  style={{ marginTop: "12px", padding: "8px 20px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", color: "#aaaaaa", fontSize: "13px", cursor: "pointer" }}
                 >
                   Crear uno ahora
                 </button>
@@ -276,7 +276,7 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
                     </p>
                     {ticket.adminReply && (
                       <div style={{ padding: "10px 12px", borderRadius: "8px", background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)", marginTop: "10px" }}>
-                        <p style={{ fontSize: "10px", fontWeight: 700, color: "#3b82f6", marginBottom: "4px", letterSpacing: "0.05em" }}>RESPUESTA DEL EQUIPO</p>
+                        <p style={{ fontSize: "10px", fontWeight: 700, color: "#aaaaaa", marginBottom: "4px", letterSpacing: "0.05em" }}>RESPUESTA DEL EQUIPO</p>
                         <p style={{ fontSize: "13px", color: "#93c5fd", lineHeight: 1.5 }}>{ticket.adminReply}</p>
                       </div>
                     )}

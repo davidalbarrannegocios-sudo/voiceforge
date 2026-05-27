@@ -366,7 +366,7 @@ function HomeTab({
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className="group relative overflow-hidden flex flex-col p-4 sm:p-6 rounded-2xl border border-[#222222] hover:border-blue-700 text-left transition-all hover:-translate-y-0.5 h-full"
+            className="group relative overflow-hidden flex flex-col p-4 sm:p-6 rounded-2xl border border-[#222222] hover:border-white/20 text-left transition-all hover:-translate-y-0.5 h-full"
             style={{ background: "#111111" }}
           >
             <svg className="absolute top-0 right-0 w-40 h-40 opacity-20 group-hover:opacity-30 transition-opacity duration-300" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -483,7 +483,7 @@ function CompactSlider({
         <div className="w-full h-full rounded-full" style={{ background: "#222222" }} />
         <div
           className="absolute left-0 h-full rounded-full"
-          style={{ width: `${pct}%`, background: "linear-gradient(90deg, #3b82f6, #2563eb)" }}
+          style={{ width: `${pct}%`, background: "#ffffff" }}
         />
         <input
           type="range"
@@ -530,7 +530,7 @@ function M1Slider({
       </div>
       <div style={{ position: "relative", height: "4px", display: "flex", alignItems: "center" }}>
         <div style={{ width: "100%", height: "100%", borderRadius: "9999px", background: "#222222" }} />
-        <div style={{ position: "absolute", left: 0, width: `${pct}%`, height: "100%", borderRadius: "9999px", background: "linear-gradient(90deg, #3b82f6, #2563eb)" }} />
+        <div style={{ position: "absolute", left: 0, width: `${pct}%`, height: "100%", borderRadius: "9999px", background: "#ffffff" }} />
         <input
           type="range" min={min} max={max} step={step} value={value}
           onChange={(e) => onChange(parseFloat(e.target.value))}
@@ -804,7 +804,7 @@ function GenerateTab({
             onClick={() => setShowBrowser(true)}
             style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", flexShrink: 0, width: "100%", textAlign: "left", background: "transparent", cursor: "pointer", border: "none" }}
           >
-            <div className="ring-2 ring-blue-500 ring-offset-1 ring-offset-[#000000] rounded-full flex-shrink-0">
+            <div className="ring-2 ring-white/30 ring-offset-1 ring-offset-[#000000] rounded-full flex-shrink-0">
               <VoiceAvatar name={selectedVoice?.name ?? "V"} coverImage={selectedVoice?.coverImage} size="xs" id={selectedVoice?.referenceId} />
             </div>
             <span style={{ fontSize: "13px", fontWeight: 400, color: "#9ca3af" }}>{selectedVoice?.name ?? t.generate.defaultVoice}</span>
@@ -828,7 +828,7 @@ function GenerateTab({
                   <span style={{ fontSize: "11px", color: "#6b7280" }}>{elapsedLabel}</span>
                 </div>
                 <div style={{ height: "3px", borderRadius: "9999px", background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
-                  <div style={{ height: "100%", borderRadius: "9999px", width: `${progress}%`, background: "linear-gradient(90deg, #3b82f6, #2563eb)", transition: "width 1s linear" }} />
+                  <div style={{ height: "100%", borderRadius: "9999px", width: `${progress}%`, background: "#ffffff", transition: "width 1s linear" }} />
                 </div>
               </div>
             )}
@@ -1252,7 +1252,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
             value={voiceName}
             onChange={(e) => setVoiceName(e.target.value)}
             placeholder="Ej: Mi voz, Narrador masculino..."
-            className="w-full rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            className="w-full rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-white/20"
             style={{ background: "#000000", border: "1px solid #222222" }}
           />
         </div>
@@ -1574,7 +1574,7 @@ function VoicesTab({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar voces..."
-            className="w-full rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/40"
+            className="w-full rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/20"
             style={{ background: "#111111", border: "1px solid #1a1a1a", color: "#d1d5db" }}
           />
         </div>
@@ -1824,7 +1824,7 @@ function HistoryTab({ plan }: { plan: string }) {
                               display: "flex", alignItems: "center", gap: 4,
                               padding: "4px 9px", borderRadius: 20,
                               background: isPlaying ? "rgba(255,255,255,0.08)" : "#1a1a1a",
-                              border: isPlaying ? "1px solid #3b82f6" : "1px solid transparent",
+                              border: isPlaying ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent",
                               color: isPlaying ? "#aaaaaa" : "#9ca3af",
                               fontSize: 11, cursor: gen.audioUrl ? "pointer" : "not-allowed",
                               opacity: gen.audioUrl ? 1 : 0.4, flexShrink: 0,
@@ -2652,7 +2652,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             {voiceSubTab === "model" ? (
               <button
                 onClick={() => setShowBrowser(true)}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all hover:border-blue-500/60"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all hover:border-white/20"
                 style={{ background: "#111111", border: "1px solid #222222" }}
               >
                 <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.08)" }}>
@@ -2680,7 +2680,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 ) : (
                   <div
                     onClick={() => refInputRef.current?.click()}
-                    className="w-full flex flex-col items-center gap-2 px-4 py-6 rounded-xl cursor-pointer transition-all hover:border-blue-500/40"
+                    className="w-full flex flex-col items-center gap-2 px-4 py-6 rounded-xl cursor-pointer transition-all hover:border-white/15"
                     style={{ background: "#111111", border: "1px dashed #222222" }}
                   >
                     <Mic2 size={20} style={{ color: "#555570" }} />
@@ -2767,7 +2767,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 value={historySearch}
                 onChange={(e) => setHistorySearch(e.target.value)}
                 placeholder="Buscar traducciones..."
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-white/20"
                 style={{ background: "#111111", border: "1px solid #222222", color: "#e5e7eb" }}
               />
             </div>
@@ -2848,7 +2848,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                             <a
                               href={task.audioUrl}
                               download={`traduccion-${task.targetLanguage}-${task.id}.mp3`}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-blue-500/20"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-white/10"
                               style={{ background: "rgba(255,255,255,0.06)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.1)" }}
                             >
                               <Download size={11} /> Descargar
@@ -4054,7 +4054,7 @@ function TeamTab() {
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto py-10 flex justify-center">
-        <div className="w-5 h-5 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+        <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
       </div>
     );
   }

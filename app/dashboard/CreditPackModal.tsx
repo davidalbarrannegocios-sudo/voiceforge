@@ -10,7 +10,7 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 const ELEMENTS_APPEARANCE = {
   theme: "night" as const,
   variables: {
-    colorPrimary: "#3b82f6",
+    colorPrimary: "#ffffff",
     colorBackground: "#12121a",
     colorText: "#e5e7eb",
     colorDanger: "#f87171",
@@ -20,10 +20,10 @@ const ELEMENTS_APPEARANCE = {
   },
   rules: {
     ".Input": { border: "1px solid #2a2a3e", backgroundColor: "#0a0a0f" },
-    ".Input:focus": { border: "1px solid #3b82f6", boxShadow: "0 0 0 2px rgba(59,130,246,0.15)" },
+    ".Input:focus": { border: "1px solid #ffffff", boxShadow: "0 0 0 2px rgba(255,255,255,0.1)" },
     ".Label": { color: "#6b7280", fontSize: "12px", fontWeight: "500" },
     ".Tab": { border: "1px solid #2a2a3e", backgroundColor: "#0d0d17" },
-    ".Tab--selected": { border: "1px solid #3b82f6", backgroundColor: "rgba(59,130,246,0.08)" },
+    ".Tab--selected": { border: "1px solid #ffffff", backgroundColor: "rgba(59,130,246,0.08)" },
     ".Tab:hover": { backgroundColor: "#12121a" },
   },
 };
@@ -139,7 +139,7 @@ function CreditPaymentForm({
         disabled={loading || !stripe}
         style={{
           width: "100%", padding: "12px", borderRadius: "10px", border: "none",
-          background: loading ? "#1e3a5f" : "linear-gradient(135deg,#3b82f6,#2563eb)",
+          background: loading ? "#333333" : "#ffffff",
           color: "#fff", fontSize: "15px", fontWeight: 600, cursor: loading ? "not-allowed" : "pointer",
           opacity: loading || !stripe ? 0.7 : 1,
           display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
@@ -222,7 +222,7 @@ export function CreditPackModal({
         <div style={{ padding: "20px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <Zap size={15} style={{ color: "#3b82f6" }} />
+              <Zap size={15} style={{ color: "#aaaaaa" }} />
             </div>
             <div>
               <p style={{ fontSize: "17px", fontWeight: 700, color: "#fff", marginBottom: "2px" }}>
@@ -250,7 +250,7 @@ export function CreditPackModal({
             </div>
           ) : !clientSecret || !paymentIntentId || !packInfo ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", padding: "32px 0" }}>
-              <svg style={{ color: "#3b82f6" }} className="animate-spin h-7 w-7" fill="none" viewBox="0 0 24 24">
+              <svg style={{ color: "#aaaaaa" }} className="animate-spin h-7 w-7" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
