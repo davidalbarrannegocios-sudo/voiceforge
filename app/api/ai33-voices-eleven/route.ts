@@ -52,13 +52,17 @@ export async function GET(req: Request) {
   const search = (searchParams.get("search") ?? "").trim();
   const langFilter = (searchParams.get("language") ?? "").toLowerCase().trim();
   const genderFilter = (searchParams.get("gender") ?? "").toLowerCase().trim();
+  const ageFilter = (searchParams.get("age") ?? "").toLowerCase().trim();
+  const useCaseFilter = (searchParams.get("use_case") ?? "").toLowerCase().trim();
   const accentFilter = (searchParams.get("accent") ?? "").toLowerCase().trim();
   const PAGE_SIZE = 20;
 
   // Build server-side filter params for ai33.pro
+  // age and gender work server-side; use_case does not (always returns full set)
   const params = new URLSearchParams({ page_size: "100" });
   if (langFilter && langFilter !== "all") params.set("language", langFilter);
   if (genderFilter && genderFilter !== "all") params.set("gender", genderFilter);
+  if (ageFilter && ageFilter !== "all") params.set("age", ageFilter);
   if (search) params.set("search", search);
 
   const url = `https://api.ai33.pro/v1/shared-voices?${params}`;
@@ -77,21 +81,25 @@ export async function GET(req: Request) {
 
   const rawVoices: SharedVoice[] = Array.isArray(parsed) ? parsed : (parsed.voices ?? []);
   const serverTotal: number = Array.isArray(parsed) ? rawVoices.length : (parsed.total_count ?? rawVoices.length);
-  console.log(`[ai33-voices-eleven] fetched=${rawVoices.length} serverTotal=${serverTotal} lang="${langFilter}" gender="${genderFilter}" accent="${accentFilter}" search="${search}"`);
+  console.log(`[ai33-voices-eleven] fetched=${rawVoices.length} serverTotal=${serverTotal} lang="${langFilter}" gender="${genderFilter}" age="${ageFilter}" use_case="${useCaseFilter}" accent="${accentFilter}"`);
 
-  // Collect available accents from fetched set (before accent filter)
+  // Collect available accents before any client-side filters
   const accents = [...new Set(
     rawVoices
       .map((v) => v.accent)
       .filter((a): a is string => typeof a === "string" && a.length > 0)
   )].sort();
 
-  // Client-side accent filter (not supported server-side)
-  const accentFiltered = accentFilter && accentFilter !== "all"
-    ? rawVoices.filter((v) => (v.accent ?? "").toLowerCase() === accentFilter)
-    : rawVoices;
+  // Client-side filters (not supported server-side)
+  let filtered = rawVoices;
+  if (useCaseFilter && useCaseFilter !== "all") {
+    filtered = filtered.filter((v) => (v.use_case ?? "").toLowerCase() === useCaseFilter);
+  }
+  if (accentFilter && accentFilter !== "all") {
+    filtered = filtered.filter((v) => (v.accent ?? "").toLowerCase() === accentFilter);
+  }
 
-  const allItems = accentFiltered.map(mapToFishVoice);
+  const allItems = filtered.map(mapToFishVoice);
   const total = allItems.length;
   const items = allItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 

@@ -511,6 +511,119 @@ const QUALITY_OPTIONS = [
 
 const QUALITIES_INITIAL_COUNT = 8;
 
+const ELEVEN_USE_CASE_OPTIONS = [
+  { value: "conversational",        label: "Conversacional" },
+  { value: "narrative_story",       label: "Narración" },
+  { value: "characters_animation",  label: "Personajes" },
+  { value: "social_media",          label: "Redes Sociales" },
+  { value: "entertainment_tv",      label: "Entretenimiento" },
+  { value: "advertisement",         label: "Publicidad" },
+  { value: "informative_educational", label: "Educativo" },
+];
+
+type ElevenFilters = { gender: string; age: string; useCase: string };
+const EMPTY_ELEVEN_FILTERS: ElevenFilters = { gender: "", age: "", useCase: "" };
+
+function ElevenFilterPanel({
+  filters,
+  onChange,
+  onReset,
+  onClose,
+  onApply,
+}: {
+  filters: ElevenFilters;
+  onChange: (f: ElevenFilters) => void;
+  onReset: () => void;
+  onClose: () => void;
+  onApply: () => void;
+}) {
+  function toggle(field: keyof ElevenFilters, value: string) {
+    onChange({ ...filters, [field]: filters[field] === value ? "" : value });
+  }
+
+  function Pill({ field, value, label }: { field: keyof ElevenFilters; value: string; label: string }) {
+    const active = filters[field] === value;
+    return (
+      <button
+        onClick={() => toggle(field, value)}
+        className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
+        style={
+          active
+            ? { background: "rgba(59,130,246,0.2)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
+            : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a3e" }
+        }
+      >
+        {label}
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className="absolute inset-y-0 right-0 w-72 flex flex-col z-20 overflow-y-auto"
+      style={{ background: "#0d0d17", borderLeft: "1px solid #1e1e2e" }}
+    >
+      <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0" style={{ borderColor: "#1e1e2e" }}>
+        <span className="text-sm font-semibold text-white">Filtros</span>
+        <div className="flex items-center gap-3">
+          <button onClick={onReset} className="text-xs font-medium transition-colors" style={{ color: "#555570" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#e2e2f0")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#555570")}
+          >Restablecer</button>
+          <button onClick={onClose} className="w-6 h-6 rounded-md flex items-center justify-center transition-colors flex-shrink-0"
+            style={{ color: "#555570", background: "transparent" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#1e1e2e")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div className="px-4 py-4 flex flex-col gap-5 flex-1">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#555570" }}>Género</p>
+          <div className="flex flex-wrap gap-1.5">
+            <Pill field="gender" value="male"    label="Masculino" />
+            <Pill field="gender" value="female"  label="Femenina" />
+            <Pill field="gender" value="neutral" label="Neutral" />
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#555570" }}>Edad</p>
+          <div className="flex flex-wrap gap-1.5">
+            <Pill field="age" value="young"       label="Joven" />
+            <Pill field="age" value="middle_aged" label="Mediana Edad" />
+            <Pill field="age" value="old"         label="Mayor" />
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2.5" style={{ color: "#555570" }}>Caso de Uso</p>
+          <div className="flex flex-wrap gap-1.5">
+            {ELEVEN_USE_CASE_OPTIONS.map(({ value, label }) => (
+              <Pill key={value} field="useCase" value={value} label={label} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 py-4 border-t flex-shrink-0" style={{ borderColor: "#1e1e2e" }}>
+        <button
+          onClick={onApply}
+          className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
+          style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+        >
+          Aplicar filtros
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function FilterPanel({
   filters,
   onChange,
@@ -862,6 +975,8 @@ export function VoiceBrowser({
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [filters, setFilters] = useState<AdvancedFilters>(EMPTY_FILTERS);
   const [appliedFilters, setAppliedFilters] = useState<AdvancedFilters>(EMPTY_FILTERS);
+  const [elevenFilters, setElevenFilters] = useState<ElevenFilters>(EMPTY_ELEVEN_FILTERS);
+  const [appliedElevenFilters, setAppliedElevenFilters] = useState<ElevenFilters>(EMPTY_ELEVEN_FILTERS);
   const [featuredVoices, setFeaturedVoices] = useState<FishVoice[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [enrichedVoices, setEnrichedVoices] = useState<Map<string, FishVoice>>(new Map());
@@ -890,14 +1005,17 @@ export function VoiceBrowser({
   }, [tab, communitySearchDebounced]);
 
   const userCanUsePremium = canUsePremium(plan);
-  const activeFilterCount =
-    filters.genders.length + filters.ages.length + filters.useCases.length + filters.qualities.length;
+  const activeFilterCount = isExternalSource
+    ? [elevenFilters.gender, elevenFilters.age, elevenFilters.useCase].filter(Boolean).length
+    : filters.genders.length + filters.ages.length + filters.useCases.length + filters.qualities.length;
 
   // Reset filters when the endpoint changes (e.g. provider switch while browser is open)
   useEffect(() => {
     setLanguage(isExternalSource ? "" : (defaultLanguage ?? "es"));
     setAccent("all");
     setAvailableAccents([]);
+    setElevenFilters(EMPTY_ELEVEN_FILTERS);
+    setAppliedElevenFilters(EMPTY_ELEVEN_FILTERS);
     setPage(1);
     setPublicVoices([]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -998,7 +1116,11 @@ export function VoiceBrowser({
     tierFishPageRef.current = 1;
     tierHasMoreRef.current = true;
     setPage(1);
-    setAppliedFilters({ ...filters });
+    if (isExternalSource) {
+      setAppliedElevenFilters({ ...elevenFilters });
+    } else {
+      setAppliedFilters({ ...filters });
+    }
     setShowFilterPanel(false);
   }
 
@@ -1076,6 +1198,11 @@ export function VoiceBrowser({
           const p = new URLSearchParams({ page: String(1), language });
           if (debouncedSearch) p.set("search", debouncedSearch);
           if (accent !== "all") p.set("accent", accent);
+          if (isExternalSource) {
+            if (appliedElevenFilters.gender) p.set("gender", appliedElevenFilters.gender);
+            if (appliedElevenFilters.age)    p.set("age", appliedElevenFilters.age);
+            if (appliedElevenFilters.useCase) p.set("use_case", appliedElevenFilters.useCase);
+          }
           const res = await fetch(`${effectiveEndpoint}?${p}`, { signal });
           if (signal.aborted) return;
           const data = await res.json();
@@ -1102,7 +1229,7 @@ export function VoiceBrowser({
     run();
     return () => { controller.abort(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, tier, language, debouncedSearch, accent, appliedFilters]);
+  }, [tab, tier, language, debouncedSearch, accent, appliedFilters, appliedElevenFilters]);
 
   // Separate effect for page navigation (no buffer reset — just slices into existing data)
   useEffect(() => {
@@ -1151,6 +1278,11 @@ export function VoiceBrowser({
           const p = new URLSearchParams({ page: String(page), language });
           if (debouncedSearch) p.set("search", debouncedSearch);
           if (accent !== "all") p.set("accent", accent);
+          if (isExternalSource) {
+            if (appliedElevenFilters.gender)  p.set("gender", appliedElevenFilters.gender);
+            if (appliedElevenFilters.age)     p.set("age", appliedElevenFilters.age);
+            if (appliedElevenFilters.useCase) p.set("use_case", appliedElevenFilters.useCase);
+          }
           const res = await fetch(`${effectiveEndpoint}?${p}`, { signal });
           if (signal.aborted) return;
           const data = await res.json();
@@ -1855,13 +1987,23 @@ export function VoiceBrowser({
 
           {/* Advanced filter panel overlay */}
           {showFilterPanel && tab === "explore" && (
-            <FilterPanel
-              filters={filters}
-              onChange={setFilters}
-              onReset={() => setFilters(EMPTY_FILTERS)}
-              onClose={() => setShowFilterPanel(false)}
-              onApply={handleApplyFilters}
-            />
+            isExternalSource ? (
+              <ElevenFilterPanel
+                filters={elevenFilters}
+                onChange={setElevenFilters}
+                onReset={() => setElevenFilters(EMPTY_ELEVEN_FILTERS)}
+                onClose={() => setShowFilterPanel(false)}
+                onApply={handleApplyFilters}
+              />
+            ) : (
+              <FilterPanel
+                filters={filters}
+                onChange={setFilters}
+                onReset={() => setFilters(EMPTY_FILTERS)}
+                onClose={() => setShowFilterPanel(false)}
+                onApply={handleApplyFilters}
+              />
+            )
           )}
         </div>
       </div>
