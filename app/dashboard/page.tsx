@@ -571,11 +571,7 @@ function GenerateTab({
   const [topP, setTopP] = useState(0.9);
   const [selectedModel, setSelectedModel] = useState("speech-1.6");
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
-  const [engineDropdownOpen, setEngineDropdownOpen] = useState(false);
-  const [ttsEngine, setTtsEngine] = useState<"elitelabs" | "elitelabs2">("elitelabs");
-  const [elitelabs2Down, setElitelabs2Down] = useState(false);
   const modelDropdownRef = useRef<HTMLDivElement>(null);
-  const engineDropdownRef = useRef<HTMLDivElement>(null);
   // M1 (ElevenLabs) controls
   const [m1Speed, setM1Speed] = useState(1.0);
   const [m1Stability, setM1Stability] = useState(0.5);
@@ -594,7 +590,7 @@ function GenerateTab({
   const [elapsed, setElapsed] = useState(0);
 
   const charCost = calculateCharCost(text.length);
-  const displayCost = ttsEngine === "elitelabs2" ? Math.ceil(charCost / 2) : charCost;
+  const displayCost = selectedModel === "turbo" ? Math.ceil(charCost / 2) : charCost;
   const clonedVoices = voices.filter((v) => !v.isSystem);
   const estimatedSeconds = Math.max(5, Math.ceil(text.trim().length / 120));
   const progress = submitting ? Math.min(92, (elapsed / estimatedSeconds) * 100) : 0;
@@ -616,17 +612,6 @@ function GenerateTab({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [modelDropdownOpen]);
-
-  useEffect(() => {
-    if (!engineDropdownOpen) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (engineDropdownRef.current && !engineDropdownRef.current.contains(e.target as Node)) {
-        setEngineDropdownOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [engineDropdownOpen]);
 
   useEffect(() => {
     if (!m1OutDropOpen) return;
@@ -667,32 +652,6 @@ function GenerateTab({
     } catch { /* ignore */ }
   }, [m1Speed, m1Stability, m1Similarity, m1StyleExag, m1LangOverride, m1OutputFormat, m1SpeakerBoost]);
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("vf_tts_engine");
-      if (saved === "elitelabs2") setTtsEngine("elitelabs2");
-    } catch { /* ignore */ }
-  }, []);
-
-  useEffect(() => {
-    try { localStorage.setItem("vf_tts_engine", ttsEngine); } catch { /* ignore */ }
-  }, [ttsEngine]);
-
-  useEffect(() => {
-    fetch("/api/ai33-health")
-      .then((r) => r.json())
-      .then((data: { isDown?: boolean }) => {
-        const down = !!data.isDown;
-        setElitelabs2Down(down);
-        if (down && ttsEngine === "elitelabs2") {
-          setTtsEngine("elitelabs");
-          onVoiceChange(null);
-        }
-      })
-      .catch(() => { /* keep default false if unreachable */ });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   async function handleGenerate() {
     setFormError(null);
     setSubmitting(true);
@@ -700,7 +659,7 @@ function GenerateTab({
       let endpoint: string;
       let body: Record<string, unknown>;
 
-      if (ttsEngine === "elitelabs2") {
+      if (selectedModel === "turbo") {
         endpoint = "/api/generate-ai33";
         body = {
           text,
@@ -921,53 +880,8 @@ function GenerateTab({
                 </button>
               </div>
 
-              {/* MOTOR */}
-              <div>
-                <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", marginBottom: "8px" }}>Motor</p>
-                <div style={{ position: "relative" }} ref={engineDropdownRef}>
-                  <button
-                    onClick={() => setEngineDropdownOpen((o) => !o)}
-                    style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
-                      <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ttsEngine === "elitelabs" ? "Elite Labs M2" : "Elite Labs M1"}</span>
-                      {ttsEngine === "elitelabs"  && <span className="badge-shimmer-blue"   style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", flexShrink: 0 }}>Recomendado</span>}
-                      {ttsEngine === "elitelabs2" && <span className="badge-shimmer-purple" style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", flexShrink: 0 }}>+12k voces</span>}
-                    </div>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", flexShrink: 0, transform: engineDropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
-                  </button>
-                  {engineDropdownOpen && (
-                    <div style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "4px", padding: "4px", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
-                      {([
-                        { value: "elitelabs",  label: "Elite Labs M2", sub: "+500k voces en español", badge: "Recomendado", badgeClass: "badge-shimmer-blue",   disabled: false },
-                        { value: "elitelabs2", label: "Elite Labs M1", sub: "Buenas voces para videos", badge: "+12k voces",  badgeClass: "badge-shimmer-purple", disabled: elitelabs2Down },
-                      ] as const).map(({ value, label, sub, badge, badgeClass, disabled }) => (
-                        <button
-                          key={value}
-                          disabled={disabled}
-                          onClick={() => { if (!disabled) { setTtsEngine(value); onVoiceChange(null); setEngineDropdownOpen(false); } }}
-                          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: disabled ? "#4b5563" : ttsEngine === value ? "#e2e2f0" : "#6b7280", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.5 : 1 }}
-                          onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                        >
-                          <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <span style={{ fontWeight: 500 }}>{label}</span>
-                              <span className={disabled ? undefined : badgeClass} style={disabled ? { fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", background: "#374151", color: "#9ca3af", flexShrink: 0 } : { fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", flexShrink: 0 }}>{disabled ? "Mantenimiento" : badge}</span>
-                            </div>
-                            <span style={{ fontSize: "11px", marginTop: "2px", color: "#4b4b6a" }}>{sub}</span>
-                          </div>
-                          {ttsEngine === value && !disabled && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginLeft: "8px" }}><polyline points="20 6 9 17 4 12" /></svg>}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-
               {/* MODELO */}
-              {ttsEngine === "elitelabs" && <div>
+              <div>
                 <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", marginBottom: "8px" }}>Modelo</p>
                 <div style={{ position: "relative" }} ref={modelDropdownRef}>
                   <button
@@ -975,47 +889,52 @@ function GenerateTab({
                     style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
-                      <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{selectedModel === "speech-1.6" ? "Elite Labs E2 Pro" : "Elite Labs E1"}</span>
+                      <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {selectedModel === "speech-1.6" ? "Elite Labs E2 Pro" : selectedModel === "speech-1.5" ? "Elite Labs E1" : "Elite Labs E1 Turbo"}
+                      </span>
                       {selectedModel === "speech-1.6" && <span className="badge-shimmer-purple" style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", flexShrink: 0 }}>El más nuevo</span>}
+                      {selectedModel === "turbo" && <span style={{ fontSize: "11px", fontWeight: 500, padding: "1px 8px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.5)", background: "transparent", color: "white", flexShrink: 0 }}>Turbo</span>}
                     </div>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", flexShrink: 0, transform: modelDropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
                   </button>
                   {modelDropdownOpen && (
                     <div style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "4px", padding: "4px", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
                       {([
-                        { value: "speech-1.6", label: "Elite Labs E2 Pro", sub: "Nuestro modelo insignia", badge: "El más nuevo", badgeClass: "badge-shimmer-purple" },
-                        { value: "speech-1.5", label: "Elite Labs E1",     sub: "Heredado",                badge: null,           badgeClass: "" },
-                      ] as const).map(({ value, label, sub, badge, badgeClass }) => (
-                        <button key={value} onClick={() => { setSelectedModel(value); setModelDropdownOpen(false); }} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: selectedModel === value ? "#e2e2f0" : "#6b7280", cursor: "pointer" }} onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                        { value: "speech-1.6", label: "Elite Labs E2 Pro",   sub: "Nuestro modelo insignia",   badge: "El más nuevo" as string | null, badgeClass: "badge-shimmer-purple", turbo: false },
+                        { value: "speech-1.5", label: "Elite Labs E1",       sub: "Heredado",                  badge: null,                            badgeClass: "",                     turbo: false },
+                        { value: "turbo",      label: "Elite Labs E1 Turbo", sub: "+12k voces con ElevenLabs", badge: "Turbo" as string | null,        badgeClass: "",                     turbo: true  },
+                      ]).map(({ value, label, sub, badge, badgeClass, turbo }) => (
+                        <button
+                          key={value}
+                          onClick={() => {
+                            if (value === "turbo" || selectedModel === "turbo") onVoiceChange(null);
+                            setSelectedModel(value);
+                            setModelDropdownOpen(false);
+                          }}
+                          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: selectedModel === value ? "#e2e2f0" : "#6b7280", cursor: "pointer" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                        >
                           <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                               <span style={{ fontWeight: 500 }}>{label}</span>
-                              {badge && <span className={badgeClass} style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", flexShrink: 0 }}>{badge}</span>}
+                              {badge && (turbo
+                                ? <span style={{ fontSize: "11px", fontWeight: 500, padding: "1px 8px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.5)", background: "transparent", color: "white", flexShrink: 0 }}>{badge}</span>
+                                : <span className={badgeClass || undefined} style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", flexShrink: 0 }}>{badge}</span>
+                              )}
                             </div>
                             <span style={{ fontSize: "11px", marginTop: "2px", color: "#4b4b6a" }}>{sub}</span>
                           </div>
                           {selectedModel === value && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginLeft: "8px" }}><polyline points="20 6 9 17 4 12" /></svg>}
                         </button>
                       ))}
-                      {/* Promo row: switch to M1 */}
-                      <div style={{ margin: "2px 0 0", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "4px" }}>
-                        <button
-                          onClick={() => { setTtsEngine("elitelabs2"); onVoiceChange(null); setModelDropdownOpen(false); }}
-                          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", fontSize: "12px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: "#6b7280", cursor: "pointer" }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
-                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                        >
-                          <span>Probar <span style={{ fontWeight: 600, color: "#a78bfa" }}>M1</span> — +12k voces con ElevenLabs</span>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                        </button>
-                      </div>
                     </div>
                   )}
                 </div>
-              </div>}
+              </div>
 
               {/* CONTROLES DE AUDIO */}
-              {ttsEngine === "elitelabs" && (
+              {selectedModel !== "turbo" && (
               <div>
                 <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", marginBottom: "8px" }}>{t.generate.audioControls}</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -1043,8 +962,8 @@ function GenerateTab({
               </div>
               )}
 
-              {/* CONTROLES DE AUDIO — M1 (ElevenLabs) */}
-              {ttsEngine === "elitelabs2" && (
+              {/* CONTROLES DE AUDIO — Turbo (ElevenLabs) */}
+              {selectedModel === "turbo" && (
               <div>
                 <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", marginBottom: "8px" }}>Controles de Audio</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -1135,10 +1054,10 @@ function GenerateTab({
           onSelect={onVoiceChange}
           onClose={() => setShowBrowser(false)}
           plan={plan}
-          voiceListEndpoint={ttsEngine === "elitelabs2" ? "/api/ai33-voices-eleven" : undefined}
-          disablePremiumLock={ttsEngine === "elitelabs2"}
-          showExternalFilters={ttsEngine === "elitelabs2"}
-          defaultLanguage={ttsEngine === "elitelabs2" ? "en" : "es"}
+          voiceListEndpoint={selectedModel === "turbo" ? "/api/ai33-voices-eleven" : undefined}
+          disablePremiumLock={selectedModel === "turbo"}
+          showExternalFilters={selectedModel === "turbo"}
+          defaultLanguage={selectedModel === "turbo" ? "en" : "es"}
         />
       )}
     </div>
