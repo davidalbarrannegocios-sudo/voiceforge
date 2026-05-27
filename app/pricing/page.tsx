@@ -343,9 +343,17 @@ function PricingContent() {
               <div style={{ height: "1px", background: plan.popular ? "rgba(255,255,255,0.08)" : "#1a1a1a", marginBottom: "14px" }} />
 
               {/* Features */}
-              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
-                {plan.features.map((f) => (
-                  <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "12px", color: plan.popular ? "#b0b0c0" : "#666666", lineHeight: 1.4 }}>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, flex: 1 }}>
+                {plan.features.map((f, i) => (
+                  <li
+                    key={f}
+                    style={{
+                      display: "flex", alignItems: "flex-start", gap: "10px",
+                      fontSize: "13px", lineHeight: 1.6, color: "rgba(255,255,255,0.80)",
+                      paddingTop: "10px", paddingBottom: "10px",
+                      borderBottom: i < plan.features.length - 1 ? "1px solid rgba(255,255,255,0.07)" : "none",
+                    }}
+                  >
                     <FeatureTick />
                     {f}
                   </li>
