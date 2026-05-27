@@ -109,7 +109,7 @@ export function CustomSelect({ options, value, onChange, placeholder, className,
         type="button"
         onClick={handleOpen}
         className="w-full flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-        style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }}
+        style={{ background: "#000000", border: "1px solid #222222" }}
       >
         {selected?.icon && <span className="flex-shrink-0 flex items-center">{selected.icon}</span>}
         <span className="flex-1 text-left truncate" style={{ color: selected ? "#e5e7eb" : "#6b7280" }}>
@@ -130,8 +130,8 @@ export function CustomSelect({ options, value, onChange, placeholder, className,
         <div
           style={{
             ...panelStyle,
-            background: "#1a1a2e",
-            border: "1px solid #2a2a3e",
+            background: "#1a1a1a",
+            border: "1px solid #222222",
             borderRadius: "12px",
             boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
             zIndex: 99999,

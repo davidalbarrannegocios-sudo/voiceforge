@@ -37,7 +37,7 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
   const r = 16;
   const circumference = 2 * Math.PI * r;
   const strokeDashoffset = circumference - (pct / 100) * circumference;
-  const ringColor = pct < 60 ? "#3b82f6" : pct < 85 ? "#f59e0b" : "#ef4444";
+  const ringColor = pct < 60 ? "#ffffff" : pct < 85 ? "#f59e0b" : "#ef4444";
 
   return (
     <div className="relative" ref={ref}>

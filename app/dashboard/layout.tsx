@@ -14,7 +14,7 @@ export default async function DashboardLayout({
 
   return (
     <LanguageProvider>
-      <div style={{ display: "flex", minHeight: "100vh", background: "#0a0a0f" }}>
+      <div style={{ display: "flex", minHeight: "100vh", background: "#000000" }}>
         <Suspense fallback={null}>
           <DashboardSidebar />
         </Suspense>

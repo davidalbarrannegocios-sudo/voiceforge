@@ -254,7 +254,7 @@ export default function AudioHistoryList({
                             <>
                               <button
                                 onClick={() => handlePlayToggle(gen)}
-                                style={{ display: "flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "9999px", background: isPlaying ? "rgba(59,130,246,0.15)" : "rgba(255,255,255,0.08)", border: isPlaying ? "1px solid #3b82f6" : "1px solid transparent", cursor: "pointer", fontSize: "11px", fontWeight: 500, color: isPlaying ? "#93c5fd" : "#e2e8f0", transition: "all 0.15s" }}
+                                style={{ display: "flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "9999px", background: "rgba(255,255,255,0.08)", border: isPlaying ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent", cursor: "pointer", fontSize: "11px", fontWeight: 500, color: isPlaying ? "#ffffff" : "#e2e8f0", transition: "all 0.15s" }}
                               >
                                 {isPlaying ? (
                                   <><Pause size={10} /><span style={{ fontVariantNumeric: "tabular-nums" }}>{fmtMSS(playTime.current)}/{fmtMSS(playTime.duration)}</span></>
@@ -293,7 +293,7 @@ export default function AudioHistoryList({
                         {isConfirming && (
                           <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "6px", paddingLeft: "32px" }}>
                             <span style={{ fontSize: "11px", color: "#f87171", flex: 1 }}>¿Eliminar?</span>
-                            <button onClick={() => setConfirmId(null)} style={{ fontSize: "11px", color: "#6b7280", background: "none", border: "1px solid #2a2a3e", borderRadius: "6px", padding: "2px 8px", cursor: "pointer" }}>
+                            <button onClick={() => setConfirmId(null)} style={{ fontSize: "11px", color: "#6b7280", background: "none", border: "1px solid #222222", borderRadius: "6px", padding: "2px 8px", cursor: "pointer" }}>
                               No
                             </button>
                             <button onClick={() => handleDelete([gen.id])} disabled={isDeleting} style={{ fontSize: "11px", color: "#f87171", background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "6px", padding: "2px 8px", cursor: "pointer", opacity: isDeleting ? 0.5 : 1 }}>
@@ -335,7 +335,7 @@ export default function AudioHistoryList({
         <div className="mb-4 px-4 py-2.5 rounded-xl flex items-center justify-between gap-3" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}>
           <span className="text-sm" style={{ color: "#f87171" }}>{selected.size} seleccionada{selected.size > 1 ? "s" : ""}</span>
           <div className="flex items-center gap-2">
-            <button onClick={() => setSelected(new Set())} className="text-xs px-3 py-1.5 rounded-lg" style={{ color: "#6b7280", background: "transparent", border: "1px solid #2a2a3e" }}>Cancelar</button>
+            <button onClick={() => setSelected(new Set())} className="text-xs px-3 py-1.5 rounded-lg" style={{ color: "#6b7280", background: "transparent", border: "1px solid #222222" }}>Cancelar</button>
             <button onClick={() => handleDelete([...selected])} disabled={deletingIds.size > 0} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-semibold disabled:opacity-50" style={{ background: "rgba(239,68,68,0.2)", color: "#f87171", border: "1px solid rgba(239,68,68,0.35)" }}>
               <Trash2 size={11} /> Eliminar seleccionadas ({selected.size})
             </button>
@@ -345,7 +345,7 @@ export default function AudioHistoryList({
 
       {loading ? (
         <div className="space-y-3">
-          {[1, 2, 3].map((i) => <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: "#12121a" }} />)}
+          {[1, 2, 3].map((i) => <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: "#111111" }} />)}
         </div>
       ) : generations.length === 0 ? (
         <div className="text-center py-16" style={{ color: "#8888a8" }}>
@@ -355,8 +355,8 @@ export default function AudioHistoryList({
       ) : (
         <>
           <div className="flex items-center gap-2 mb-2 px-1">
-            <input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(selectableIds))} className="rounded" style={{ accentColor: "#3b82f6", width: "14px", height: "14px", cursor: "pointer" }} />
-            <span className="text-xs" style={{ color: "#4a4a65" }}>Seleccionar todo</span>
+            <input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(selectableIds))} className="rounded" style={{ accentColor: "#ffffff", width: "14px", height: "14px", cursor: "pointer" }} />
+            <span className="text-xs" style={{ color: "#555555" }}>Seleccionar todo</span>
           </div>
 
           <div className="space-y-3">
@@ -369,9 +369,9 @@ export default function AudioHistoryList({
               const isSelected = selected.has(gen.id);
 
               return (
-                <div key={gen.id} className="rounded-xl border" style={{ background: isSelected ? "rgba(59,130,246,0.05)" : "#12121a", borderColor: isSelected ? "rgba(59,130,246,0.3)" : isExpired ? "#1e1e2e" : "#2a2a3e", opacity: isRemoving ? 0 : 1, transition: "opacity 300ms ease-out" }}>
+                <div key={gen.id} className="rounded-xl border" style={{ background: isSelected ? "rgba(255,255,255,0.04)" : "#111111", borderColor: isSelected ? "rgba(255,255,255,0.2)" : isExpired ? "#1a1a1a" : "#222222", opacity: isRemoving ? 0 : 1, transition: "opacity 300ms ease-out" }}>
                   <div className="p-4 flex items-start gap-3">
-                    <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(gen.id)} className="mt-0.5 rounded flex-shrink-0" style={{ accentColor: "#3b82f6", width: "14px", height: "14px", cursor: "pointer" }} />
+                    <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(gen.id)} className="mt-0.5 rounded flex-shrink-0" style={{ accentColor: "#ffffff", width: "14px", height: "14px", cursor: "pointer" }} />
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm truncate ${isExpired ? "text-gray-600" : "text-gray-300"}`}>{gen.text}</p>
                       <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 flex-wrap">
@@ -380,14 +380,14 @@ export default function AudioHistoryList({
                         <span>{gen.creditsUsed.toLocaleString("es-ES")} chars</span>
                         <span>·</span>
                         <span>{gen.durationSeconds.toFixed(1)}s</span>
-                        {expiry && <><span>·</span><span style={{ color: expiry.expired ? "#6b7280" : expiry.label.includes("h") ? "#f59e0b" : "#4a4a65" }}>{expiry.label}</span></>}
+                        {expiry && <><span>·</span><span style={{ color: expiry.expired ? "#6b7280" : expiry.label.includes("h") ? "#f59e0b" : "#555555" }}>{expiry.label}</span></>}
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       {isExpired ? (
-                        <span className="px-2 py-1 rounded-lg text-xs font-medium" style={{ background: "#12121a", color: "#4a4a65", border: "1px solid #1e1e2e" }}>Audio expirado</span>
+                        <span className="px-2 py-1 rounded-lg text-xs font-medium" style={{ background: "#111111", color: "#555555", border: "1px solid #222222" }}>Audio expirado</span>
                       ) : (
-                        <button onClick={() => handlePlayToggle(gen)} className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium" style={{ background: playingId === gen.id ? "rgba(59,130,246,0.15)" : "#1a1a2e", color: playingId === gen.id ? "#93c5fd" : "#8888a8", border: `1px solid ${playingId === gen.id ? "#3b82f6" : "#2a2a3e"}`, transition: "all 0.15s" }}>
+                        <button onClick={() => handlePlayToggle(gen)} className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium" style={{ background: playingId === gen.id ? "rgba(255,255,255,0.12)" : "#1a1a1a", color: playingId === gen.id ? "#ffffff" : "#888888", border: `1px solid ${playingId === gen.id ? "rgba(255,255,255,0.4)" : "#222222"}`, transition: "all 0.15s" }}>
                           {playingId === gen.id ? (
                             <><Pause size={10} /><span style={{ fontVariantNumeric: "tabular-nums" }}>{fmtMSS(playTime.current)}/{fmtMSS(playTime.duration)}</span></>
                           ) : (
@@ -403,7 +403,7 @@ export default function AudioHistoryList({
                   {isConfirming && (
                     <div className="px-3 pb-3 flex items-center gap-2">
                       <span className="text-xs flex-1" style={{ color: "#f87171" }}>¿Eliminar?</span>
-                      <button onClick={() => setConfirmId(null)} className="text-xs px-2 py-1 rounded-lg" style={{ color: "#6b7280", background: "transparent", border: "1px solid #2a2a3e" }}>Cancelar</button>
+                      <button onClick={() => setConfirmId(null)} className="text-xs px-2 py-1 rounded-lg" style={{ color: "#6b7280", background: "transparent", border: "1px solid #222222" }}>Cancelar</button>
                       <button onClick={() => handleDelete([gen.id])} disabled={isDeleting} className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg font-semibold disabled:opacity-50" style={{ background: "rgba(239,68,68,0.2)", color: "#f87171", border: "1px solid rgba(239,68,68,0.35)" }}>
                         {isDeleting ? "..." : <><Trash2 size={10} /> Eliminar</>}
                       </button>
@@ -416,9 +416,9 @@ export default function AudioHistoryList({
 
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 mt-6">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40" style={{ background: "#1a1a2e", color: "#d1d5db", border: "1px solid #2a2a3e" }}>← Anterior</button>
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40" style={{ background: "#1a1a1a", color: "#d1d5db", border: "1px solid #222222" }}>← Anterior</button>
               <span className="text-sm text-gray-500">Página {page} de {totalPages}</span>
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40" style={{ background: "#1a1a2e", color: "#d1d5db", border: "1px solid #2a2a3e" }}>Siguiente →</button>
+              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40" style={{ background: "#1a1a1a", color: "#d1d5db", border: "1px solid #222222" }}>Siguiente →</button>
             </div>
           )}
         </>

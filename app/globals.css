@@ -4,14 +4,21 @@
 @import 'flag-icons/css/flag-icons.min.css';
 
 :root {
-  --bg-primary: #0a0a0f;
-  --bg-secondary: #12121a;
-  --bg-card: #1a1a2e;
-  --accent-purple: #3b82f6;
-  --accent-blue: #3b82f6;
-  --text-primary: #f1f1f5;
-  --text-muted: #8888a8;
-  --border: #2a2a3e;
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #111111;
+  --border: #222222;
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+
+  --bg-primary: #000000;
+  --bg-secondary: #111111;
+  --bg-card: #111111;
+  --accent-purple: #ffffff;
+  --accent-blue: #ffffff;
+  --text-primary: #ffffff;
+  --text-muted: #888888;
+  --border-color: #222222;
 }
 
 * {
@@ -37,7 +44,7 @@ audio {
 }
 
 audio::-webkit-media-controls-panel {
-  background: #1a1a2e;
+  background: #111111;
 }
 
 /* Scrollbar */
@@ -45,14 +52,14 @@ audio::-webkit-media-controls-panel {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #12121a;
+  background: #111111;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2a3e;
+  background: #333333;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3b82f6;
+  background: #ffffff;
 }
 
 /* Slider */
@@ -61,7 +68,7 @@ input[type="range"] {
   appearance: none;
   height: 6px;
   border-radius: 3px;
-  background: #2a2a3e;
+  background: #333333;
   outline: none;
 }
 
@@ -71,18 +78,18 @@ input[type="range"]::-webkit-slider-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #3b82f6;
+  background: #ffffff;
   cursor: pointer;
-  border: 2px solid #0a0a0f;
+  border: 2px solid #000000;
 }
 
 input[type="range"]::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #3b82f6;
+  background: #ffffff;
   cursor: pointer;
-  border: 2px solid #0a0a0f;
+  border: 2px solid #000000;
 }
 
 @keyframes waveBar {
@@ -96,7 +103,7 @@ input[type="range"]::-moz-range-thumb {
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: linear-gradient(135deg, #ffffff, #aaaaaa);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -104,22 +111,22 @@ input[type="range"]::-moz-range-thumb {
 
   .card {
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    color: white;
+    background: #ffffff;
+    color: #000000;
     border-radius: 8px;
     font-weight: 600;
     transition: all 0.2s;
   }
 
   .btn-primary:hover:not(:disabled) {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background: #e5e5e5;
     transform: translateY(-1px);
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.12);
   }
 
   .btn-primary:disabled {
@@ -132,7 +139,7 @@ input[type="range"]::-moz-range-thumb {
 .cl-modalContent,
 .cl-card,
 .cl-userProfile-root {
-  background-color: #0d0d17 !important;
+  background-color: #111111 !important;
   color: #e5e7eb !important;
 }
 
@@ -160,11 +167,11 @@ input[type="range"]::-moz-range-thumb {
   color: #e5e7eb !important;
 }
 
-/* Badge Last Used - texto azul y borde azul */
+/* Badge Last Used */
 .cl-badge {
-  color: #3b82f6 !important;
+  color: #888888 !important;
   background: transparent !important;
-  border: 1px solid #3b82f6 !important;
+  border: 1px solid #444444 !important;
 }
 
 /* Botones de Google y Apple - sin fondo, borde gris, texto blanco */

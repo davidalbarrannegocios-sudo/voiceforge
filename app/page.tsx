@@ -22,13 +22,13 @@ const USE_CASES = [
     title: "Narración de vídeo",
     tags: ["Expresivo", "Dinámico", "Profesional"],
     bg: "linear-gradient(135deg,#1a0535 0%,#2d1b69 60%,#1e0a3c 100%)",
-    accent: "#93c5fd",
+    accent: "#aaaaaa",
   },
   {
     title: "Audiolibros",
     tags: ["Profesional", "Calmado", "Articulado"],
     bg: "linear-gradient(135deg,#030b1a 0%,#0c2461 60%,#0a1628 100%)",
-    accent: "#60a5fa",
+    accent: "#bbbbbb",
   },
   {
     title: "Contenido YouTube",
@@ -45,8 +45,8 @@ const FEATURES = [
 ];
 
 const STAT_AVATARS = [
-  { color: "#3b82f6", initials: "AL" },
-  { color: "#3b82f6", initials: "MR" },
+  { color: "#aaaaaa", initials: "AL" },
+  { color: "#aaaaaa", initials: "MR" },
   { color: "#EC4899", initials: "JG" },
   { color: "#14B8A6", initials: "PC" },
   { color: "#F97316", initials: "SL" },
@@ -122,14 +122,14 @@ function FaqItem({ item, open, onToggle, onOpen, onClose }: {
   return (
     <div
       className="rounded-xl border overflow-hidden"
-      style={{ background: "#12121a", borderColor: "#2a2a3e" }}
+      style={{ background: "#111111", borderColor: "#222222" }}
       onMouseEnter={onOpen}
       onMouseLeave={onClose}
     >
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between px-5 py-4 text-left transition-colors"
-        style={{ color: open ? "#93c5fd" : "white" }}
+        style={{ color: open ? "#aaaaaa" : "white" }}
       >
         <span className="font-medium pr-4 text-sm md:text-base">{item.q}</span>
         <ChevronDown
@@ -138,7 +138,7 @@ function FaqItem({ item, open, onToggle, onOpen, onClose }: {
           style={{
             transform: open ? "rotate(180deg)" : "none",
             transition: "transform 200ms ease-out",
-            color: "#8888a8",
+            color: "#888888",
           }}
         />
       </button>
@@ -149,7 +149,7 @@ function FaqItem({ item, open, onToggle, onOpen, onClose }: {
           transition: "max-height 200ms ease-out",
         }}
       >
-        <div className="px-5 pb-5 text-sm text-gray-400 leading-relaxed border-t" style={{ borderColor: "#2a2a3e" }}>
+        <div className="px-5 pb-5 text-sm text-gray-400 leading-relaxed border-t" style={{ borderColor: "#222222" }}>
           {item.a}
         </div>
       </div>
@@ -257,12 +257,12 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "#0a0a0f", color: "white" }}>
+    <div className="min-h-screen" style={{ background: "#000000", color: "white" }}>
 
       {/* ── Nav ────────────────────────────────────────────────── */}
       <header
         className="fixed top-0 left-0 right-0 z-50 border-b"
-        style={{ background: "rgba(10,10,15,0.9)", backdropFilter: "blur(12px)", borderColor: "#2a2a3e" }}
+        style={{ background: "rgba(0,0,0,0.9)", backdropFilter: "blur(12px)", borderColor: "#222222" }}
       >
         <div className="max-w-screen-2xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
@@ -298,7 +298,7 @@ export default function LandingPage() {
                   transition: "opacity 150ms ease-out, transform 150ms ease-out",
                   width: "500px",
                   background: "#13131d",
-                  border: "1px solid #2a2a3e",
+                  border: "1px solid #222222",
                   borderRadius: "16px",
                   padding: "10px",
                   boxShadow: "0 20px 60px rgba(0,0,0,0.8)",
@@ -319,7 +319,7 @@ export default function LandingPage() {
                       </Link>
                     ))}
                   </div>
-                  <div style={{ width: "1px", background: "#1e1e2e", flexShrink: 0, margin: "8px 0" }} />
+                  <div style={{ width: "1px", background: "#1a1a1a", flexShrink: 0, margin: "8px 0" }} />
                   <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
                     {NAV_PRODUCTS_RIGHT.map((item) => (
                       <Link
@@ -362,14 +362,14 @@ export default function LandingPage() {
                   transition: "opacity 150ms ease-out, transform 150ms ease-out",
                   width: "240px",
                   background: "#13131d",
-                  border: "1px solid #2a2a3e",
+                  border: "1px solid #222222",
                   borderRadius: "16px",
                   padding: "10px",
                   boxShadow: "0 20px 60px rgba(0,0,0,0.8)",
                   zIndex: 60,
                 }}
               >
-                <p style={{ fontSize: "10px", fontWeight: 700, color: "#3a3a52", textTransform: "uppercase", letterSpacing: "0.1em", padding: "4px 12px 6px" }}>Empresa</p>
+                <p style={{ fontSize: "10px", fontWeight: 700, color: "#444444", textTransform: "uppercase", letterSpacing: "0.1em", padding: "4px 12px 6px" }}>Empresa</p>
                 {NAV_EMPRESA.map((item) => (
                   <Link
                     key={item.title}
@@ -407,8 +407,8 @@ export default function LandingPage() {
               <>
                 <Link
                   href="/dashboard"
-                  className="text-sm font-semibold text-white px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5"
-                  style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
+                  className="text-sm font-semibold text-black px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5"
+                  style={{ background: "#ffffff" }}
                 >
                   Dashboard
                 </Link>
@@ -421,8 +421,8 @@ export default function LandingPage() {
                 </Link>
                 <Link
                   href="/sign-up"
-                  className="text-sm font-semibold text-white px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5"
-                  style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
+                  className="text-sm font-semibold text-black px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5"
+                  style={{ background: "#ffffff" }}
                 >
                   Empezar gratis
                 </Link>
@@ -433,7 +433,7 @@ export default function LandingPage() {
 
         {/* Mobile menu */}
         {mobileNavOpen && (
-          <div className="md:hidden border-t" style={{ borderColor: "#1e1e2e", background: "#0a0a0f" }}>
+          <div className="md:hidden border-t" style={{ borderColor: "#1a1a1a", background: "#000000" }}>
             {/* Productos accordion */}
             <button
               onClick={() => setMobileProductsOpen(!mobileProductsOpen)}
@@ -463,7 +463,7 @@ export default function LandingPage() {
             <button
               onClick={() => setMobileEmpresaOpen(!mobileEmpresaOpen)}
               className="w-full flex items-center justify-between px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors border-t"
-              style={{ background: "none", border: "none", borderTop: "1px solid #1e1e2e", cursor: "pointer" }}
+              style={{ background: "none", border: "none", borderTop: "1px solid #1a1a1a", cursor: "pointer" }}
             >
               <span>Empresa</span>
               <ChevronDown size={14} style={{ transition: "transform 0.15s", transform: mobileEmpresaOpen ? "rotate(180deg)" : "none" }} />
@@ -484,7 +484,7 @@ export default function LandingPage() {
                 ))}
               </div>
             )}
-            <Link href="/pricing" onClick={() => setMobileNavOpen(false)} className="block px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors border-t" style={{ borderColor: "#1e1e2e" }}>Precios</Link>
+            <Link href="/pricing" onClick={() => setMobileNavOpen(false)} className="block px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors border-t" style={{ borderColor: "#1a1a1a" }}>Precios</Link>
           </div>
         )}
       </header>
@@ -503,7 +503,7 @@ export default function LandingPage() {
                   <span
                     key={word}
                     style={{
-                      color: word === "Clona." ? "#3b82f6" : "#ffffff",
+                      color: word === "Clona." ? "#ffffff" : "#ffffff",
                       display: "inline-block",
                       marginRight: "0.35em",
                       animation: `heroWordIn 0.5s ease-out both`,
@@ -597,8 +597,8 @@ export default function LandingPage() {
               {/* Inner dark card */}
               <div
                 style={{
-                  background: "#0d0d17",
-                  border: "1px solid #1e1e2e",
+                  background: "#111111",
+                  border: "1px solid #1a1a1a",
                   borderRadius: "16px",
                   overflow: "hidden",
                 }}
@@ -612,7 +612,7 @@ export default function LandingPage() {
                     <div
                       style={{
                         width: "48px", height: "48px", borderRadius: "50%",
-                        background: "rgba(59,130,246,0.12)",
+                        background: "rgba(255,255,255,0.06)",
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: "22px", marginBottom: "16px",
                       }}
@@ -628,7 +628,7 @@ export default function LandingPage() {
                     <Link
                       href="/sign-up"
                       className="font-semibold text-white transition-all hover:opacity-80"
-                      style={{ fontSize: "13px", padding: "9px 22px", borderRadius: "8px", background: "#2563eb" }}
+                      style={{ fontSize: "13px", padding: "9px 22px", borderRadius: "8px", background: "#ffffff", color: "#000000" }}
                     >
                       Empezar gratis →
                     </Link>
@@ -639,12 +639,12 @@ export default function LandingPage() {
                   {/* Left: voice list ~280px */}
                   <div
                     className="flex-shrink-0 flex flex-col w-full md:w-[280px] border-b md:border-b-0 md:border-r"
-                    style={{ background: "#0d0d17", borderColor: "#1e1e2e" }}
+                    style={{ background: "#111111", borderColor: "#1a1a1a" }}
                   >
                     <div className="flex-1 overflow-y-auto" style={{ padding: "8px" }}>
                       {demoVoices.length === 0
                         ? Array.from({ length: 5 }).map((_, i) => (
-                            <div key={i} className="animate-pulse rounded-xl mb-0.5" style={{ height: "44px", background: "#1a1a2e" }} />
+                            <div key={i} className="animate-pulse rounded-xl mb-0.5" style={{ height: "44px", background: "#1a1a1a" }} />
                           ))
                         : demoVoices.map((voice) => {
                             const active = selectedVoice === voice._id;
@@ -656,7 +656,7 @@ export default function LandingPage() {
                                 style={{
                                   height: "44px",
                                   padding: "0 10px",
-                                  background: active ? "#1a1a2e" : "transparent",
+                                  background: active ? "#1a1a1a" : "transparent",
                                 }}
                               >
                                 <VoiceAvatarGenerative seed={voice._id} size={30} />
@@ -671,19 +671,19 @@ export default function LandingPage() {
                           })}
                     </div>
                     {/* 2M+ footer */}
-                    <div style={{ padding: "10px 18px", borderTop: "1px solid #1e1e2e", flexShrink: 0 }}>
+                    <div style={{ padding: "10px 18px", borderTop: "1px solid #1a1a1a", flexShrink: 0 }}>
                       <Link
                         href="/dashboard"
                         className="transition-colors hover:text-blue-400"
                         style={{ fontSize: "12px", color: "#555570" }}
                       >
-                        2.000.000+ voces <span style={{ color: "#3b82f6" }}>↗</span>
+                        2.000.000+ voces <span style={{ color: "#aaaaaa" }}>↗</span>
                       </Link>
                     </div>
                   </div>
 
                   {/* Right: textarea + footer */}
-                  <div className="flex-1 flex flex-col min-w-0" style={{ background: "#0d0d17" }}>
+                  <div className="flex-1 flex flex-col min-w-0" style={{ background: "#111111" }}>
                     <textarea
                       value={demoText}
                       onChange={(e) => setDemoText(e.target.value.slice(0, 30000))}
@@ -707,7 +707,7 @@ export default function LandingPage() {
                     {/* Card footer */}
                     <div
                       className="flex items-center gap-3 flex-shrink-0"
-                      style={{ padding: "12px 22px", borderTop: "1px solid #1e1e2e" }}
+                      style={{ padding: "12px 22px", borderTop: "1px solid #1a1a1a" }}
                     >
                       <span className="flex-1" style={{ fontSize: "12px", color: "#555570" }}>
                         {demoText.length}/30000 characters
@@ -716,7 +716,7 @@ export default function LandingPage() {
                         onClick={handleGenerateDemo}
                         disabled={demoLoading || !demoText.trim()}
                         className="flex items-center gap-1.5 font-semibold text-white transition-all hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
-                        style={{ fontSize: "13px", padding: "9px 18px", borderRadius: "8px", background: "#111", border: "1px solid #2a2a3e" }}
+                        style={{ fontSize: "13px", padding: "9px 18px", borderRadius: "8px", background: "#111", border: "1px solid #222222" }}
                       >
                         {demoLoading ? (
                           <>
@@ -756,7 +756,7 @@ export default function LandingPage() {
                     <Link
                       href="/dashboard"
                       className="font-semibold text-white transition-all hover:opacity-80 flex-shrink-0"
-                      style={{ fontSize: "13px", padding: "8px 18px", borderRadius: "8px", background: "#2563eb" }}
+                      style={{ fontSize: "13px", padding: "8px 18px", borderRadius: "8px", background: "#ffffff", color: "#000000" }}
                     >
                       Ir al Dashboard →
                     </Link>
@@ -764,7 +764,7 @@ export default function LandingPage() {
                     <Link
                       href="/sign-up"
                       className="font-semibold text-white transition-all hover:opacity-80 flex-shrink-0"
-                      style={{ fontSize: "13px", padding: "8px 18px", borderRadius: "8px", background: "#2563eb" }}
+                      style={{ fontSize: "13px", padding: "8px 18px", borderRadius: "8px", background: "#ffffff", color: "#000000" }}
                     >
                       Empezar gratis →
                     </Link>
@@ -835,9 +835,9 @@ export default function LandingPage() {
                     <li key={f} className="flex items-start gap-3">
                       <div
                         className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                        style={{ background: "rgba(59,130,246,0.2)" }}
+                        style={{ background: "rgba(255,255,255,0.1)" }}
                       >
-                        <Check size={11} style={{ color: "#93c5fd" }} />
+                        <Check size={11} style={{ color: "#aaaaaa" }} />
                       </div>
                       <span className="text-gray-300">{f}</span>
                     </li>
@@ -847,16 +847,16 @@ export default function LandingPage() {
                 {isLoaded && isSignedIn ? (
                   <Link
                     href="/dashboard"
-                    className="inline-block px-6 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
-                    style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 15px rgba(59,130,246,0.3)" }}
+                    className="inline-block px-6 py-3 rounded-xl font-semibold text-black text-sm transition-all hover:-translate-y-0.5"
+                    style={{ background: "#ffffff", boxShadow: "0 4px 15px rgba(255,255,255,0.1)" }}
                   >
                     Ir al Dashboard →
                   </Link>
                 ) : (
                   <Link
                     href="/sign-up"
-                    className="px-6 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5"
-                    style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 15px rgba(59,130,246,0.3)" }}
+                    className="px-6 py-3 rounded-xl font-semibold text-black text-sm transition-all hover:-translate-y-0.5"
+                    style={{ background: "#ffffff", boxShadow: "0 4px 15px rgba(255,255,255,0.1)" }}
                   >
                     Empezar gratis →
                   </Link>
@@ -867,7 +867,7 @@ export default function LandingPage() {
               {(() => {
                 const fv = demoVoices[0];
                 return (
-                  <div className="rounded-2xl border p-5" style={{ background: "#12121a", borderColor: "#2a2a3e" }}>
+                  <div className="rounded-2xl border p-5" style={{ background: "#111111", borderColor: "#222222" }}>
                     {/* Window chrome */}
                     <div className="flex items-center gap-1.5 mb-4">
                       <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
@@ -879,7 +879,7 @@ export default function LandingPage() {
                     {/* Script text */}
                     <div
                       className="rounded-lg px-4 py-3 text-xs text-gray-400 mb-3 leading-relaxed"
-                      style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }}
+                      style={{ background: "#000000", border: "1px solid #222222" }}
                     >
                       &ldquo;Bienvenidos a este episodio del podcast. Hoy vamos a hablar sobre el futuro de la inteligencia artificial y cómo está cambiando el mundo.&rdquo;
                     </div>
@@ -887,7 +887,7 @@ export default function LandingPage() {
                     {/* Waveform area */}
                     <div
                       className="rounded-lg px-3 pt-3 pb-2 mb-3 flex items-center justify-center"
-                      style={{ background: "#0a0a0f", border: "1px solid #2a2a3e", minHeight: "56px" }}
+                      style={{ background: "#000000", border: "1px solid #222222", minHeight: "56px" }}
                     >
                       {featuresPlaying ? (
                         /* Animated waveform bars */
@@ -901,7 +901,7 @@ export default function LandingPage() {
                                 style={{
                                   width: "3px",
                                   height: `${baseH}px`,
-                                  background: "#3b82f6",
+                                  background: "#ffffff",
                                   transformOrigin: "center",
                                   animation: `waveBar ${0.7 + (i % 4) * 0.15}s ease-in-out infinite`,
                                   animationDelay: `${(i * 0.06) % 0.5}s`,
@@ -923,7 +923,7 @@ export default function LandingPage() {
                                 width="3"
                                 height={h}
                                 rx="1.5"
-                                fill={featuresAudioUrl && i < 22 ? "#3b82f6" : "#2a2a3e"}
+                                fill={featuresAudioUrl && i < 22 ? "rgba(255,255,255,0.6)" : "#333333"}
                               />
                             );
                           })}
@@ -942,7 +942,7 @@ export default function LandingPage() {
                         onClick={handleFeaturesPlay}
                         disabled={featuresLoading || !fv}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{ background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}
+                        style={{ background: "rgba(255,255,255,0.08)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.1)" }}
                       >
                         {featuresLoading ? (
                           <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
@@ -976,7 +976,7 @@ export default function LandingPage() {
           >
             <div
               className="w-[600px] h-[600px] rounded-full opacity-[0.07]"
-              style={{ background: "radial-gradient(circle,#3b82f6,transparent 70%)" }}
+              style={{ background: "radial-gradient(circle,rgba(255,255,255,0.08),transparent 70%)" }}
             />
           </div>
 
@@ -989,7 +989,7 @@ export default function LandingPage() {
                   className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 flex-shrink-0"
                   style={{
                     background: av.color,
-                    borderColor: "#0a0a0f",
+                    borderColor: "#000000",
                     marginTop: i % 2 === 0 ? "0px" : "12px",
                     boxShadow: `0 0 20px ${av.color}55`,
                   }}
@@ -1000,7 +1000,7 @@ export default function LandingPage() {
             </div>
 
             <h2 className="text-6xl md:text-8xl font-bold mb-4">
-              2.000.000<span style={{ color: "#3b82f6" }}>+</span>
+              2.000.000<span style={{ color: "#aaaaaa" }}>+</span>
             </h2>
             <p className="text-2xl font-semibold text-gray-200 mb-4">Voces disponibles</p>
             <p className="text-gray-500 max-w-md mx-auto">
@@ -1034,13 +1034,13 @@ export default function LandingPage() {
             <div
               className="rounded-2xl p-12 border relative overflow-hidden text-center"
               style={{
-                background: "linear-gradient(135deg,rgba(59,130,246,0.12),rgba(59,130,246,0.06))",
-                borderColor: "rgba(59,130,246,0.25)",
+                background: "linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.04))",
+                borderColor: "rgba(255,255,255,0.12)",
               }}
             >
               <div
                 className="absolute -top-24 -right-24 w-64 h-64 rounded-full pointer-events-none"
-                style={{ background: "radial-gradient(circle,rgba(59,130,246,0.2),transparent 70%)" }}
+                style={{ background: "radial-gradient(circle,rgba(255,255,255,0.1),transparent 70%)" }}
                 aria-hidden
               />
 
@@ -1052,16 +1052,16 @@ export default function LandingPage() {
               {isLoaded && isSignedIn ? (
                 <Link
                   href="/dashboard"
-                  className="inline-block px-8 py-4 rounded-xl font-semibold text-white text-base transition-all hover:-translate-y-1 relative"
-                  style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 8px 30px rgba(59,130,246,0.4)" }}
+                  className="inline-block px-8 py-4 rounded-xl font-semibold text-black text-base transition-all hover:-translate-y-1 relative"
+                  style={{ background: "#ffffff", boxShadow: "0 4px 20px rgba(255,255,255,0.1)" }}
                 >
                   Ir al Dashboard →
                 </Link>
               ) : (
                 <Link
                   href="/sign-up"
-                  className="px-8 py-4 rounded-xl font-semibold text-white text-base transition-all hover:-translate-y-1 relative"
-                  style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 8px 30px rgba(59,130,246,0.4)" }}
+                  className="px-8 py-4 rounded-xl font-semibold text-black text-base transition-all hover:-translate-y-1 relative"
+                  style={{ background: "#ffffff", boxShadow: "0 4px 20px rgba(255,255,255,0.1)" }}
                 >
                   Empezar gratis →
                 </Link>
@@ -1073,7 +1073,7 @@ export default function LandingPage() {
       </main>
 
       {/* ── Footer ─────────────────────────────────────────────── */}
-      <footer className="border-t" style={{ borderColor: "#2a2a3e", background: "#0a0a0f" }}>
+      <footer className="border-t" style={{ borderColor: "#222222", background: "#000000" }}>
         <div className="max-w-5xl mx-auto px-4 pt-14 pb-8">
 
           {/* Top: brand + link columns */}
@@ -1109,7 +1109,7 @@ export default function LandingPage() {
                   { label: "Precios", href: "/pricing" },
                 ].map(({ label, href }) => (
                   <li key={label}>
-                    <Link href={href} className="text-sm transition-colors hover:text-gray-200" style={{ color: "#8888a8" }}>
+                    <Link href={href} className="text-sm transition-colors hover:text-gray-200" style={{ color: "#888888" }}>
                       {label}
                     </Link>
                   </li>
@@ -1127,7 +1127,7 @@ export default function LandingPage() {
                   { label: "Soporte", href: "/support" },
                 ].map(({ label, href }) => (
                   <li key={label}>
-                    <Link href={href} className="text-sm transition-colors hover:text-gray-200" style={{ color: "#8888a8" }}>
+                    <Link href={href} className="text-sm transition-colors hover:text-gray-200" style={{ color: "#888888" }}>
                       {label}
                     </Link>
                   </li>
@@ -1144,7 +1144,7 @@ export default function LandingPage() {
                   { label: "Términos de uso", href: "/terms" },
                 ].map(({ label, href }) => (
                   <li key={label}>
-                    <Link href={href} className="text-sm transition-colors hover:text-gray-200" style={{ color: "#8888a8" }}>
+                    <Link href={href} className="text-sm transition-colors hover:text-gray-200" style={{ color: "#888888" }}>
                       {label}
                     </Link>
                   </li>
@@ -1154,7 +1154,7 @@ export default function LandingPage() {
           </div>
 
           {/* Divider */}
-          <div className="border-t mb-6" style={{ borderColor: "#1e1e2e" }} />
+          <div className="border-t mb-6" style={{ borderColor: "#1a1a1a" }} />
 
           {/* Bottom bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -1172,7 +1172,7 @@ export default function LandingPage() {
                   <a href={href} className="text-xs transition-colors hover:text-gray-300" style={{ color: "#555570" }}>
                     {label}
                   </a>
-                  {i < arr.length - 1 && <span style={{ color: "#2a2a3e" }}>|</span>}
+                  {i < arr.length - 1 && <span style={{ color: "#222222" }}>|</span>}
                 </span>
               ))}
             </div>

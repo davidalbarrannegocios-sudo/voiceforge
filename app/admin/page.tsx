@@ -109,15 +109,15 @@ interface Payment {
 
 /* ─── Style helpers ───────────────────────────────────────── */
 const card = {
-  background: "#12121a",
-  border: "1px solid #2a2a3e",
+  background: "#111111",
+  border: "1px solid #222222",
   borderRadius: "1rem",
   padding: "1.5rem",
 } as const;
 
 const input = {
-  background: "#0d0d17",
-  border: "1px solid #2a2a3e",
+  background: "#111111",
+  border: "1px solid #222222",
   borderRadius: "0.5rem",
   color: "#fff",
   padding: "0.5rem 0.75rem",
@@ -126,12 +126,12 @@ const input = {
   outline: "none",
 } as const;
 
-const btn = (color = "#3b82f6", extra: React.CSSProperties = {}) =>
+const btn = (color = "#ffffff", extra: React.CSSProperties = {}) =>
   ({
     background: color,
     border: "none",
     borderRadius: "0.5rem",
-    color: "#fff",
+    color: color === "#ffffff" ? "#000000" : "#fff",
     padding: "0.5rem 1rem",
     fontSize: "0.875rem",
     fontWeight: 600,
@@ -146,9 +146,9 @@ function Tag({ role }: { role: string }) {
     <span style={{
       display: "inline-block", padding: "2px 10px", borderRadius: "999px",
       fontSize: "0.7rem", fontWeight: 700,
-      background: isAdmin ? "rgba(59,130,246,0.18)" : "rgba(255,255,255,0.06)",
-      color: isAdmin ? "#93c5fd" : "#8888a8",
-      border: `1px solid ${isAdmin ? "rgba(59,130,246,0.35)" : "#2a2a3e"}`,
+      background: isAdmin ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.06)",
+      color: isAdmin ? "#aaaaaa" : "#888888",
+      border: `1px solid ${isAdmin ? "rgba(255,255,255,0.2)" : "#222222"}`,
     }}>
       {isAdmin ? "admin" : "user"}
     </span>
@@ -170,7 +170,7 @@ function AudioCell({ url }: { url: string }) {
   return (
     <>
       <audio ref={audioRef} src={url} onEnded={() => setPlaying(false)} />
-      <button onClick={toggle} style={btn(playing ? "#6b7280" : "#3b82f6", { padding: "0.3rem 0.7rem", fontSize: "0.75rem" })}>
+      <button onClick={toggle} style={btn(playing ? "#6b7280" : "#ffffff", { padding: "0.3rem 0.7rem", fontSize: "0.75rem" })}>
         {playing ? "⏸ Parar" : "▶ Escuchar"}
       </button>
     </>
@@ -317,7 +317,7 @@ function UserDetailModal({
       canceled:   { label: "CANCELADO", color: "#f87171" },
       failed:     { label: "FALLIDO", color: "#f87171" },
     };
-    const s = map[status] ?? { label: status.toUpperCase(), color: "#8888a8" };
+    const s = map[status] ?? { label: status.toUpperCase(), color: "#888888" };
     return <span style={{ color: s.color, fontSize: "0.7rem", fontWeight: 700 }}>{s.label}</span>;
   }
 
@@ -333,13 +333,13 @@ function UserDetailModal({
     >
       <div style={{
         width: "100%", maxWidth: "960px",
-        background: "#0d0d17", borderRadius: "1.25rem",
-        border: "1px solid #2a2a3e", overflow: "hidden",
+        background: "#111111", borderRadius: "1.25rem",
+        border: "1px solid #222222", overflow: "hidden",
       }}>
         {/* Modal header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1.25rem 1.5rem", borderBottom: "1px solid #2a2a3e" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1.25rem 1.5rem", borderBottom: "1px solid #222222" }}>
           <p style={{ fontWeight: 700, fontSize: "1rem" }}>Detalle de usuario</p>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "#8888a8", cursor: "pointer", fontSize: "1.2rem", lineHeight: 1 }}>✕</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "#888888", cursor: "pointer", fontSize: "1.2rem", lineHeight: 1 }}>✕</button>
         </div>
 
         {loading ? (
@@ -354,7 +354,7 @@ function UserDetailModal({
                 { label: "Rol",      value: detail.user.role },
                 { label: "Registro", value: new Date(detail.user.createdAt).toLocaleDateString("es-ES") },
               ].map(({ label, value }) => (
-                <div key={label} style={{ background: "#12121a", border: "1px solid #2a2a3e", borderRadius: "0.75rem", padding: "0.75rem 1rem" }}>
+                <div key={label} style={{ background: "#111111", border: "1px solid #222222", borderRadius: "0.75rem", padding: "0.75rem 1rem" }}>
                   <p style={{ color: "#555570", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "0.3rem" }}>{label}</p>
                   <p style={{ color: "#e5e7eb", fontSize: "0.85rem", fontWeight: 600, wordBreak: "break-all" }}>{value}</p>
                 </div>
@@ -362,7 +362,7 @@ function UserDetailModal({
             </div>
 
             {/* Estado Stripe */}
-            <div style={{ marginBottom: "1.5rem", padding: "1rem", borderRadius: "0.75rem", background: "#0a0a0f", border: "1px solid #2a2a3e" }}>
+            <div style={{ marginBottom: "1.5rem", padding: "1rem", borderRadius: "0.75rem", background: "#000000", border: "1px solid #222222" }}>
               <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#555570", marginBottom: "0.75rem" }}>Estado Stripe</p>
               {stripeSubLoading ? (
                 <p style={{ color: "#555570", fontSize: "0.8rem" }}>Consultando Stripe...</p>
@@ -373,13 +373,13 @@ function UserDetailModal({
               ) : stripeSub ? (() => {
                 const statusColors: Record<string, string> = {
                   active: "#4ade80", canceled: "#f87171", past_due: "#f59e0b",
-                  trialing: "#93c5fd", incomplete: "#f59e0b", unpaid: "#f87171",
+                  trialing: "#aaaaaa", incomplete: "#f59e0b", unpaid: "#f87171",
                 };
                 const statusLabels: Record<string, string> = {
                   active: "ACTIVO", canceled: "CANCELADO", past_due: "PAGO PENDIENTE",
                   trialing: "TRIAL", incomplete: "INCOMPLETO", unpaid: "IMPAGADO",
                 };
-                const col = statusColors[stripeSub.status ?? ""] ?? "#8888a8";
+                const col = statusColors[stripeSub.status ?? ""] ?? "#888888";
                 const lbl = statusLabels[stripeSub.status ?? ""] ?? (stripeSub.status ?? "").toUpperCase();
                 const periodDate = stripeSub.currentPeriodEnd
                   ? new Date(stripeSub.currentPeriodEnd).toLocaleDateString("es-ES", { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" })
@@ -412,7 +412,7 @@ function UserDetailModal({
                         Cancelado el {cancelDate}
                       </span>
                     )}
-                    <span style={{ fontSize: "0.72rem", color: "#6b7280", padding: "1px 8px", borderRadius: "999px", border: "1px solid #2a2a3e" }}>
+                    <span style={{ fontSize: "0.72rem", color: "#6b7280", padding: "1px 8px", borderRadius: "999px", border: "1px solid #222222" }}>
                       {stripeSub.interval === "year" ? "Anual" : "Mensual"}
                     </span>
                     {stripeSub.customerId && (
@@ -420,7 +420,7 @@ function UserDetailModal({
                         href={`https://dashboard.stripe.com/customers/${stripeSub.customerId}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{ fontSize: "0.75rem", color: "#93c5fd", textDecoration: "none", padding: "3px 10px", borderRadius: "6px", border: "1px solid rgba(59,130,246,0.3)", background: "rgba(59,130,246,0.08)" }}
+                        style={{ fontSize: "0.75rem", color: "#aaaaaa", textDecoration: "none", padding: "3px 10px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.05)" }}
                       >
                         Ver en Stripe ↗
                       </a>
@@ -431,7 +431,7 @@ function UserDetailModal({
             </div>
 
             {/* Cambiar plan */}
-            <div style={{ marginBottom: "1.5rem", padding: "1rem", borderRadius: "0.75rem", background: "#0a0a0f", border: "1px solid #2a2a3e" }}>
+            <div style={{ marginBottom: "1.5rem", padding: "1rem", borderRadius: "0.75rem", background: "#000000", border: "1px solid #222222" }}>
               <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#555570", marginBottom: "0.75rem" }}>
                 Plan actual: <span style={{ color: "#e5e7eb" }}>{detail.user.plan}</span>
               </p>
@@ -445,7 +445,7 @@ function UserDetailModal({
                 <button
                   onClick={handleAssignPlan}
                   disabled={planLoading || !planValue || planValue === detail.user.plan}
-                  style={btn("#3b82f6", { opacity: planLoading || planValue === detail.user.plan ? 0.5 : 1 })}
+                  style={btn("#ffffff", { opacity: planLoading || planValue === detail.user.plan ? 0.5 : 1 })}
                 >
                   {planLoading ? "Asignando..." : "Asignar plan"}
                 </button>
@@ -453,7 +453,7 @@ function UserDetailModal({
             </div>
 
             {/* Tabs */}
-            <div style={{ display: "flex", borderBottom: "1px solid #2a2a3e", marginBottom: "1rem" }}>
+            <div style={{ display: "flex", borderBottom: "1px solid #222222", marginBottom: "1rem" }}>
               {(["generaciones", "pagos"] as const).map((t) => (
                 <button
                   key={t}
@@ -479,7 +479,7 @@ function UserDetailModal({
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
                     <thead>
-                      <tr style={{ borderBottom: "1px solid #2a2a3e" }}>
+                      <tr style={{ borderBottom: "1px solid #222222" }}>
                         {["Fecha", "Texto", "Duración", "Créditos", "Estado", "Audio", "Acción"].map((h) => (
                           <th key={h} style={{ padding: "0.5rem 0.75rem", textAlign: "left", color: "#555570", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
                         ))}
@@ -487,7 +487,7 @@ function UserDetailModal({
                     </thead>
                     <tbody>
                       {detail.generations.map((g) => (
-                        <tr key={g.id} style={{ borderBottom: "1px solid #1e1e2e", opacity: g.refunded ? 0.5 : 1 }}>
+                        <tr key={g.id} style={{ borderBottom: "1px solid #1a1a1a", opacity: g.refunded ? 0.5 : 1 }}>
                           <td style={{ padding: "0.6rem 0.75rem", color: "#555570", whiteSpace: "nowrap" }}>
                             {new Date(g.createdAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}
                           </td>
@@ -497,7 +497,7 @@ function UserDetailModal({
                           <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", whiteSpace: "nowrap" }}>
                             {g.durationSeconds.toFixed(1)}s
                           </td>
-                          <td style={{ padding: "0.6rem 0.75rem", color: "#93c5fd", fontWeight: 600 }}>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "#aaaaaa", fontWeight: 600 }}>
                             {g.creditsUsed.toLocaleString("es-ES")}
                           </td>
                           <td style={{ padding: "0.6rem 0.75rem" }}>
@@ -537,7 +537,7 @@ function UserDetailModal({
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
                     <thead>
-                      <tr style={{ borderBottom: "1px solid #2a2a3e" }}>
+                      <tr style={{ borderBottom: "1px solid #222222" }}>
                         {["Fecha", "Importe", "Reembolsado", "Caracteres", "Tarjeta", "Estado", "Acción"].map((h) => (
                           <th key={h} style={{ padding: "0.5rem 0.75rem", textAlign: "left", color: "#555570", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
                         ))}
@@ -545,7 +545,7 @@ function UserDetailModal({
                     </thead>
                     <tbody>
                       {payments.map((p) => (
-                        <tr key={p.id} style={{ borderBottom: "1px solid #1e1e2e", opacity: p.status === "refunded" ? 0.55 : 1 }}>
+                        <tr key={p.id} style={{ borderBottom: "1px solid #1a1a1a", opacity: p.status === "refunded" ? 0.55 : 1 }}>
                           <td style={{ padding: "0.6rem 0.75rem", color: "#555570", whiteSpace: "nowrap" }}>
                             {new Date(p.createdAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}
                           </td>
@@ -555,7 +555,7 @@ function UserDetailModal({
                           <td style={{ padding: "0.6rem 0.75rem", color: p.amountRefunded > 0 ? "#f59e0b" : "#555570" }}>
                             {p.amountRefunded > 0 ? `$${p.amountRefunded.toFixed(2)}` : "—"}
                           </td>
-                          <td style={{ padding: "0.6rem 0.75rem", color: "#93c5fd", fontWeight: 600 }}>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "#aaaaaa", fontWeight: 600 }}>
                             {p.creditsPurchased.toLocaleString("es-ES")}
                           </td>
                           <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", fontFamily: "monospace" }}>
@@ -618,7 +618,7 @@ function AffiliateDetailModal({
   }
 
   const row = (label: string, value: string) => (
-    <div style={{ display: "flex", gap: "12px", padding: "10px 0", borderBottom: "1px solid #1e1e2e" }}>
+    <div style={{ display: "flex", gap: "12px", padding: "10px 0", borderBottom: "1px solid #1a1a1a" }}>
       <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#555570", width: 140, flexShrink: 0, paddingTop: 1 }}>{label}</span>
       <span style={{ fontSize: "0.875rem", color: "#e5e7eb", wordBreak: "break-word" }}>{value}</span>
     </div>
@@ -631,7 +631,7 @@ function AffiliateDetailModal({
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
-      <div style={{ background: "#12121a", border: "1px solid #2a2a3e", borderRadius: "16px", width: "100%", maxWidth: "520px", padding: "28px", position: "relative" }}>
+      <div style={{ background: "#111111", border: "1px solid #222222", borderRadius: "16px", width: "100%", maxWidth: "520px", padding: "28px", position: "relative" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
           <div>
             <p style={{ fontWeight: 700, fontSize: "1rem", color: "#fff", margin: 0 }}>Solicitud de afiliado</p>
@@ -671,7 +671,7 @@ function AffiliateDetailModal({
 
         <button
           onClick={onClose}
-          style={{ ...btn("#1e1e2e", { border: "1px solid #2a2a3e", color: "#8888a8" }), width: "100%", marginTop: app.status === "pending" ? "8px" : "20px" }}
+          style={{ ...btn("#1a1a1a", { border: "1px solid #222222", color: "#888888" }), width: "100%", marginTop: app.status === "pending" ? "8px" : "20px" }}
         >
           Cerrar
         </button>
@@ -895,16 +895,16 @@ export default function AdminPage() {
 
   if (!isLoaded || authorized === null)
     return (
-      <div style={{ minHeight: "100vh", background: "#0a0a0f", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "#8888a8" }}>Cargando...</p>
+      <div style={{ minHeight: "100vh", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "#888888" }}>Cargando...</p>
       </div>
     );
 
   if (authorized === false)
     return (
-      <div style={{ minHeight: "100vh", background: "#0a0a0f", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "1rem" }}>
+      <div style={{ minHeight: "100vh", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "1rem" }}>
         <p style={{ color: "#f87171", fontSize: "1.25rem", fontWeight: 700 }}>Acceso denegado</p>
-        <p style={{ color: "#8888a8" }}>Necesitas permisos de administrador.</p>
+        <p style={{ color: "#888888" }}>Necesitas permisos de administrador.</p>
         <button style={btn()} onClick={() => router.push("/dashboard")}>Volver al dashboard</button>
       </div>
     );
@@ -914,14 +914,14 @@ export default function AdminPage() {
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0f", color: "#fff", fontFamily: "Inter, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#000000", color: "#fff", fontFamily: "Inter, sans-serif" }}>
       {/* Header */}
-      <div style={{ borderBottom: "1px solid #2a2a3e", padding: "1rem 2rem", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "rgba(10,10,15,0.95)", backdropFilter: "blur(12px)", zIndex: 10 }}>
+      <div style={{ borderBottom: "1px solid #222222", padding: "1rem 2rem", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "rgba(10,10,15,0.95)", backdropFilter: "blur(12px)", zIndex: 10 }}>
         <div>
           <p style={{ fontWeight: 800, fontSize: "1.1rem" }}>Panel de Administración</p>
           <p style={{ color: "#555570", fontSize: "0.75rem" }}>Elite Labs — acceso restringido</p>
         </div>
-        <button style={{ ...btn(), background: "#1a1a2e", border: "1px solid #2a2a3e" }} onClick={() => router.push("/dashboard")}>
+        <button style={{ ...btn(), background: "#1a1a1a", border: "1px solid #222222" }} onClick={() => router.push("/dashboard")}>
           ← Dashboard
         </button>
       </div>
@@ -964,7 +964,7 @@ export default function AdminPage() {
         const openTickets = tickets.filter(t => t.status === "open").length;
         const pendingWithdrawals = withdrawalRequests.filter(w => w.status === "pending").length;
         return (
-          <div style={{ borderBottom: "1px solid #1e1e2e", padding: "0 2rem", display: "flex", gap: "4px", overflowX: "auto" }}>
+          <div style={{ borderBottom: "1px solid #1a1a1a", padding: "0 2rem", display: "flex", gap: "4px", overflowX: "auto" }}>
             {[
               { label: "Usuarios", anchor: "#section-users", badge: 0 },
               { label: "Tickets soporte", anchor: "#section-tickets", badge: openTickets },
@@ -974,9 +974,9 @@ export default function AdminPage() {
               <a
                 key={anchor}
                 href={anchor}
-                style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "10px 14px", fontSize: "13px", fontWeight: 500, color: "#8888a8", textDecoration: "none", whiteSpace: "nowrap", borderBottom: "2px solid transparent" }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "10px 14px", fontSize: "13px", fontWeight: 500, color: "#888888", textDecoration: "none", whiteSpace: "nowrap", borderBottom: "2px solid transparent" }}
                 onMouseEnter={e => (e.currentTarget.style.color = "#e5e7eb")}
-                onMouseLeave={e => (e.currentTarget.style.color = "#8888a8")}
+                onMouseLeave={e => (e.currentTarget.style.color = "#888888")}
               >
                 {label}
                 {badge > 0 && (
@@ -1024,7 +1024,7 @@ export default function AdminPage() {
           </div>
 
           {/* Elite Labs Turbo row */}
-          <div style={{ background: "#12121a", borderRadius: "10px", padding: "16px" }}>
+          <div style={{ background: "#111111", borderRadius: "10px", padding: "16px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -1058,15 +1058,15 @@ export default function AdminPage() {
                 type="checkbox"
                 checked={turboManualOverridePending}
                 onChange={(e) => setTurboManualOverridePending(e.target.checked)}
-                style={{ width: "14px", height: "14px", accentColor: "#3b82f6", cursor: "pointer" }}
+                style={{ width: "14px", height: "14px", accentColor: "#ffffff", cursor: "pointer" }}
               />
-              <span style={{ fontSize: "12px", color: "#8888a8" }}>Anular control automático <span style={{ color: "#4b5563" }}>(el health check no sobreescribirá este estado)</span></span>
+              <span style={{ fontSize: "12px", color: "#888888" }}>Anular control automático <span style={{ color: "#4b5563" }}>(el health check no sobreescribirá este estado)</span></span>
             </label>
 
             <button
               onClick={saveTurboStatus}
               disabled={turboStatusSaving || (turboStatusPending === turboStatus && turboManualOverridePending === turboManualOverride)}
-              style={{ padding: "6px 18px", fontSize: "12px", fontWeight: 600, borderRadius: "6px", border: "none", transition: "all 150ms", cursor: (turboStatusPending === turboStatus && turboManualOverridePending === turboManualOverride) ? "default" : "pointer", background: (turboStatusPending === turboStatus && turboManualOverridePending === turboManualOverride) ? "rgba(255,255,255,0.05)" : "#3b82f6", color: (turboStatusPending === turboStatus && turboManualOverridePending === turboManualOverride) ? "#6b7280" : "#fff", opacity: turboStatusSaving ? 0.6 : 1 }}
+              style={{ padding: "6px 18px", fontSize: "12px", fontWeight: 600, borderRadius: "6px", border: "none", transition: "all 150ms", cursor: (turboStatusPending === turboStatus && turboManualOverridePending === turboManualOverride) ? "default" : "pointer", background: (turboStatusPending === turboStatus && turboManualOverridePending === turboManualOverride) ? "rgba(255,255,255,0.05)" : "#ffffff", color: (turboStatusPending === turboStatus && turboManualOverridePending === turboManualOverride) ? "#6b7280" : "#000000", opacity: turboStatusSaving ? 0.6 : 1 }}
             >{turboStatusSaving ? "Guardando..." : "Guardar cambios"}</button>
           </div>
         </div>
@@ -1079,16 +1079,16 @@ export default function AdminPage() {
             <p style={{ fontWeight: 700, marginBottom: "1rem" }}>Gestión de créditos</p>
             <form onSubmit={handleCredits} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               <div>
-                <label style={{ fontSize: "0.75rem", color: "#8888a8", display: "block", marginBottom: "0.35rem" }}>ID de usuario</label>
+                <label style={{ fontSize: "0.75rem", color: "#888888", display: "block", marginBottom: "0.35rem" }}>ID de usuario</label>
                 <input style={input} placeholder="cuid del usuario" value={creditUserId} onChange={(e) => setCreditUserId(e.target.value)} />
               </div>
               <div style={{ display: "flex", gap: "0.5rem" }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: "0.75rem", color: "#8888a8", display: "block", marginBottom: "0.35rem" }}>Cantidad</label>
+                  <label style={{ fontSize: "0.75rem", color: "#888888", display: "block", marginBottom: "0.35rem" }}>Cantidad</label>
                   <input style={input} type="number" min="1" placeholder="0" value={creditAmount} onChange={(e) => setCreditAmount(e.target.value)} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: "0.75rem", color: "#8888a8", display: "block", marginBottom: "0.35rem" }}>Operación</label>
+                  <label style={{ fontSize: "0.75rem", color: "#888888", display: "block", marginBottom: "0.35rem" }}>Operación</label>
                   <CustomSelect
                     options={[{ value: "add", label: "Añadir" }, { value: "subtract", label: "Quitar" }]}
                     value={creditOp}
@@ -1097,7 +1097,7 @@ export default function AdminPage() {
                   />
                 </div>
               </div>
-              <button type="submit" disabled={creditLoading} style={{ ...btn(creditOp === "add" ? "#3b82f6" : "#ef4444"), opacity: creditLoading ? 0.6 : 1 }}>
+              <button type="submit" disabled={creditLoading} style={{ ...btn(creditOp === "add" ? "#ffffff" : "#ef4444"), opacity: creditLoading ? 0.6 : 1 }}>
                 {creditLoading ? "Procesando..." : creditOp === "add" ? "Añadir créditos" : "Quitar créditos"}
               </button>
             </form>
@@ -1108,11 +1108,11 @@ export default function AdminPage() {
             <p style={{ fontWeight: 700, marginBottom: "1rem" }}>Gestión de roles</p>
             <form onSubmit={handleRole} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               <div>
-                <label style={{ fontSize: "0.75rem", color: "#8888a8", display: "block", marginBottom: "0.35rem" }}>ID de usuario</label>
+                <label style={{ fontSize: "0.75rem", color: "#888888", display: "block", marginBottom: "0.35rem" }}>ID de usuario</label>
                 <input style={input} placeholder="cuid del usuario" value={roleUserId} onChange={(e) => setRoleUserId(e.target.value)} />
               </div>
               <div>
-                <label style={{ fontSize: "0.75rem", color: "#8888a8", display: "block", marginBottom: "0.35rem" }}>Nuevo rol</label>
+                <label style={{ fontSize: "0.75rem", color: "#888888", display: "block", marginBottom: "0.35rem" }}>Nuevo rol</label>
                 <CustomSelect
                   options={[{ value: "user", label: "user" }, { value: "admin", label: "admin" }]}
                   value={roleValue}
@@ -1136,7 +1136,7 @@ export default function AdminPage() {
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
               <thead>
-                <tr style={{ borderBottom: "1px solid #2a2a3e" }}>
+                <tr style={{ borderBottom: "1px solid #222222" }}>
                   {["ID", "Email", "Créditos", "Generaciones", "Ingresos", "Suscripción", "Rol", "Registro", ""].map((h) => (
                     <th key={h} style={{ padding: "0.5rem 0.75rem", textAlign: "left", color: "#555570", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
                   ))}
@@ -1146,7 +1146,7 @@ export default function AdminPage() {
                 {filtered.map((u) => {
                   const planPrice = PLAN_PRICE[u.plan] ?? 0;
                   return (
-                    <tr key={u.id} style={{ borderBottom: "1px solid #1e1e2e" }}>
+                    <tr key={u.id} style={{ borderBottom: "1px solid #1a1a1a" }}>
                       <td style={{ padding: "0.6rem 0.75rem", color: "#555570", fontFamily: "monospace", fontSize: "0.7rem" }}>
                         <button
                           onClick={() => { navigator.clipboard.writeText(u.id); toast("ID copiado"); }}
@@ -1157,7 +1157,7 @@ export default function AdminPage() {
                         </button>
                       </td>
                       <td style={{ padding: "0.6rem 0.75rem", color: "#e5e7eb" }}>{u.email}</td>
-                      <td style={{ padding: "0.6rem 0.75rem", color: "#93c5fd", fontWeight: 600 }}>{u.credits.toLocaleString("es-ES")}</td>
+                      <td style={{ padding: "0.6rem 0.75rem", color: "#aaaaaa", fontWeight: 600 }}>{u.credits.toLocaleString("es-ES")}</td>
                       <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af" }}>{u._count.generations}</td>
                       <td style={{ padding: "0.6rem 0.75rem" }}>
                         <span style={{ color: planPrice > 0 ? "#4ade80" : "#555570", fontWeight: 600 }}>
@@ -1176,11 +1176,11 @@ export default function AdminPage() {
                             return <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", color: "#f87171", background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.3)", whiteSpace: "nowrap" }}>Expirado</span>;
                           }
                           if (!u.stripeSubscriptionId || u.plan === "free") {
-                            return <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", color: "#6b7280", background: "rgba(107,114,128,0.1)", border: "1px solid #2a2a3e", whiteSpace: "nowrap" }}>Sin plan</span>;
+                            return <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", color: "#6b7280", background: "rgba(107,114,128,0.1)", border: "1px solid #222222", whiteSpace: "nowrap" }}>Sin plan</span>;
                           }
                           const dateStr = expires ? expires.toLocaleDateString("es-ES", { timeZone: "UTC", day: "numeric", month: "short" }) : null;
                           if (u.billingInterval === "annual") {
-                            return <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", color: "#93c5fd", background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.3)", whiteSpace: "nowrap" }}>Anual{dateStr ? ` · ${dateStr}` : ""}</span>;
+                            return <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", color: "#aaaaaa", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", whiteSpace: "nowrap" }}>Anual{dateStr ? ` · ${dateStr}` : ""}</span>;
                           }
                           return <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", color: "#4ade80", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", whiteSpace: "nowrap" }}>Mensual{dateStr ? ` · ${dateStr}` : ""}</span>;
                         })()}
@@ -1192,7 +1192,7 @@ export default function AdminPage() {
                       <td style={{ padding: "0.6rem 0.75rem" }}>
                         <button
                           onClick={() => setDetailUserId(u.id)}
-                          style={btn("#1e1e2e", { border: "1px solid #2a2a3e", color: "#93c5fd", padding: "0.3rem 0.7rem", fontSize: "0.75rem" })}
+                          style={btn("#1a1a1a", { border: "1px solid #222222", color: "#aaaaaa", padding: "0.3rem 0.7rem", fontSize: "0.75rem" })}
                         >
                           Ver detalle
                         </button>
@@ -1217,7 +1217,7 @@ export default function AdminPage() {
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "1rem" }}>
             <p style={{ fontWeight: 700 }}>Tickets de soporte</p>
             {tickets.filter(t => t.status === "open").length > 0 && (
-              <span style={{ padding: "2px 10px", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 700, background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.3)" }}>
+              <span style={{ padding: "2px 10px", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 700, background: "rgba(255,255,255,0.08)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.15)" }}>
                 {tickets.filter(t => t.status === "open").length} abiertos
               </span>
             )}
@@ -1227,25 +1227,25 @@ export default function AdminPage() {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {tickets.map(ticket => (
-                <div key={ticket.id} style={{ borderRadius: "12px", border: `1px solid ${ticket.status === "closed" ? "#1e1e2e" : "#2a2a3e"}`, background: "#0a0a0f", overflow: "hidden" }}>
+                <div key={ticket.id} style={{ borderRadius: "12px", border: `1px solid ${ticket.status === "closed" ? "#1a1a1a" : "#222222"}`, background: "#000000", overflow: "hidden" }}>
                   <div style={{ padding: "12px 16px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", flexWrap: "wrap" }}>
                         <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#9ca3af" }}>{TICKET_TYPE_LABELS[ticket.type] ?? ticket.type}</span>
                         <span style={{ fontSize: "0.65rem", color: "#555570" }}>·</span>
                         <span style={{ fontSize: "0.7rem", color: "#555570" }}>{ticket.user.email}</span>
-                        <span style={{ fontSize: "0.65rem", padding: "1px 7px", borderRadius: "999px", background: ticket.status === "closed" ? "rgba(107,114,128,0.12)" : "rgba(59,130,246,0.12)", color: ticket.status === "closed" ? "#6b7280" : "#93c5fd", border: `1px solid ${ticket.status === "closed" ? "#2a2a3e" : "rgba(59,130,246,0.25)"}`, fontWeight: 700 }}>
+                        <span style={{ fontSize: "0.65rem", padding: "1px 7px", borderRadius: "999px", background: ticket.status === "closed" ? "rgba(107,114,128,0.12)" : "rgba(255,255,255,0.06)", color: ticket.status === "closed" ? "#6b7280" : "#aaaaaa", border: `1px solid ${ticket.status === "closed" ? "#222222" : "rgba(255,255,255,0.12)"}`, fontWeight: 700 }}>
                           {ticket.status === "closed" ? "CERRADO" : "ABIERTO"}
                         </span>
-                        <span style={{ fontSize: "0.65rem", color: "#2e2e48", marginLeft: "auto" }}>
+                        <span style={{ fontSize: "0.65rem", color: "#444444", marginLeft: "auto" }}>
                           {new Date(ticket.createdAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}
                         </span>
                       </div>
                       <p style={{ fontSize: "0.8rem", color: "#6b7280", lineHeight: 1.5 }}>{ticket.description}</p>
                       {ticket.adminReply && (
-                        <div style={{ marginTop: "8px", padding: "8px 12px", borderRadius: "8px", background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)" }}>
-                          <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "#3b82f6", marginBottom: "3px" }}>TU RESPUESTA</p>
-                          <p style={{ fontSize: "0.78rem", color: "#93c5fd" }}>{ticket.adminReply}</p>
+                        <div style={{ marginTop: "8px", padding: "8px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                          <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "#aaaaaa", marginBottom: "3px" }}>TU RESPUESTA</p>
+                          <p style={{ fontSize: "0.78rem", color: "#aaaaaa" }}>{ticket.adminReply}</p>
                         </div>
                       )}
                     </div>
@@ -1254,13 +1254,13 @@ export default function AdminPage() {
                         <>
                           <button
                             onClick={() => { setReplyTicketId(replyTicketId === ticket.id ? null : ticket.id); setReplyText(ticket.adminReply ?? ""); }}
-                            style={btn("#1e3a5f", { padding: "0.3rem 0.7rem", fontSize: "0.75rem", border: "1px solid rgba(59,130,246,0.3)" })}
+                            style={btn("#1e3a5f", { padding: "0.3rem 0.7rem", fontSize: "0.75rem", border: "1px solid rgba(255,255,255,0.15)" })}
                           >
                             Responder
                           </button>
                           <button
                             onClick={() => handleReply(ticket.id, true)}
-                            style={btn("#1e1e2e", { padding: "0.3rem 0.7rem", fontSize: "0.75rem", border: "1px solid #2a2a3e", color: "#6b7280" })}
+                            style={btn("#1a1a1a", { padding: "0.3rem 0.7rem", fontSize: "0.75rem", border: "1px solid #222222", color: "#6b7280" })}
                           >
                             Cerrar
                           </button>
@@ -1269,7 +1269,7 @@ export default function AdminPage() {
                     </div>
                   </div>
                   {replyTicketId === ticket.id && (
-                    <div style={{ padding: "12px 16px", borderTop: "1px solid #1e1e2e", background: "#0d0d17" }}>
+                    <div style={{ padding: "12px 16px", borderTop: "1px solid #1a1a1a", background: "#111111" }}>
                       <textarea
                         value={replyText}
                         onChange={(e) => setReplyText(e.target.value)}
@@ -1281,14 +1281,14 @@ export default function AdminPage() {
                         <button
                           onClick={() => handleReply(ticket.id, false)}
                           disabled={replyLoading || !replyText.trim()}
-                          style={btn("#3b82f6", { padding: "0.4rem 1rem", fontSize: "0.8rem", opacity: replyLoading || !replyText.trim() ? 0.6 : 1 })}
+                          style={btn("#ffffff", { padding: "0.4rem 1rem", fontSize: "0.8rem", opacity: replyLoading || !replyText.trim() ? 0.6 : 1 })}
                         >
                           {replyLoading ? "Enviando..." : "Enviar respuesta"}
                         </button>
                         <button
                           onClick={() => handleReply(ticket.id, true)}
                           disabled={replyLoading}
-                          style={btn("#1e3a5f", { padding: "0.4rem 1rem", fontSize: "0.8rem", border: "1px solid rgba(59,130,246,0.3)" })}
+                          style={btn("#1e3a5f", { padding: "0.4rem 1rem", fontSize: "0.8rem", border: "1px solid rgba(255,255,255,0.15)" })}
                         >
                           Responder y cerrar
                         </button>
@@ -1321,7 +1321,7 @@ export default function AdminPage() {
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
                     <thead>
-                      <tr style={{ borderBottom: "1px solid #2a2a3e" }}>
+                      <tr style={{ borderBottom: "1px solid #222222" }}>
                         {["Nombre", "Email", "Canal / Plataforma", "Audiencia", "Pago", "Fecha", "Estado", "Acciones"].map((h) => (
                           <th key={h} style={{ padding: "0.5rem 0.75rem", textAlign: "left", color: "#555570", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
                         ))}
@@ -1334,7 +1334,7 @@ export default function AdminPage() {
                         const statusBorder = app.status === "approved" ? "rgba(74,222,128,0.3)" : app.status === "rejected" ? "rgba(239,68,68,0.3)" : "rgba(251,191,36,0.3)";
                         const statusLabel = app.status === "approved" ? "Aprobado" : app.status === "rejected" ? "Rechazado" : "Pendiente";
                         return (
-                          <tr key={app.id} style={{ borderBottom: "1px solid #1e1e2e" }}>
+                          <tr key={app.id} style={{ borderBottom: "1px solid #1a1a1a" }}>
                             <td style={{ padding: "0.6rem 0.75rem", color: "#e5e7eb", whiteSpace: "nowrap" }}>{app.name}</td>
                             <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af" }}>{app.email}</td>
                             <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", maxWidth: 160 }}>
@@ -1358,7 +1358,7 @@ export default function AdminPage() {
                               <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
                                 <button
                                   onClick={() => setAffiliateDetailApp(app)}
-                                  style={btn("#1e1e2e", { border: "1px solid #2a2a3e", color: "#93c5fd", padding: "0.25rem 0.6rem", fontSize: "0.7rem" })}
+                                  style={btn("#1a1a1a", { border: "1px solid #222222", color: "#aaaaaa", padding: "0.25rem 0.6rem", fontSize: "0.7rem" })}
                                 >
                                   Ver
                                 </button>
@@ -1421,7 +1421,7 @@ export default function AdminPage() {
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
                     <thead>
-                      <tr style={{ borderBottom: "1px solid #2a2a3e" }}>
+                      <tr style={{ borderBottom: "1px solid #222222" }}>
                         {["Usuario", "Importe", "Método", "Detalles", "Fecha", "Estado", "Acciones"].map((h) => (
                           <th key={h} style={{ padding: "0.5rem 0.75rem", textAlign: "left", color: "#555570", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
                         ))}
@@ -1437,7 +1437,7 @@ export default function AdminPage() {
                           ? `PayPal: ${w.details?.email ?? "—"}`
                           : `${w.details?.bankName ?? "—"} · ${w.details?.iban ?? "—"}`;
                         return (
-                          <tr key={w.id} style={{ borderBottom: "1px solid #1e1e2e" }}>
+                          <tr key={w.id} style={{ borderBottom: "1px solid #1a1a1a" }}>
                             <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af" }}>{w.user.email}</td>
                             <td style={{ padding: "0.6rem 0.75rem", color: "#4ade80", fontWeight: 700 }}>${w.amount.toFixed(2)}</td>
                             <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", whiteSpace: "nowrap" }}>

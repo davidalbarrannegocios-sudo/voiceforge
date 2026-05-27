@@ -93,8 +93,8 @@ export function DashboardSidebar() {
         flexDirection: "column",
         position: "sticky",
         top: 0,
-        borderRight: "1px solid #1e1e2e",
-        background: "#0d0d17",
+        borderRight: "1px solid #1a1a1a",
+        background: "#000000",
         overflowX: "hidden",
       }}
     >
@@ -118,7 +118,7 @@ export function DashboardSidebar() {
         {sections.map((section, si) => (
           <div key={si} style={{ marginBottom: si < sections.length - 1 ? "20px" : 0 }}>
             {section.label && (
-              <p style={{ paddingLeft: "12px", marginBottom: "4px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#2e2e48" }}>
+              <p style={{ paddingLeft: "12px", marginBottom: "4px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#444444" }}>
                 {section.label}
               </p>
             )}
@@ -142,13 +142,13 @@ export function DashboardSidebar() {
                       border: "none",
                       cursor: "pointer",
                       transition: "background 0.15s",
-                      background: isActive ? "rgba(59,130,246,0.12)" : "transparent",
-                      color: isActive ? "#93c5fd" : "#5a5a78",
+                      background: isActive ? "rgba(255,255,255,0.08)" : "transparent",
+                      color: isActive ? "#ffffff" : "#555555",
                     }}
                   >
-                    <Icon size={15} style={{ color: isActive ? "#93c5fd" : "#3e3e58", flexShrink: 0 }} />
+                    <Icon size={15} style={{ color: isActive ? "#ffffff" : "#444444", flexShrink: 0 }} />
                     <span style={{ flex: 1 }}>{label}</span>
-                    {isActive && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#3b82f6", flexShrink: 0 }} />}
+                    {isActive && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
                   </button>
                 );
               })}
@@ -170,22 +170,22 @@ export function DashboardSidebar() {
             textDecoration: "none",
             marginTop: "2px",
             transition: "background 0.15s",
-            background: isMiCuenta ? "rgba(59,130,246,0.12)" : "transparent",
-            color: isMiCuenta ? "#93c5fd" : "#5a5a78",
+            background: isMiCuenta ? "rgba(255,255,255,0.08)" : "transparent",
+            color: isMiCuenta ? "#ffffff" : "#555555",
           }}
           onMouseEnter={(e) => { if (!isMiCuenta) { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#d1d5db"; } }}
-          onMouseLeave={(e) => { if (!isMiCuenta) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#5a5a78"; } }}
+          onMouseLeave={(e) => { if (!isMiCuenta) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#555555"; } }}
         >
-          <Settings size={15} style={{ color: isMiCuenta ? "#93c5fd" : "#3e3e58", flexShrink: 0 }} />
+          <Settings size={15} style={{ color: isMiCuenta ? "#ffffff" : "#444444", flexShrink: 0 }} />
           <span style={{ flex: 1 }}>{t.nav.account}</span>
-          {isMiCuenta && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#3b82f6", flexShrink: 0 }} />}
+          {isMiCuenta && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
         </Link>
       </nav>
 
       {/* Team membership section */}
       {memberInfo && (
-        <div style={{ borderTop: "1px solid #1a1a28", padding: "12px 20px 16px" }}>
-          <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#2e2e48", marginBottom: "8px" }}>
+        <div style={{ borderTop: "1px solid #1a1a1a", padding: "12px 20px 16px" }}>
+          <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#444444", marginBottom: "8px" }}>
             Equipo
           </p>
           {leaveConfirm ? (
@@ -201,7 +201,7 @@ export function DashboardSidebar() {
                 <button
                   onClick={() => setLeaveConfirm(false)}
                   disabled={leaving}
-                  style={{ flex: 1, padding: "5px 0", borderRadius: "7px", border: "1px solid #2a2a3e", background: "transparent", color: "#5a5a78", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
+                  style={{ flex: 1, padding: "5px 0", borderRadius: "7px", border: "1px solid #333333", background: "transparent", color: "#666666", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
                 >
                   Cancelar
                 </button>
@@ -216,15 +216,15 @@ export function DashboardSidebar() {
             </div>
           ) : (
             <>
-              <div style={{ background: "#111122", border: "1px solid #1e1e32", borderRadius: "10px", padding: "10px 12px", display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: "rgba(59,130,246,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <Users size={14} style={{ color: "#3b82f6" }} />
+              <div style={{ background: "#111111", border: "1px solid #222222", borderRadius: "10px", padding: "10px 12px", display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Users size={14} style={{ color: "#aaaaaa" }} />
                 </div>
                 <div style={{ minWidth: 0 }}>
                   <p style={{ fontSize: "12px", fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {memberInfo.teamName}
                   </p>
-                  <p style={{ fontSize: "11px", color: "#3a3a52", marginTop: "1px" }}>
+                  <p style={{ fontSize: "11px", color: "#555555", marginTop: "1px" }}>
                     Miembro · {(memberInfo.percentage > 0 ? Math.floor(5_000_000 * memberInfo.percentage / 100) : memberInfo.creditsLastDistributed).toLocaleString("es-ES")} car.
                   </p>
                 </div>
@@ -258,19 +258,19 @@ export function DashboardSidebar() {
               cursor: "pointer",
               position: "relative",
               overflow: "hidden",
-              background: "#0a0a14",
+              background: "#111111",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(59,130,246,0.35)"; e.currentTarget.style.background = "#0d0d1e"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "#0a0a14"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.background = "#1a1a1a"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "#111111"; }}
           >
             <div aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none", backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.03) 4px, rgba(255,255,255,0.03) 8px)" }} />
-            <div style={{ position: "relative", zIndex: 1, width: "24px", height: "24px", borderRadius: "6px", background: "rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <Zap size={13} style={{ color: "#93c5fd" }} />
+            <div style={{ position: "relative", zIndex: 1, width: "24px", height: "24px", borderRadius: "6px", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Zap size={13} style={{ color: "#cccccc" }} />
             </div>
-            <span style={{ position: "relative", zIndex: 1, fontSize: "13px", fontWeight: 600, color: "#c0c0d8", flex: 1, textAlign: "left" }}>
+            <span style={{ position: "relative", zIndex: 1, fontSize: "13px", fontWeight: 600, color: "#cccccc", flex: 1, textAlign: "left" }}>
               {t.nav.upgradePlan}
             </span>
-            <svg style={{ position: "relative", zIndex: 1 }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555570" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg style={{ position: "relative", zIndex: 1 }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>

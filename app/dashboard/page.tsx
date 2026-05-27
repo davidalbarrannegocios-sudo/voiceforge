@@ -120,11 +120,11 @@ function Sidebar({
           flexShrink: 0,
           position: "sticky",
           top: 0,
-          borderRight: "1px solid #1e1e2e",
+          borderRight: "1px solid #1a1a1a",
           transition: "width 0.2s ease-in-out",
           overflowX: "hidden",
         } : {}),
-        background: "#0d0d17",
+        background: "#111111",
       }}
     >
       {/* Logo */}
@@ -147,7 +147,7 @@ function Sidebar({
         {sections.map((section, si) => (
           <div key={si} style={{ marginBottom: si < sections.length - 1 ? "20px" : 0 }}>
             {section.label && !(collapsed && desktop) && (
-              <p style={{ paddingLeft: "12px", marginBottom: "4px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#2e2e48" }}>
+              <p style={{ paddingLeft: "12px", marginBottom: "4px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#444444" }}>
                 {section.label}
               </p>
             )}
@@ -173,15 +173,15 @@ function Sidebar({
                       border: "none",
                       cursor: "pointer",
                       transition: "background 0.15s",
-                      background: isActive ? "rgba(59,130,246,0.12)" : "transparent",
-                      color: isActive ? "#93c5fd" : "#5a5a78",
+                      background: isActive ? "rgba(255,255,255,0.06)" : "transparent",
+                      color: isActive ? "#aaaaaa" : "#555555",
                     }}
                   >
-                    <Icon size={15} style={{ color: isActive ? "#93c5fd" : "#3e3e58", flexShrink: 0 }} />
+                    <Icon size={15} style={{ color: isActive ? "#aaaaaa" : "#444444", flexShrink: 0 }} />
                     {!(collapsed && desktop) && (
                       <>
                         <span style={{ flex: 1 }}>{label}</span>
-                        {isActive && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#3b82f6", flexShrink: 0 }} />}
+                        {isActive && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
                       </>
                     )}
                   </button>
@@ -208,20 +208,20 @@ function Sidebar({
             marginTop: "2px",
             transition: "background 0.15s",
             background: "transparent",
-            color: "#5a5a78",
+            color: "#555555",
           }}
           onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#d1d5db"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#5a5a78"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#555555"; }}
         >
-          <Settings size={15} style={{ color: "#3e3e58", flexShrink: 0 }} />
+          <Settings size={15} style={{ color: "#444444", flexShrink: 0 }} />
           {!(collapsed && desktop) && <span style={{ flex: 1 }}>Mi cuenta</span>}
         </Link>
       </nav>
 
       {/* Team membership section — only for non-owner members */}
       {memberInfo && !(collapsed && desktop) && (
-        <div style={{ borderTop: "1px solid #1a1a28", padding: "12px 20px 16px" }}>
-          <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#2e2e48", marginBottom: "8px" }}>
+        <div style={{ borderTop: "1px solid #1a1a1a", padding: "12px 20px 16px" }}>
+          <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#444444", marginBottom: "8px" }}>
             Equipo
           </p>
           {leaveConfirm ? (
@@ -237,7 +237,7 @@ function Sidebar({
                 <button
                   onClick={() => setLeaveConfirm(false)}
                   disabled={leaving}
-                  style={{ flex: 1, padding: "5px 0", borderRadius: "7px", border: "1px solid #2a2a3e", background: "transparent", color: "#5a5a78", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
+                  style={{ flex: 1, padding: "5px 0", borderRadius: "7px", border: "1px solid #222222", background: "transparent", color: "#555555", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
                 >
                   Cancelar
                 </button>
@@ -252,15 +252,15 @@ function Sidebar({
             </div>
           ) : (
             <>
-              <div style={{ background: "#111122", border: "1px solid #1e1e32", borderRadius: "10px", padding: "10px 12px", display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: "rgba(59,130,246,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <Users size={14} style={{ color: "#3b82f6" }} />
+              <div style={{ background: "#111111", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "10px 12px", display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Users size={14} style={{ color: "#ffffff" }} />
                 </div>
                 <div style={{ minWidth: 0 }}>
                   <p style={{ fontSize: "12px", fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {memberInfo.teamName}
                   </p>
-                  <p style={{ fontSize: "11px", color: "#3a3a52", marginTop: "1px" }}>
+                  <p style={{ fontSize: "11px", color: "#444444", marginTop: "1px" }}>
                     Miembro · {(memberInfo.percentage > 0 ? Math.floor(5_000_000 * memberInfo.percentage / 100) : memberInfo.creditsLastDistributed).toLocaleString("es-ES")} car.
                   </p>
                 </div>
@@ -296,10 +296,10 @@ function Sidebar({
               cursor: "pointer",
               position: "relative",
               overflow: "hidden",
-              background: "#0a0a14",
+              background: "#111111",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(59,130,246,0.35)"; e.currentTarget.style.background = "#0d0d1e"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "#0a0a14"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.background = "#111111"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "#111111"; }}
           >
             <div
               aria-hidden="true"
@@ -308,12 +308,12 @@ function Sidebar({
                 backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.03) 4px, rgba(255,255,255,0.03) 8px)",
               }}
             />
-            <div style={{ position: "relative", zIndex: 1, width: "24px", height: "24px", borderRadius: "6px", background: "rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <Zap size={13} style={{ color: "#93c5fd" }} />
+            <div style={{ position: "relative", zIndex: 1, width: "24px", height: "24px", borderRadius: "6px", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Zap size={13} style={{ color: "#aaaaaa" }} />
             </div>
             {!(collapsed && desktop) && (
               <>
-                <span style={{ position: "relative", zIndex: 1, fontSize: "13px", fontWeight: 600, color: "#c0c0d8", flex: 1, textAlign: "left" }}>Mejorar plan</span>
+                <span style={{ position: "relative", zIndex: 1, fontSize: "13px", fontWeight: 600, color: "#cccccc", flex: 1, textAlign: "left" }}>Mejorar plan</span>
                 <svg style={{ position: "relative", zIndex: 1 }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555570" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
@@ -353,8 +353,8 @@ function HomeTab({
         <h1 className="text-3xl font-bold text-white mb-2">
           {t.home.greeting} {user?.firstName ?? t.home.defaultName}
         </h1>
-        <p style={{ color: "#8888a8" }}>
-          <span className="font-semibold" style={{ color: "#93c5fd" }}>
+        <p style={{ color: "#888888" }}>
+          <span className="font-semibold" style={{ color: "#aaaaaa" }}>
             {credits !== null ? credits.toLocaleString("es-ES") : "—"}
           </span>{" "}
           {t.home.available}
@@ -366,84 +366,84 @@ function HomeTab({
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className="group relative overflow-hidden flex flex-col p-4 sm:p-6 rounded-2xl border border-[#2a2a3e] hover:border-blue-700 text-left transition-all hover:-translate-y-0.5 h-full"
-            style={{ background: "#12121a" }}
+            className="group relative overflow-hidden flex flex-col p-4 sm:p-6 rounded-2xl border border-[#222222] hover:border-blue-700 text-left transition-all hover:-translate-y-0.5 h-full"
+            style={{ background: "#111111" }}
           >
             <svg className="absolute top-0 right-0 w-40 h-40 opacity-20 group-hover:opacity-30 transition-opacity duration-300" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
               {i === 0 && <>
                 {/* Texto a Voz: ondas suaves desde esquina */}
-                <path d="M160 0 Q120 40 160 80" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q100 50 160 100" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q80 60 160 120" stroke="#2563eb" strokeWidth="1.5" fill="none"/>
-                <path d="M160 10 Q90 60 160 110" stroke="#2563eb" strokeWidth="1" fill="none"/>
-                <path d="M160 20 Q100 65 160 120" stroke="#3b82f6" strokeWidth="1" fill="none"/>
-                <path d="M160 0 Q110 70 160 140" stroke="#1d4ed8" strokeWidth="1.5" fill="none"/>
-                <path d="M160 10 Q120 75 160 150" stroke="#1d4ed8" strokeWidth="1" fill="none"/>
-                <path d="M140 0 Q100 55 150 120" stroke="#3b82f6" strokeWidth="1" fill="none"/>
-                <path d="M120 0 Q90 50 140 110" stroke="#2563eb" strokeWidth="0.8" fill="none"/>
-                <path d="M100 0 Q75 45 130 100" stroke="#1d4ed8" strokeWidth="0.8" fill="none"/>
+                <path d="M160 0 Q120 40 160 80" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q100 50 160 100" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q80 60 160 120" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none"/>
+                <path d="M160 10 Q90 60 160 110" stroke="rgba(255,255,255,0.2)" strokeWidth="1" fill="none"/>
+                <path d="M160 20 Q100 65 160 120" stroke="rgba(255,255,255,0.25)" strokeWidth="1" fill="none"/>
+                <path d="M160 0 Q110 70 160 140" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none"/>
+                <path d="M160 10 Q120 75 160 150" stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"/>
+                <path d="M140 0 Q100 55 150 120" stroke="rgba(255,255,255,0.25)" strokeWidth="1" fill="none"/>
+                <path d="M120 0 Q90 50 140 110" stroke="rgba(255,255,255,0.2)" strokeWidth="0.8" fill="none"/>
+                <path d="M100 0 Q75 45 130 100" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" fill="none"/>
               </>}
               {i === 1 && <>
                 {/* Mis Voces: ondas cerradas y apretadas */}
-                <path d="M160 0 Q145 20 160 40" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q140 30 160 60" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q135 40 160 80" stroke="#2563eb" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q130 50 160 100" stroke="#2563eb" strokeWidth="1" fill="none"/>
-                <path d="M160 0 Q125 60 160 120" stroke="#1d4ed8" strokeWidth="1" fill="none"/>
-                <path d="M160 0 Q120 70 160 140" stroke="#1d4ed8" strokeWidth="1.5" fill="none"/>
-                <path d="M150 0 Q135 35 155 70" stroke="#3b82f6" strokeWidth="1" fill="none"/>
-                <path d="M140 0 Q128 30 148 65" stroke="#2563eb" strokeWidth="0.8" fill="none"/>
-                <path d="M130 0 Q118 28 142 58" stroke="#1d4ed8" strokeWidth="0.8" fill="none"/>
-                <path d="M160 10 Q142 45 158 90" stroke="#3b82f6" strokeWidth="0.8" fill="none"/>
+                <path d="M160 0 Q145 20 160 40" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q140 30 160 60" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q135 40 160 80" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q130 50 160 100" stroke="rgba(255,255,255,0.2)" strokeWidth="1" fill="none"/>
+                <path d="M160 0 Q125 60 160 120" stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"/>
+                <path d="M160 0 Q120 70 160 140" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none"/>
+                <path d="M150 0 Q135 35 155 70" stroke="rgba(255,255,255,0.25)" strokeWidth="1" fill="none"/>
+                <path d="M140 0 Q128 30 148 65" stroke="rgba(255,255,255,0.2)" strokeWidth="0.8" fill="none"/>
+                <path d="M130 0 Q118 28 142 58" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" fill="none"/>
+                <path d="M160 10 Q142 45 158 90" stroke="rgba(255,255,255,0.25)" strokeWidth="0.8" fill="none"/>
               </>}
               {i === 2 && <>
                 {/* Historial: ondas abiertas y espaciadas */}
-                <path d="M160 0 Q90 80 160 160" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q70 70 150 150" stroke="#2563eb" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q110 60 160 120" stroke="#3b82f6" strokeWidth="1" fill="none"/>
-                <path d="M160 20 Q95 85 155 150" stroke="#1d4ed8" strokeWidth="1" fill="none"/>
-                <path d="M140 0 Q70 65 135 145" stroke="#2563eb" strokeWidth="1" fill="none"/>
-                <path d="M120 0 Q55 60 120 135" stroke="#1d4ed8" strokeWidth="1" fill="none"/>
-                <path d="M160 40 Q100 90 155 145" stroke="#3b82f6" strokeWidth="0.8" fill="none"/>
-                <path d="M100 0 Q40 55 105 125" stroke="#2563eb" strokeWidth="0.8" fill="none"/>
-                <path d="M80 0 Q25 50 90 115" stroke="#1d4ed8" strokeWidth="0.8" fill="none"/>
-                <path d="M160 60 Q105 100 150 148" stroke="#3b82f6" strokeWidth="0.8" fill="none"/>
+                <path d="M160 0 Q90 80 160 160" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q70 70 150 150" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q110 60 160 120" stroke="rgba(255,255,255,0.25)" strokeWidth="1" fill="none"/>
+                <path d="M160 20 Q95 85 155 150" stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"/>
+                <path d="M140 0 Q70 65 135 145" stroke="rgba(255,255,255,0.2)" strokeWidth="1" fill="none"/>
+                <path d="M120 0 Q55 60 120 135" stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"/>
+                <path d="M160 40 Q100 90 155 145" stroke="rgba(255,255,255,0.25)" strokeWidth="0.8" fill="none"/>
+                <path d="M100 0 Q40 55 105 125" stroke="rgba(255,255,255,0.2)" strokeWidth="0.8" fill="none"/>
+                <path d="M80 0 Q25 50 90 115" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" fill="none"/>
+                <path d="M160 60 Q105 100 150 148" stroke="rgba(255,255,255,0.25)" strokeWidth="0.8" fill="none"/>
               </>}
               {i === 3 && <>
                 {/* Audio a Texto: diagonal pronunciada */}
-                <path d="M160 0 Q60 60 100 160" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q70 55 110 160" stroke="#2563eb" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q80 50 120 160" stroke="#1d4ed8" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q90 45 130 160" stroke="#3b82f6" strokeWidth="1" fill="none"/>
-                <path d="M160 0 Q100 40 140 160" stroke="#2563eb" strokeWidth="1" fill="none"/>
-                <path d="M160 10 Q65 65 105 160" stroke="#1d4ed8" strokeWidth="1" fill="none"/>
-                <path d="M160 20 Q75 65 115 160" stroke="#3b82f6" strokeWidth="0.8" fill="none"/>
-                <path d="M160 30 Q85 65 125 160" stroke="#2563eb" strokeWidth="0.8" fill="none"/>
-                <path d="M160 0 Q55 70 95 160" stroke="#1d4ed8" strokeWidth="0.8" fill="none"/>
-                <path d="M160 0 Q50 80 90 160" stroke="#3b82f6" strokeWidth="0.8" fill="none"/>
+                <path d="M160 0 Q60 60 100 160" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q70 55 110 160" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q80 50 120 160" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q90 45 130 160" stroke="rgba(255,255,255,0.25)" strokeWidth="1" fill="none"/>
+                <path d="M160 0 Q100 40 140 160" stroke="rgba(255,255,255,0.2)" strokeWidth="1" fill="none"/>
+                <path d="M160 10 Q65 65 105 160" stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"/>
+                <path d="M160 20 Q75 65 115 160" stroke="rgba(255,255,255,0.25)" strokeWidth="0.8" fill="none"/>
+                <path d="M160 30 Q85 65 125 160" stroke="rgba(255,255,255,0.2)" strokeWidth="0.8" fill="none"/>
+                <path d="M160 0 Q55 70 95 160" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" fill="none"/>
+                <path d="M160 0 Q50 80 90 160" stroke="rgba(255,255,255,0.25)" strokeWidth="0.8" fill="none"/>
               </>}
               {i === 4 && <>
                 {/* Traducción: ondas cortas y densas */}
-                <path d="M160 0 Q148 12 160 24" stroke="#3b82f6" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q144 16 160 32" stroke="#2563eb" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q140 20 160 40" stroke="#1d4ed8" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q135 25 160 50" stroke="#3b82f6" strokeWidth="1" fill="none"/>
-                <path d="M160 0 Q130 30 160 60" stroke="#2563eb" strokeWidth="1" fill="none"/>
-                <path d="M160 0 Q124 36 160 72" stroke="#1d4ed8" strokeWidth="1" fill="none"/>
-                <path d="M160 0 Q118 42 160 84" stroke="#3b82f6" strokeWidth="1" fill="none"/>
-                <path d="M155 0 Q140 20 158 42" stroke="#2563eb" strokeWidth="0.8" fill="none"/>
-                <path d="M150 0 Q133 22 154 46" stroke="#1d4ed8" strokeWidth="0.8" fill="none"/>
-                <path d="M145 0 Q126 24 150 50" stroke="#3b82f6" strokeWidth="0.8" fill="none"/>
+                <path d="M160 0 Q148 12 160 24" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q144 16 160 32" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q140 20 160 40" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none"/>
+                <path d="M160 0 Q135 25 160 50" stroke="rgba(255,255,255,0.25)" strokeWidth="1" fill="none"/>
+                <path d="M160 0 Q130 30 160 60" stroke="rgba(255,255,255,0.2)" strokeWidth="1" fill="none"/>
+                <path d="M160 0 Q124 36 160 72" stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"/>
+                <path d="M160 0 Q118 42 160 84" stroke="rgba(255,255,255,0.25)" strokeWidth="1" fill="none"/>
+                <path d="M155 0 Q140 20 158 42" stroke="rgba(255,255,255,0.2)" strokeWidth="0.8" fill="none"/>
+                <path d="M150 0 Q133 22 154 46" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" fill="none"/>
+                <path d="M145 0 Q126 24 150 50" stroke="rgba(255,255,255,0.25)" strokeWidth="0.8" fill="none"/>
               </>}
             </svg>
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 flex-shrink-0"
-              style={{ background: "rgba(59,130,246,0.15)" }}
+              style={{ background: "rgba(255,255,255,0.08)" }}
             >
-              <Icon size={20} style={{ color: "#93c5fd" }} />
+              <Icon size={20} style={{ color: "#aaaaaa" }} />
             </div>
             <h3 className="font-semibold text-white">{title}</h3>
-            <p className="text-sm mt-1" style={{ color: "#8888a8" }}>{desc}</p>
+            <p className="text-sm mt-1" style={{ color: "#888888" }}>{desc}</p>
           </button>
         ))}
       </div>
@@ -476,11 +476,11 @@ function CompactSlider({
   return (
     <div
       className="flex items-center gap-3 px-3.5"
-      style={{ background: "#12121a", borderRadius: "10px", height: "40px" }}
+      style={{ background: "#111111", borderRadius: "10px", height: "40px" }}
     >
-      <span className="text-xs font-medium flex-shrink-0 w-20" style={{ color: "#8888a8" }}>{label}</span>
+      <span className="text-xs font-medium flex-shrink-0 w-20" style={{ color: "#888888" }}>{label}</span>
       <div className="flex-1 relative flex items-center" style={{ height: "4px" }}>
-        <div className="w-full h-full rounded-full" style={{ background: "#2a2a3e" }} />
+        <div className="w-full h-full rounded-full" style={{ background: "#222222" }} />
         <div
           className="absolute left-0 h-full rounded-full"
           style={{ width: `${pct}%`, background: "linear-gradient(90deg, #3b82f6, #2563eb)" }}
@@ -503,8 +503,8 @@ function CompactSlider({
         className="text-xs font-mono text-right rounded-md outline-none flex-shrink-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         style={{
           width: "48px", minWidth: "48px", padding: "2px 4px",
-          color: !isDefault ? "#93c5fd" : "#e5e7eb",
-          background: !isDefault ? "rgba(59,130,246,0.12)" : "transparent",
+          color: !isDefault ? "#aaaaaa" : "#e5e7eb",
+          background: !isDefault ? "rgba(255,255,255,0.06)" : "transparent",
           border: "1px solid transparent",
         }}
       />
@@ -523,13 +523,13 @@ function M1Slider({
   const decimals = step < 0.1 ? 2 : step < 1 ? 2 : 0;
   const isDefault = value === defaultValue;
   return (
-    <div style={{ background: "#12121a", borderRadius: "10px", padding: "8px 14px", display: "flex", flexDirection: "column", gap: "5px" }}>
+    <div style={{ background: "#111111", borderRadius: "10px", padding: "8px 14px", display: "flex", flexDirection: "column", gap: "5px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: "12px", fontWeight: 500, color: "#8888a8" }}>{label}</span>
-        <span style={{ fontSize: "11px", fontFamily: "monospace", color: isDefault ? "#e5e7eb" : "#93c5fd" }}>{value.toFixed(decimals)}</span>
+        <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>{label}</span>
+        <span style={{ fontSize: "11px", fontFamily: "monospace", color: isDefault ? "#e5e7eb" : "#aaaaaa" }}>{value.toFixed(decimals)}</span>
       </div>
       <div style={{ position: "relative", height: "4px", display: "flex", alignItems: "center" }}>
-        <div style={{ width: "100%", height: "100%", borderRadius: "9999px", background: "#2a2a3e" }} />
+        <div style={{ width: "100%", height: "100%", borderRadius: "9999px", background: "#222222" }} />
         <div style={{ position: "absolute", left: 0, width: `${pct}%`, height: "100%", borderRadius: "9999px", background: "linear-gradient(90deg, #3b82f6, #2563eb)" }} />
         <input
           type="range" min={min} max={max} step={step} value={value}
@@ -794,7 +794,7 @@ function GenerateTab({
     <div className="flex flex-col" style={{ minHeight: "calc(100vh - 88px)", overflow: "auto" }}>
 
       {/* ── Unified two-column container ── */}
-      <div className="flex flex-col lg:flex-row" style={{ flex: 1, minHeight: 0, maxHeight: "calc(100vh - 120px)", background: "#0d0f14", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", overflow: "hidden" }}>
+      <div className="flex flex-col lg:flex-row" style={{ flex: 1, minHeight: 0, maxHeight: "calc(100vh - 120px)", background: "#000000", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", overflow: "hidden" }}>
 
         {/* ── LEFT COLUMN ── */}
         <div className="flex-1 min-w-0 flex flex-col min-h-64 lg:min-h-0 border-b lg:border-b-0" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
@@ -804,7 +804,7 @@ function GenerateTab({
             onClick={() => setShowBrowser(true)}
             style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", flexShrink: 0, width: "100%", textAlign: "left", background: "transparent", cursor: "pointer", border: "none" }}
           >
-            <div className="ring-2 ring-blue-500 ring-offset-1 ring-offset-[#0d0f14] rounded-full flex-shrink-0">
+            <div className="ring-2 ring-blue-500 ring-offset-1 ring-offset-[#000000] rounded-full flex-shrink-0">
               <VoiceAvatar name={selectedVoice?.name ?? "V"} coverImage={selectedVoice?.coverImage} size="xs" id={selectedVoice?.referenceId} />
             </div>
             <span style={{ fontSize: "13px", fontWeight: 400, color: "#9ca3af" }}>{selectedVoice?.name ?? t.generate.defaultVoice}</span>
@@ -824,7 +824,7 @@ function GenerateTab({
             {submitting && (
               <div style={{ padding: "10px 16px 0", display: "flex", flexDirection: "column", gap: "4px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: "11px", color: "#93c5fd" }}>Generando audio... {Math.round(progress)}%</span>
+                  <span style={{ fontSize: "11px", color: "#aaaaaa" }}>Generando audio... {Math.round(progress)}%</span>
                   <span style={{ fontSize: "11px", color: "#6b7280" }}>{elapsedLabel}</span>
                 </div>
                 <div style={{ height: "3px", borderRadius: "9999px", background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
@@ -840,14 +840,14 @@ function GenerateTab({
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px" }}>
               <span style={{ fontSize: "13px", color: "#6b7280" }}>
                 {text.length.toLocaleString("es-ES")} {t.generate.characters}
-                {text.length > 0 && <span style={{ marginLeft: "6px", fontSize: "11px", color: "#4b4b6a" }}>· {displayCost.toLocaleString("es-ES")} {t.generate.credits}</span>}
+                {text.length > 0 && <span style={{ marginLeft: "6px", fontSize: "11px", color: "#444444" }}>· {displayCost.toLocaleString("es-ES")} {t.generate.credits}</span>}
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 {plan !== "free" && (
                   <button
                     onClick={handlePreview}
                     disabled={previewing === "loading"}
-                    style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: 500, background: previewing === "playing" ? "rgba(239,68,68,0.1)" : "rgba(59,130,246,0.08)", border: `1px solid ${previewing === "playing" ? "rgba(239,68,68,0.3)" : "rgba(59,130,246,0.2)"}`, color: previewing === "playing" ? "#f87171" : previewing === "loading" ? "#6b7280" : "#93c5fd", cursor: previewing === "loading" ? "not-allowed" : "pointer", opacity: previewing === "loading" ? 0.6 : 1 }}
+                    style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: 500, background: previewing === "playing" ? "rgba(239,68,68,0.1)" : "rgba(255,255,255,0.05)", border: `1px solid ${previewing === "playing" ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`, color: previewing === "playing" ? "#f87171" : previewing === "loading" ? "#6b7280" : "#aaaaaa", cursor: previewing === "loading" ? "not-allowed" : "pointer", opacity: previewing === "loading" ? 0.6 : 1 }}
                   >
                     {previewing === "loading" && <svg className="animate-spin" style={{ width: "12px", height: "12px" }} fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
                     {previewing === "idle" && "▶ Pre-escuchar"}
@@ -858,7 +858,7 @@ function GenerateTab({
                 <button
                   onClick={handleGenerate}
                   disabled={submitting || text.trim().length === 0}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "8px 20px", borderRadius: "8px", fontSize: "13px", fontWeight: 600, color: "#fff", border: "none", cursor: submitting || text.trim().length === 0 ? "not-allowed" : "pointer", background: "linear-gradient(135deg, #3b82f6, #2563eb)", boxShadow: submitting ? "none" : "0 4px 15px rgba(59,130,246,0.3)", opacity: submitting || text.trim().length === 0 ? 0.6 : 1 }}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "8px 20px", borderRadius: "8px", fontSize: "13px", fontWeight: 600, color: "#000000", border: "none", cursor: submitting || text.trim().length === 0 ? "not-allowed" : "pointer", background: "#ffffff", boxShadow: submitting ? "none" : "0 4px 15px rgba(255,255,255,0.1)", opacity: submitting || text.trim().length === 0 ? 0.6 : 1 }}
                 >
                   {submitting ? <><svg className="animate-spin" style={{ width: "14px", height: "14px" }} fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>{t.generate.generating}</> : t.generate.generateBtn}
                 </button>
@@ -872,8 +872,8 @@ function GenerateTab({
 
           {/* Sliding pill tab toggle */}
           <div style={{ padding: "12px", flexShrink: 0 }}>
-            <div style={{ position: "relative", display: "flex", background: "#12121a", borderRadius: "8px", padding: "4px" }}>
-              <div style={{ position: "absolute", top: "4px", bottom: "4px", left: "4px", width: "calc(50% - 4px)", background: "#2a2a3e", borderRadius: "6px", transform: rightTab === "ajustes" ? "translateX(0)" : "translateX(100%)", transition: "transform 200ms ease-out" }} />
+            <div style={{ position: "relative", display: "flex", background: "#111111", borderRadius: "8px", padding: "4px" }}>
+              <div style={{ position: "absolute", top: "4px", bottom: "4px", left: "4px", width: "calc(50% - 4px)", background: "#222222", borderRadius: "6px", transform: rightTab === "ajustes" ? "translateX(0)" : "translateX(100%)", transition: "transform 200ms ease-out" }} />
               <button onClick={() => setRightTab("ajustes")} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: rightTab === "ajustes" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>{t.generate.settingsTab}</button>
               <button onClick={() => setRightTab("historial")} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: rightTab === "historial" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>{t.generate.historyTab}</button>
             </div>
@@ -888,8 +888,8 @@ function GenerateTab({
 
                 <button
                   onClick={() => setShowBrowser(true)}
-                  style={{ width: "100%", textAlign: "left", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "12px", cursor: "pointer" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)")}
+                  style={{ width: "100%", textAlign: "left", background: "#111111", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "12px", cursor: "pointer" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)")}
                   onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
                 >
                   <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
@@ -926,7 +926,7 @@ function GenerateTab({
                 <div style={{ position: "relative" }} ref={modelDropdownRef}>
                   <button
                     onClick={() => setModelDropdownOpen((o) => !o)}
-                    style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
+                    style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", background: "#111111", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
                       <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -940,7 +940,7 @@ function GenerateTab({
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", flexShrink: 0, transform: modelDropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
                   </button>
                   {modelDropdownOpen && (
-                    <div style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "4px", padding: "4px", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
+                    <div style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "4px", padding: "4px", background: "#111111", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
                       {([
                         { value: "speech-1.6", sub: "Nuestro modelo insignia",                    disabled: false },
                         { value: "speech-1.5", sub: "Heredado",                                    disabled: false },
@@ -967,9 +967,9 @@ function GenerateTab({
                               {value === "turbo" && !turboDisabled && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "white", flexShrink: 0 }}>Turbo</span>}
                               {value === "turbo" && turboDisabled  && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", background: "rgba(251,191,36,0.12)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)", flexShrink: 0 }}>Mantenimiento</span>}
                             </div>
-                            <span style={{ fontSize: "11px", marginTop: "2px", color: "#4b4b6a" }}>{sub}</span>
+                            <span style={{ fontSize: "11px", marginTop: "2px", color: "#444444" }}>{sub}</span>
                           </div>
-                          {selectedModel === value && !disabled && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginLeft: "8px" }}><polyline points="20 6 9 17 4 12" /></svg>}
+                          {selectedModel === value && !disabled && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginLeft: "8px" }}><polyline points="20 6 9 17 4 12" /></svg>}
                         </button>
                       ))}
                     </div>
@@ -991,28 +991,28 @@ function GenerateTab({
                     </>
                   )}
                   {/* Normalización de volumen */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#12121a", borderRadius: "10px", height: "40px" }}>
-                    <span style={{ fontSize: "12px", fontWeight: 500, color: "#8888a8" }}>{selectedModel === "speech-1.5" ? "Norm. texto" : "Norm. de volumen"}</span>
-                    <div style={{ position: "relative", display: "flex", background: "#0d0f14", borderRadius: "6px", padding: "2px" }}>
-                      <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#2a2a3e", borderRadius: "4px", transform: normalize ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#111111", borderRadius: "10px", height: "40px" }}>
+                    <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>{selectedModel === "speech-1.5" ? "Norm. texto" : "Norm. de volumen"}</span>
+                    <div style={{ position: "relative", display: "flex", background: "#000000", borderRadius: "6px", padding: "2px" }}>
+                      <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#222222", borderRadius: "4px", transform: normalize ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
                       <button onClick={() => setNormalize(false)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: !normalize ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>No</button>
                       <button onClick={() => setNormalize(true)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: normalize ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>Sí</button>
                     </div>
                   </div>
                   {/* Pro-only controls */}
                   {selectedModel === "speech-1.6" && (<>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#12121a", borderRadius: "10px", height: "40px" }}>
-                      <span style={{ fontSize: "12px", fontWeight: 500, color: "#8888a8" }}>Norm. de texto</span>
-                      <div style={{ position: "relative", display: "flex", background: "#0d0f14", borderRadius: "6px", padding: "2px" }}>
-                        <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#2a2a3e", borderRadius: "4px", transform: proNormText ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#111111", borderRadius: "10px", height: "40px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>Norm. de texto</span>
+                      <div style={{ position: "relative", display: "flex", background: "#000000", borderRadius: "6px", padding: "2px" }}>
+                        <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#222222", borderRadius: "4px", transform: proNormText ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
                         <button onClick={() => setProNormText(false)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: !proNormText ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>No</button>
                         <button onClick={() => setProNormText(true)}  style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color:  proNormText ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>Sí</button>
                       </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#12121a", borderRadius: "10px", height: "40px" }}>
-                      <span style={{ fontSize: "12px", fontWeight: 500, color: "#8888a8" }}>Calidad MP3</span>
-                      <div style={{ position: "relative", display: "flex", background: "#0d0f14", borderRadius: "6px", padding: "2px" }}>
-                        <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#2a2a3e", borderRadius: "4px", transform: proHighBitrate ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#111111", borderRadius: "10px", height: "40px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>Calidad MP3</span>
+                      <div style={{ position: "relative", display: "flex", background: "#000000", borderRadius: "6px", padding: "2px" }}>
+                        <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#222222", borderRadius: "4px", transform: proHighBitrate ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
                         <button onClick={() => setProHighBitrate(false)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: !proHighBitrate ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>128k</button>
                         <button onClick={() => setProHighBitrate(true)}  style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color:  proHighBitrate ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>192k</button>
                       </div>
@@ -1036,10 +1036,10 @@ function GenerateTab({
                   <M1Slider label="Style Exaggeration" leftLabel="None"          rightLabel="Exaggerated"  value={m1StyleExag} onChange={setM1StyleExag} min={0}    max={1}    step={0.01} defaultValue={0} />
 
                   {/* Language Override toggle */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#12121a", borderRadius: "10px", height: "40px" }}>
-                    <span style={{ fontSize: "12px", fontWeight: 500, color: "#8888a8" }}>Language Override</span>
-                    <div style={{ position: "relative", display: "flex", background: "#0d0f14", borderRadius: "6px", padding: "2px" }}>
-                      <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#2a2a3e", borderRadius: "4px", transform: m1LangOverride ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#111111", borderRadius: "10px", height: "40px" }}>
+                    <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>Language Override</span>
+                    <div style={{ position: "relative", display: "flex", background: "#000000", borderRadius: "6px", padding: "2px" }}>
+                      <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#222222", borderRadius: "4px", transform: m1LangOverride ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
                       <button onClick={() => setM1LangOverride(false)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: !m1LangOverride ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>Off</button>
                       <button onClick={() => setM1LangOverride(true)}  style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color:  m1LangOverride ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>On</button>
                     </div>
@@ -1049,18 +1049,18 @@ function GenerateTab({
                   <div style={{ position: "relative" }} ref={m1OutDropRef}>
                     <button
                       onClick={() => setM1OutDropOpen((o) => !o)}
-                      style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", height: "40px", fontSize: "12px", background: "#12121a", border: "none", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
+                      style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", height: "40px", fontSize: "12px", background: "#111111", border: "none", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
                     >
-                      <span style={{ fontWeight: 500, color: "#8888a8" }}>Output Format</span>
+                      <span style={{ fontWeight: 500, color: "#888888" }}>Output Format</span>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ fontSize: "11px", color: m1OutputFormat !== "mp3_44100_128" ? "#93c5fd" : "#6b7280" }}>
+                        <span style={{ fontSize: "11px", color: m1OutputFormat !== "mp3_44100_128" ? "#aaaaaa" : "#6b7280" }}>
                           {m1OutputFormat === "mp3_44100_128" ? "MP3 44.1kHz 128k" : m1OutputFormat === "mp3_44100_192" ? "MP3 44.1kHz 192k" : m1OutputFormat === "pcm_16000" ? "PCM 16kHz" : m1OutputFormat === "pcm_22050" ? "PCM 22kHz" : "PCM 44.1kHz"}
                         </span>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", transform: m1OutDropOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
                       </div>
                     </button>
                     {m1OutDropOpen && (
-                      <div style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "2px", padding: "4px", background: "#12121a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
+                      <div style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "2px", padding: "4px", background: "#111111", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
                         {([
                           { value: "mp3_44100_128", label: "MP3 44.1 kHz (128kbps)" },
                           { value: "mp3_44100_192", label: "MP3 44.1 kHz (192kbps)" },
@@ -1074,7 +1074,7 @@ function GenerateTab({
                             onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                           >
                             {label}
-                            {m1OutputFormat === value && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                            {m1OutputFormat === value && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
                           </button>
                         ))}
                       </div>
@@ -1082,11 +1082,11 @@ function GenerateTab({
                   </div>
 
                   {/* Speaker Boost toggle + Reset */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#12121a", borderRadius: "10px", height: "40px" }}>
-                    <span style={{ fontSize: "12px", fontWeight: 500, color: "#8888a8" }}>Speaker Boost</span>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#111111", borderRadius: "10px", height: "40px" }}>
+                    <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>Speaker Boost</span>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <div style={{ position: "relative", display: "flex", background: "#0d0f14", borderRadius: "6px", padding: "2px" }}>
-                        <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#2a2a3e", borderRadius: "4px", transform: m1SpeakerBoost ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
+                      <div style={{ position: "relative", display: "flex", background: "#000000", borderRadius: "6px", padding: "2px" }}>
+                        <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#222222", borderRadius: "4px", transform: m1SpeakerBoost ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
                         <button onClick={() => setM1SpeakerBoost(false)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: !m1SpeakerBoost ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>Off</button>
                         <button onClick={() => setM1SpeakerBoost(true)}  style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color:  m1SpeakerBoost ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>On</button>
                       </div>
@@ -1207,7 +1207,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
-      <div className="w-full max-w-md rounded-2xl p-6" style={{ background: "#12121a", border: "1px solid #2a2a3e" }}>
+      <div className="w-full max-w-md rounded-2xl p-6" style={{ background: "#111111", border: "1px solid #222222" }}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-bold text-white">Clonar nueva voz</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">×</button>
@@ -1219,7 +1219,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
           onDragLeave={() => setDragging(false)}
           onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
           className="rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-all mb-4"
-          style={{ borderColor: dragging ? "#3b82f6" : "#2a2a3e", background: dragging ? "rgba(59,130,246,0.05)" : "transparent" }}
+          style={{ borderColor: dragging ? "#ffffff" : "#222222", background: dragging ? "rgba(255,255,255,0.03)" : "transparent" }}
         >
           <input ref={inputRef} type="file" className="hidden" accept=".mp3,audio/mpeg" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
           {file ? (
@@ -1233,7 +1233,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
           ) : (
             <div>
               <div className="flex justify-center mb-3">
-                <Mic size={32} style={{ color: "#8888a8" }} />
+                <Mic size={32} style={{ color: "#888888" }} />
               </div>
               <p className="text-sm text-gray-400 mb-1">Arrastra tu audio aquí o haz clic</p>
               <p className="text-xs text-gray-600">Solo MP3 · Ideal: 10-30 segundos</p>
@@ -1253,7 +1253,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
             onChange={(e) => setVoiceName(e.target.value)}
             placeholder="Ej: Mi voz, Narrador masculino..."
             className="w-full rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-            style={{ background: "#0a0a0f", border: "1px solid #2a2a3e" }}
+            style={{ background: "#000000", border: "1px solid #222222" }}
           />
         </div>
 
@@ -1265,10 +1265,10 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
           </div>
           <div>
             <label className="text-sm font-medium text-gray-300 mb-2 block">Género</label>
-            <div style={{ position: "relative", display: "grid", gridTemplateColumns: "1fr 1fr", background: "#0a0a0f", border: "1px solid #2a2a3e", borderRadius: "8px", padding: "3px" }}>
-              <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#1a1a2e", borderRadius: "5px", pointerEvents: "none", transition: "transform 0.2s ease", transform: `translateX(${gender === "feminine" ? "100%" : "0%"})` }} />
-              <button type="button" onClick={() => setGender("masculine")} style={{ position: "relative", zIndex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 600, background: "transparent", border: "none", cursor: "pointer", color: gender === "masculine" ? "#e5e7eb" : "#4a4a65", transition: "color 0.2s ease" }}>♂ Masc.</button>
-              <button type="button" onClick={() => setGender("feminine")} style={{ position: "relative", zIndex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 600, background: "transparent", border: "none", cursor: "pointer", color: gender === "feminine" ? "#e5e7eb" : "#4a4a65", transition: "color 0.2s ease" }}>♀ Fem.</button>
+            <div style={{ position: "relative", display: "grid", gridTemplateColumns: "1fr 1fr", background: "#000000", border: "1px solid #222222", borderRadius: "8px", padding: "3px" }}>
+              <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#1a1a1a", borderRadius: "5px", pointerEvents: "none", transition: "transform 0.2s ease", transform: `translateX(${gender === "feminine" ? "100%" : "0%"})` }} />
+              <button type="button" onClick={() => setGender("masculine")} style={{ position: "relative", zIndex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 600, background: "transparent", border: "none", cursor: "pointer", color: gender === "masculine" ? "#e5e7eb" : "#444444", transition: "color 0.2s ease" }}>♂ Masc.</button>
+              <button type="button" onClick={() => setGender("feminine")} style={{ position: "relative", zIndex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 600, background: "transparent", border: "none", cursor: "pointer", color: gender === "feminine" ? "#e5e7eb" : "#444444", transition: "color 0.2s ease" }}>♀ Fem.</button>
             </div>
           </div>
         </div>
@@ -1276,14 +1276,14 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
         <p className="text-xs text-gray-500 mb-4">La clonación es gratuita</p>
 
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors" style={{ background: "#1a1a2e", border: "1px solid #2a2a3e" }}>
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors" style={{ background: "#1a1a1a", border: "1px solid #222222" }}>
             Cancelar
           </button>
           <button
             onClick={handleClone}
             disabled={!file || !voiceName.trim() || loading}
             className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+            style={{ background: "#ffffff" }}
           >
             {loading && (
               <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -1347,7 +1347,7 @@ function VoiceCard({
   return (
     <div
       className="rounded-xl border p-3 transition-colors"
-      style={{ background: hovered ? "#111120" : "#0d0d17", borderColor: hovered ? "#252535" : "#1e1e2e" }}
+      style={{ background: hovered ? "#111120" : "#111111", borderColor: hovered ? "#252535" : "#1a1a1a" }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => { setHovered(false); setMenuOpen(false); }}
     >
@@ -1358,13 +1358,13 @@ function VoiceCard({
           <div className="flex items-center gap-1 min-w-0">
             <span className="font-semibold text-white text-sm truncate">{voice.name}</span>
             {voice.language && <span className="text-xs leading-none flex-shrink-0">{<span className={`fi fi-${voice.language}`} style={{width:"16px",height:"12px",display:"inline-block",borderRadius:"2px"}} />}</span>}
-            {voice.gender && <span className="text-xs flex-shrink-0" style={{ color: "#3a3a52" }}>{voice.gender === "masculine" ? "♂" : "♀"}</span>}
+            {voice.gender && <span className="text-xs flex-shrink-0" style={{ color: "#444444" }}>{voice.gender === "masculine" ? "♂" : "♀"}</span>}
             {voice.isPublic !== undefined && (
               <span
                 className="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 font-medium leading-none"
                 style={{
                   background: voice.isPublic ? "rgba(74,222,128,0.12)" : "rgba(107,114,128,0.1)",
-                  color: voice.isPublic ? "#4ade80" : "#4a4a65",
+                  color: voice.isPublic ? "#4ade80" : "#444444",
                   border: `1px solid ${voice.isPublic ? "rgba(74,222,128,0.25)" : "rgba(107,114,128,0.15)"}`,
                 }}
               >
@@ -1373,7 +1373,7 @@ function VoiceCard({
             )}
           </div>
           {voice.createdAt && (
-            <span className="text-xs flex-shrink-0" style={{ color: "#3a3a52" }}>{formatDate(voice.createdAt)}</span>
+            <span className="text-xs flex-shrink-0" style={{ color: "#444444" }}>{formatDate(voice.createdAt)}</span>
           )}
         </div>
       </div>
@@ -1381,7 +1381,7 @@ function VoiceCard({
       {/* Bottom row: clips · actions (on hover) */}
       <div className="flex items-center justify-between" style={{ paddingLeft: "52px" }}>
         {/* Gender */}
-        <div className="flex items-center gap-1 text-xs" style={{ color: "#3a3a52" }}>
+        <div className="flex items-center gap-1 text-xs" style={{ color: "#444444" }}>
           <User size={9} />
           <span>{genderLabel}</span>
         </div>
@@ -1395,10 +1395,10 @@ function VoiceCard({
           <button
             onClick={handleCopy}
             className="p-1.5 rounded-lg transition-colors"
-            style={{ color: copied ? "#4ade80" : "#4a4a65" }}
+            style={{ color: copied ? "#4ade80" : "#444444" }}
             title="Copiar ID de voz"
             onMouseEnter={(e) => { if (!copied) (e.currentTarget as HTMLButtonElement).style.color = "#9ca3af"; }}
-            onMouseLeave={(e) => { if (!copied) (e.currentTarget as HTMLButtonElement).style.color = "#4a4a65"; }}
+            onMouseLeave={(e) => { if (!copied) (e.currentTarget as HTMLButtonElement).style.color = "#444444"; }}
           >
             {copied ? <Check size={13} /> : <Copy size={13} />}
           </button>
@@ -1408,7 +1408,7 @@ function VoiceCard({
             <button
               onClick={() => setMenuOpen((o) => !o)}
               className="p-1.5 rounded-lg transition-colors"
-              style={{ color: menuOpen ? "#9ca3af" : "#4a4a65", background: menuOpen ? "rgba(255,255,255,0.06)" : "transparent" }}
+              style={{ color: menuOpen ? "#9ca3af" : "#444444", background: menuOpen ? "rgba(255,255,255,0.06)" : "transparent" }}
               title="Más opciones"
             >
               <MoreVertical size={13} />
@@ -1417,7 +1417,7 @@ function VoiceCard({
             {menuOpen && (
               <div
                 className="absolute right-0 bottom-full mb-1.5 rounded-xl py-1 z-20 min-w-[150px]"
-                style={{ background: "#1a1a2e", border: "1px solid #2a2a3e", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
+                style={{ background: "#1a1a1a", border: "1px solid #222222", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
               >
                 <button
                   onClick={() => { onPreview(voice); setMenuOpen(false); }}
@@ -1438,7 +1438,7 @@ function VoiceCard({
                 </button>
                 {onToggleVisibility && (
                   <>
-                    <div style={{ height: "1px", background: "#2a2a3e", margin: "2px 0" }} />
+                    <div style={{ height: "1px", background: "#222222", margin: "2px 0" }} />
                     <button
                       onClick={() => { onToggleVisibility(voice.id, !voice.isPublic); setMenuOpen(false); }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors"
@@ -1451,7 +1451,7 @@ function VoiceCard({
                     </button>
                   </>
                 )}
-                <div style={{ height: "1px", background: "#2a2a3e", margin: "2px 0" }} />
+                <div style={{ height: "1px", background: "#222222", margin: "2px 0" }} />
                 <button
                   onClick={() => { onDelete(voice.id); setMenuOpen(false); }}
                   disabled={isDeleting}
@@ -1472,7 +1472,7 @@ function VoiceCard({
             onClick={() => onUse(voice)}
             disabled={!voice.fishAudioModelId}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors disabled:opacity-40"
-            style={{ background: "#ffffff", color: "#0a0a0f" }}
+            style={{ background: "#ffffff", color: "#000000" }}
           >
             <AudioWaveform size={11} />
             Usar
@@ -1566,23 +1566,23 @@ function VoicesTab({
 
       {/* Toolbar: slots · search · clone button */}
       <div className="flex items-center gap-3 mb-6">
-        <span className="text-xs flex-shrink-0" style={{ color: "#4a4a65" }}>{slotLabel}</span>
+        <span className="text-xs flex-shrink-0" style={{ color: "#444444" }}>{slotLabel}</span>
         <div className="flex-1 relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a4a65" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#444444" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar voces..."
             className="w-full rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/40"
-            style={{ background: "#0d0d17", border: "1px solid #1e1e2e", color: "#d1d5db" }}
+            style={{ background: "#111111", border: "1px solid #1a1a1a", color: "#d1d5db" }}
           />
         </div>
         <button
           onClick={() => !atLimit && setShowModal(true)}
           disabled={atLimit}
           className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white flex-shrink-0 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)" }}
+          style={{ background: "#ffffff" }}
         >
           <span className="text-base leading-none">+</span>
           Clonar nueva voz
@@ -1591,13 +1591,13 @@ function VoicesTab({
 
       {/* Grid */}
       {cloned.length === 0 ? (
-        <div className="text-center py-20" style={{ color: "#8888a8" }}>
+        <div className="text-center py-20" style={{ color: "#888888" }}>
           <Mic size={40} className="mx-auto mb-3 opacity-30" />
           <p className="font-medium mb-1">No tienes voces clonadas</p>
           <p className="text-sm opacity-60">Clona una voz con 10 segundos de audio</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16" style={{ color: "#8888a8" }}>
+        <div className="text-center py-16" style={{ color: "#888888" }}>
           <p className="text-sm">Sin resultados para &ldquo;{search}&rdquo;</p>
         </div>
       ) : (
@@ -1734,7 +1734,7 @@ function HistoryTab({ plan }: { plan: string }) {
       {/* Search header */}
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px", flexShrink: 0 }}>
         <div style={{ flex: 1, position: "relative" }}>
-          <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#4a4a65", pointerEvents: "none" }} />
+          <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#444444", pointerEvents: "none" }} />
           <input
             type="text"
             value={search}
@@ -1742,7 +1742,7 @@ function HistoryTab({ plan }: { plan: string }) {
             placeholder="Buscar en historial..."
             style={{
               width: "100%", paddingLeft: 36, paddingRight: 12, paddingTop: 9, paddingBottom: 9,
-              background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: 8,
+              background: "#111111", border: "1px solid #1a1a1a", borderRadius: 8,
               color: "#d1d5db", fontSize: 13, outline: "none", boxSizing: "border-box",
             }}
           />
@@ -1752,7 +1752,7 @@ function HistoryTab({ plan }: { plan: string }) {
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-            background: "#0d0d17", border: "1px solid #1e1e2e", color: "#9ca3af", cursor: "pointer",
+            background: "#111111", border: "1px solid #1a1a1a", color: "#9ca3af", cursor: "pointer",
           }}
           title="Actualizar"
         >
@@ -1763,12 +1763,12 @@ function HistoryTab({ plan }: { plan: string }) {
       {/* Scrollable body */}
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
         {loading ? (
-          <div style={{ textAlign: "center", paddingTop: 80, color: "#4a4a65", fontSize: 14 }}>Cargando...</div>
+          <div style={{ textAlign: "center", paddingTop: 80, color: "#444444", fontSize: 14 }}>Cargando...</div>
         ) : groups.length === 0 ? (
           <div style={{ textAlign: "center", paddingTop: 80 }}>
-            <Clock size={40} style={{ margin: "0 auto 12px", color: "#2a2a3e" }} />
+            <Clock size={40} style={{ margin: "0 auto 12px", color: "#222222" }} />
             <p style={{ color: "#6b7280", fontSize: 14, fontWeight: 500 }}>Sin generaciones</p>
-            <p style={{ color: "#4a4a65", fontSize: 12, marginTop: 4 }}>Tus audios generados aparecerán aquí</p>
+            <p style={{ color: "#444444", fontSize: 12, marginTop: 4 }}>Tus audios generados aparecerán aquí</p>
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
@@ -1790,7 +1790,7 @@ function HistoryTab({ plan }: { plan: string }) {
                       <div
                         key={gen.id}
                         style={{
-                          background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: 10,
+                          background: "#111111", border: "1px solid #1a1a1a", borderRadius: 10,
                           padding: 14, position: "relative",
                           transition: "opacity 0.3s, transform 0.3s",
                           opacity: isRemoving ? 0 : 1,
@@ -1823,9 +1823,9 @@ function HistoryTab({ plan }: { plan: string }) {
                             style={{
                               display: "flex", alignItems: "center", gap: 4,
                               padding: "4px 9px", borderRadius: 20,
-                              background: isPlaying ? "rgba(59,130,246,0.15)" : "#1a1a2e",
+                              background: isPlaying ? "rgba(255,255,255,0.08)" : "#1a1a1a",
                               border: isPlaying ? "1px solid #3b82f6" : "1px solid transparent",
-                              color: isPlaying ? "#93c5fd" : "#9ca3af",
+                              color: isPlaying ? "#aaaaaa" : "#9ca3af",
                               fontSize: 11, cursor: gen.audioUrl ? "pointer" : "not-allowed",
                               opacity: gen.audioUrl ? 1 : 0.4, flexShrink: 0,
                               transition: "all 0.15s",
@@ -1847,7 +1847,7 @@ function HistoryTab({ plan }: { plan: string }) {
                               style={{
                                 display: "flex", alignItems: "center", justifyContent: "center",
                                 width: 26, height: 26, borderRadius: "50%",
-                                background: "#1a1a2e", color: "#9ca3af", textDecoration: "none",
+                                background: "#1a1a1a", color: "#9ca3af", textDecoration: "none",
                               }}
                               title="Descargar"
                             >
@@ -1860,7 +1860,7 @@ function HistoryTab({ plan }: { plan: string }) {
                             style={{
                               display: "flex", alignItems: "center", justifyContent: "center",
                               width: 26, height: 26, borderRadius: "50%",
-                              background: "#1a1a2e", color: "#9ca3af", border: "none", cursor: "pointer",
+                              background: "#1a1a1a", color: "#9ca3af", border: "none", cursor: "pointer",
                             }}
                             title="Copiar enlace"
                           >
@@ -1874,7 +1874,7 @@ function HistoryTab({ plan }: { plan: string }) {
                               style={{
                                 display: "flex", alignItems: "center", justifyContent: "center",
                                 width: 26, height: 26, borderRadius: "50%",
-                                background: "#1a1a2e", color: "#9ca3af", border: "none", cursor: "pointer",
+                                background: "#1a1a1a", color: "#9ca3af", border: "none", cursor: "pointer",
                               }}
                             >
                               <MoreHorizontal size={13} />
@@ -1884,13 +1884,13 @@ function HistoryTab({ plan }: { plan: string }) {
                                 onClick={(e) => e.stopPropagation()}
                                 style={{
                                   position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: 50,
-                                  background: "#12121e", border: "1px solid #1e1e2e", borderRadius: 8,
+                                  background: "#12121e", border: "1px solid #1a1a1a", borderRadius: 8,
                                   padding: 4, minWidth: 120, boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
                                 }}
                               >
                                 <button
                                   onClick={() => handleDelete(gen.id)}
-                                  onMouseEnter={(e) => { e.currentTarget.style.background = "#1e1e2e"; }}
+                                  onMouseEnter={(e) => { e.currentTarget.style.background = "#1a1a1a"; }}
                                   onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                                   style={{
                                     display: "flex", alignItems: "center", gap: 8,
@@ -1920,14 +1920,14 @@ function HistoryTab({ plan }: { plan: string }) {
       {totalPages > 1 && (
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          paddingTop: 16, marginTop: 16, borderTop: "1px solid #1a1a2e", flexShrink: 0,
+          paddingTop: 16, marginTop: 16, borderTop: "1px solid #1a1a1a", flexShrink: 0,
         }}>
           <button
             onClick={() => fetchHistory(page - 1)}
             disabled={page <= 1}
             style={{
               padding: "5px 12px", borderRadius: 6, fontSize: 12, cursor: page <= 1 ? "not-allowed" : "pointer",
-              background: "#0d0d17", border: "1px solid #1e1e2e", color: page <= 1 ? "#4a4a65" : "#9ca3af",
+              background: "#111111", border: "1px solid #1a1a1a", color: page <= 1 ? "#444444" : "#9ca3af",
             }}
           >Anterior</button>
           <span style={{ fontSize: 12, color: "#6b7280" }}>{page} / {totalPages}</span>
@@ -1936,14 +1936,14 @@ function HistoryTab({ plan }: { plan: string }) {
             disabled={page >= totalPages}
             style={{
               padding: "5px 12px", borderRadius: 6, fontSize: 12, cursor: page >= totalPages ? "not-allowed" : "pointer",
-              background: "#0d0d17", border: "1px solid #1e1e2e", color: page >= totalPages ? "#4a4a65" : "#9ca3af",
+              background: "#111111", border: "1px solid #1a1a1a", color: page >= totalPages ? "#444444" : "#9ca3af",
             }}
           >Siguiente</button>
         </div>
       )}
 
       {total > 0 && (
-        <p style={{ fontSize: 11, color: "#4a4a65", textAlign: "center", paddingTop: 8, flexShrink: 0 }}>
+        <p style={{ fontSize: 11, color: "#444444", textAlign: "center", paddingTop: 8, flexShrink: 0 }}>
           {total} generaci{total !== 1 ? "ones" : "ón"} en total
         </p>
       )}
@@ -2005,7 +2005,7 @@ const BILLING_PLANS = [
 const PLAN_BADGE: Record<string, { label: string; color: string; bg: string }> = {
   free:       { label: "Gratis",     color: "#6b7280", bg: "rgba(107,114,128,0.12)" },
   starter:    { label: "Starter",    color: "#a78bfa", bg: "rgba(167,139,250,0.12)" },
-  pro:        { label: "Pro",        color: "#93c5fd", bg: "rgba(59,130,246,0.15)"  },
+  pro:        { label: "Pro",        color: "#aaaaaa", bg: "rgba(255,255,255,0.08)"  },
   elite:      { label: "Elite",      color: "#fbbf24", bg: "rgba(251,191,36,0.12)"  },
   enterprise: { label: "Enterprise", color: "#34d399", bg: "rgba(52,211,153,0.12)"  },
 };
@@ -2059,10 +2059,10 @@ function BillingTab({
       </div>
 
       {/* ── Info banner ── */}
-      <div style={{ borderRadius: "12px", border: "1px solid #1e1e2e", background: "#0d0d17", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "28px" }}>
+      <div style={{ borderRadius: "12px", border: "1px solid #1a1a1a", background: "#111111", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "28px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "24px", flexWrap: "wrap" }}>
           <div>
-            <p style={{ fontSize: "11px", color: "#3a3a52", marginBottom: "3px" }}>Caracteres disponibles</p>
+            <p style={{ fontSize: "11px", color: "#444444", marginBottom: "3px" }}>Caracteres disponibles</p>
             <p style={{ fontSize: "17px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "baseline", gap: "6px" }}>
               {credits !== null ? credits.toLocaleString("es-ES") : "—"}
               {extraCredits > 0 && (
@@ -2072,9 +2072,9 @@ function BillingTab({
           </div>
           {renewalDateLabel && (
             <>
-              <div style={{ width: "1px", height: "32px", background: "#1e1e2e", flexShrink: 0 }} />
+              <div style={{ width: "1px", height: "32px", background: "#1a1a1a", flexShrink: 0 }} />
               <div>
-                <p style={{ fontSize: "11px", color: "#3a3a52", marginBottom: "3px" }}>
+                <p style={{ fontSize: "11px", color: "#444444", marginBottom: "3px" }}>
                   {plan === "free" ? "Próxima recarga" : "Próxima renovación"}
                 </p>
                 <p style={{ fontSize: "14px", fontWeight: 600, color: renewalSoon ? "#f59e0b" : "#d1d5db", display: "flex", alignItems: "center", gap: "5px" }}>
@@ -2085,7 +2085,7 @@ function BillingTab({
                   {renewalDateLabel}
                   {renewalSoon && <span style={{ fontSize: "11px", color: "#f59e0b", fontWeight: 700 }}>· ¡pronto!</span>}
                   {!renewalSoon && daysUntilRenewal !== null && (
-                    <span style={{ fontSize: "11px", color: "#3a3a52", fontWeight: 400 }}>· en {daysUntilRenewal}d</span>
+                    <span style={{ fontSize: "11px", color: "#444444", fontWeight: 400 }}>· en {daysUntilRenewal}d</span>
                   )}
                 </p>
               </div>
@@ -2095,7 +2095,7 @@ function BillingTab({
         {plan !== "free" && (
           <button
             onClick={() => setBillingModalOpen(true)}
-            style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", color: "#d1d5db", fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+            style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #222222", background: "transparent", color: "#d1d5db", fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
           >
             Gestionar suscripción →
           </button>
@@ -2105,18 +2105,18 @@ function BillingTab({
 
       {/* ── Monthly / Annual toggle ── */}
       <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px" }}>
-        <div style={{ position: "relative", display: "inline-grid", gridTemplateColumns: "1fr 1fr", background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: "10px", padding: "3px" }}>
+        <div style={{ position: "relative", display: "inline-grid", gridTemplateColumns: "1fr 1fr", background: "#111111", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "3px" }}>
           {/* Sliding pill */}
-          <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#1a1a2e", borderRadius: "7px", pointerEvents: "none", transition: "transform 0.2s ease", transform: `translateX(${billing === "annual" ? "100%" : "0%"})` }} />
+          <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#1a1a1a", borderRadius: "7px", pointerEvents: "none", transition: "transform 0.2s ease", transform: `translateX(${billing === "annual" ? "100%" : "0%"})` }} />
           <button
             onClick={() => setBilling("monthly")}
-            style={{ position: "relative", zIndex: 1, padding: "7px 22px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, background: "transparent", color: billing === "monthly" ? "#e5e7eb" : "#4a4a65", transition: "color 0.2s ease" }}
+            style={{ position: "relative", zIndex: 1, padding: "7px 22px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, background: "transparent", color: billing === "monthly" ? "#e5e7eb" : "#444444", transition: "color 0.2s ease" }}
           >
             Mensual
           </button>
           <button
             onClick={() => setBilling("annual")}
-            style={{ position: "relative", zIndex: 1, padding: "7px 22px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, background: "transparent", color: billing === "annual" ? "#e5e7eb" : "#4a4a65", display: "flex", alignItems: "center", justifyContent: "center", gap: "7px", transition: "color 0.2s ease" }}
+            style={{ position: "relative", zIndex: 1, padding: "7px 22px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, background: "transparent", color: billing === "annual" ? "#e5e7eb" : "#444444", display: "flex", alignItems: "center", justifyContent: "center", gap: "7px", transition: "color 0.2s ease" }}
           >
             Anual
             <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e", letterSpacing: "0.03em" }}>
@@ -2134,10 +2134,10 @@ function BillingTab({
           const monthlyPrice = billing === "annual" && p.price > 0
             ? Math.round(p.price * 0.83 * 10) / 10
             : p.price;
-          const borderColor = isCurrent ? (planBadge?.color ?? "#3b82f6") : p.popular ? "#3b82f6" : "#1e1e2e";
+          const borderColor = isCurrent ? (planBadge?.color ?? "#888888") : p.popular ? "#333333" : "#1a1a1a";
           const bgColor = isCurrent
             ? "rgba(255,255,255,0.03)"
-            : p.popular ? "rgba(30,58,138,0.12)" : "#0d0d17";
+            : p.popular ? "rgba(30,58,138,0.12)" : "#111111";
           const isDowngrade = plan !== "free" && p.key === "free";
 
           return (
@@ -2153,7 +2153,7 @@ function BillingTab({
                     ACTUAL
                   </span>
                 ) : p.popular ? (
-                  <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px", color: "#93c5fd", background: "rgba(59,130,246,0.15)", letterSpacing: "0.05em", whiteSpace: "nowrap", flexShrink: 0 }}>
+                  <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px", color: "#aaaaaa", background: "rgba(255,255,255,0.08)", letterSpacing: "0.05em", whiteSpace: "nowrap", flexShrink: 0 }}>
                     POPULAR
                   </span>
                 ) : null}
@@ -2165,18 +2165,18 @@ function BillingTab({
                   <span style={{ fontSize: "26px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
                     {p.price === 0 ? "Gratis" : `$${monthlyPrice}`}
                   </span>
-                  {p.price > 0 && <span style={{ fontSize: "11px", color: "#3a3a52" }}>/mes</span>}
+                  {p.price > 0 && <span style={{ fontSize: "11px", color: "#444444" }}>/mes</span>}
                 </div>
                 {billing === "annual" && p.price > 0 && (
-                  <p style={{ fontSize: "10px", color: "#4a4a65", marginTop: "2px" }}>
+                  <p style={{ fontSize: "10px", color: "#444444", marginTop: "2px" }}>
                     ${Math.round(monthlyPrice * 12)}/año
                   </p>
                 )}
-                <p style={{ fontSize: "11px", color: "#4a4a65", marginTop: "5px" }}>
+                <p style={{ fontSize: "11px", color: "#444444", marginTop: "5px" }}>
                   {p.characters.toLocaleString("es-ES")} chars/mes
                 </p>
                 {p.price > 0 && (
-                  <p style={{ fontSize: "10px", color: "#3a3a52", marginTop: "2px" }}>
+                  <p style={{ fontSize: "10px", color: "#444444", marginTop: "2px" }}>
                     {costPer10k(monthlyPrice, p.characters)}
                   </p>
                 )}
@@ -2192,10 +2192,10 @@ function BillingTab({
                 disabled={isCurrent}
                 style={
                   isCurrent
-                    ? { width: "100%", padding: "9px 8px", borderRadius: "9px", border: "1px solid #2a2a3e", background: "transparent", color: "#3a3a52", fontSize: "12px", fontWeight: 600, marginBottom: "14px", cursor: "not-allowed" }
+                    ? { width: "100%", padding: "9px 8px", borderRadius: "9px", border: "1px solid #222222", background: "transparent", color: "#444444", fontSize: "12px", fontWeight: 600, marginBottom: "14px", cursor: "not-allowed" }
                     : p.popular
-                    ? { width: "100%", padding: "9px 8px", borderRadius: "9px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "12px", fontWeight: 600, marginBottom: "14px" }
-                    : { width: "100%", padding: "9px 8px", borderRadius: "9px", border: "1px solid #2a2a3e", cursor: "pointer", background: "transparent", color: "#d1d5db", fontSize: "12px", fontWeight: 600, marginBottom: "14px" }
+                    ? { width: "100%", padding: "9px 8px", borderRadius: "9px", border: "none", cursor: "pointer", background: "#ffffff", color: "#000000", fontSize: "12px", fontWeight: 600, marginBottom: "14px" }
+                    : { width: "100%", padding: "9px 8px", borderRadius: "9px", border: "1px solid #222222", cursor: "pointer", background: "transparent", color: "#d1d5db", fontSize: "12px", fontWeight: 600, marginBottom: "14px" }
                 }
               >
                 {isCurrent
@@ -2210,11 +2210,11 @@ function BillingTab({
               </button>
 
               {/* Features */}
-              <div style={{ height: "1px", background: "#1a1a28", marginBottom: "12px" }} />
+              <div style={{ height: "1px", background: "#1a1a1a", marginBottom: "12px" }} />
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "7px" }}>
                 {p.features.map((f) => (
                   <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "6px", fontSize: "11px", color: "#6b6b88", lineHeight: 1.4 }}>
-                    <Check size={11} style={{ color: p.key === "enterprise" ? "#34d399" : "#3b82f6", flexShrink: 0, marginTop: "1px" }} />
+                    <Check size={11} style={{ color: p.key === "enterprise" ? "#34d399" : "#ffffff", flexShrink: 0, marginTop: "1px" }} />
                     {f}
                   </li>
                 ))}
@@ -2243,7 +2243,7 @@ function BillingTab({
       {/* ── Extra credits section ── */}
       <div id="creditos-extra" style={{ marginTop: "44px", marginBottom: "16px" }}>
         <p style={{ fontSize: "16px", fontWeight: 700, color: "#e5e7eb", marginBottom: "3px" }}>Créditos extra</p>
-        <p style={{ fontSize: "13px", color: "#3a3a52" }}>Compra créditos adicionales a tu plan. Válidos 3 meses, pago único.</p>
+        <p style={{ fontSize: "13px", color: "#444444" }}>Compra créditos adicionales a tu plan. Válidos 3 meses, pago único.</p>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -2255,11 +2255,11 @@ function BillingTab({
         ].map((pack) => (
           <div
             key={pack.key}
-            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderRadius: "12px", border: "1px solid #1e1e2e", background: "#0d0d17" }}
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderRadius: "12px", border: "1px solid #1a1a1a", background: "#111111" }}
           >
             <div>
               <p style={{ fontSize: "14px", fontWeight: 700, color: "#e5e7eb" }}>{pack.label}</p>
-              <p style={{ fontSize: "11px", color: "#3a3a52", marginTop: "2px" }}>
+              <p style={{ fontSize: "11px", color: "#444444", marginTop: "2px" }}>
                 {costPer10k(pack.price, pack.credits)} · Válidos 3 meses
               </p>
             </div>
@@ -2267,7 +2267,7 @@ function BillingTab({
               <span style={{ fontSize: "20px", fontWeight: 800, color: "#fff" }}>${pack.price}</span>
               <button
                 onClick={() => setActivePack(pack.key)}
-                style={{ padding: "8px 18px", borderRadius: "9px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap" }}
+                style={{ padding: "8px 18px", borderRadius: "9px", border: "none", cursor: "pointer", background: "#ffffff", color: "#000000", fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap" }}
               >
                 Comprar →
               </button>
@@ -2505,7 +2505,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             PREVIEW
           </span>
         </div>
-        <p className="text-sm" style={{ color: "#8888a8" }}>
+        <p className="text-sm" style={{ color: "#888888" }}>
           Transforma tu audio a cualquier idioma manteniendo tu voz original
         </p>
 
@@ -2513,27 +2513,27 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           isFreeExhausted ? (
             <div className="mt-4 p-4 rounded-xl flex items-center justify-between gap-4" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
               <p className="text-sm" style={{ color: "#f87171" }}>Has agotado tus usos gratuitos. Actualiza tu plan para continuar.</p>
-              <button onClick={onBilling} style={{ padding: "6px 14px", borderRadius: "8px", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0 }}>Ver planes</button>
+              <button onClick={onBilling} style={{ padding: "6px 14px", borderRadius: "8px", background: "#ffffff", color: "#000000", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0 }}>Ver planes</button>
             </div>
           ) : (
-            <div className="mt-4 p-3 rounded-xl" style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)" }}>
-              <p className="text-xs" style={{ color: "#4a6fa8" }}>Plan gratuito · <strong style={{ color: "#93c5fd" }}>{freeRemaining} de {FREE_LIMIT} usos restantes</strong> · Suscríbete para uso ilimitado</p>
+            <div className="mt-4 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <p className="text-xs" style={{ color: "#4a6fa8" }}>Plan gratuito · <strong style={{ color: "#aaaaaa" }}>{freeRemaining} de {FREE_LIMIT} usos restantes</strong> · Suscríbete para uso ilimitado</p>
             </div>
           )
         )}
 
         {/* Inner tabs */}
-        <div className="flex mt-5" style={{ borderBottom: "1px solid #2a2a3e" }}>
+        <div className="flex mt-5" style={{ borderBottom: "1px solid #222222" }}>
           {(["convert", "history"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setInnerTab(t)}
               className="relative pb-3 px-1 mr-6 text-sm font-medium transition-colors"
-              style={{ color: innerTab === t ? "#fff" : "#8888a8", background: "none", border: "none", cursor: "pointer" }}
+              style={{ color: innerTab === t ? "#fff" : "#888888", background: "none", border: "none", cursor: "pointer" }}
             >
               {t === "convert" ? "Convertir" : "Historial"}
               {innerTab === t && (
-                <span style={{ position: "absolute", bottom: -1, left: 0, right: 0, height: "2px", background: "#3b82f6", borderRadius: "2px 2px 0 0" }} />
+                <span style={{ position: "absolute", bottom: -1, left: 0, right: 0, height: "2px", background: "#ffffff", borderRadius: "2px 2px 0 0" }} />
               )}
             </button>
           ))}
@@ -2553,11 +2553,11 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
           >
             <div style={{ position: "absolute", top: -40, right: -40, width: 140, height: 140, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%)", pointerEvents: "none" }} />
-            <div style={{ position: "absolute", bottom: -30, left: -30, width: 100, height: 100, borderRadius: "50%", background: "radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", bottom: -30, left: -30, width: 100, height: 100, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
 
             <div className="relative p-8 text-center">
               {dragging && (
-                <div style={{ position: "absolute", inset: 0, background: "rgba(59,130,246,0.1)", border: "2px dashed #3b82f6", borderRadius: "inherit", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.3)", borderRadius: "inherit", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <p className="text-blue-400 font-medium">Suelta el archivo aquí</p>
                 </div>
               )}
@@ -2570,7 +2570,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                   <FileAudio size={18} style={{ color: "#a78bfa", flexShrink: 0 }} />
                   <div className="flex-1 text-left min-w-0">
                     <p className="text-sm font-medium text-white truncate">{file.name}</p>
-                    <p className="text-xs" style={{ color: "#8888a8" }}>
+                    <p className="text-xs" style={{ color: "#888888" }}>
                       {fileDuration != null ? fmtSec(Math.round(fileDuration)) + " · " : ""}
                       {(file.size / 1024 / 1024).toFixed(2)} MB
                     </p>
@@ -2622,8 +2622,8 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                   className="flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl text-xs font-medium transition-all"
                   style={
                     targetLang === lang.code
-                      ? { background: "rgba(59,130,246,0.18)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
-                      : { background: "#12121a", color: "#8888a8", border: "1px solid #2a2a3e" }
+                      ? { background: "rgba(255,255,255,0.1)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.2)" }
+                      : { background: "#111111", color: "#888888", border: "1px solid #222222" }
                   }
                 >
                   <span className={`fi fi-${lang.fi}`} style={{ width: "24px", height: "18px", display: "inline-block", borderRadius: "3px", flexShrink: 0 }} />
@@ -2636,13 +2636,13 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           {/* Voice section */}
           <div>
             <p className="text-sm font-semibold text-white mb-3">Voz para el audio traducido</p>
-            <div className="flex p-1 rounded-xl gap-1 mb-3" style={{ background: "#0d0d17", border: "1px solid #2a2a3e" }}>
+            <div className="flex p-1 rounded-xl gap-1 mb-3" style={{ background: "#111111", border: "1px solid #222222" }}>
               {(["model", "reference"] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setVoiceSubTab(t)}
                   className="flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all"
-                  style={{ background: voiceSubTab === t ? "#1a1a2e" : "transparent", color: voiceSubTab === t ? "#e5e7eb" : "#6b7280", border: "none", cursor: "pointer" }}
+                  style={{ background: voiceSubTab === t ? "#1a1a1a" : "transparent", color: voiceSubTab === t ? "#e5e7eb" : "#6b7280", border: "none", cursor: "pointer" }}
                 >
                   {t === "model" ? "Seleccionar modelo" : "Subir referencia"}
                 </button>
@@ -2653,25 +2653,25 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
               <button
                 onClick={() => setShowBrowser(true)}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all hover:border-blue-500/60"
-                style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
+                style={{ background: "#111111", border: "1px solid #222222" }}
               >
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(59,130,246,0.15)" }}>
-                  <Mic size={13} style={{ color: "#93c5fd" }} />
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.08)" }}>
+                  <Mic size={13} style={{ color: "#aaaaaa" }} />
                 </div>
                 <div className="flex-1 text-left min-w-0">
                   <p className="text-sm font-medium text-white truncate">{selectedVoice?.name ?? "Voz por defecto"}</p>
-                  <p className="text-xs" style={{ color: "#8888a8" }}>{selectedVoice?.isCloned ? "Voz clonada" : "Sistema"}</p>
+                  <p className="text-xs" style={{ color: "#888888" }}>{selectedVoice?.isCloned ? "Voz clonada" : "Sistema"}</p>
                 </div>
-                <span className="text-xs flex-shrink-0" style={{ color: "#8888a8" }}>→</span>
+                <span className="text-xs flex-shrink-0" style={{ color: "#888888" }}>→</span>
               </button>
             ) : (
               <div>
                 {referenceFile ? (
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: "#12121a", border: "1px solid #2a2a3e" }}>
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: "#111111", border: "1px solid #222222" }}>
                     <Mic2 size={16} style={{ color: "#a78bfa", flexShrink: 0 }} />
                     <div className="flex-1 text-left min-w-0">
                       <p className="text-sm font-medium text-white truncate">{referenceFile.name}</p>
-                      <p className="text-xs" style={{ color: "#8888a8" }}>{(referenceFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                      <p className="text-xs" style={{ color: "#888888" }}>{(referenceFile.size / 1024 / 1024).toFixed(2)} MB</p>
                     </div>
                     <button onClick={() => setReferenceFile(null)} style={{ color: "#6b7280", background: "none", border: "none", cursor: "pointer", padding: "4px" }}>
                       <X size={14} />
@@ -2681,10 +2681,10 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                   <div
                     onClick={() => refInputRef.current?.click()}
                     className="w-full flex flex-col items-center gap-2 px-4 py-6 rounded-xl cursor-pointer transition-all hover:border-blue-500/40"
-                    style={{ background: "#12121a", border: "1px dashed #2a2a3e" }}
+                    style={{ background: "#111111", border: "1px dashed #222222" }}
                   >
                     <Mic2 size={20} style={{ color: "#555570" }} />
-                    <p className="text-sm" style={{ color: "#8888a8" }}>Sube un audio de referencia de voz</p>
+                    <p className="text-sm" style={{ color: "#888888" }}>Sube un audio de referencia de voz</p>
                     <p className="text-xs" style={{ color: "#555570" }}>MP3, WAV, M4A</p>
                   </div>
                 )}
@@ -2694,11 +2694,11 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           </div>
 
           {/* Cost note */}
-          <div className="flex items-start gap-3 px-4 py-3 rounded-xl text-xs leading-relaxed" style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)", color: "#8888a8" }}>
-            <span className="flex-shrink-0 mt-0.5" style={{ color: "#3b82f6" }}>ℹ</span>
+          <div className="flex items-start gap-3 px-4 py-3 rounded-xl text-xs leading-relaxed" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#888888" }}>
+            <span className="flex-shrink-0 mt-0.5" style={{ color: "#ffffff" }}>ℹ</span>
             <span>
               Se aplica un incremento del{" "}
-              <span className="font-semibold" style={{ color: "#93c5fd" }}>{plan === "enterprise" ? "10%" : "20%"}</span>{" "}
+              <span className="font-semibold" style={{ color: "#aaaaaa" }}>{plan === "enterprise" ? "10%" : "20%"}</span>{" "}
               sobre el coste estándar para cubrir los costes de transcripción y traducción automática.
             </span>
           </div>
@@ -2715,7 +2715,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
               onClick={handleTranslate}
               disabled={!file || loading || isFreeExhausted}
               className="flex items-center gap-2 px-8 py-3 rounded-full font-semibold text-white text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
-              style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", boxShadow: loading || !file ? "none" : "0 4px 20px rgba(59,130,246,0.35)" }}
+              style={{ background: "#ffffff", boxShadow: loading || !file ? "none" : "0 4px 20px rgba(255,255,255,0.2)" }}
             >
               {loading ? (
                 <>
@@ -2733,21 +2733,21 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 
           {/* Result */}
           {result && (
-            <div className="rounded-2xl border p-6 space-y-5" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+            <div className="rounded-2xl border p-6 space-y-5" style={{ background: "#111111", borderColor: "#222222" }}>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#4ade80" }} />
                 <p className="text-sm font-semibold text-white">Audio traducido al {result.targetLanguageName}</p>
-                <span className="ml-auto text-xs px-2 py-0.5 rounded-full" style={{ color: "#8888a8", background: "#12121a", border: "1px solid #2a2a3e" }}>
+                <span className="ml-auto text-xs px-2 py-0.5 rounded-full" style={{ color: "#888888", background: "#111111", border: "1px solid #222222" }}>
                   {result.charCost.toLocaleString("es-ES")} créditos · {result.durationSeconds.toFixed(1)}s
                 </span>
               </div>
               <AudioPlayer src={result.audioUrl} filename={`traduccion-${result.targetLanguageName.toLowerCase()}.mp3`} />
               <div className="grid gap-3">
-                <div className="rounded-xl p-4" style={{ background: "#12121a", border: "1px solid #2a2a3e" }}>
+                <div className="rounded-xl p-4" style={{ background: "#111111", border: "1px solid #222222" }}>
                   <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555570" }}>Transcripción (español)</p>
                   <p className="text-sm leading-relaxed" style={{ color: "#9ca3af" }}>{result.transcribedText}</p>
                 </div>
-                <div className="rounded-xl p-4" style={{ background: "#12121a", border: "1px solid #2a2a3e" }}>
+                <div className="rounded-xl p-4" style={{ background: "#111111", border: "1px solid #222222" }}>
                   <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555570" }}>Traducción ({result.targetLanguageName})</p>
                   <p className="text-sm leading-relaxed" style={{ color: "#9ca3af" }}>{result.translatedText}</p>
                 </div>
@@ -2762,40 +2762,40 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
         <div>
           <div className="flex items-center gap-3 mb-4">
             <div className="relative flex-1 max-w-xs">
-              <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#4a4a65", pointerEvents: "none" }} />
+              <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#444444", pointerEvents: "none" }} />
               <input
                 value={historySearch}
                 onChange={(e) => setHistorySearch(e.target.value)}
                 placeholder="Buscar traducciones..."
                 className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                style={{ background: "#0d0d17", border: "1px solid #2a2a3e", color: "#e5e7eb" }}
+                style={{ background: "#111111", border: "1px solid #222222", color: "#e5e7eb" }}
               />
             </div>
-            <button onClick={fetchHistory} className="p-2.5 rounded-xl transition-colors hover:bg-white/5" style={{ border: "1px solid #2a2a3e", color: "#8888a8", background: "transparent", cursor: "pointer" }}>
+            <button onClick={fetchHistory} className="p-2.5 rounded-xl transition-colors hover:bg-white/5" style={{ border: "1px solid #222222", color: "#888888", background: "transparent", cursor: "pointer" }}>
               <RefreshCw size={14} className={loadingHistory ? "animate-spin" : ""} />
             </button>
           </div>
 
           {loadingHistory ? (
             <div className="flex items-center justify-center py-16">
-              <svg className="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24" style={{ color: "#3b82f6" }}>
+              <svg className="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24" style={{ color: "#ffffff" }}>
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
             </div>
           ) : filteredHistory.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Globe size={32} style={{ color: "#2a2a3e", marginBottom: "12px" }} />
+              <Globe size={32} style={{ color: "#222222", marginBottom: "12px" }} />
               <p className="text-sm font-medium" style={{ color: "#6b7280" }}>
                 {historySearch ? "No se encontraron traducciones" : "Sin traducciones aún"}
               </p>
-              {!historySearch && <p className="text-xs mt-1" style={{ color: "#4a4a65" }}>Las traducciones que realices aparecerán aquí</p>}
+              {!historySearch && <p className="text-xs mt-1" style={{ color: "#444444" }}>Las traducciones que realices aparecerán aquí</p>}
             </div>
           ) : (
-            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid #2a2a3e" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid #222222" }}>
               <table className="w-full" style={{ borderCollapse: "collapse" }}>
                 <thead>
-                  <tr style={{ background: "#0d0d17", borderBottom: "1px solid #2a2a3e" }}>
+                  <tr style={{ background: "#111111", borderBottom: "1px solid #222222" }}>
                     <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>Archivo</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>Idioma destino</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#555570" }}>Estado</th>
@@ -2809,7 +2809,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                     return (
                       <tr
                         key={task.id}
-                        style={{ background: i % 2 === 0 ? "#0a0a0f" : "#0d0d17", borderBottom: i < filteredHistory.length - 1 ? "1px solid #1a1a2e" : "none" }}
+                        style={{ background: i % 2 === 0 ? "#000000" : "#111111", borderBottom: i < filteredHistory.length - 1 ? "1px solid #1a1a1a" : "none" }}
                       >
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
@@ -2849,7 +2849,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                               href={task.audioUrl}
                               download={`traduccion-${task.targetLanguage}-${task.id}.mp3`}
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-blue-500/20"
-                              style={{ background: "rgba(59,130,246,0.1)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}
+                              style={{ background: "rgba(255,255,255,0.06)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.1)" }}
                             >
                               <Download size={11} /> Descargar
                             </a>
@@ -3027,7 +3027,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
       <div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: "#fff", margin: 0 }}>Audio a Texto</h2>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", padding: "2px 7px", borderRadius: 4, background: "rgba(59,130,246,0.15)", color: "#60a5fa", border: "1px solid rgba(59,130,246,0.3)" }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", padding: "2px 7px", borderRadius: 4, background: "rgba(255,255,255,0.08)", color: "#bbbbbb", border: "1px solid rgba(255,255,255,0.15)" }}>
             BETA
           </span>
         </div>
@@ -3040,12 +3040,12 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
       {plan === "free" && (isFreeExhausted ? (
         <div style={{ padding: "12px 16px", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
           <p style={{ fontSize: 13, color: "#f87171", margin: 0 }}>Has agotado tus usos gratuitos. Actualiza tu plan para continuar.</p>
-          <button onClick={onBilling} style={{ padding: "5px 12px", borderRadius: 7, background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0 }}>Ver planes</button>
+          <button onClick={onBilling} style={{ padding: "5px 12px", borderRadius: 7, background: "#ffffff", color: "#000000", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0 }}>Ver planes</button>
         </div>
       ) : (
-        <div style={{ padding: "8px 14px", borderRadius: 8, background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)" }}>
+        <div style={{ padding: "8px 14px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
           <p style={{ fontSize: 12, color: "#4a6fa8", margin: 0 }}>
-            Plan gratuito · <strong style={{ color: "#93c5fd" }}>{Math.max(0, FREE_LIMIT - transcriptionUsed)} de {FREE_LIMIT} usos restantes</strong> · Suscríbete para uso ilimitado
+            Plan gratuito · <strong style={{ color: "#aaaaaa" }}>{Math.max(0, FREE_LIMIT - transcriptionUsed)} de {FREE_LIMIT} usos restantes</strong> · Suscríbete para uso ilimitado
           </p>
         </div>
       ))}
@@ -3053,31 +3053,31 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
       {/* Toolbar */}
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <div style={{ flex: 1, position: "relative" }}>
-          <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#4a4a65", pointerEvents: "none" }} />
+          <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#444444", pointerEvents: "none" }} />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nombre de archivo..."
-            style={{ width: "100%", paddingLeft: 36, paddingRight: 12, paddingTop: 9, paddingBottom: 9, background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: 8, color: "#d1d5db", fontSize: 13, outline: "none", boxSizing: "border-box" }}
+            style={{ width: "100%", paddingLeft: 36, paddingRight: 12, paddingTop: 9, paddingBottom: 9, background: "#111111", border: "1px solid #1a1a1a", borderRadius: 8, color: "#d1d5db", fontSize: 13, outline: "none", boxSizing: "border-box" }}
           />
         </div>
         <button
           onClick={() => { if (!isFreeExhausted) setShowCreate(true); else onBilling(); }}
-          style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 8, background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0, boxShadow: "0 2px 10px rgba(59,130,246,0.3)" }}
+          style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 8, background: "#ffffff", color: "#000000", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0, boxShadow: "0 2px 10px rgba(255,255,255,0.08)" }}
         >
           <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> Crear tarea
         </button>
-        <button onClick={fetchTasks} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 8, background: "#0d0d17", border: "1px solid #1e1e2e", color: "#9ca3af", cursor: "pointer", flexShrink: 0 }} title="Actualizar">
+        <button onClick={fetchTasks} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 8, background: "#111111", border: "1px solid #1a1a1a", color: "#9ca3af", cursor: "pointer", flexShrink: 0 }} title="Actualizar">
           <RefreshCw size={14} />
         </button>
       </div>
 
       {/* Table */}
-      <div style={{ background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: 12, overflow: "hidden" }}>
+      <div style={{ background: "#111111", border: "1px solid #1a1a1a", borderRadius: 12, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ borderBottom: "1px solid #1a1a2e" }}>
+            <tr style={{ borderBottom: "1px solid #1a1a1a" }}>
               <th style={thStyle}>Archivo</th>
               <th style={thStyle}>Actualizado</th>
               <th style={thStyle}>Estado</th>
@@ -3092,15 +3092,15 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                 <tr key={i}>
                   {[1, 2, 3, 4, 5, 6].map((j) => (
                     <td key={j} style={tdStyle}>
-                      <div style={{ height: 14, borderRadius: 4, background: "#1a1a2e", animation: "pulse 2s infinite", width: j === 1 ? "70%" : "40%" }} />
+                      <div style={{ height: 14, borderRadius: 4, background: "#1a1a1a", animation: "pulse 2s infinite", width: j === 1 ? "70%" : "40%" }} />
                     </td>
                   ))}
                 </tr>
               ))
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ ...tdStyle, textAlign: "center", padding: "48px 16px", color: "#4a4a65" }}>
-                  <FileAudio size={32} style={{ margin: "0 auto 10px", color: "#2a2a3e" }} />
+                <td colSpan={6} style={{ ...tdStyle, textAlign: "center", padding: "48px 16px", color: "#444444" }}>
+                  <FileAudio size={32} style={{ margin: "0 auto 10px", color: "#222222" }} />
                   <p style={{ margin: 0, fontWeight: 500, color: "#555570" }}>{search ? "Sin resultados" : "No hay tareas aún"}</p>
                   {!search && <p style={{ margin: "4px 0 0", fontSize: 12 }}>Haz click en &ldquo;Crear tarea&rdquo; para transcribir tu primer audio</p>}
                 </td>
@@ -3125,8 +3125,8 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                     {/* File */}
                     <td style={tdStyle}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: 6, background: "#12121a", border: "1px solid #1e1e2e", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          <FileAudio size={14} style={{ color: "#3b82f6" }} />
+                        <div style={{ width: 32, height: 32, borderRadius: 6, background: "#111111", border: "1px solid #1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <FileAudio size={14} style={{ color: "#ffffff" }} />
                         </div>
                         <div style={{ minWidth: 0 }}>
                           <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: "#e5e7eb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>{task.fileName}</p>
@@ -3159,7 +3159,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                         {task.status === "completed" && (
                           <button
                             onClick={() => setViewerTask(task)}
-                            style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 6, fontSize: 12, fontWeight: 500, background: "rgba(59,130,246,0.12)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.25)", cursor: "pointer" }}
+                            style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 6, fontSize: 12, fontWeight: 500, background: "rgba(255,255,255,0.06)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}
                           >
                             <Type size={11} /> Abrir visor
                           </button>
@@ -3172,9 +3172,9 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                         <button
                           onClick={() => handleDelete(task.id)}
                           disabled={isRemoving}
-                          style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 6, background: "transparent", border: "none", color: "#3a3a52", cursor: "pointer" }}
+                          style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 6, background: "transparent", border: "none", color: "#444444", cursor: "pointer" }}
                           onMouseEnter={(e) => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.background = "rgba(239,68,68,0.1)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = "#3a3a52"; e.currentTarget.style.background = "transparent"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#444444"; e.currentTarget.style.background = "transparent"; }}
                           title="Eliminar"
                         >
                           <Trash2 size={13} />
@@ -3195,9 +3195,9 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
           style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) { setShowCreate(false); setFile(null); setCreateError(null); } }}
         >
-          <div style={{ width: "100%", maxWidth: 480, background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: 16, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
+          <div style={{ width: "100%", maxWidth: 480, background: "#111111", border: "1px solid #1a1a1a", borderRadius: 16, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
             {/* Modal header */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: "1px solid #1a1a2e" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: "1px solid #1a1a1a" }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#fff" }}>Crear tarea de transcripción</h3>
                 <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6b7280" }}>El audio se procesará y el resultado quedará guardado</p>
@@ -3214,24 +3214,24 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                 onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
                 onDragLeave={() => setDragging(false)}
                 onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
-                style={{ border: `2px dashed ${dragging ? "#3b82f6" : "#1e1e2e"}`, borderRadius: 12, padding: "28px 20px", textAlign: "center", cursor: "pointer", background: dragging ? "rgba(59,130,246,0.05)" : "#070710", transition: "all 0.15s" }}
+                style={{ border: `2px dashed ${dragging ? "#ffffff" : "#1a1a1a"}`, borderRadius: 12, padding: "28px 20px", textAlign: "center", cursor: "pointer", background: dragging ? "rgba(255,255,255,0.03)" : "#000000", transition: "all 0.15s" }}
               >
                 <input ref={fileInputRef} type="file" className="hidden" accept=".mp3,.wav,.m4a,.flac,.mp4,.mov,.webm,audio/*,video/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
                 {file ? (
                   <div>
-                    <FileAudio size={24} style={{ color: "#3b82f6", margin: "0 auto 8px" }} />
+                    <FileAudio size={24} style={{ color: "#ffffff", margin: "0 auto 8px" }} />
                     <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: "#e5e7eb" }}>{file.name}</p>
                     <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b7280" }}>
                       {(file.size / 1024 / 1024).toFixed(2)} MB
                       {fileDuration !== null && ` · ${fmtDur(fileDuration)}`}
-                      {" · "}<button onClick={(ev) => { ev.stopPropagation(); setFile(null); setFileDuration(null); }} style={{ background: "none", border: "none", color: "#3b82f6", cursor: "pointer", fontSize: 12, padding: 0 }}>Cambiar</button>
+                      {" · "}<button onClick={(ev) => { ev.stopPropagation(); setFile(null); setFileDuration(null); }} style={{ background: "none", border: "none", color: "#ffffff", cursor: "pointer", fontSize: 12, padding: 0 }}>Cambiar</button>
                     </p>
                   </div>
                 ) : (
                   <>
-                    <FileAudio size={28} style={{ color: "#3a3a52", margin: "0 auto 10px" }} />
+                    <FileAudio size={28} style={{ color: "#444444", margin: "0 auto 10px" }} />
                     <p style={{ margin: 0, fontSize: 14, color: "#9ca3af" }}>Arrastra tu archivo aquí o haz clic para elegir</p>
-                    <p style={{ margin: "6px 0 0", fontSize: 12, color: "#4a4a65" }}>MP3, WAV, M4A, FLAC, MP4, MOV, WEBM</p>
+                    <p style={{ margin: "6px 0 0", fontSize: 12, color: "#444444" }}>MP3, WAV, M4A, FLAC, MP4, MOV, WEBM</p>
                   </>
                 )}
               </div>
@@ -3253,8 +3253,8 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
               </div>
 
               {/* Info */}
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 12px", borderRadius: 8, background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)" }}>
-                <span style={{ color: "#3b82f6", fontSize: 13, flexShrink: 0, marginTop: 1 }}>ℹ</span>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 12px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <span style={{ color: "#ffffff", fontSize: 13, flexShrink: 0, marginTop: 1 }}>ℹ</span>
                 <p style={{ margin: 0, fontSize: 12, color: "#6b7280", lineHeight: 1.5 }}>
                   Los créditos se calculan según los caracteres transcritos, al mismo precio que la generación de audio.
                   {fileDuration !== null && ` Duración estimada: ${fmtDur(fileDuration)}.`}
@@ -3269,13 +3269,13 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
 
               {/* Actions */}
               <div style={{ display: "flex", gap: 10 }}>
-                <button onClick={() => { setShowCreate(false); setFile(null); setCreateError(null); }} style={{ flex: 1, padding: "10px", borderRadius: 8, background: "transparent", border: "1px solid #1e1e2e", color: "#9ca3af", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
+                <button onClick={() => { setShowCreate(false); setFile(null); setCreateError(null); }} style={{ flex: 1, padding: "10px", borderRadius: 8, background: "transparent", border: "1px solid #1a1a1a", color: "#9ca3af", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
                   Cancelar
                 </button>
                 <button
                   onClick={handleCreate}
                   disabled={!file || creating}
-                  style={{ flex: 2, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px", borderRadius: 8, background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", fontSize: 13, fontWeight: 600, border: "none", cursor: !file || creating ? "not-allowed" : "pointer", opacity: !file || creating ? 0.6 : 1, boxShadow: !file || creating ? "none" : "0 2px 10px rgba(59,130,246,0.3)" }}
+                  style={{ flex: 2, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px", borderRadius: 8, background: "#ffffff", color: "#000000", fontSize: 13, fontWeight: 600, border: "none", cursor: !file || creating ? "not-allowed" : "pointer", opacity: !file || creating ? 0.6 : 1, boxShadow: !file || creating ? "none" : "0 2px 10px rgba(255,255,255,0.08)" }}
                 >
                   {creating ? (
                     <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg> Transcribiendo...</>
@@ -3295,11 +3295,11 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
           style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setViewerTask(null); }}
         >
-          <div style={{ width: "100%", maxWidth: 620, maxHeight: "85vh", display: "flex", flexDirection: "column", background: "#0d0d17", border: "1px solid #1e1e2e", borderRadius: 16, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
+          <div style={{ width: "100%", maxWidth: 620, maxHeight: "85vh", display: "flex", flexDirection: "column", background: "#111111", border: "1px solid #1a1a1a", borderRadius: 16, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
             {/* Header */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", borderBottom: "1px solid #1a1a2e", flexShrink: 0 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 8, background: "#12121a", border: "1px solid #1e1e2e", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <FileAudio size={16} style={{ color: "#3b82f6" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", borderBottom: "1px solid #1a1a1a", flexShrink: 0 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: "#111111", border: "1px solid #1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <FileAudio size={16} style={{ color: "#ffffff" }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#e5e7eb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{viewerTask.fileName}</p>
@@ -3320,16 +3320,16 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
             </div>
 
             {/* Actions */}
-            <div style={{ display: "flex", gap: 10, padding: "14px 20px", borderTop: "1px solid #1a1a2e", flexShrink: 0 }}>
+            <div style={{ display: "flex", gap: 10, padding: "14px 20px", borderTop: "1px solid #1a1a1a", flexShrink: 0 }}>
               <button
                 onClick={() => { if (!viewerTask.transcriptionText) return; navigator.clipboard.writeText(viewerTask.transcriptionText); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: copied ? "rgba(74,222,128,0.15)" : "#12121a", color: copied ? "#4ade80" : "#93c5fd", border: `1px solid ${copied ? "rgba(74,222,128,0.3)" : "rgba(59,130,246,0.3)"}`, cursor: "pointer" }}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: copied ? "rgba(74,222,128,0.15)" : "#111111", color: copied ? "#4ade80" : "#aaaaaa", border: `1px solid ${copied ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.15)"}`, cursor: "pointer" }}
               >
                 <Copy size={12} />{copied ? "¡Copiado!" : "Copiar texto"}
               </button>
               <button
                 onClick={() => handleDownload(viewerTask)}
-                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: "#12121a", color: "#9ca3af", border: "1px solid #1e1e2e", cursor: "pointer" }}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: "#111111", color: "#9ca3af", border: "1px solid #1a1a1a", cursor: "pointer" }}
               >
                 <Download size={12} /> Descargar .txt
               </button>
@@ -3399,16 +3399,16 @@ function WithdrawModal({ balance, onClose, onSuccess }: { balance: number; onClo
     }
   }
 
-  const inputSt = { background: "#0a0a0f", border: "1px solid #2a2a3e", color: "#e5e7eb", borderRadius: "10px", padding: "10px 14px", width: "100%", fontSize: "14px", outline: "none" };
-  const labelSt = { display: "block", fontSize: "12px", fontWeight: 600 as const, color: "#8888a8", marginBottom: "6px" };
+  const inputSt = { background: "#000000", border: "1px solid #222222", color: "#e5e7eb", borderRadius: "10px", padding: "10px 14px", width: "100%", fontSize: "14px", outline: "none" };
+  const labelSt = { display: "block", fontSize: "12px", fontWeight: 600 as const, color: "#888888", marginBottom: "6px" };
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
-      <div style={{ background: "#12121a", border: "1px solid #2a2a3e", borderRadius: "20px", width: "100%", maxWidth: "420px", padding: "28px", position: "relative" }}>
+      <div style={{ background: "#111111", border: "1px solid #222222", borderRadius: "20px", width: "100%", maxWidth: "420px", padding: "28px", position: "relative" }}>
         <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", color: "#6b7280", fontSize: "18px", lineHeight: 1 }}>✕</button>
 
         <h2 style={{ color: "#fff", fontSize: "18px", fontWeight: 700, margin: "0 0 4px" }}>Retirar en efectivo</h2>
-        <p style={{ color: "#8888a8", fontSize: "13px", margin: "0 0 20px" }}>
+        <p style={{ color: "#888888", fontSize: "13px", margin: "0 0 20px" }}>
           Saldo disponible: <strong style={{ color: "#4ade80" }}>${maxAmount.toFixed(2)}</strong> · Mín. $20
         </p>
 
@@ -3416,8 +3416,8 @@ function WithdrawModal({ balance, onClose, onSuccess }: { balance: number; onClo
           {/* Method toggle */}
           <div>
             <label style={labelSt}>Método de pago</label>
-            <div style={{ position: "relative", background: "#0a0a0f", border: "1px solid #2a2a3e", borderRadius: "8px", padding: "3px", display: "flex" }}>
-              <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#1a1a2e", borderRadius: "5px", transition: "transform 0.2s ease", transform: `translateX(${method === "transfer" ? "100%" : "0%"})`, border: "1px solid #2a2a3e" }} />
+            <div style={{ position: "relative", background: "#000000", border: "1px solid #222222", borderRadius: "8px", padding: "3px", display: "flex" }}>
+              <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#1a1a1a", borderRadius: "5px", transition: "transform 0.2s ease", transform: `translateX(${method === "transfer" ? "100%" : "0%"})`, border: "1px solid #222222" }} />
               {(["paypal", "transfer"] as const).map((m) => (
                 <button
                   key={m}
@@ -3480,7 +3480,7 @@ function WithdrawModal({ balance, onClose, onSuccess }: { balance: number; onClo
           <button
             type="submit"
             disabled={!canSubmit || loading}
-            style={{ padding: "12px", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", border: "none", borderRadius: "12px", fontWeight: 700, fontSize: "14px", cursor: canSubmit && !loading ? "pointer" : "not-allowed", opacity: canSubmit && !loading ? 1 : 0.5, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+            style={{ padding: "12px", background: "#ffffff", color: "#000000", border: "none", borderRadius: "12px", fontWeight: 700, fontSize: "14px", cursor: canSubmit && !loading ? "pointer" : "not-allowed", opacity: canSubmit && !loading ? 1 : 0.5, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
           >
             {loading ? (
               <svg style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} fill="none" viewBox="0 0 24 24">
@@ -3609,8 +3609,8 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
   const redeemRowBtn = (active: boolean): React.CSSProperties => ({
     width: "100%", textAlign: "center" as const, padding: "10px 14px",
     borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 500,
-    background: active ? "#1a1a2e" : "transparent",
-    border: `1px solid ${active ? "#3a3a5e" : "#2a2a3e"}`,
+    background: active ? "#1a1a1a" : "transparent",
+    border: `1px solid ${active ? "#3a3a5e" : "#222222"}`,
     color: active ? "#e5e7eb" : "#9ca3af",
     transition: "all 0.15s",
   });
@@ -3635,12 +3635,12 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
       </h1>
 
       {/* ── SECCIÓN 1 ───────────────────────────────────────── */}
-      <div style={{ paddingBottom: 36, marginBottom: 36, borderBottom: "1px solid #1e1e2e" }}>
+      <div style={{ paddingBottom: 36, marginBottom: 36, borderBottom: "1px solid #1a1a1a" }}>
 
         {/* Section header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22, gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Gift size={15} style={{ color: "#3b82f6", flexShrink: 0 }} />
+            <Gift size={15} style={{ color: "#ffffff", flexShrink: 0 }} />
             <span style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>
               Comparte tu enlace y obtén créditos de producto
             </span>
@@ -3666,9 +3666,9 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
 
           {/* Left: link + stats */}
           <div>
-            <p style={{ fontSize: 12, color: "#8888a8", marginBottom: 8 }}>Tu enlace único:</p>
+            <p style={{ fontSize: 12, color: "#888888", marginBottom: 8 }}>Tu enlace único:</p>
             <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-              <div style={{ flex: 1, padding: "9px 14px", borderRadius: 10, background: "transparent", border: "1px solid #2a2a3e", fontSize: 13, fontFamily: "monospace", color: "#93c5fd", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ flex: 1, padding: "9px 14px", borderRadius: 10, background: "transparent", border: "1px solid #222222", fontSize: 13, fontFamily: "monospace", color: "#aaaaaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {loading ? "—" : (referralLink || "—")}
               </div>
               <button
@@ -3676,7 +3676,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
                 disabled={!referralLink}
                 style={{
                   display: "flex", alignItems: "center", gap: 6, padding: "9px 14px",
-                  borderRadius: 10, fontSize: 12, fontWeight: 600, border: "1px solid #2a2a3e",
+                  borderRadius: 10, fontSize: 12, fontWeight: 600, border: "1px solid #222222",
                   background: "transparent", cursor: referralLink ? "pointer" : "not-allowed",
                   color: copied ? "#4ade80" : "#9ca3af", flexShrink: 0, transition: "color 0.15s",
                   opacity: referralLink ? 1 : 0.4,
@@ -3692,17 +3692,17 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                   <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", display: "inline-block", flexShrink: 0 }} />
-                  <span style={{ fontSize: 11, color: "#8888a8" }}>Disponible para canjear</span>
+                  <span style={{ fontSize: 11, color: "#888888" }}>Disponible para canjear</span>
                 </div>
                 <p style={{ fontSize: 22, fontWeight: 800, color: "#4ade80", lineHeight: 1 }}>
-                  {loading ? <span style={{ color: "#3a3a52" }}>—</span> : centsToUSD(referralBalance)}
+                  {loading ? <span style={{ color: "#444444" }}>—</span> : centsToUSD(referralBalance)}
                 </p>
               </div>
-              <div style={{ width: 1, height: 40, background: "#2a2a3e", flexShrink: 0 }} />
+              <div style={{ width: 1, height: 40, background: "#222222", flexShrink: 0 }} />
               <div>
-                <p style={{ fontSize: 11, color: "#8888a8", marginBottom: 4 }}>Créditos Totales Ganados</p>
+                <p style={{ fontSize: 11, color: "#888888", marginBottom: 4 }}>Créditos Totales Ganados</p>
                 <p style={{ fontSize: 22, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
-                  {loading ? <span style={{ color: "#3a3a52" }}>—</span> : centsToUSD(referralEarned)}
+                  {loading ? <span style={{ color: "#444444" }}>—</span> : centsToUSD(referralEarned)}
                 </p>
               </div>
             </div>
@@ -3723,7 +3723,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
             </button>
 
             {openRedeem === "plan" && (
-              <div style={{ marginTop: 8, padding: "14px", background: "#0d0d17", borderRadius: 10, border: "1px solid #2a2a3e", marginBottom: 8 }}>
+              <div style={{ marginTop: 8, padding: "14px", background: "#111111", borderRadius: 10, border: "1px solid #222222", marginBottom: 8 }}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
                   {REDEEM_PLANS.map(p => (
                     <button
@@ -3733,8 +3733,8 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
                         padding: "5px 10px", borderRadius: 8, fontSize: 12, fontWeight: 500,
                         cursor: "pointer", transition: "all 0.15s",
                         ...(selectedPlan === p.key
-                          ? { background: "rgba(59,130,246,0.2)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }
-                          : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a3e" }),
+                          ? { background: "rgba(255,255,255,0.1)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.2)" }
+                          : { background: "transparent", color: "#6b7280", border: "1px solid #222222" }),
                       }}
                     >
                       {p.label} <span style={{ opacity: 0.7 }}>${p.price}</span>
@@ -3748,7 +3748,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
                 <button
                   onClick={handleRedeemPlan}
                   disabled={!canRedeemPlan || redeemingPlan}
-                  style={{ width: "100%", padding: "8px", borderRadius: 8, fontSize: 12, fontWeight: 700, border: "none", cursor: canRedeemPlan && !redeemingPlan ? "pointer" : "not-allowed", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", opacity: canRedeemPlan && !redeemingPlan ? 1 : 0.45, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                  style={{ width: "100%", padding: "8px", borderRadius: 8, fontSize: 12, fontWeight: 700, border: "none", cursor: canRedeemPlan && !redeemingPlan ? "pointer" : "not-allowed", background: "#ffffff", color: "#000000", opacity: canRedeemPlan && !redeemingPlan ? 1 : 0.45, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
                 >
                   {redeemingPlan ? spin : null} Canjear plan
                 </button>
@@ -3764,7 +3764,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
             </button>
 
             {openRedeem === "chars" && (
-              <div style={{ marginTop: 8, padding: "14px", background: "#0d0d17", borderRadius: 10, border: "1px solid #2a2a3e" }}>
+              <div style={{ marginTop: 8, padding: "14px", background: "#111111", borderRadius: 10, border: "1px solid #222222" }}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
                   {REDEEM_PACKS.map(p => (
                     <button
@@ -3775,7 +3775,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
                         cursor: "pointer", transition: "all 0.15s",
                         ...(selectedPack === p.key
                           ? { background: "rgba(139,92,246,0.2)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.4)" }
-                          : { background: "transparent", color: "#6b7280", border: "1px solid #2a2a3e" }),
+                          : { background: "transparent", color: "#6b7280", border: "1px solid #222222" }),
                       }}
                     >
                       {p.label} <span style={{ opacity: 0.7 }}>${p.price}</span>
@@ -3810,20 +3810,20 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
             <p style={{ fontSize: 13, fontWeight: 600, color: "#fff", marginBottom: 14 }}>Historial de recompensas</p>
             {loading ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {[1, 2].map(i => <div key={i} style={{ height: 48, borderRadius: 10, background: "#1a1a2e" }} />)}
+                {[1, 2].map(i => <div key={i} style={{ height: 48, borderRadius: 10, background: "#1a1a1a" }} />)}
               </div>
             ) : referrals.length === 0 ? (
               <div style={{ textAlign: "center", padding: "32px 0" }}>
-                <Gift size={24} style={{ color: "#2a2a3e", marginBottom: 8 }} />
+                <Gift size={24} style={{ color: "#222222", marginBottom: 8 }} />
                 <p style={{ fontSize: 13, color: "#6b7280" }}>Aún no tienes referidos</p>
-                <p style={{ fontSize: 12, color: "#4a4a65", marginTop: 4 }}>Comparte tu enlace y empieza a ganar</p>
+                <p style={{ fontSize: 12, color: "#444444", marginTop: 4 }}>Comparte tu enlace y empieza a ganar</p>
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {referrals.map((r, i) => (
-                  <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderRadius: 10, background: "#0d0d17", border: "1px solid #1e1e2e" }}>
+                  <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderRadius: 10, background: "#111111", border: "1px solid #1a1a1a" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg,#3b82f6,#2563eb)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{i + 1}</div>
+                      <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#000000", flexShrink: 0 }}>{i + 1}</div>
                       <div>
                         <p style={{ fontSize: 13, fontWeight: 500, color: "#e5e7eb" }}>Referido #{i + 1}</p>
                         <p style={{ fontSize: 11, color: "#6b7280" }}>{formatDate(r.createdAt)}</p>
@@ -3834,8 +3834,8 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
                       ...(r.status === "claimed"
                         ? { background: "rgba(34,197,94,0.12)", color: "#4ade80" }
                         : r.status === "rewarded"
-                        ? { background: "rgba(59,130,246,0.12)", color: "#93c5fd" }
-                        : { background: "rgba(255,255,255,0.06)", color: "#8888a8" })
+                        ? { background: "rgba(255,255,255,0.06)", color: "#aaaaaa" }
+                        : { background: "rgba(255,255,255,0.06)", color: "#888888" })
                     }}>
                       {r.status === "claimed" ? "Canjeado" : r.status === "rewarded" ? "Completado" : "Pendiente"}
                     </span>
@@ -3877,7 +3877,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
         {canWithdraw ? (
           <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
             <div>
-              <p style={{ fontSize: 11, color: "#8888a8", marginBottom: 3 }}>Disponible para retirar</p>
+              <p style={{ fontSize: 11, color: "#888888", marginBottom: 3 }}>Disponible para retirar</p>
               <p style={{ fontSize: 20, fontWeight: 800, color: "#4ade80" }}>{centsToUSD(referralBalance)}</p>
             </div>
             <button
@@ -3891,7 +3891,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
           <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
             <a
               href="/dashboard/afiliados"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 18px", borderRadius: 10, background: "transparent", color: "#e5e7eb", border: "1px solid #3a3a52", fontSize: 13, fontWeight: 600, textDecoration: "none" }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 18px", borderRadius: 10, background: "transparent", color: "#e5e7eb", border: "1px solid #444444", fontSize: 13, fontWeight: 600, textDecoration: "none" }}
             >
               Más información y solicitar
             </a>
@@ -4049,7 +4049,7 @@ function TeamTab() {
   const ownerPercent = 100 - totalAssigned;
   const ownerCredits = Math.floor(ENTERPRISE_CREDITS * ownerPercent / 100);
 
-  const cardStyle = { background: "#0d0d17", borderColor: "#2a2a3e" };
+  const cardStyle = { background: "#111111", borderColor: "#222222" };
 
   if (loading) {
     return (
@@ -4063,11 +4063,11 @@ function TeamTab() {
     return (
       <div className="max-w-lg mx-auto py-10 space-y-6">
         <div className="rounded-2xl border p-8 text-center space-y-3" style={cardStyle}>
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto" style={{ background: "rgba(59,130,246,0.1)" }}>
-            <Users size={26} style={{ color: "#3b82f6" }} />
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto" style={{ background: "rgba(255,255,255,0.06)" }}>
+            <Users size={26} style={{ color: "#ffffff" }} />
           </div>
           <h2 className="text-lg font-bold text-white">Crear tu equipo</h2>
-          <p className="text-sm" style={{ color: "#8888a8" }}>
+          <p className="text-sm" style={{ color: "#888888" }}>
             Crea un equipo para distribuir caracteres mensuales entre tus miembros automáticamente cada mes.
           </p>
         </div>
@@ -4081,7 +4081,7 @@ function TeamTab() {
             onChange={(e) => setTeamName(e.target.value)}
             placeholder="Ej. Equipo de Marketing"
             className="w-full px-4 py-2.5 rounded-xl text-sm text-gray-200 focus:outline-none"
-            style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
+            style={{ background: "#111111", border: "1px solid #222222" }}
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
           />
           {error && <p className="text-sm" style={{ color: "#f87171" }}>{error}</p>}
@@ -4089,7 +4089,7 @@ function TeamTab() {
             onClick={handleCreate}
             disabled={creating || !teamName.trim()}
             className="w-full py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
-            style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+            style={{ background: "#ffffff" }}
           >
             {creating ? "Creando..." : "Crear equipo"}
           </button>
@@ -4102,8 +4102,8 @@ function TeamTab() {
     <div className="max-w-2xl mx-auto py-6 space-y-5">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(59,130,246,0.12)" }}>
-          <Users size={18} style={{ color: "#3b82f6" }} />
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.06)" }}>
+          <Users size={18} style={{ color: "#ffffff" }} />
         </div>
         <div>
           <h2 className="text-base font-bold text-white">{team.name}</h2>
@@ -4117,15 +4117,15 @@ function TeamTab() {
           Resumen de créditos este mes
         </p>
         <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-xl p-3 text-center" style={{ background: "#12121a", border: "1px solid #1e1e2e" }}>
+          <div className="rounded-xl p-3 text-center" style={{ background: "#111111", border: "1px solid #1a1a1a" }}>
             <p className="text-xs mb-1" style={{ color: "#555570" }}>Total equipo</p>
             <p className="text-sm font-bold text-white">{ENTERPRISE_CREDITS.toLocaleString("es-ES")}</p>
           </div>
-          <div className="rounded-xl p-3 text-center" style={{ background: "#12121a", border: "1px solid #1e1e2e" }}>
+          <div className="rounded-xl p-3 text-center" style={{ background: "#111111", border: "1px solid #1a1a1a" }}>
             <p className="text-xs mb-1" style={{ color: "#555570" }}>Tu parte ({ownerPercent}%)</p>
-            <p className="text-sm font-bold" style={{ color: "#93c5fd" }}>{ownerCredits.toLocaleString("es-ES")}</p>
+            <p className="text-sm font-bold" style={{ color: "#aaaaaa" }}>{ownerCredits.toLocaleString("es-ES")}</p>
           </div>
-          <div className="rounded-xl p-3 text-center" style={{ background: "#12121a", border: "1px solid #1e1e2e" }}>
+          <div className="rounded-xl p-3 text-center" style={{ background: "#111111", border: "1px solid #1a1a1a" }}>
             <p className="text-xs mb-1" style={{ color: "#555570" }}>Distribuidos</p>
             <p className="text-sm font-bold" style={{ color: totalAssigned > 100 ? "#f87171" : "#4ade80" }}>{totalAssigned}%</p>
           </div>
@@ -4153,11 +4153,11 @@ function TeamTab() {
               const pct = percentages[member.id] ?? 0;
               const chars = Math.floor(ENTERPRISE_CREDITS * pct / 100);
               return (
-                <div key={member.id} className="rounded-xl p-4 space-y-3" style={{ background: "#12121a", border: "1px solid #1e1e2e" }}>
+                <div key={member.id} className="rounded-xl p-4 space-y-3" style={{ background: "#111111", border: "1px solid #1a1a1a" }}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                        style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}>
+                        style={{ background: "#ffffff" }}>
                         {(member.name ?? member.email)[0].toUpperCase()}
                       </div>
                       <div className="min-w-0">
@@ -4195,7 +4195,7 @@ function TeamTab() {
                         value={pct}
                         onChange={(e) => setPercentages((p) => ({ ...p, [member.id]: Math.min(100, Math.max(0, Number(e.target.value))) }))}
                         className="w-14 px-2 py-1 rounded-lg text-sm text-center text-white focus:outline-none"
-                        style={{ background: "#0a0a12", border: "1px solid #2a2a3e" }}
+                        style={{ background: "#0a0a12", border: "1px solid #222222" }}
                       />
                       <span className="text-xs" style={{ color: "#555570" }}>%</span>
                     </div>
@@ -4218,7 +4218,7 @@ function TeamTab() {
               onClick={handleSaveDistribution}
               disabled={saving || totalAssigned > 100}
               className="w-full py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50 transition-all"
-              style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+              style={{ background: "#ffffff" }}
             >
               {saving ? "Guardando..." : "Guardar distribución"}
             </button>
@@ -4244,14 +4244,14 @@ function TeamTab() {
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="email@ejemplo.com"
             className="flex-1 px-3 py-2.5 rounded-xl text-sm text-gray-200 focus:outline-none"
-            style={{ background: "#12121a", border: "1px solid #2a2a3e" }}
+            style={{ background: "#111111", border: "1px solid #222222" }}
             onKeyDown={(e) => e.key === "Enter" && handleInvite()}
           />
           <button
             onClick={handleInvite}
             disabled={inviting || !inviteEmail.trim()}
             className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50 flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+            style={{ background: "#ffffff" }}
           >
             {inviting ? "..." : "Invitar"}
           </button>
@@ -4259,7 +4259,7 @@ function TeamTab() {
       </div>
 
       {/* Danger zone */}
-      <div className="rounded-2xl border p-5" style={{ background: "#0d0d17", borderColor: "#3a1a1a" }}>
+      <div className="rounded-2xl border p-5" style={{ background: "#111111", borderColor: "#3a1a1a" }}>
         <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#7a3a3a" }}>
           Zona de peligro
         </p>
@@ -4282,9 +4282,9 @@ function TeamTab() {
       {/* Delete confirmation modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
-          <div className="rounded-2xl border p-6 w-full max-w-sm space-y-4" style={{ background: "#0d0d17", borderColor: "#2a2a3e" }}>
+          <div className="rounded-2xl border p-6 w-full max-w-sm space-y-4" style={{ background: "#111111", borderColor: "#222222" }}>
             <h3 className="text-base font-bold text-white">¿Eliminar el equipo &ldquo;{team.name}&rdquo;?</h3>
-            <p className="text-sm" style={{ color: "#8888a8" }}>
+            <p className="text-sm" style={{ color: "#888888" }}>
               Los créditos asignados a los miembros se devolverán automáticamente a tu cuenta antes de eliminar el equipo. Los miembros perderán acceso inmediatamente.
             </p>
             <div className="flex gap-3">
@@ -4292,7 +4292,7 @@ function TeamTab() {
                 onClick={() => setShowDeleteModal(false)}
                 disabled={deletingTeam}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50"
-                style={{ background: "#1a1a2e", border: "1px solid #2a2a3e", color: "#8888a8" }}
+                style={{ background: "#1a1a1a", border: "1px solid #222222", color: "#888888" }}
               >
                 Cancelar
               </button>
@@ -4399,7 +4399,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background: "#0a0a0f" }}>
+    <div className="flex min-h-screen" style={{ background: "#000000" }}>
       {supportOpen && <SupportModal onClose={() => setSupportOpen(false)} />}
 
       {/* Mobile drawer overlay */}
@@ -4414,7 +4414,7 @@ export default function DashboardPage() {
       {/* Mobile drawer */}
       <div
         className={`fixed inset-y-0 left-0 z-50 flex flex-col lg:hidden transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
-        style={{ width: "260px", background: "#0d0d17", borderRight: "1px solid #1e1e2e" }}
+        style={{ width: "260px", background: "#111111", borderRight: "1px solid #1a1a1a" }}
       >
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onClose={() => setSidebarOpen(false)} plan={plan} memberInfo={memberInfo} />
       </div>
@@ -4435,16 +4435,16 @@ export default function DashboardPage() {
           };
           const { title, Icon } = TAB_META[activeTab] ?? { title: "", Icon: Home };
           return (
-            <div style={{ height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", position: "sticky", top: 0, zIndex: 10, borderBottom: "1px solid #1a1a28", background: "#0a0a0f", flexShrink: 0 }}>
+            <div style={{ height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", position: "sticky", top: 0, zIndex: 10, borderBottom: "1px solid #1a1a1a", background: "#000000", flexShrink: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 {/* Hamburger — opens mobile drawer / collapses desktop sidebar */}
                 <button
                   onClick={() => setSidebarOpen(true)}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", cursor: "pointer", color: "#8888a8", flexShrink: 0 }}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #222222", background: "transparent", cursor: "pointer", color: "#888888", flexShrink: 0 }}
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect y="2" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="7.25" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="12.5" width="16" height="1.5" rx="0.75" fill="currentColor"/></svg>
                 </button>
-                <Icon size={16} style={{ color: "#4a4a65" }} />
+                <Icon size={16} style={{ color: "#444444" }} />
                 <span className="hidden sm:inline" style={{ fontSize: "14px", fontWeight: 600, color: "#e5e7eb" }}>{title}</span>
               </div>
               <div className="flex items-center gap-2">
