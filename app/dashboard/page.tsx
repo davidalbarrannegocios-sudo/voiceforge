@@ -572,7 +572,7 @@ function GenerateTab({
   const [temperature, setTemperature] = useState(0.9);
   const [topP, setTopP] = useState(0.9);
   const [selectedModel, setSelectedModel] = useState("speech-1.6");
-  const [turboDown, setTurboDown] = useState(false);
+  const [turboAdminStatus, setTurboAdminStatus] = useState("active");
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   const modelDropdownRef = useRef<HTMLDivElement>(null);
   // M1 (ElevenLabs) controls
@@ -656,22 +656,40 @@ function GenerateTab({
   }, [m1Speed, m1Stability, m1Similarity, m1StyleExag, m1LangOverride, m1OutputFormat, m1SpeakerBoost]);
 
   useEffect(() => {
-    fetch("/api/ai33-health")
+    const cached = localStorage.getItem("turboStatusCache");
+    const cachedTime = localStorage.getItem("turboStatusCacheTime");
+    if (cached && cachedTime && Date.now() - Number(cachedTime) < 300000) {
+      setTurboAdminStatus(cached);
+      return;
+    }
+    fetch("/api/admin/system-config")
       .then((r) => r.json())
-      .then((data: { isDown?: boolean }) => {
-        const down = !!data.isDown;
-        setTurboDown(down);
-        if (down && selectedModel === "turbo") {
-          setSelectedModel("speech-1.6");
-          onVoiceChange(null);
-        }
+      .then((d: { elitelabsTurboStatus?: string }) => {
+        const status = d.elitelabsTurboStatus ?? "active";
+        setTurboAdminStatus(status);
+        localStorage.setItem("turboStatusCache", status);
+        localStorage.setItem("turboStatusCacheTime", String(Date.now()));
       })
       .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const turboDisabled = turboAdminStatus === "maintenance" || turboAdminStatus === "disabled";
+
+  useEffect(() => {
+    if (turboDisabled && selectedModel === "turbo") {
+      setSelectedModel("speech-1.6");
+      onVoiceChange(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turboDisabled]);
+
   async function handleGenerate() {
     setFormError(null);
+    if (selectedModel === "turbo" && turboDisabled) {
+      setFormError("Elite Labs Turbo no está disponible en este momento. Por favor selecciona otro modelo.");
+      return;
+    }
     setSubmitting(true);
     try {
       let endpoint: string;
@@ -916,8 +934,8 @@ function GenerateTab({
                       </span>
                       {selectedModel === "speech-1.6" && <span className="badge-shimmer-purple" style={{ fontSize: "12px", fontWeight: 600, padding: "2px 8px", borderRadius: "6px", flexShrink: 0 }}>Pro</span>}
                       {selectedModel === "speech-1.5" && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>Legacy</span>}
-                      {selectedModel === "turbo" && !turboDown && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "white", flexShrink: 0 }}>Turbo</span>}
-                      {selectedModel === "turbo" && turboDown  && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", background: "rgba(251,191,36,0.15)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)", flexShrink: 0 }}>Mantenimiento</span>}
+                      {selectedModel === "turbo" && !turboDisabled && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "white", flexShrink: 0 }}>Turbo</span>}
+                      {selectedModel === "turbo" && turboDisabled  && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", background: "rgba(251,191,36,0.15)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)", flexShrink: 0 }}>Mantenimiento</span>}
                     </div>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", flexShrink: 0, transform: modelDropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
                   </button>
@@ -926,7 +944,7 @@ function GenerateTab({
                       {([
                         { value: "speech-1.6", sub: "Nuestro modelo insignia",                    disabled: false },
                         { value: "speech-1.5", sub: "Heredado",                                    disabled: false },
-                        { value: "turbo",      sub: "Voces premium · 2x rendimiento de caracteres", disabled: turboDown },
+                        { value: "turbo",      sub: "Voces premium · 2x rendimiento de caracteres", disabled: turboDisabled },
                       ]).map(({ value, sub, disabled }) => (
                         <button
                           key={value}
@@ -946,8 +964,8 @@ function GenerateTab({
                               <span style={{ fontWeight: 500 }}>Elite Labs</span>
                               {value === "speech-1.6" && <span className="badge-shimmer-purple" style={{ fontSize: "12px", fontWeight: 600, padding: "2px 8px", borderRadius: "6px", flexShrink: 0 }}>Pro</span>}
                               {value === "speech-1.5" && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>Legacy</span>}
-                              {value === "turbo" && !turboDown && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "white", flexShrink: 0 }}>Turbo</span>}
-                              {value === "turbo" && turboDown  && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", background: "rgba(251,191,36,0.12)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)", flexShrink: 0 }}>Mantenimiento</span>}
+                              {value === "turbo" && !turboDisabled && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "white", flexShrink: 0 }}>Turbo</span>}
+                              {value === "turbo" && turboDisabled  && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", background: "rgba(251,191,36,0.12)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)", flexShrink: 0 }}>Mantenimiento</span>}
                             </div>
                             <span style={{ fontSize: "11px", marginTop: "2px", color: "#4b4b6a" }}>{sub}</span>
                           </div>
