@@ -62,6 +62,7 @@ export async function POST(req: Request) {
             credits: PLAN_CREDITS[planKey] ?? 0,
             planExpiresAt: periodEnd,
             billingInterval,
+            stripePriceId: priceId,
             creditsRenewedAt: new Date(),
           },
         });
@@ -100,6 +101,7 @@ export async function POST(req: Request) {
           plan: planKey,
           credits: { increment: PLAN_CREDITS[planKey] ?? 0 },
           stripeSubscriptionId: subscription.id,
+          stripePriceId: priceId,
           planExpiresAt: periodEnd,
           billingInterval,
           creditsRenewedAt: new Date(),

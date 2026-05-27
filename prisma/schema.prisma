@@ -9,122 +9,123 @@ datasource db {
 }
 
 model User {
-  id                   String        @id @default(cuid())
-  clerkId              String        @unique
-  email                String
-  credits              Int           @default(0)
-  extraCredits         Int           @default(0)
-  role                 String        @default("user")
-  plan                 String        @default("free")
-  planExpiresAt        DateTime?
-  stripeCustomerId     String?       @unique
-  stripeSubscriptionId String?       @unique
-  billingInterval      String        @default("monthly")
-  creditsRenewedAt     DateTime?
-  transcriptionUsed    Int           @default(0)
-  referralCode         String?       @unique
-  referredBy           String?
-  createdAt            DateTime      @default(now())
-  updatedAt            DateTime      @updatedAt
-  generations          Generation[]
-  clonedVoices         ClonedVoice[]
-  purchases            Purchase[]
-  jobs                 Job[]
-  referralsGiven       Referral[]    @relation("referrer")
-  referralReceived     Referral?     @relation("referred")
-  supportTickets       SupportTicket[]
-  creditPacks          CreditPack[]
-  favoriteVoices       FavoriteVoice[]
-  teamOwned            Team?           @relation("TeamOwner")
-  teamMember           TeamMember?
-  transcriptionTasks    TranscriptionTask[]
-  translationTasks      TranslationTask[]
+  id                    String                 @id @default(cuid())
+  clerkId               String                 @unique
+  email                 String
+  credits               Int                    @default(0)
+  referralCode          String?                @unique
+  referredBy            String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  role                  String                 @default("user")
+  plan                  String                 @default("free")
+  planExpiresAt         DateTime?
+  stripeCustomerId      String?                @unique
+  stripeSubscriptionId  String?                @unique
+  stripePriceId         String?
+  transcriptionUsed     Int                    @default(0)
+  extraCredits          Int                    @default(0)
+  billingInterval       String                 @default("monthly")
+  creditsRenewedAt      DateTime?
   referralBalance       Int                    @default(0)
   referralEarned        Int                    @default(0)
-  payoutRequests        PayoutRequest[]
-  withdrawalRequests    WithdrawalRequest[]
   affiliateApplications AffiliateApplication[]
+  clonedVoices          ClonedVoice[]
+  creditPacks           CreditPack[]
+  favoriteVoices        FavoriteVoice[]
+  generations           Generation[]
   generationJobs        GenerationJob[]
+  jobs                  Job[]
+  payoutRequests        PayoutRequest[]
+  purchases             Purchase[]
+  referralReceived      Referral?              @relation("referred")
+  referralsGiven        Referral[]             @relation("referrer")
+  supportTickets        SupportTicket[]
+  teamOwned             Team?                  @relation("TeamOwner")
+  teamMember            TeamMember?
+  transcriptionTasks    TranscriptionTask[]
+  translationTasks      TranslationTask[]
+  withdrawalRequests    WithdrawalRequest[]
 }
 
 model Job {
   id              String    @id @default(cuid())
   userId          String
-  user            User      @relation(fields: [userId], references: [id])
   status          String    @default("pending")
   text            String
   voiceId         String
-  voiceName       String?
   audioUrl        String?
   durationSeconds Float?
   error           String?
   creditsUsed     Int       @default(0)
-  expiresAt       DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  expiresAt       DateTime?
+  voiceName       String?
+  user            User      @relation(fields: [userId], references: [id])
 }
 
 model Generation {
   id              String    @id @default(cuid())
   userId          String
-  user            User      @relation(fields: [userId], references: [id])
-  status          String    @default("done")
   text            String
   voiceId         String
-  voiceName       String?
   audioUrl        String?
   durationSeconds Float?
   creditsUsed     Int       @default(0)
-  error           String?
+  createdAt       DateTime  @default(now())
   refunded        Boolean   @default(false)
   expiresAt       DateTime?
-  createdAt       DateTime  @default(now())
+  error           String?
+  status          String    @default("done")
+  voiceName       String?
+  user            User      @relation(fields: [userId], references: [id])
 }
 
 model ClonedVoice {
   id                String   @id @default(cuid())
   userId            String
-  user              User     @relation(fields: [userId], references: [id])
   name              String
   referenceAudioUrl String
-  language          String   @default("es")
-  gender            String   @default("masculine")
-  isPublic          Boolean  @default(false)
-  provider          String   @default("fish_audio")
-  minimaxVoiceId    String?
   createdAt         DateTime @default(now())
+  gender            String   @default("masculine")
+  language          String   @default("es")
+  isPublic          Boolean  @default(false)
+  minimaxVoiceId    String?
+  provider          String   @default("fish_audio")
+  user              User     @relation(fields: [userId], references: [id])
 }
 
 model Purchase {
   id               String   @id @default(cuid())
   userId           String
-  user             User     @relation(fields: [userId], references: [id])
   stripeSessionId  String   @unique
   creditsPurchased Int
   amountCents      Int
   createdAt        DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id])
 }
 
 model SupportTicket {
   id          String   @id @default(cuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
   type        String
   description String
   status      String   @default("open")
   adminReply  String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 model CreditPack {
   id                    String   @id @default(cuid())
   userId                String
-  user                  User     @relation(fields: [userId], references: [id])
   credits               Int
   expiresAt             DateTime
   stripePaymentIntentId String?  @unique
   createdAt             DateTime @default(now())
+  user                  User     @relation(fields: [userId], references: [id])
 }
 
 model FavoriteVoice {
@@ -143,9 +144,9 @@ model Team {
   id        String       @id @default(cuid())
   name      String
   ownerId   String       @unique
+  createdAt DateTime     @default(now())
   owner     User         @relation("TeamOwner", fields: [ownerId], references: [id])
   members   TeamMember[]
-  createdAt DateTime     @default(now())
 }
 
 model TeamMember {
@@ -155,10 +156,10 @@ model TeamMember {
   email                  String
   name                   String?
   percentage             Int      @default(0)
+  createdAt              DateTime @default(now())
   creditsLastDistributed Int      @default(0)
   team                   Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   user                   User     @relation(fields: [userId], references: [id])
-  createdAt              DateTime @default(now())
 }
 
 model VoicePreview {
@@ -171,21 +172,20 @@ model VoicePreview {
 model Referral {
   id          String    @id @default(cuid())
   referrerId  String
-  referrer    User      @relation("referrer", fields: [referrerId], references: [id])
   referredId  String    @unique
-  referred    User      @relation("referred", fields: [referredId], references: [id])
-  status      String    @default("pending") // pending | rewarded | claimed
+  status      String    @default("pending")
   rewardChars Int       @default(0)
   createdAt   DateTime  @default(now())
   rewardedAt  DateTime?
+  referred    User      @relation("referred", fields: [referredId], references: [id])
+  referrer    User      @relation("referrer", fields: [referrerId], references: [id])
 }
 
 model TranscriptionTask {
   id                String   @id @default(cuid())
   userId            String
-  user              User     @relation(fields: [userId], references: [id])
   fileName          String
-  status            String   @default("processing") // processing | completed | error
+  status            String   @default("processing")
   creditsUsed       Int      @default(0)
   speakers          String   @default("auto")
   durationSeconds   Float?
@@ -193,12 +193,12 @@ model TranscriptionTask {
   errorMessage      String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id])
 }
 
 model TranslationTask {
   id                 String   @id @default(cuid())
   userId             String
-  user               User     @relation(fields: [userId], references: [id])
   fileName           String
   targetLanguage     String
   targetLanguageName String
@@ -211,12 +211,11 @@ model TranslationTask {
   errorMessage       String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  user               User     @relation(fields: [userId], references: [id])
 }
 
 model AffiliateApplication {
   id            String   @id @default(cuid())
-  userId        String?
-  user          User?    @relation(fields: [userId], references: [id])
   name          String
   email         String
   platform      String
@@ -225,35 +224,36 @@ model AffiliateApplication {
   status        String   @default("pending")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
 }
 
 model WithdrawalRequest {
   id        String    @id @default(cuid())
   userId    String
-  user      User      @relation(fields: [userId], references: [id])
   amount    Float
   method    String
   details   Json
   status    String    @default("pending")
   createdAt DateTime  @default(now())
   paidAt    DateTime?
+  user      User      @relation(fields: [userId], references: [id])
 }
 
 model PayoutRequest {
   id          String   @id @default(cuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
   amountCents Int
   method      String
   status      String   @default("pending")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 model GenerationJob {
   id          String   @id @default(cuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
   status      String   @default("pending")
   voiceId     String   @default("default")
   voiceName   String
@@ -266,12 +266,12 @@ model GenerationJob {
   fromExtra   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 model SystemConfig {
-  id                          String   @id @default("singleton")
-  elitelabsTurboStatus        String   @default("active")
+  id                           String   @id @default("singleton")
+  elitelabsTurboStatus         String   @default("active")
+  updatedAt                    DateTime @updatedAt
   elitelabsTurboManualOverride Boolean  @default(false)
-  updatedAt                   DateTime @updatedAt
 }
-

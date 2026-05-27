@@ -5,6 +5,7 @@ import { getStripe, getPriceId, PLAN_CREDITS, PLANS, type PlanKey } from "@/lib/
 
 export const runtime = "nodejs";
 
+// GET: returns real billing state from Stripe (not just DB) to avoid inconsistencies
 export async function GET() {
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ hasActiveSub: false });
@@ -12,11 +13,46 @@ export async function GET() {
   const user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
   if (!user) return NextResponse.json({ hasActiveSub: false });
 
-  return NextResponse.json({
-    hasActiveSub: !!user.stripeSubscriptionId && user.plan !== "free",
-    currentPlan: user.plan,
-    billingInterval: user.billingInterval ?? "monthly",
-  });
+  if (!user.stripeSubscriptionId || user.plan === "free") {
+    return NextResponse.json({ hasActiveSub: false, currentPlan: user.plan, billingInterval: "monthly" });
+  }
+
+  // Query Stripe directly for the real billing state
+  try {
+    const stripe = getStripe();
+    const sub = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+
+    if (sub.status !== "active") {
+      return NextResponse.json({ hasActiveSub: false, currentPlan: user.plan, billingInterval: user.billingInterval ?? "monthly" });
+    }
+
+    const interval = sub.items.data[0].price.recurring?.interval;
+    const billingInterval = interval === "year" ? "annual" : "monthly";
+    const stripePriceId = sub.items.data[0].price.id;
+
+    // Sync DB if billing interval drifted (e.g. manual Stripe dashboard change)
+    if (billingInterval !== user.billingInterval || stripePriceId !== user.stripePriceId) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { billingInterval, stripePriceId },
+      }).catch(() => {});
+    }
+
+    return NextResponse.json({
+      hasActiveSub: true,
+      currentPlan: user.plan,
+      billingInterval,
+      stripePriceId,
+    });
+  } catch {
+    // Stripe unreachable — fall back to DB values
+    return NextResponse.json({
+      hasActiveSub: !!user.stripeSubscriptionId,
+      currentPlan: user.plan,
+      billingInterval: user.billingInterval ?? "monthly",
+      stripePriceId: user.stripePriceId ?? null,
+    });
+  }
 }
 
 export async function POST(req: Request) {
@@ -66,11 +102,12 @@ export async function POST(req: Request) {
         credits,
         planExpiresAt: periodEnd,
         billingInterval,
+        stripePriceId: priceId,
         creditsRenewedAt: new Date(),
       },
     });
 
-    console.log(`[change-plan] plan changed: user=${user.id} newPlan=${planKey} billing=${billing}`);
+    console.log(`[change-plan] plan changed: user=${user.id} newPlan=${planKey} billing=${billing} priceId=${priceId}`);
 
     return NextResponse.json({ success: true });
   } catch (error) {

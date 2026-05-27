@@ -307,17 +307,27 @@ export async function POST(req: Request) {
     if (!priceId) return NextResponse.json({ received: true });
 
     const newPlan = getPlanFromPriceId(priceId);
-    if (!newPlan || newPlan === user.plan) return NextResponse.json({ received: true });
+    if (!newPlan) return NextResponse.json({ received: true });
 
     const periodEnd = new Date(sub.items.data[0].current_period_end * 1000);
-    const credits = PLAN_CREDITS[newPlan] ?? 0;
+    const interval = sub.items.data[0].plan.interval;
+    const newBillingInterval = interval === "year" ? "annual" : "monthly";
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { plan: newPlan, planExpiresAt: periodEnd, credits },
-    });
+    // Always update billingInterval and stripePriceId — catches monthly↔annual switches on same plan
+    const updateData: Parameters<typeof prisma.user.update>[0]["data"] = {
+      billingInterval: newBillingInterval,
+      stripePriceId: priceId,
+      planExpiresAt: periodEnd,
+    };
 
-    console.log(`[webhook] plan changed: user=${user.id} plan=${newPlan}`);
+    if (newPlan !== user.plan) {
+      updateData.plan = newPlan;
+      updateData.credits = PLAN_CREDITS[newPlan] ?? 0;
+    }
+
+    await prisma.user.update({ where: { id: user.id }, data: updateData });
+
+    console.log(`[webhook] subscription updated: user=${user.id} plan=${newPlan} billing=${newBillingInterval}`);
   }
 
   // ── payment_intent.succeeded (credit pack backup) ─────────
