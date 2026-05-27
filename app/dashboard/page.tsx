@@ -567,6 +567,8 @@ function GenerateTab({
   const [volume, setVolume] = useState(1.0);
 
   const [normalize, setNormalize] = useState(true);
+  const [proNormText, setProNormText] = useState(false);
+  const [proHighBitrate, setProHighBitrate] = useState(false);
   const [temperature, setTemperature] = useState(0.9);
   const [topP, setTopP] = useState(0.9);
   const [selectedModel, setSelectedModel] = useState("speech-1.6");
@@ -685,9 +687,13 @@ function GenerateTab({
           reference_id: selectedVoice?.referenceId ?? undefined,
           voiceName: selectedVoice?.name ?? "Voz por defecto",
           prosody,
-          normalize,
+          normalizeLoudness: normalize,
           model: selectedModel,
           ...(selectedModel === "speech-1.5" && { temperature, topP }),
+          ...(selectedModel === "speech-1.6" && {
+            normalizeText: proNormText,
+            mp3Bitrate: proHighBitrate ? 192 : 128,
+          }),
         };
       }
 
@@ -946,15 +952,34 @@ function GenerateTab({
                       <CompactSlider label="Top P" value={topP} onChange={setTopP} min={0} max={1} step={0.1} decimals={1} defaultValue={0.9} />
                     </>
                   )}
-                  {/* Normalización — sliding pill */}
+                  {/* Normalización de volumen */}
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#12121a", borderRadius: "10px", height: "40px" }}>
-                    <span style={{ fontSize: "12px", fontWeight: 500, color: "#8888a8" }}>{selectedModel === "speech-1.5" ? "Norm. texto" : "Normalización"}</span>
+                    <span style={{ fontSize: "12px", fontWeight: 500, color: "#8888a8" }}>{selectedModel === "speech-1.5" ? "Norm. texto" : "Norm. de volumen"}</span>
                     <div style={{ position: "relative", display: "flex", background: "#0d0f14", borderRadius: "6px", padding: "2px" }}>
                       <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#2a2a3e", borderRadius: "4px", transform: normalize ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
                       <button onClick={() => setNormalize(false)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: !normalize ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>No</button>
                       <button onClick={() => setNormalize(true)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: normalize ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>Sí</button>
                     </div>
                   </div>
+                  {/* Pro-only controls */}
+                  {selectedModel === "speech-1.6" && (<>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#12121a", borderRadius: "10px", height: "40px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: 500, color: "#8888a8" }}>Norm. de texto</span>
+                      <div style={{ position: "relative", display: "flex", background: "#0d0f14", borderRadius: "6px", padding: "2px" }}>
+                        <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#2a2a3e", borderRadius: "4px", transform: proNormText ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
+                        <button onClick={() => setProNormText(false)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: !proNormText ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>No</button>
+                        <button onClick={() => setProNormText(true)}  style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color:  proNormText ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>Sí</button>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#12121a", borderRadius: "10px", height: "40px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: 500, color: "#8888a8" }}>Calidad MP3</span>
+                      <div style={{ position: "relative", display: "flex", background: "#0d0f14", borderRadius: "6px", padding: "2px" }}>
+                        <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#2a2a3e", borderRadius: "4px", transform: proHighBitrate ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
+                        <button onClick={() => setProHighBitrate(false)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: !proHighBitrate ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>128k</button>
+                        <button onClick={() => setProHighBitrate(true)}  style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color:  proHighBitrate ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>192k</button>
+                      </div>
+                    </div>
+                  </>)}
                 </div>
                 {(speed !== 1 || volume !== 1 || (selectedModel === "speech-1.5" && (temperature !== 0.9 || topP !== 0.9))) && (
                   <button onClick={() => { setSpeed(1); setVolume(1); setTemperature(0.9); setTopP(0.9); }} style={{ marginTop: "10px", fontSize: "11px", color: "#6b7280", background: "none", border: "none", cursor: "pointer" }}>Restablecer valores</button>

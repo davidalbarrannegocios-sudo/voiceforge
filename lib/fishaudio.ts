@@ -196,6 +196,9 @@ export async function fishAudioGenerate({
   model = "speech-1.6",
   temperature,
   topP,
+  normalizeLoudness,
+  normalizeText,
+  mp3Bitrate,
 }: {
   text: string;
   referenceId?: string;
@@ -205,6 +208,9 @@ export async function fishAudioGenerate({
   model?: string;
   temperature?: number;
   topP?: number;
+  normalizeLoudness?: boolean;
+  normalizeText?: boolean;
+  mp3Bitrate?: number;
 }): Promise<GenerateResult> {
   const apiKey = getApiKey();
   const chunks = splitTextIntoChunks(text);
@@ -219,8 +225,8 @@ export async function fishAudioGenerate({
       text: chunks[i],
       model,
       format: "mp3",
-      mp3_bitrate: 128,
-      normalize: true,
+      mp3_bitrate: mp3Bitrate ?? 128,
+      normalize: normalizeText ?? true,
       latency: "balanced",
       chunk_length: 200,
     };
@@ -229,11 +235,15 @@ export async function fishAudioGenerate({
       if (temperature !== undefined) payload.temperature = temperature;
       if (topP !== undefined) payload.top_p = topP;
     }
-    // speed se aplica con ffmpeg post-proceso — nunca se envía a Fish Audio
+    // Build prosody: normalize_loudness + optional volume (speed via ffmpeg, not sent to Fish Audio)
+    const prosodyObj: Record<string, unknown> = {
+      normalize_loudness: normalizeLoudness ?? true,
+    };
     if (prosody?.volume !== undefined && prosody.volume !== 1) {
-      payload.prosody = { volume: prosody.volume };
+      prosodyObj.volume = prosody.volume;
     }
-    console.log("[fishaudio] payload prosody (sin speed):", JSON.stringify(payload.prosody));
+    payload.prosody = prosodyObj;
+    console.log("[fishaudio] payload prosody:", JSON.stringify(payload.prosody));
     return withSlot(() => fetchChunk(apiKey, payload, i, chunks.length, signal));
   }));
 

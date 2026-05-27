@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const { text, reference_id, prosody, voiceName, model, temperature, topP } = await req.json();
+  const { text, reference_id, prosody, voiceName, model, temperature, topP, normalizeLoudness, normalizeText, mp3Bitrate } = await req.json();
   console.log("[generate] prosody del request:", JSON.stringify(prosody));
 
   if (!text || typeof text !== "string" || text.trim().length === 0) {
@@ -89,6 +89,9 @@ export async function POST(req: Request) {
         model: typeof model === "string" ? model : undefined,
         temperature: typeof temperature === "number" ? temperature : undefined,
         topP: typeof topP === "number" ? topP : undefined,
+        normalizeLoudness: typeof normalizeLoudness === "boolean" ? normalizeLoudness : undefined,
+        normalizeText: typeof normalizeText === "boolean" ? normalizeText : undefined,
+        mp3Bitrate: typeof mp3Bitrate === "number" ? mp3Bitrate : undefined,
       });
     } catch (fishErr) {
       const isAbort = req.signal.aborted;
