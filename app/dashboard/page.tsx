@@ -795,7 +795,7 @@ function GenerateTab({
     <div className="flex flex-col" style={{ minHeight: "calc(100vh - 88px)", overflow: "auto" }}>
 
       {/* ── Unified two-column container ── */}
-      <div className="flex flex-col lg:flex-row" style={{ flex: 1, minHeight: 0, background: "#0d0f14", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", overflow: "hidden" }}>
+      <div className="flex flex-col lg:flex-row" style={{ flex: 1, minHeight: 0, maxHeight: "calc(100vh - 120px)", background: "#0d0f14", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", overflow: "hidden" }}>
 
         {/* ── LEFT COLUMN ── */}
         <div className="flex-1 min-w-0 flex flex-col min-h-64 lg:min-h-0 border-b lg:border-b-0" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
@@ -869,7 +869,7 @@ function GenerateTab({
         </div>
 
         {/* ── RIGHT COLUMN ── */}
-        <div className="w-full lg:w-72 flex-shrink-0 flex flex-col">
+        <div className="w-full lg:w-72 flex-shrink-0 flex flex-col min-h-0">
 
           {/* Sliding pill tab toggle */}
           <div style={{ padding: "12px", flexShrink: 0 }}>
@@ -881,7 +881,7 @@ function GenerateTab({
           </div>
 
           {rightTab === "ajustes" && (
-            <div style={{ flex: 1, overflowY: "auto", padding: "0 12px 16px", display: "flex", flexDirection: "column", gap: "20px" }}>
+            <div style={{ flex: 1, overflowY: "auto", padding: "0 12px 16px", display: "flex", flexDirection: "column", gap: "20px", scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}>
 
               {/* VOZ */}
               <div>
