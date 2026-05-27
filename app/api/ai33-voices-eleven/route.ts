@@ -3,53 +3,36 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-interface ElevenVoice {
-  voice_id?: string;
-  id?: string;
+interface SharedVoice {
+  voice_id: string;
   name?: string;
+  language?: string;
+  accent?: string;
+  gender?: string;
+  age?: string;
+  descriptive?: string;
+  use_case?: string;
+  category?: string;
   description?: string;
   preview_url?: string;
-  category?: string;
-  labels?: {
-    accent?: string;
-    gender?: string;
-    age?: string;
-    use_case?: string;
-    description?: string;
-  };
+  image_url?: string;
 }
 
-function labelsToLanguages(labels: ElevenVoice["labels"]): string[] {
-  const accent = (labels?.accent ?? "").toLowerCase();
-  if (accent.includes("spanish") || accent.includes("espanol") || accent.includes("español")) return ["es"];
-  if (accent.includes("french") || accent.includes("français")) return ["fr"];
-  if (accent.includes("german") && !accent.includes("american")) return ["de"];
-  if (accent.includes("italian") || accent.includes("italiano")) return ["it"];
-  if (accent.includes("portuguese") || accent.includes("português")) return ["pt"];
-  if (accent.includes("japanese") || accent.includes("日本語")) return ["ja"];
-  if (accent.includes("chinese") || accent.includes("中文")) return ["zh"];
-  if (accent.includes("korean") || accent.includes("한국어")) return ["ko"];
-  if (accent.includes("arabic") || accent.includes("عربي")) return ["ar"];
-  if (accent.includes("russian") || accent.includes("русский")) return ["ru"];
-  return ["en"];
-}
-
-function mapToFishVoice(v: ElevenVoice) {
-  const labels = v.labels ?? {};
+function mapToFishVoice(v: SharedVoice) {
   const tags: string[] = [
-    labels.gender,
-    labels.age,
-    labels.use_case,
-    labels.accent ? `accent-${labels.accent}` : undefined,
-    labels.description,
+    v.gender,
+    v.age,
+    v.use_case,
+    v.accent ? `accent-${v.accent}` : undefined,
+    v.descriptive,
   ].filter((t): t is string => typeof t === "string" && t.length > 0);
 
   return {
-    _id: v.voice_id ?? v.id ?? "",
+    _id: v.voice_id,
     title: v.name ?? "",
-    description: v.description ?? labels.description ?? null,
-    cover_image: null,
-    languages: labelsToLanguages(labels),
+    description: v.description ?? v.descriptive ?? null,
+    cover_image: v.image_url ?? null,
+    languages: v.language ? [v.language.split("-")[0].toLowerCase()] : ["en"],
     tags,
     task_count: 0,
     like_count: 0,
@@ -66,58 +49,52 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
-  const search = (searchParams.get("search") ?? "").toLowerCase().trim();
+  const search = (searchParams.get("search") ?? "").trim();
   const langFilter = (searchParams.get("language") ?? "").toLowerCase().trim();
+  const genderFilter = (searchParams.get("gender") ?? "").toLowerCase().trim();
   const accentFilter = (searchParams.get("accent") ?? "").toLowerCase().trim();
   const PAGE_SIZE = 20;
 
-  // page_size=500 returns all voices in one request (confirmed: API supports this param)
-  console.log("[ai33-voices-eleven] fetching voices from ai33.pro");
-  const res = await fetch("https://api.ai33.pro/v2/voices?page_size=500", { headers: { "xi-api-key": apiKey } });
+  // Build server-side filter params for ai33.pro
+  const params = new URLSearchParams({ page_size: "100" });
+  if (langFilter && langFilter !== "all") params.set("language", langFilter);
+  if (genderFilter && genderFilter !== "all") params.set("gender", genderFilter);
+  if (search) params.set("search", search);
+
+  const url = `https://api.ai33.pro/v1/shared-voices?${params}`;
+  console.log("[ai33-voices-eleven] fetching:", url);
+
+  const res = await fetch(url, { headers: { "xi-api-key": apiKey } });
   if (!res.ok) {
     const errBody = await res.text();
     return NextResponse.json({ error: `ai33.pro error ${res.status}: ${errBody}` }, { status: res.status });
   }
-  let parsed: { voices?: ElevenVoice[] } | ElevenVoice[];
+
+  let parsed: { voices?: SharedVoice[]; total_count?: number } | SharedVoice[];
   try { parsed = await res.json() as typeof parsed; } catch {
     return NextResponse.json({ error: "ai33.pro devolvió respuesta no-JSON" }, { status: 500 });
   }
-  const rawVoices: ElevenVoice[] = Array.isArray(parsed) ? parsed : (parsed.voices ?? []);
-  console.log(`[ai33-voices-eleven] fetched=${rawVoices.length} langFilter="${langFilter}" accentFilter="${accentFilter}" search="${search}" page=${page}`);
 
-  // Filter by language
-  const langFiltered = langFilter && langFilter !== "all"
-    ? rawVoices.filter((v) => labelsToLanguages(v.labels).includes(langFilter))
-    : rawVoices;
+  const rawVoices: SharedVoice[] = Array.isArray(parsed) ? parsed : (parsed.voices ?? []);
+  const serverTotal: number = Array.isArray(parsed) ? rawVoices.length : (parsed.total_count ?? rawVoices.length);
+  console.log(`[ai33-voices-eleven] fetched=${rawVoices.length} serverTotal=${serverTotal} lang="${langFilter}" gender="${genderFilter}" accent="${accentFilter}" search="${search}"`);
 
-  // Collect available accents from language-filtered set (before accent filter)
+  // Collect available accents from fetched set (before accent filter)
   const accents = [...new Set(
-    langFiltered
-      .map((v) => v.labels?.accent)
+    rawVoices
+      .map((v) => v.accent)
       .filter((a): a is string => typeof a === "string" && a.length > 0)
   )].sort();
 
-  // Filter by accent
+  // Client-side accent filter (not supported server-side)
   const accentFiltered = accentFilter && accentFilter !== "all"
-    ? langFiltered.filter((v) => (v.labels?.accent ?? "").toLowerCase() === accentFilter)
-    : langFiltered;
+    ? rawVoices.filter((v) => (v.accent ?? "").toLowerCase() === accentFilter)
+    : rawVoices;
 
-  // Map to FishVoice format
   const allItems = accentFiltered.map(mapToFishVoice);
+  const total = allItems.length;
+  const items = allItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // Search filter
-  const filtered = search
-    ? allItems.filter(
-        (v) =>
-          v.title.toLowerCase().includes(search) ||
-          (v.description ?? "").toLowerCase().includes(search) ||
-          v.tags.some((t) => t.toLowerCase().includes(search))
-      )
-    : allItems;
-
-  const total = filtered.length;
-  const items = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  console.log(`[ai33-voices-eleven] returning items=${items.length} total=${total} accents=${accents.length}`);
-
-  return NextResponse.json({ items, total, accents });
+  console.log(`[ai33-voices-eleven] returning items=${items.length} total=${total} accents=${accents.length} serverTotal=${serverTotal}`);
+  return NextResponse.json({ items, total, accents, serverTotal });
 }
