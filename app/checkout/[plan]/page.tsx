@@ -499,6 +499,168 @@ function CreditCheckoutForm({
   );
 }
 
+/* ─── Change plan confirmation (no payment form needed) ────── */
+function ChangePlanConfirm({
+  planKey,
+  currentPlan,
+  billing,
+  setBilling,
+}: {
+  planKey: PlanKey;
+  currentPlan: string;
+  billing: "monthly" | "annual";
+  setBilling: (b: "monthly" | "annual") => void;
+}) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const plan = PLANS[planKey];
+  const features = PLAN_FEATURES[planKey] ?? [];
+  const monthlyPrice = billing === "annual" ? Math.round(plan.price * 0.83 * 10) / 10 : plan.price;
+  const annualTotal = Math.round(monthlyPrice * 12);
+  const displayPrice = billing === "annual" ? `$${annualTotal}/año` : `$${plan.price}/mes`;
+
+  async function handleConfirm() {
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/change-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planKey, billing }),
+      });
+      const data = await res.json();
+      if (data.redirect) { router.push(data.redirect); return; }
+      if (!res.ok || !data.success) { setError(data.error ?? "Error al cambiar el plan"); setLoading(false); return; }
+      router.push(`/dashboard?planChanged=1&plan=${planKey}`);
+    } catch {
+      setError("Error de conexión. Inténtalo de nuevo.");
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div style={{ display: "flex", height: "100vh", background: "#000000", overflow: "hidden" }}>
+      {/* LEFT */}
+      <div style={{ flex: "0 0 55%", height: "100vh", overflowY: "auto", padding: "48px 56px", display: "flex", flexDirection: "column", gap: "32px" }}>
+        <div>
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard?tab=billing")}
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "none", border: "none", cursor: "pointer", color: "#555555", fontSize: "13px", padding: 0, marginBottom: "28px" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#ffffff"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "#555555"; }}
+          >
+            <ArrowLeft size={14} />
+            Volver
+          </button>
+          <h1 style={{ fontSize: "28px", fontWeight: 800, color: "#ffffff", margin: 0, lineHeight: 1.1 }}>
+            Cambiar de plan
+          </h1>
+          <p style={{ fontSize: "14px", color: "#555555", marginTop: "6px" }}>
+            De <span style={{ color: "#aaaaaa", textTransform: "capitalize" }}>{currentPlan}</span> a <span style={{ color: "#ffffff", textTransform: "capitalize" }}>{plan.name}</span> · El prorrateo se calculará automáticamente
+          </p>
+        </div>
+
+        {/* Billing toggle */}
+        <div>
+          <p style={{ fontSize: "12px", fontWeight: 600, color: "#555555", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "12px" }}>
+            Facturación
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+            <button
+              type="button"
+              onClick={() => setBilling("monthly")}
+              style={{ padding: "14px 16px", borderRadius: "12px", border: billing === "monthly" ? "2px solid #ffffff" : "1px solid #222222", background: billing === "monthly" ? "rgba(255,255,255,0.04)" : "#0a0a0a", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}
+            >
+              <p style={{ fontSize: "12px", color: billing === "monthly" ? "#cccccc" : "#555555", margin: "0 0 4px", fontWeight: 500 }}>Facturación mensual</p>
+              <p style={{ fontSize: "20px", fontWeight: 800, color: billing === "monthly" ? "#ffffff" : "#666666", margin: 0 }}>
+                ${plan.price}<span style={{ fontSize: "12px", fontWeight: 400, color: "#555555" }}>/mes</span>
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setBilling("annual")}
+              style={{ padding: "14px 16px", borderRadius: "12px", border: billing === "annual" ? "2px solid #ffffff" : "1px solid #222222", background: billing === "annual" ? "rgba(255,255,255,0.04)" : "#0a0a0a", cursor: "pointer", textAlign: "left", transition: "all 0.15s", position: "relative" }}
+            >
+              <div style={{ position: "absolute", top: "10px", right: "10px", fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e" }}>AHORRA 17%</div>
+              <p style={{ fontSize: "12px", color: billing === "annual" ? "#cccccc" : "#555555", margin: "0 0 4px", fontWeight: 500 }}>Facturación anual</p>
+              <p style={{ fontSize: "20px", fontWeight: 800, color: billing === "annual" ? "#ffffff" : "#666666", margin: 0 }}>
+                ${Math.round(plan.price * 0.83 * 10) / 10}<span style={{ fontSize: "12px", fontWeight: 400, color: "#555555" }}>/mes</span>
+              </p>
+            </button>
+          </div>
+        </div>
+
+        {/* Info box */}
+        <div style={{ padding: "16px", borderRadius: "10px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", fontSize: "13px", color: "#888888", lineHeight: 1.6 }}>
+          Tu plan cambiará de inmediato. Se calculará un prorrateo basado en los días restantes de tu ciclo actual. No se requiere una nueva tarjeta de crédito.
+        </div>
+
+        {error && (
+          <div style={{ padding: "10px 12px", borderRadius: "8px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171", fontSize: "13px" }}>
+            {error}
+          </div>
+        )}
+
+        <p style={{ fontSize: "11px", color: "#333333", marginTop: "auto" }}>
+          Pago seguro cifrado con SSL · Cancela en cualquier momento
+        </p>
+      </div>
+
+      {/* RIGHT */}
+      <div style={{ flex: "0 0 45%", height: "100vh", overflowY: "auto", background: "#0a0a0a", borderLeft: "1px solid #1a1a1a", padding: "48px 40px", display: "flex", flexDirection: "column" }}>
+        <div style={{ marginBottom: "24px" }}>
+          <p style={{ fontSize: "12px", fontWeight: 600, color: "#555555", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "6px" }}>Plan seleccionado</p>
+          <h2 style={{ fontSize: "22px", fontWeight: 800, color: "#ffffff", margin: "0 0 2px" }}>{plan.name}</h2>
+          <p style={{ fontSize: "13px", color: "#555555" }}>{plan.characters.toLocaleString("es-ES")} caracteres/mes</p>
+        </div>
+        <div style={{ marginBottom: "28px", flex: 1 }}>
+          <p style={{ fontSize: "12px", fontWeight: 600, color: "#555555", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "4px" }}>Funciones destacadas</p>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {features.map((f, i) => (
+              <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "10px", fontSize: "13px", color: "rgba(255,255,255,0.75)", lineHeight: 1.5, paddingTop: "10px", paddingBottom: "10px", borderBottom: i < features.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
+                <FeatureTick />{f}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: "20px", marginTop: "auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", color: "#555555", marginBottom: "8px" }}>
+            <span>Suscripción {billing === "annual" ? "anual" : "mensual"}</span>
+            <span>${billing === "annual" ? `${monthlyPrice}/mes` : `${plan.price}/mes`}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", color: "#555555", marginBottom: "16px" }}>
+            <span>Prorrateo</span>
+            <span>Calculado al cambiar</span>
+          </div>
+          <div style={{ height: "1px", background: "#1a1a1a", marginBottom: "16px" }} />
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "15px", fontWeight: 700, color: "#ffffff", marginBottom: "20px" }}>
+            <span>Nuevo precio</span>
+            <span>{displayPrice}</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={loading}
+            style={{ width: "100%", padding: "14px", borderRadius: "10px", border: "none", background: loading ? "#333333" : "#ffffff", color: "#000000", fontSize: "15px", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "background 0.15s, opacity 0.15s", marginBottom: "12px" }}
+            onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLElement).style.background = "#e5e5e5"; }}
+            onMouseLeave={(e) => { if (!loading) (e.currentTarget as HTMLElement).style.background = "#ffffff"; }}
+          >
+            {loading ? (
+              <><svg style={{ color: "#666666", flexShrink: 0 }} className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Procesando...</>
+            ) : `Cambiar a ${plan.name} — ${displayPrice}`}
+          </button>
+          <p style={{ fontSize: "11px", color: "#333333", textAlign: "center" }}>
+            Se renueva {billing === "annual" ? "anualmente" : "mensualmente"} · Cancela cuando quieras
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Data loader — fetches intent then renders form ─────── */
 function CheckoutContent() {
   const params = useParams<{ plan: string }>();
@@ -514,13 +676,14 @@ function CheckoutContent() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [hasActiveSub, setHasActiveSub] = useState<boolean | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<string>("free");
 
   useEffect(() => {
     if (!isCreditPack && !isPlan) { router.replace("/pricing"); return; }
     let cancelled = false;
 
     if (isCreditPack) {
-      // PaymentIntent flow for credit packs
       fetch("/api/buy-credits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -534,19 +697,49 @@ function CheckoutContent() {
         })
         .catch(() => { if (!cancelled) setFetchError("Error de conexión. Inténtalo de nuevo."); });
     } else {
-      // SetupIntent flow for subscriptions
-      fetch("/api/create-subscription", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planKey: rawKey }),
-      })
+      // Check if user already has an active subscription
+      fetch("/api/change-plan")
         .then((r) => r.json())
         .then((data) => {
           if (cancelled) return;
-          if (data.clientSecret) { setClientSecret(data.clientSecret); setCustomerId(data.customerId); }
-          else { setFetchError(data.error ?? "No se pudo iniciar el proceso de pago"); }
+          setHasActiveSub(data.hasActiveSub ?? false);
+          setCurrentPlan(data.currentPlan ?? "free");
+          if (data.billingInterval) setBilling(data.billingInterval);
+
+          if (!data.hasActiveSub) {
+            // New subscription — fetch SetupIntent
+            fetch("/api/create-subscription", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ planKey: rawKey }),
+            })
+              .then((r) => r.json())
+              .then((d) => {
+                if (cancelled) return;
+                if (d.clientSecret) { setClientSecret(d.clientSecret); setCustomerId(d.customerId); }
+                else { setFetchError(d.error ?? "No se pudo iniciar el proceso de pago"); }
+              })
+              .catch(() => { if (!cancelled) setFetchError("Error de conexión. Inténtalo de nuevo."); });
+          }
         })
-        .catch(() => { if (!cancelled) setFetchError("Error de conexión. Inténtalo de nuevo."); });
+        .catch(() => {
+          if (!cancelled) {
+            // On error checking sub status, fall through to normal checkout
+            setHasActiveSub(false);
+            fetch("/api/create-subscription", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ planKey: rawKey }),
+            })
+              .then((r) => r.json())
+              .then((d) => {
+                if (cancelled) return;
+                if (d.clientSecret) { setClientSecret(d.clientSecret); setCustomerId(d.customerId); }
+                else { setFetchError(d.error ?? "No se pudo iniciar el proceso de pago"); }
+              })
+              .catch(() => { if (!cancelled) setFetchError("Error de conexión. Inténtalo de nuevo."); });
+          }
+        });
     }
 
     return () => { cancelled = true; };
@@ -565,6 +758,11 @@ function CheckoutContent() {
         </div>
       </div>
     );
+  }
+
+  // Show change-plan confirmation for users with active subscriptions
+  if (isPlan && hasActiveSub) {
+    return <ChangePlanConfirm planKey={rawKey as PlanKey} currentPlan={currentPlan} billing={billing} setBilling={setBilling} />;
   }
 
   if (!clientSecret || (!isCreditPack && !customerId)) {

@@ -43,7 +43,34 @@ export async function POST(req: Request) {
     });
     console.log("[activate-subscription] PaymentMethod adjunto y configurado como default");
 
-    // Cancel any existing active/incomplete subscriptions to avoid duplicates
+    // If user already has an active subscription, update it instead of creating a duplicate
+    if (user.stripeSubscriptionId) {
+      const existingSub = await stripe.subscriptions.retrieve(user.stripeSubscriptionId).catch(() => null);
+      if (existingSub && existingSub.status === "active") {
+        const updatedSub = await stripe.subscriptions.update(user.stripeSubscriptionId, {
+          items: [{ id: existingSub.items.data[0].id, price: priceId }],
+          default_payment_method: paymentMethodId,
+          proration_behavior: "create_prorations",
+        });
+        const periodEnd = new Date(updatedSub.items.data[0].current_period_end * 1000);
+        const interval = updatedSub.items.data[0].plan.interval;
+        const billingInterval = interval === "year" ? "annual" : "monthly";
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            plan: planKey,
+            credits: PLAN_CREDITS[planKey] ?? 0,
+            planExpiresAt: periodEnd,
+            billingInterval,
+            creditsRenewedAt: new Date(),
+          },
+        });
+        console.log("[activate-subscription] Suscripción actualizada (proration):", user.stripeSubscriptionId, "→", planKey);
+        return NextResponse.json({ success: true, subscriptionId: user.stripeSubscriptionId, status: "active" });
+      }
+    }
+
+    // Cancel any existing incomplete subscriptions to avoid duplicates
     const existing = await stripe.subscriptions.list({
       customer: customerId,
       status: "incomplete",

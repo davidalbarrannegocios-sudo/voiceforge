@@ -4430,6 +4430,7 @@ export default function DashboardPage() {
 
   const successPlan     = searchParams.get("plan");
   const creditsBought   = searchParams.get("creditsBought");
+  const planChanged     = searchParams.get("planChanged");
 
   function handleUseVoice(voice: SelectedVoice) {
     setSelectedVoice(voice);
@@ -4511,11 +4512,19 @@ export default function DashboardPage() {
         })()}
         {/* Page content */}
         <div className="p-4">
-        {successPlan && (
+        {successPlan && !planChanged && (
           <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
             <Check size={18} className="text-green-400 flex-shrink-0" />
             <p className="text-green-400 font-medium text-sm">
               ¡Suscripción activada! Tu plan <strong className="capitalize">{successPlan}</strong> ya está activo.
+            </p>
+          </div>
+        )}
+        {planChanged && successPlan && (
+          <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
+            <Check size={18} className="text-green-400 flex-shrink-0" />
+            <p className="text-green-400 font-medium text-sm">
+              ¡Plan actualizado correctamente! Ahora estás en el plan <strong className="capitalize">{successPlan}</strong>.
             </p>
           </div>
         )}
