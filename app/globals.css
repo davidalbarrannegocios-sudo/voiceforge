@@ -254,19 +254,25 @@ input[type="range"]::-moz-range-thumb {
 }
 
 
-/* ── Fish Audio tag highlight marks ──────────────────────────── */
-mark { background: none; }
-.tts-tag-s2,
-.tts-tag-s1 {
-  display: inline;
-  background: rgba(255, 255, 255, 0.13);
+/* ── Fish Audio tag highlight spans ──────────────────────────── */
+.tts-tag {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.95);
   border-radius: 4px;
   padding: 1px 5px;
-  font-style: normal;
+  font-size: 0.875em;
+  display: inline;
+  white-space: nowrap;
 }
-.tts-tag-s2 {
-  color: rgba(255, 255, 255, 0.90) !important;
-}
+
 .tts-tag-s1 {
-  color: rgba(200, 180, 255, 0.90) !important;
+  background: rgba(180, 150, 255, 0.15);
+  color: rgba(210, 190, 255, 0.95);
+}
+
+/* Placeholder para contenteditable */
+[contenteditable][data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  color: rgba(255, 255, 255, 0.25);
+  pointer-events: none;
 }

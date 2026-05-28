@@ -16,6 +16,7 @@ import { useLang } from "./LanguageContext";
 import AudioHistoryList from "@/components/AudioHistoryList";
 import { CustomSelect } from "@/components/CustomSelect";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
+import { TaggedTextEditor } from "@/components/TaggedTextEditor";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface Voice {
@@ -585,8 +586,6 @@ function GenerateTab({
   const m1OutDropRef = useRef<HTMLDivElement>(null);
   const [previewing, setPreviewing] = useState<"idle" | "loading" | "playing">("idle");
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [isAutoTagging, setIsAutoTagging] = useState(false);
   const tagsAreaRef = useRef<HTMLDivElement>(null);
@@ -731,31 +730,11 @@ function GenerateTab({
     ? "Las etiquetas (…) deben ir al inicio de cada frase"
     : "Las etiquetas […] deben ir al inicio de cada frase";
 
-  const showTagOverlay = selectedModel !== "turbo";
-
-  function getHighlightedHTML(raw: string): string {
-    const escaped = raw
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/\n/g, "<br>");
-    if (selectedModel === "speech-1.5") {
-      return escaped.replace(/\(([^)]+)\)/g, '<mark class="tts-tag-s1">($1)</mark>');
-    }
-    return escaped.replace(/\[([^\]]+)\]/g, '<mark class="tts-tag-s2">[$1]</mark>');
-  }
-
   function insertTagAtCursor(tag: string) {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const newText = text.substring(0, start) + tag + text.substring(end);
-    setText(newText);
-    setTimeout(() => {
-      ta.selectionStart = ta.selectionEnd = start + tag.length;
-      ta.focus();
-    }, 0);
+    const editor = document.querySelector('[data-tts-editor]') as HTMLElement;
+    if (!editor) return;
+    editor.focus();
+    document.execCommand('insertText', false, tag);
   }
 
   async function handleAutoTag() {
@@ -986,24 +965,14 @@ function GenerateTab({
             </div>
           )}
 
-          {/* Textarea with highlight overlay */}
+          {/* Tagged text editor (contenteditable) */}
           <div style={{ position: "relative", flex: 1, overflow: "hidden" }}>
-            {showTagOverlay && (
-              <div
-                ref={overlayRef}
-                aria-hidden="true"
-                style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, padding: "16px", fontSize: "14px", lineHeight: "1.75", fontFamily: "inherit", color: "transparent", whiteSpace: "pre-wrap", wordBreak: "break-word", pointerEvents: "none", overflow: "hidden", boxSizing: "border-box", zIndex: 1 }}
-                dangerouslySetInnerHTML={{ __html: getHighlightedHTML(text) }}
-              />
-            )}
-            <textarea
-              ref={textareaRef}
+            <TaggedTextEditor
               value={text}
-              onChange={(e) => setText(e.target.value)}
-              onScroll={(e) => { if (overlayRef.current) overlayRef.current.scrollTop = e.currentTarget.scrollTop; }}
+              onChange={setText}
+              isS2={selectedModel !== "speech-1.5"}
               placeholder={t.generate.placeholder}
               disabled={submitting}
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", padding: "16px", background: "transparent", border: "none", outline: "none", resize: "none", fontSize: "14px", color: "rgba(255,255,255,0.92)", caretColor: "white", lineHeight: "1.75", opacity: submitting ? 0.6 : 1, fontFamily: "inherit", boxSizing: "border-box", zIndex: 2 }}
             />
           </div>
 
