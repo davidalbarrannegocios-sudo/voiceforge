@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   title: "Elite Labs — Narración con IA de calidad profesional",
   description:
     "Genera voces realistas con IA y clona cualquier voz con solo 10 segundos de audio. Powered by Chatterbox TTS.",
+  icons: {
+    icon: "/elitelabs.png",
+    apple: "/elitelabs.png",
+  },
 };
 
 export default function RootLayout({
