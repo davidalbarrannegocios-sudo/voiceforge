@@ -585,6 +585,9 @@ function GenerateTab({
   const m1OutDropRef = useRef<HTMLDivElement>(null);
   const [previewing, setPreviewing] = useState<"idle" | "loading" | "playing">("idle");
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [tagsOpen, setTagsOpen] = useState(false);
+  const tagsAreaRef = useRef<HTMLDivElement>(null);
   const [rightTab, setRightTab] = useState<"ajustes" | "historial">("ajustes");
   const { t } = useLang();
 
@@ -696,6 +699,41 @@ function GenerateTab({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [turboDisabled]);
+
+  useEffect(() => {
+    if (!tagsOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (tagsAreaRef.current && !tagsAreaRef.current.contains(e.target as Node)) {
+        setTagsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [tagsOpen]);
+
+  const TAG_GROUPS = [
+    {
+      label: "Tono emocional",
+      tags: ["[angry]", "[sad]", "[embarrassed]", "[emphasis]", "[whispering]", "[soft]", "[breathy]", "[excited]"],
+    },
+    {
+      label: "Efectos de audio",
+      tags: ["[laughing]", "[chuckling]", "[moaning]", "[clear throat]", "[sobbing]", "[crying loudly]", "[sighing]", "[panting]", "[groaning]", "[crowd laughing]", "[background laughter]", "[audience laughing]", "[pause]", "[long pause]"],
+    },
+  ];
+
+  function insertTagAtCursor(tag: string) {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const newText = text.substring(0, start) + tag + text.substring(end);
+    setText(newText);
+    setTimeout(() => {
+      ta.selectionStart = ta.selectionEnd = start + tag.length;
+      ta.focus();
+    }, 0);
+  }
 
   async function handleGenerate() {
     setFormError(null);
@@ -854,8 +892,54 @@ function GenerateTab({
             <span style={{ fontSize: "13px", fontWeight: 400, color: "#9ca3af" }}>{selectedVoice?.name ?? t.generate.defaultVoice}</span>
           </button>
 
+          {/* Tags toolbar — only for Fish Audio (M2) models */}
+          {selectedModel !== "turbo" && (
+            <div ref={tagsAreaRef} style={{ position: "relative", padding: "0 12px 6px", flexShrink: 0 }}>
+              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                <button
+                  onClick={() => setTagsOpen(o => !o)}
+                  style={{ display: "flex", alignItems: "center", gap: "4px", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, background: tagsOpen ? "rgba(255,255,255,0.08)" : "transparent", border: "1px solid rgba(255,255,255,0.12)", color: "#9ca3af", cursor: "pointer" }}
+                >
+                  Etiquetas
+                  <span style={{ display: "inline-block", transition: "transform 0.15s", transform: tagsOpen ? "rotate(90deg)" : "none", fontSize: "10px" }}>›</span>
+                </button>
+                <button
+                  disabled
+                  title="Próximamente: etiquetado automático con IA"
+                  style={{ display: "flex", alignItems: "center", gap: "4px", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, background: "transparent", border: "1px solid rgba(255,255,255,0.06)", color: "#444444", cursor: "not-allowed" }}
+                >
+                  ✦ Etiquetado automático
+                </button>
+              </div>
+
+              {tagsOpen && (
+                <div style={{ position: "absolute", top: "calc(100% + 4px)", left: "12px", zIndex: 50, background: "#111111", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", padding: "14px 16px", minWidth: "340px", maxWidth: "520px", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
+                  {TAG_GROUPS.map(group => (
+                    <div key={group.label} style={{ marginBottom: "12px" }}>
+                      <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#555555", marginBottom: "8px" }}>{group.label}</p>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
+                        {group.tags.map(tag => (
+                          <button
+                            key={tag}
+                            onMouseDown={e => { e.preventDefault(); insertTagAtCursor(tag); }}
+                            style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, background: "#1e1e1e", border: "1px solid rgba(255,255,255,0.08)", color: "#d1d5db", cursor: "pointer", transition: "background 0.1s, color 0.1s" }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#2a2a2a"; (e.currentTarget as HTMLButtonElement).style.color = "#fff"; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "#1e1e1e"; (e.currentTarget as HTMLButtonElement).style.color = "#d1d5db"; }}
+                          >
+                            {tag}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Textarea */}
           <textarea
+            ref={textareaRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder={t.generate.placeholder}
