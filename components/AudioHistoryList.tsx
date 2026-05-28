@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Clock, Trash2, Play, Pause, Download, RefreshCw, Share2, FileText } from "lucide-react";
+import { Clock, Trash2, Play, Pause, Download, RefreshCw, FileText, Copy, Check } from "lucide-react";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 
 interface PendingJob {
@@ -25,6 +25,7 @@ interface Generation {
   error: string | null;
   createdAt: string;
   expiresAt: string | null;
+  inputText?: string;
 }
 
 interface DateGroup {
@@ -93,6 +94,9 @@ export default function AudioHistoryList({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [pendingJobs, setPendingJobs] = useState<PendingJob[]>([]);
+  const [openTranscripts, setOpenTranscripts] = useState<Set<string>>(new Set());
+  const [cleanedIds, setCleanedIds] = useState<Set<string>>(new Set());
+  const [copied, setCopied] = useState<string | null>(null);
   const pendingIntervals = useRef<Record<string, ReturnType<typeof setInterval>>>({});
   const pageRef = useRef(page);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -402,7 +406,7 @@ export default function AudioHistoryList({
                         </p>
 
                         {/* Row 3: action buttons */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "4px", paddingLeft: "32px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px", paddingLeft: "32px", flexWrap: "nowrap", overflow: "hidden" }}>
                           {isProcessing && !isStale ? (
                             <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "10px", color: "#6b7280" }}>
                               <svg style={{ color: "#6b7280", flexShrink: 0, animation: "spin 1s linear infinite" }} width="10" height="10" viewBox="0 0 24 24" fill="none">
@@ -421,18 +425,18 @@ export default function AudioHistoryList({
                             <>
                               <button
                                 onClick={() => handlePlayToggle(gen)}
-                                style={{ display: "flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "9999px", background: "rgba(255,255,255,0.08)", border: isPlaying ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent", cursor: "pointer", fontSize: "11px", fontWeight: 500, color: isPlaying ? "#ffffff" : "#e2e8f0", transition: "all 0.15s" }}
+                                style={{ display: "flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "9999px", background: "rgba(255,255,255,0.08)", border: isPlaying ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent", cursor: "pointer", fontSize: "11px", fontWeight: 500, color: isPlaying ? "#ffffff" : "#e2e8f0", transition: "all 0.15s", minWidth: 0, maxWidth: "110px", overflow: "hidden", flexShrink: 0 }}
                               >
                                 {isPlaying ? (
-                                  <><Pause size={10} /><span style={{ fontVariantNumeric: "tabular-nums" }}>{fmtMSS(playTime.current)}/{fmtMSS(playTime.duration)}</span></>
+                                  <><Pause size={10} style={{ flexShrink: 0 }} /><span style={{ fontVariantNumeric: "tabular-nums", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{fmtMSS(playTime.current)}/{fmtMSS(playTime.duration)}</span></>
                                 ) : (
-                                  <><Play size={10} fill="currentColor" />Play</>
+                                  <><Play size={10} fill="currentColor" style={{ flexShrink: 0 }} />Play</>
                                 )}
                               </button>
                               <a
                                 href={gen.audioUrl!}
                                 download={`audio-${gen.id}.mp3`}
-                                style={{ display: "flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "9999px", background: "rgba(255,255,255,0.08)", fontSize: "11px", fontWeight: 500, color: "#e2e8f0", textDecoration: "none" }}
+                                style={{ display: "flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "9999px", background: "rgba(255,255,255,0.08)", fontSize: "11px", fontWeight: 500, color: "#e2e8f0", textDecoration: "none", flexShrink: 0 }}
                               >
                                 <Download size={10} />
                                 Descargar
@@ -440,21 +444,61 @@ export default function AudioHistoryList({
                             </>
                           )}
                           <div style={{ flex: 1 }} />
-                          <button title="Ver texto completo" style={{ background: "none", border: "none", cursor: "pointer", color: "#4b5563", padding: "2px", display: "flex", alignItems: "center" }}>
+                          <button
+                            title="Ver transcript"
+                            onClick={() => setOpenTranscripts((prev) => { const s = new Set(prev); if (s.has(gen.id)) s.delete(gen.id); else s.add(gen.id); return s; })}
+                            style={{ background: "none", border: "none", cursor: "pointer", color: openTranscripts.has(gen.id) ? "#ffffff" : "#4b5563", padding: "2px", display: "flex", alignItems: "center", flexShrink: 0 }}
+                          >
                             <FileText size={13} />
-                          </button>
-                          <button title="Compartir" style={{ background: "none", border: "none", cursor: "pointer", color: "#4b5563", padding: "2px", display: "flex", alignItems: "center" }}>
-                            <Share2 size={13} />
                           </button>
                           <button
                             onClick={() => setConfirmId(isConfirming ? null : gen.id)}
                             disabled={isDeleting}
                             title="Eliminar"
-                            style={{ background: "none", border: "none", cursor: "pointer", color: isConfirming ? "#f87171" : "#4b5563", padding: "2px", display: "flex", alignItems: "center", opacity: isDeleting ? 0.4 : 1 }}
+                            style={{ background: "none", border: "none", cursor: "pointer", color: isConfirming ? "#f87171" : "#4b5563", padding: "2px", display: "flex", alignItems: "center", opacity: isDeleting ? 0.4 : 1, flexShrink: 0 }}
                           >
                             <Trash2 size={13} />
                           </button>
                         </div>
+
+                        {/* Transcript panel */}
+                        {openTranscripts.has(gen.id) && gen.inputText && (
+                          <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                              <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Transcript</span>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                {(gen.inputText.includes("[") || gen.inputText.includes("(")) && (
+                                  <button
+                                    onClick={() => setCleanedIds((prev) => { const s = new Set(prev); if (s.has(gen.id)) s.delete(gen.id); else s.add(gen.id); return s; })}
+                                    style={{ display: "flex", alignItems: "center", gap: "4px", padding: "2px 8px", borderRadius: "9999px", background: "rgba(255,255,255,0.05)", border: "none", cursor: "pointer", fontSize: "11px", color: "rgba(255,255,255,0.5)" }}
+                                  >
+                                    {cleanedIds.has(gen.id) ? "Con etiquetas" : "Sin etiquetas"}
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => {
+                                    const full = gen.inputText!;
+                                    const textToCopy = cleanedIds.has(gen.id)
+                                      ? full.replace(/\[[^\]]+\]\s*/g, "").replace(/\([^)]+\)\s*/g, "")
+                                      : full;
+                                    navigator.clipboard.writeText(textToCopy);
+                                    setCopied(gen.id);
+                                    setTimeout(() => setCopied(null), 2000);
+                                  }}
+                                  title="Copiar texto"
+                                  style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", padding: "2px", display: "flex", alignItems: "center" }}
+                                >
+                                  {copied === gen.id ? <Check size={13} style={{ color: "#4ade80" }} /> : <Copy size={13} />}
+                                </button>
+                              </div>
+                            </div>
+                            <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.7)", lineHeight: "1.6", whiteSpace: "pre-wrap", maxHeight: "200px", overflowY: "auto", margin: 0 }}>
+                              {cleanedIds.has(gen.id)
+                                ? gen.inputText.replace(/\[[^\]]+\]\s*/g, "").replace(/\([^)]+\)\s*/g, "")
+                                : gen.inputText}
+                            </p>
+                          </div>
+                        )}
 
                         {/* Inline confirm */}
                         {isConfirming && (

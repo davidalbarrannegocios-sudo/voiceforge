@@ -43,6 +43,7 @@ export async function GET(req: Request) {
   return NextResponse.json({
     generations: generations.map((g) => ({
       ...g,
+      inputText: g.text,
       text: truncateText(g.text, 100),
     })),
     total,
