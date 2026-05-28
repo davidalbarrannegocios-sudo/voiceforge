@@ -25,13 +25,19 @@ export async function GET(req: Request) {
     select: { id: true, audioUrl: true },
   });
 
-  // Collect unique R2 URLs to delete (Generation and Job share the same file)
-  const uniqueUrls = new Set<string>();
-  for (const g of expiredGenerations) if (g.audioUrl) uniqueUrls.add(g.audioUrl);
-  for (const j of expiredJobs) if (j.audioUrl) uniqueUrls.add(j.audioUrl);
+  // Fetch expired translation tasks
+  const expiredTranslations = await prisma.translationTask.findMany({
+    where: { expiresAt: { lt: now }, audioUrl: { not: null }, status: { not: "expired" } },
+    select: { id: true, audioUrl: true, r2Key: true },
+  });
 
   let deleted = 0;
   let errors = 0;
+
+  // Collect unique R2 keys/URLs to delete (Generation and Job share the same file)
+  const uniqueUrls = new Set<string>();
+  for (const g of expiredGenerations) if (g.audioUrl) uniqueUrls.add(g.audioUrl);
+  for (const j of expiredJobs) if (j.audioUrl) uniqueUrls.add(j.audioUrl);
 
   for (const url of uniqueUrls) {
     try {
@@ -39,6 +45,19 @@ export async function GET(req: Request) {
       deleted++;
     } catch (err) {
       console.error(`[cleanup] failed to delete ${url}:`, err);
+      errors++;
+    }
+  }
+
+  // Delete translation audio files (prefer r2Key, fall back to URL)
+  for (const t of expiredTranslations) {
+    const key = t.r2Key ?? (t.audioUrl ? keyFromPublicUrl(t.audioUrl) : null);
+    if (!key) continue;
+    try {
+      await deleteFromR2(key);
+      deleted++;
+    } catch (err) {
+      console.error(`[cleanup] failed to delete translation ${key}:`, err);
       errors++;
     }
   }
@@ -59,7 +78,15 @@ export async function GET(req: Request) {
     });
   }
 
-  console.log(`[cleanup] deleted=${deleted} errors=${errors} generations=${expiredGenerations.length} jobs=${expiredJobs.length}`);
+  // Null out audioUrl and mark expired on translation tasks
+  if (expiredTranslations.length > 0) {
+    await prisma.translationTask.updateMany({
+      where: { id: { in: expiredTranslations.map((t) => t.id) } },
+      data: { audioUrl: null, status: "expired" },
+    });
+  }
+
+  console.log(`[cleanup] deleted=${deleted} errors=${errors} generations=${expiredGenerations.length} jobs=${expiredJobs.length} translations=${expiredTranslations.length}`);
 
   return NextResponse.json({
     ok: true,
@@ -67,5 +94,6 @@ export async function GET(req: Request) {
     errors,
     generations: expiredGenerations.length,
     jobs: expiredJobs.length,
+    translations: expiredTranslations.length,
   });
 }

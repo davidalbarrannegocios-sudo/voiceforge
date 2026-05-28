@@ -5,12 +5,16 @@ import { prisma } from "@/lib/prisma";
 import { fishAudioGenerate, fishAudioClone, convertToMp3 } from "@/lib/fishaudio";
 import { calculateCharCost } from "@/lib/utils";
 import { getEffectivePlan } from "@/lib/plan";
-import { downloadFromR2, deleteFromR2 } from "@/lib/r2";
+import { downloadFromR2, deleteFromR2, keyFromPublicUrl } from "@/lib/r2";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
 const FREE_TRANSCRIPTION_LIMIT = 2;
+
+const RETENTION_DAYS: Record<string, number> = {
+  free: 3, starter: 14, pro: 30, elite: 30, enterprise: 90,
+};
 
 const LANGUAGES: Record<string, { name: string; deeplCode: deepl.TargetLanguageCode }> = {
   en:  { name: "Inglés",    deeplCode: "en-US" },
@@ -183,6 +187,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: msg }, { status: 500 });
     }
 
+    const retentionDays = RETENTION_DAYS[effectivePlan] ?? 3;
+    const expiresAt = new Date(Date.now() + retentionDays * 24 * 60 * 60 * 1000);
+    const r2Key = keyFromPublicUrl(ttsResult.audio_url);
+
     await prisma.translationTask.update({
       where: { id: task.id },
       data: {
@@ -190,6 +198,8 @@ export async function POST(req: Request) {
         creditsUsed: charCost,
         durationSeconds: ttsResult.duration_seconds,
         audioUrl: ttsResult.audio_url,
+        r2Key,
+        expiresAt,
         transcribedText,
         translatedText,
       },

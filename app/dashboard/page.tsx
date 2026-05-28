@@ -2495,7 +2495,12 @@ interface TTranslateTask {
   audioUrl: string | null;
   errorMessage: string | null;
   createdAt: string;
+  expiresAt: string | null;
 }
+
+const TRANSLATE_RETENTION: Record<string, number> = {
+  free: 3, starter: 14, pro: 30, elite: 30, enterprise: 90,
+};
 
 const TRANSLATE_STEPS = [
   { after: 0,    label: "Transcribiendo audio..." },
@@ -2904,7 +2909,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           )}
 
           {/* Submit */}
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-2">
             <button
               onClick={handleTranslate}
               disabled={!file || loading || isFreeExhausted}
@@ -2923,6 +2928,9 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 <><Globe size={15} /> Iniciar traducción</>
               )}
             </button>
+            <p className="text-xs text-center" style={{ color: "rgba(255,255,255,0.25)" }}>
+              Los audios se eliminan automáticamente en {TRANSLATE_RETENTION[plan] ?? 3} días · Descárgalos una vez generados
+            </p>
           </div>
 
           {/* Result */}
@@ -2994,6 +3002,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                     <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>Idioma destino</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>Estado</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>Fecha</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>Retención</th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
@@ -3037,8 +3046,16 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                             {new Date(task.createdAt).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}
                           </span>
                         </td>
+                        <td className="px-4 py-3">
+                          {task.expiresAt && (() => {
+                            const daysLeft = Math.ceil((new Date(task.expiresAt).getTime() - Date.now()) / 86_400_000);
+                            return daysLeft <= 0
+                              ? <span style={{ fontSize: "11px", color: "#f87171" }}>Expirado</span>
+                              : <span style={{ fontSize: "11px", color: daysLeft <= 3 ? "#f59e0b" : "#6b7280" }}>Expira en {daysLeft}d</span>;
+                          })()}
+                        </td>
                         <td className="px-4 py-3 text-right">
-                          {task.audioUrl && (
+                          {task.audioUrl && task.status !== "expired" && (
                             <a
                               href={task.audioUrl}
                               download={`traduccion-${task.targetLanguage}-${task.id}.mp3`}
