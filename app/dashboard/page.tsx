@@ -2609,6 +2609,10 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 
   async function handleTranslate() {
     if (!file) return;
+    if (file.size > 50 * 1024 * 1024) {
+      setError("El archivo es demasiado grande. Máximo 50 MB.");
+      return;
+    }
     setLoading(true);
     setError(null);
     setResult(null);

@@ -3,6 +3,9 @@ const nextConfig = {
   output: "standalone",
   experimental: {
     proxyTimeout: 300000,
+    serverActions: {
+      bodySizeLimit: "50mb",
+    },
   },
   env: {
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_live_Y2xlcmsuZWxpdGVsYWJzLmVzJA",
