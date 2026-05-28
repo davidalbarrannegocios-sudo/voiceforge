@@ -740,9 +740,9 @@ function GenerateTab({
       .replace(/>/g, "&gt;")
       .replace(/\n/g, "<br>");
     if (selectedModel === "speech-1.5") {
-      return escaped.replace(/\(([^)]+)\)/g, '<mark class="tag-highlight-s1">($1)</mark>');
+      return escaped.replace(/\(([^)]+)\)/g, '<mark class="tts-tag-s1">($1)</mark>');
     }
-    return escaped.replace(/\[([^\]]+)\]/g, '<mark class="tag-highlight-s2">[$1]</mark>');
+    return escaped.replace(/\[([^\]]+)\]/g, '<mark class="tts-tag-s2">[$1]</mark>');
   }
 
   function insertTagAtCursor(tag: string) {

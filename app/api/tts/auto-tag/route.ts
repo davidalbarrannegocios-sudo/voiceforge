@@ -4,22 +4,29 @@ import { auth } from "@clerk/nextjs/server";
 
 export const runtime = "nodejs";
 
-const S2_SYSTEM = `Eres un experto en síntesis de voz con IA. Tu tarea es añadir etiquetas de emoción y efectos de audio al texto que te dan, usando ÚNICAMENTE la sintaxis de corchetes de Fish Audio S2: [etiqueta].
+const S2_SYSTEM = `Eres un experto en síntesis de voz con IA. Tu tarea es añadir etiquetas de emoción a un texto para Fish Audio S2, usando la sintaxis de corchetes: [etiqueta].
 
 Etiquetas disponibles:
-- Tono emocional: [angry] [sad] [embarrassed] [emphasis] [whispering] [soft] [breathy] [excited] [surprised] [shouting] [screaming] [delight]
-- Efectos de audio: [laughing] [chuckling] [sighing] [panting] [groaning] [sobbing] [crying loudly] [clear throat] [moaning] [inhale] [exhale]
-- Pausas: [pause] [long pause] [short pause]
-- Ambiente: [crowd laughing] [background laughter] [audience laughing]
-- Volumen: [loud] [low volume] [volume up] [volume down] [whisper] [echo]
-- Otras: [singing] [with strong accent] [clearing throat]
+[angry] [sad] [embarrassed] [emphasis] [whispering] [soft] [breathy] [excited] [surprised] [shouting] [laughing] [chuckling] [sighing] [panting] [sobbing] [clear throat] [pause] [long pause]
 
-REGLAS ESTRICTAS:
-1. Las etiquetas van SIEMPRE al INICIO de la frase, nunca en medio
-2. NO uses más de 1-2 etiquetas por frase
-3. NO etiquetes todas las frases — solo las que se beneficien claramente de emoción
-4. Mantén el texto original exactamente igual, solo añade etiquetas al principio de frases seleccionadas
-5. Responde SOLO con el texto modificado, sin explicaciones ni comentarios`;
+REGLAS (síguela AL PIE DE LA LETRA):
+1. Una etiqueta solo puede ir al INICIO de un párrafo o frase, NUNCA en medio del texto.
+2. Después de la etiqueta SIEMPRE hay un espacio antes del texto: [excited] Hola mundo ✓ — [excited]Hola mundo ✗
+3. Máximo UNA etiqueta por párrafo o frase.
+4. Solo etiqueta entre el 30 % y el 40 % de los párrafos/frases — deja el resto sin etiquetar.
+5. Mantén el texto original exactamente igual; solo añade etiquetas al inicio.
+6. Responde ÚNICAMENTE con el texto modificado, sin explicaciones ni comentarios.
+
+EJEMPLOS:
+CORRECTO:
+[excited] ¡Bienvenidos al show de hoy!
+Hoy vamos a hablar de algo muy especial.
+[soft] Pero primero, un momento de reflexión.
+
+INCORRECTO:
+[excited][soft] ¡Bienvenidos! — (dos etiquetas)
+¡Bienvenidos [excited] al show! — (etiqueta en medio)
+[excited]¡Bienvenidos! — (sin espacio tras etiqueta)`;
 
 const S1_SYSTEM = `Eres un experto en síntesis de voz con IA. Tu tarea es añadir etiquetas de emoción y efectos de audio al texto, usando ÚNICAMENTE la sintaxis de paréntesis de Fish Audio S1: (etiqueta).
 
@@ -59,7 +66,11 @@ export async function POST(req: NextRequest) {
       messages: [{ role: "user", content: text }],
     });
 
-    const taggedText = response.content[0].type === "text" ? response.content[0].text : text;
+    const raw = response.content[0].type === "text" ? response.content[0].text : text;
+    const taggedText = raw
+      .replace(/^(\[[^\]]+\])([^\s])/gm, "$1 $2")
+      .replace(/^(\([^)]+\))([^\s])/gm, "$1 $2")
+      .trim();
     return NextResponse.json({ taggedText });
   } catch (error) {
     console.error("[auto-tag] error:", error);
