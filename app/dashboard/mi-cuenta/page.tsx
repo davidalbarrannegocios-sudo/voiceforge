@@ -145,7 +145,7 @@ export default function MiCuentaPage() {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: "flex", borderBottom: "1px solid #1e1e2e", marginBottom: "32px" }}>
+        <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: "32px" }}>
           {([
             { key: "perfil" as SettingsTab, label: t.account.tabProfile, Icon: User },
             { key: "seguridad" as SettingsTab, label: t.account.tabSecurity, Icon: Shield },
@@ -179,7 +179,7 @@ export default function MiCuentaPage() {
                 <p style={{ margin: 0, color: "#6b7280", fontSize: "13px" }}>{user?.emailAddresses[0]?.emailAddress}</p>
               </div>
               {isGoogleUser && (
-                <span style={{ fontSize: "12px", color: "#4a4a65", background: "#13131f", border: "1px solid #1e1e2e", padding: "4px 10px", borderRadius: "6px", whiteSpace: "nowrap" }}>
+                <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)", padding: "4px 10px", borderRadius: "6px", whiteSpace: "nowrap" }}>
                   {t.account.managedByGoogle}
                 </span>
               )}

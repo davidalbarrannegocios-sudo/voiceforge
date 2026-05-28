@@ -1391,7 +1391,7 @@ function VoiceCard({
   return (
     <div
       className="rounded-xl border p-3 transition-colors"
-      style={{ background: hovered ? "#111120" : "#111111", borderColor: hovered ? "#252535" : "#1a1a1a" }}
+      style={{ background: hovered ? "#191919" : "#111111", borderColor: hovered ? "#222222" : "#1a1a1a" }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => { setHovered(false); setMenuOpen(false); }}
     >

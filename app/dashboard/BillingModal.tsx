@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { ChevronLeft, Download, ExternalLink, Plus, Star, Trash2 } from "lucide-react";
+import { CustomSelect } from "@/components/CustomSelect";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -307,7 +308,7 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
         <>
           {/* ── Suscripción ── */}
           {tab === "suscripcion" && (
-            <div style={{ maxWidth: "520px" }}>
+            <div style={{ width: "100%" }}>
               <div style={{
                 background: "#0a0a0a", border: "1px solid #1a1a1a",
                 borderRadius: "14px", padding: "20px 24px", marginBottom: "20px",
@@ -388,23 +389,19 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
                   <p style={{ fontSize: "12px", color: "#6b7280", marginBottom: "16px", lineHeight: 1.5 }}>
                     Tu acceso se mantiene activo hasta el {periodEndLabel}.
                   </p>
-                  <select
+                  <CustomSelect
                     value={cancelReason}
-                    onChange={(e) => setCancelReason(e.target.value)}
-                    style={{
-                      width: "100%", padding: "10px 12px", borderRadius: "8px",
-                      border: "1px solid #2a2a2a", background: "#111111",
-                      color: cancelReason ? "#ffffff" : "#555555",
-                      fontSize: "13px", marginBottom: "14px", outline: "none",
-                    }}
-                  >
-                    <option value="">Selecciona un motivo...</option>
-                    <option value="price">El precio es muy alto</option>
-                    <option value="features">Me faltan funciones</option>
-                    <option value="usage">No lo uso suficiente</option>
-                    <option value="switching">Me cambio a otro servicio</option>
-                    <option value="other">Otro motivo</option>
-                  </select>
+                    onChange={setCancelReason}
+                    placeholder="Selecciona un motivo..."
+                    style={{ marginBottom: "14px" }}
+                    options={[
+                      { value: "price",     label: "El precio es muy alto" },
+                      { value: "features",  label: "Me faltan funciones" },
+                      { value: "usage",     label: "No lo uso suficiente" },
+                      { value: "switching", label: "Me cambio a otro servicio" },
+                      { value: "other",     label: "Otro motivo" },
+                    ]}
+                  />
                   <div style={{ display: "flex", gap: "8px" }}>
                     <button
                       onClick={handleCancel}
@@ -439,7 +436,7 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
 
           {/* ── Métodos de pago ── */}
           {tab === "metodos" && (
-            <div style={{ maxWidth: "520px" }}>
+            <div style={{ width: "100%" }}>
               {paymentMethods.length === 0 && !showAddCard && (
                 <p style={{ color: "#555555", fontSize: "13px", marginBottom: "20px" }}>
                   No hay métodos de pago registrados.
