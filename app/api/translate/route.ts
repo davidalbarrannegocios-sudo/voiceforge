@@ -25,6 +25,8 @@ const LANGUAGES: Record<string, { name: string; deeplCode: deepl.TargetLanguageC
 };
 
 export async function POST(req: Request) {
+  console.log("[translate] request received");
+
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
@@ -33,11 +35,20 @@ export async function POST(req: Request) {
   if (!fishKey)  return NextResponse.json({ error: "FISH_AUDIO_API_KEY no configurada" }, { status: 500 });
   if (!deeplKey) return NextResponse.json({ error: "DEEPL_API_KEY no configurada" }, { status: 500 });
 
-  const form = await req.formData();
+  let form: FormData;
+  try {
+    form = await req.formData();
+  } catch (e) {
+    console.error("[translate] failed to parse formData:", e);
+    return NextResponse.json({ error: "Error al leer el formulario", details: String(e) }, { status: 400 });
+  }
+
   const audioFile      = form.get("audio") as File | null;
   const targetLang     = (form.get("target_lang") as string) ?? "";
   const referenceId    = (form.get("reference_id") as string) || undefined;
   const referenceAudio = form.get("reference_audio") as File | null;
+
+  console.log("[translate] form fields:", { hasAudio: !!audioFile, targetLang, hasRefId: !!referenceId, hasRefAudio: !!referenceAudio });
 
   if (!audioFile) return NextResponse.json({ error: "No se proporcionó archivo de audio" }, { status: 400 });
   const lang = LANGUAGES[targetLang];
@@ -45,6 +56,8 @@ export async function POST(req: Request) {
 
   const user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
   if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
+
+  console.log("[translate] user found:", user.id, "plan:", user.plan, "credits:", user.credits);
 
   const effectivePlan = await getEffectivePlan(user.id, user.plan);
 
@@ -65,6 +78,7 @@ export async function POST(req: Request) {
       status: "processing",
     },
   });
+  console.log("[translate] task created:", task.id);
 
   try {
     // ── Optional: clone reference audio → get model ID ────────
@@ -76,14 +90,17 @@ export async function POST(req: Request) {
     }
 
     // ── Step 1: Fish Audio ASR ────────────────────────────────
+    console.log("[translate] step1: converting audio to mp3, size:", audioFile.size);
     const rawBuffer = Buffer.from(await audioFile.arrayBuffer());
     const mp3Buffer = await convertToMp3(rawBuffer);
+    console.log("[translate] step1: mp3 ready, bytes:", mp3Buffer.length);
 
     const asrForm = new FormData();
     asrForm.append("audio", new Blob([new Uint8Array(mp3Buffer)], { type: "audio/mpeg" }), "audio.mp3");
     asrForm.append("language", "es");
     asrForm.append("ignore_timestamps", "true");
 
+    console.log("[translate] step1: calling Fish Audio ASR...");
     const asrRes = await fetch("https://api.fish.audio/v1/asr", {
       method: "POST",
       headers: { Authorization: `Bearer ${fishKey}` },
@@ -194,11 +211,13 @@ export async function POST(req: Request) {
       charsRemaining: user.credits - charCost,
     });
   } catch (e) {
-    console.error("[translate/post]", e);
+    console.error("[translate] ERROR:", e);
+    console.error("[translate] error message:", e instanceof Error ? e.message : String(e));
+    console.error("[translate] stack:", e instanceof Error ? e.stack : "(no stack)");
     await prisma.translationTask.update({
       where: { id: task.id },
-      data: { status: "error", errorMessage: "Error interno del servidor" },
-    });
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+      data: { status: "error", errorMessage: String(e) },
+    }).catch((dbErr) => console.error("[translate] failed to update task status:", dbErr));
+    return NextResponse.json({ error: "Error interno", details: String(e) }, { status: 500 });
   }
 }
