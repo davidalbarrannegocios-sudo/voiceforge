@@ -2607,6 +2607,34 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
     if (innerTab === "history") fetchHistory();
   }, [innerTab]);
 
+  async function uploadInChunks(f: File, label: string): Promise<string> {
+    const CHUNK_SIZE = 5 * 1024 * 1024; // 5 MB — safely under Railway's ~8 MB limit
+    const totalChunks = Math.ceil(f.size / CHUNK_SIZE);
+    const uploadId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    for (let i = 0; i < totalChunks; i++) {
+      const start = i * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, f.size);
+      const chunk = f.slice(start, end);
+
+      const fd = new FormData();
+      fd.append("chunk", chunk);
+      fd.append("uploadId", uploadId);
+      fd.append("chunkIndex", String(i));
+      fd.append("totalChunks", String(totalChunks));
+      fd.append("filename", f.name);
+
+      const pct = Math.round(((i + 1) / totalChunks) * 100);
+      setStepLabel(`${label} ${pct}%`);
+
+      const res = await fetch("/api/upload-chunk", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Error al subir chunk ${i}`);
+      if (data.done) return data.fileKey as string;
+    }
+    throw new Error("Upload incompleto — no se recibió fileKey");
+  }
+
   async function handleTranslate() {
     if (!file) return;
     if (file.size > 200 * 1024 * 1024) {
@@ -2619,60 +2647,16 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
     stepTimers.current.forEach(clearTimeout);
 
     try {
-      // ── Paso 1: obtener presigned URL para el audio principal ──
-      setStepLabel("Preparando subida...");
-      const presignRes = await fetch("/api/upload-presigned", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename: file.name, contentType: file.type || "audio/mpeg", size: file.size }),
-      });
-      const presignData = await presignRes.json();
-      if (!presignRes.ok) throw new Error(presignData.error || "Error al preparar la subida");
-      const { uploadUrl, fileKey } = presignData as { uploadUrl: string; fileKey: string };
+      // ── Paso 1: subir audio principal en chunks ──
+      const fileKey = await uploadInChunks(file, "Subiendo audio...");
 
-      // ── Paso 1b: presigned URL para audio de referencia (si hay) ──
+      // ── Paso 1b: subir audio de referencia si hay ──
       let referenceFileKey: string | undefined;
       if (voiceSubTab === "reference" && referenceFile) {
-        setStepLabel("Preparando audio de referencia...");
-        const refPresignRes = await fetch("/api/upload-presigned", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ filename: referenceFile.name, contentType: referenceFile.type || "audio/mpeg", size: referenceFile.size }),
-        });
-        const refPresignData = await refPresignRes.json();
-        if (!refPresignRes.ok) throw new Error(refPresignData.error || "Error al preparar referencia");
-        const { uploadUrl: refUrl, fileKey: refKey } = refPresignData as { uploadUrl: string; fileKey: string };
-
-        setStepLabel("Subiendo audio de referencia...");
-        const refUploadRes = await fetch(refUrl, {
-          method: "PUT",
-          body: referenceFile,
-          headers: { "Content-Type": referenceFile.type || "audio/mpeg" },
-        });
-        if (!refUploadRes.ok) throw new Error("Error al subir el audio de referencia");
-        referenceFileKey = refKey;
+        referenceFileKey = await uploadInChunks(referenceFile, "Subiendo referencia...");
       }
 
-      // ── Paso 2: subir audio principal a R2 con progreso ──
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("PUT", uploadUrl);
-        xhr.setRequestHeader("Content-Type", file.type || "audio/mpeg");
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            const pct = Math.round((e.loaded / e.total) * 100);
-            setStepLabel(`Subiendo audio... ${pct}%`);
-          }
-        };
-        xhr.onload = () => {
-          if (xhr.status < 400) resolve();
-          else reject(new Error(`Error al subir el archivo (${xhr.status})`));
-        };
-        xhr.onerror = () => reject(new Error("Error de red al subir el archivo"));
-        xhr.send(file);
-      });
-
-      // ── Paso 3: traducir (el servidor descarga de R2 internamente) ──
+      // ── Paso 2: traducir (servidor descarga de R2 internamente) ──
       setStepLabel("Transcribiendo audio...");
       stepTimers.current = [
         setTimeout(() => setStepLabel("Traduciendo texto..."), 9000),
