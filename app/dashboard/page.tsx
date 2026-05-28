@@ -2696,13 +2696,11 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           {/* Upload card */}
           <div
             className="relative rounded-2xl overflow-hidden"
-            style={{ background: "linear-gradient(135deg, #1a1035 0%, #0f1830 50%, #0a1525 100%)", border: "1px solid rgba(139,92,246,0.25)" }}
+            style={{ background: "#111111", border: "1px solid #1a1a1a" }}
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
           >
-            <div style={{ position: "absolute", top: -40, right: -40, width: 140, height: 140, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%)", pointerEvents: "none" }} />
-            <div style={{ position: "absolute", bottom: -30, left: -30, width: 100, height: 100, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
 
             <div className="relative p-8 text-center">
               {dragging && (
@@ -2863,7 +2861,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             <button
               onClick={handleTranslate}
               disabled={!file || loading || isFreeExhausted}
-              className="flex items-center gap-2 px-8 py-3 rounded-full font-semibold text-white text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+              className="flex items-center gap-2 px-8 py-3 rounded-full font-semibold text-black text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
               style={{ background: "#ffffff", boxShadow: loading || !file ? "none" : "0 4px 20px rgba(255,255,255,0.2)" }}
             >
               {loading ? (
