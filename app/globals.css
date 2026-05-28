@@ -256,19 +256,17 @@ input[type="range"]::-moz-range-thumb {
 
 /* ── Fish Audio tag highlight marks ──────────────────────────── */
 mark { background: none; }
-.tts-tag-s2 {
+.tts-tag-s2,
+.tts-tag-s1 {
   display: inline;
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.13);
   border-radius: 4px;
   padding: 1px 5px;
   font-style: normal;
 }
+.tts-tag-s2 {
+  color: rgba(255, 255, 255, 0.90) !important;
+}
 .tts-tag-s1 {
-  display: inline;
-  background: rgba(255, 255, 255, 0.10);
-  color: rgba(255, 255, 255, 0.85);
-  border-radius: 4px;
-  padding: 1px 5px;
-  font-style: normal;
+  color: rgba(200, 180, 255, 0.90) !important;
 }

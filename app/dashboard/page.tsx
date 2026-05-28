@@ -992,7 +992,7 @@ function GenerateTab({
               <div
                 ref={overlayRef}
                 aria-hidden="true"
-                style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "16px", fontSize: "14px", lineHeight: "1.75", fontFamily: "inherit", color: "transparent", whiteSpace: "pre-wrap", wordBreak: "break-word", pointerEvents: "none", overflowY: "scroll", scrollbarWidth: "none", height: "100%", boxSizing: "border-box" }}
+                style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, padding: "16px", fontSize: "14px", lineHeight: "1.75", fontFamily: "inherit", color: "transparent", whiteSpace: "pre-wrap", wordBreak: "break-word", pointerEvents: "none", overflow: "hidden", boxSizing: "border-box", zIndex: 1 }}
                 dangerouslySetInnerHTML={{ __html: getHighlightedHTML(text) }}
               />
             )}
@@ -1003,7 +1003,7 @@ function GenerateTab({
               onScroll={(e) => { if (overlayRef.current) overlayRef.current.scrollTop = e.currentTarget.scrollTop; }}
               placeholder={t.generate.placeholder}
               disabled={submitting}
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", padding: "16px", background: "transparent", border: "none", outline: "none", resize: "none", fontSize: "14px", color: "rgba(255,255,255,0.9)", caretColor: "#e2e8f0", lineHeight: "1.75", opacity: submitting ? 0.6 : 1, fontFamily: "inherit", boxSizing: "border-box" }}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", padding: "16px", background: "transparent", border: "none", outline: "none", resize: "none", fontSize: "14px", color: "rgba(255,255,255,0.92)", caretColor: "white", lineHeight: "1.75", opacity: submitting ? 0.6 : 1, fontFamily: "inherit", boxSizing: "border-box", zIndex: 2 }}
             />
           </div>
 
