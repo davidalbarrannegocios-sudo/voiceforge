@@ -11,7 +11,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, formatCount } from "./VoiceBrowser";
 import { AudioPlayer } from "./AudioPlayer";
 import { SupportModal } from "./SupportModal";
-import { BillingModal } from "./BillingModal";
+import { ManageBillingPanel } from "./BillingModal";
 import { useLang } from "./LanguageContext";
 import AudioHistoryList from "@/components/AudioHistoryList";
 import { CustomSelect } from "@/components/CustomSelect";
@@ -2152,7 +2152,7 @@ function BillingTab({
   onRefresh: () => void;
 }) {
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
-  const [billingModalOpen, setBillingModalOpen] = useState(false);
+  const [showManage, setShowManage] = useState(false);
   const router = useRouter();
 
   const badge = PLAN_BADGE[plan] ?? PLAN_BADGE.free;
@@ -2166,6 +2166,10 @@ function BillingTab({
     const res = await fetch("/api/create-portal-session", { method: "POST" });
     const data = await res.json();
     if (data.url) window.location.href = data.url;
+  }
+
+  if (showManage) {
+    return <ManageBillingPanel plan={plan} onBack={() => setShowManage(false)} />;
   }
 
   return (
@@ -2214,13 +2218,12 @@ function BillingTab({
         </div>
         {plan !== "free" && (
           <button
-            onClick={() => setBillingModalOpen(true)}
+            onClick={() => setShowManage(true)}
             style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #222222", background: "transparent", color: "#d1d5db", fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
           >
             Gestionar suscripción →
           </button>
         )}
-        {billingModalOpen && <BillingModal onClose={() => setBillingModalOpen(false)} />}
       </div>
 
       {/* ── Monthly / Annual toggle ── */}
