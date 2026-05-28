@@ -22,13 +22,13 @@ model User {
   planExpiresAt         DateTime?
   stripeCustomerId      String?                @unique
   stripeSubscriptionId  String?                @unique
-  stripePriceId         String?
   transcriptionUsed     Int                    @default(0)
   extraCredits          Int                    @default(0)
   billingInterval       String                 @default("monthly")
   creditsRenewedAt      DateTime?
   referralBalance       Int                    @default(0)
   referralEarned        Int                    @default(0)
+  stripePriceId         String?
   affiliateApplications AffiliateApplication[]
   clonedVoices          ClonedVoice[]
   creditPacks           CreditPack[]
@@ -207,13 +207,13 @@ model TranslationTask {
   creditsUsed        Int       @default(0)
   durationSeconds    Float?
   audioUrl           String?
-  r2Key              String?
-  expiresAt          DateTime?
   transcribedText    String?
   translatedText     String?
   errorMessage       String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
+  expiresAt          DateTime?
+  r2Key              String?
   user               User      @relation(fields: [userId], references: [id])
 }
 

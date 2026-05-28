@@ -2,17 +2,22 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Zap, Check } from 'lucide-react'
+import { X, Zap } from 'lucide-react'
 
 interface Plan {
   id: string
   name: string
+  description: string
   price: number
-  yearlyPrice: number
-  credits: string
+  characters: number
+  popular: boolean
   features: string[]
-  highlighted: boolean
-  badge?: string
+}
+
+interface Pack {
+  id: string
+  label: string
+  price: number
 }
 
 interface NoCreditsModalProps {
@@ -25,77 +30,84 @@ const ALL_PLANS: Plan[] = [
   {
     id: 'starter',
     name: 'Starter',
+    description: 'Para creadores que están empezando',
     price: 7,
-    yearlyPrice: 5,
-    credits: '100.000',
-    highlighted: false,
+    characters: 200_000,
+    popular: false,
     features: [
-      '100.000 créditos mensuales',
-      'Motor Elite Labs Pro (S2)',
-      'Motor Elite Labs Legacy (S1)',
-      'Historial de generaciones',
-      'Descarga en MP3',
+      '200.000 caracteres/mes (x2 con EliteLabs 2)',
+      'Selección de voz completa',
+      'Transcripciones y traducciones ilimitadas',
+      '3 voces clonadas',
+      'Audios disponibles 14 días',
     ],
   },
   {
     id: 'pro',
     name: 'Pro',
+    description: 'La mejor opción para creadores activos',
     price: 13,
-    yearlyPrice: 10,
-    credits: '500.000',
-    badge: 'Popular',
-    highlighted: true,
+    characters: 500_000,
+    popular: true,
     features: [
-      '500.000 créditos mensuales',
-      'Motor Elite Labs Pro (S2)',
-      'Motor Elite Labs Legacy (S1)',
-      'Motor Elite Labs Turbo',
-      'Traducción de audio',
-      'Clonación de voz',
-      'Descarga en MP3 192kbps',
+      '500.000 caracteres/mes (x2 con EliteLabs 2)',
+      'Selección de voz completa',
+      'Transcripciones y traducciones ilimitadas',
+      '10 voces clonadas',
+      'Generación prioritaria',
+      'Audios disponibles 30 días',
     ],
   },
   {
     id: 'elite',
     name: 'Elite',
+    description: 'Máximo rendimiento sin límites',
     price: 25,
-    yearlyPrice: 19,
-    credits: '2.000.000',
-    highlighted: false,
+    characters: 1_000_000,
+    popular: false,
     features: [
-      '2.000.000 créditos mensuales',
-      'Todos los motores TTS',
-      'Traducción de audio',
-      'Clonación de voz avanzada',
-      'API de acceso',
-      'Soporte prioritario',
-      'Descarga en WAV + MP3',
+      '1.000.000 caracteres/mes (x2 con EliteLabs 2)',
+      'Selección de voz completa',
+      'Transcripciones y traducciones ilimitadas',
+      '20 voces clonadas',
+      'Prioridad máxima',
+      'Soporte preferente',
+      'Audios disponibles 30 días',
     ],
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
+    description: 'Para profesionales y equipos',
     price: 110,
-    yearlyPrice: 89,
-    credits: '10.000.000',
-    highlighted: false,
+    characters: 5_000_000,
+    popular: false,
     features: [
-      '10.000.000 créditos mensuales',
-      'Todos los motores TTS',
-      'API ilimitada',
-      'Clonación de voz ilimitada',
-      'SLA garantizado',
-      'Soporte dedicado',
-      'Factura personalizada',
+      '5.000.000 caracteres/mes (x2 con EliteLabs 2)',
+      'Voces clonadas ilimitadas',
+      'Transcripciones y traducciones ilimitadas',
+      'Traducción de audio +10%',
+      'Generación prioritaria',
+      'Soporte preferente',
+      'Audios disponibles 90 días',
     ],
   },
 ]
 
-const EXTRA_PACKS = [
-  { id: 'pack_100k', label: '100.000 créditos', price: 2 },
-  { id: 'pack_500k', label: '500.000 créditos', price: 7 },
-  { id: 'pack_1m',  label: '1.000.000 créditos', price: 12 },
+const EXTRA_PACKS: Pack[] = [
+  { id: 'credits-100k', label: '100.000 créditos', price: 5 },
+  { id: 'credits-300k', label: '300.000 créditos', price: 12 },
+  { id: 'credits-600k', label: '600.000 créditos', price: 19 },
+  { id: 'credits-1m',   label: '1.000.000 créditos', price: 30 },
 ]
+
+function annualMonthly(price: number) {
+  return Math.round(price * 0.83 * 10) / 10
+}
+
+function annualTotal(price: number) {
+  return Math.round(annualMonthly(price) * 12)
+}
 
 function getPlansToShow(currentPlan: string): Plan[] {
   const order = ['free', 'starter', 'pro', 'elite', 'enterprise']
@@ -104,45 +116,65 @@ function getPlansToShow(currentPlan: string): Plan[] {
   return ALL_PLANS.filter((p) => nextIds.includes(p.id))
 }
 
+function FeatureTick() {
+  return (
+    <div style={{
+      width: 16, height: 16, borderRadius: '50%',
+      background: 'linear-gradient(135deg, #1d4ed8, #60a5fa)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      flexShrink: 0, marginTop: '2px',
+    }}>
+      <svg width="8" height="6" viewBox="0 0 10 8" fill="none">
+        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  )
+}
+
 export function NoCreditsModal({ isOpen, onClose, currentPlan }: NoCreditsModalProps) {
   const router = useRouter()
-  const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly')
+  const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly')
+  const [hoveredPlan, setHoveredPlan] = useState<string | null>(null)
+  const [hoveredPack, setHoveredPack] = useState<string | null>(null)
   const plansToShow = getPlansToShow(currentPlan)
 
   if (!isOpen) return null
 
-  const extraPacksGrid = (
-    <div className="grid grid-cols-3 gap-3">
-      {EXTRA_PACKS.map((pack) => (
-        <button
-          key={pack.id}
-          onClick={() => { onClose(); router.push(`/checkout/credits/${pack.id}`) }}
-          className="flex flex-col items-center p-3 rounded-xl border border-white/8 bg-white/[0.02] hover:border-white/15 hover:bg-white/5 transition-all group"
-        >
-          <span className="text-sm font-semibold text-white mb-0.5">{pack.label}</span>
-          <span className="text-xl font-bold text-white">${pack.price}</span>
-          <span className="text-[11px] text-white/40 mt-1 group-hover:text-white/60 transition-colors">
-            Añadir ahora →
-          </span>
-        </button>
-      ))}
-    </div>
-  )
+  function handlePlan(planId: string) {
+    onClose()
+    router.push(`/checkout/${planId}?billing=${billing}`)
+  }
+
+  function handlePack(packId: string) {
+    onClose()
+    router.push(`/checkout/${packId}`)
+  }
+
+  const gridCols =
+    plansToShow.length === 1 ? 'repeat(1, minmax(0, 380px))' :
+    plansToShow.length === 2 ? 'repeat(2, 1fr)' :
+    plansToShow.length === 3 ? 'repeat(3, 1fr)' :
+    'repeat(4, 1fr)'
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 backdrop-blur-sm" style={{ background: 'rgba(0,0,0,0.85)' }} onClick={onClose} />
 
-      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-2xl">
-
+      <div
+        className="relative w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl"
+        style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}
+      >
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-[#0a0a0a] border-b border-white/8 px-6 py-4 flex items-center justify-between">
+        <div
+          className="sticky top-0 z-10 flex items-center justify-between px-6 py-4"
+          style={{ background: '#000000', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
+        >
           <div>
             <div className="flex items-center gap-2 mb-0.5">
-              <Zap className="w-4 h-4 text-white/60" />
+              <Zap className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} />
               <h2 className="text-base font-semibold text-white">Sin créditos disponibles</h2>
             </div>
-            <p className="text-sm text-white/40">
+            <p style={{ fontSize: '13px', color: '#555555' }}>
               {currentPlan === 'free'
                 ? 'Elige un plan para continuar generando audio con IA'
                 : 'Actualiza tu plan o añade créditos extra para continuar'}
@@ -150,7 +182,10 @@ export function NoCreditsModal({ isOpen, onClose, currentPlan }: NoCreditsModalP
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg transition-colors"
+            style={{ color: 'rgba(255,255,255,0.4)', background: 'transparent' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
             <X className="w-5 h-5" />
           </button>
@@ -158,96 +193,198 @@ export function NoCreditsModal({ isOpen, onClose, currentPlan }: NoCreditsModalP
 
         <div className="p-6 space-y-6">
 
-          {/* Toggle mensual/anual */}
-          <div className="flex justify-center">
-            <div className="flex items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/8">
+          {/* Billing toggle */}
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <div style={{
+              position: 'relative', display: 'inline-grid', gridTemplateColumns: '1fr 1fr',
+              background: '#000000', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '10px', padding: '3px',
+            }}>
+              <div style={{
+                position: 'absolute', top: '3px', left: '3px',
+                width: 'calc(50% - 3px)', height: 'calc(100% - 6px)',
+                background: '#ffffff', borderRadius: '7px',
+                pointerEvents: 'none', transition: 'transform 0.2s ease',
+                transform: `translateX(${billing === 'annual' ? '100%' : '0%'})`,
+              }} />
               <button
                 onClick={() => setBilling('monthly')}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${billing === 'monthly' ? 'bg-white text-black' : 'text-white/50 hover:text-white'}`}
+                style={{
+                  position: 'relative', zIndex: 1, padding: '7px 24px',
+                  borderRadius: '7px', border: 'none', cursor: 'pointer',
+                  fontSize: '13px', fontWeight: 600, background: 'transparent',
+                  color: billing === 'monthly' ? '#000000' : '#666666',
+                  transition: 'color 0.2s ease',
+                }}
               >
                 Mensual
               </button>
               <button
-                onClick={() => setBilling('yearly')}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${billing === 'yearly' ? 'bg-white text-black' : 'text-white/50 hover:text-white'}`}
+                onClick={() => setBilling('annual')}
+                style={{
+                  position: 'relative', zIndex: 1, padding: '7px 24px',
+                  borderRadius: '7px', border: 'none', cursor: 'pointer',
+                  fontSize: '13px', fontWeight: 600, background: 'transparent',
+                  color: billing === 'annual' ? '#000000' : '#666666',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
+                  transition: 'color 0.2s ease',
+                }}
               >
                 Anual
-                <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${billing === 'yearly' ? 'bg-black/20 text-black' : 'bg-white/10 text-white/60'}`}>
-                  -25%
+                <span style={{
+                  fontSize: '10px', fontWeight: 700, padding: '2px 5px',
+                  borderRadius: '999px',
+                  background: billing === 'annual' ? 'rgba(34,197,94,0.25)' : 'rgba(34,197,94,0.15)',
+                  color: '#22c55e', whiteSpace: 'nowrap',
+                }}>
+                  −17%
                 </span>
               </button>
             </div>
           </div>
 
-          {/* Grid de planes */}
+          {/* Plan cards */}
           {plansToShow.length > 0 && (
-            <div className={`grid gap-3 ${
-              plansToShow.length === 1 ? 'grid-cols-1 max-w-sm mx-auto' :
-              plansToShow.length === 2 ? 'grid-cols-2' :
-              plansToShow.length === 3 ? 'grid-cols-3' :
-              'grid-cols-2 lg:grid-cols-4'
-            }`}>
+            <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '8px', alignItems: 'start', justifyContent: plansToShow.length === 1 ? 'center' : undefined }}>
               {plansToShow.map((plan) => (
                 <div
                   key={plan.id}
-                  className={`relative flex flex-col rounded-xl border p-4 transition-all ${plan.highlighted ? 'border-white/30 bg-white/5' : 'border-white/8 bg-white/[0.02] hover:border-white/15'}`}
+                  style={{
+                    borderRadius: '16px', padding: '20px 14px 16px',
+                    border: plan.popular ? '1px solid rgba(255,255,255,0.2)' : '1px solid #1a1a1a',
+                    background: '#0a0a0a',
+                    display: 'flex', flexDirection: 'column', position: 'relative',
+                  }}
                 >
-                  {plan.badge && (
-                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
-                      <span className="px-2.5 py-0.5 bg-white text-black text-[11px] font-semibold rounded-full">
-                        {plan.badge}
+                  {/* Name + badge */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '6px', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>{plan.name}</span>
+                    {plan.popular && (
+                      <span style={{
+                        fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '999px',
+                        border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff',
+                        background: 'rgba(255,255,255,0.05)', whiteSpace: 'nowrap', flexShrink: 0,
+                      }}>
+                        Popular
                       </span>
-                    </div>
-                  )}
+                    )}
+                    {plan.id === 'enterprise' && (
+                      <span style={{
+                        fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '999px',
+                        border: '1px solid rgba(16,185,129,0.45)', color: '#6ee7b7',
+                        background: 'rgba(16,185,129,0.05)', whiteSpace: 'nowrap', flexShrink: 0,
+                      }}>
+                        Equipos
+                      </span>
+                    )}
+                  </div>
 
-                  <div className="mb-3">
-                    <p className="text-xs text-white/40 uppercase tracking-wider mb-1">{plan.name}</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold text-white">
-                        ${billing === 'yearly' ? plan.yearlyPrice : plan.price}
+                  {/* Description */}
+                  <p style={{ fontSize: '12px', color: '#555555', marginBottom: '14px', lineHeight: 1.4 }}>
+                    {plan.description}
+                  </p>
+
+                  {/* Price */}
+                  <div style={{ marginBottom: '14px', minHeight: '52px' }}>
+                    {billing === 'annual' && (
+                      <p style={{ fontSize: '12px', color: '#444444', textDecoration: 'line-through', lineHeight: 1, marginBottom: '1px' }}>
+                        ${plan.price}/mes
+                      </p>
+                    )}
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px' }}>
+                      <span style={{ fontSize: '34px', fontWeight: 800, color: '#fff', lineHeight: 1 }}>
+                        ${billing === 'annual' ? annualMonthly(plan.price) : plan.price}
                       </span>
-                      <span className="text-xs text-white/40">/mes</span>
+                      <span style={{ fontSize: '12px', color: '#444444', marginLeft: '2px' }}>/mes</span>
                     </div>
-                    {billing === 'yearly' && (
-                      <p className="text-[11px] text-white/30 mt-0.5">
-                        ${plan.yearlyPrice * 12} facturado anualmente
+                    {billing === 'annual' && (
+                      <p style={{ fontSize: '11px', color: '#555555', marginTop: '2px' }}>
+                        ${annualTotal(plan.price)} facturado anualmente
                       </p>
                     )}
                   </div>
 
-                  <div className="mb-3 px-2 py-1.5 bg-white/5 rounded-lg border border-white/8">
-                    <p className="text-xs text-white/50 mb-0.5">Créditos mensuales</p>
-                    <p className="text-sm font-semibold text-white">{plan.credits}</p>
-                  </div>
+                  {/* CTA */}
+                  <button
+                    onClick={() => handlePlan(plan.id)}
+                    onMouseEnter={() => setHoveredPlan(plan.id)}
+                    onMouseLeave={() => setHoveredPlan(null)}
+                    style={{
+                      width: '100%', padding: '9px', borderRadius: '8px',
+                      border: plan.popular ? 'none' : '1px solid #333333',
+                      cursor: 'pointer',
+                      background: plan.popular
+                        ? (hoveredPlan === plan.id ? '#e5e5e5' : '#ffffff')
+                        : (hoveredPlan === plan.id ? '#222222' : '#1a1a1a'),
+                      color: plan.popular ? '#000000' : '#e5e7eb',
+                      fontSize: '13px', fontWeight: 600, marginBottom: '14px',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    Elegir {plan.name}
+                  </button>
 
-                  <ul className="space-y-1.5 mb-4 flex-1">
+                  {/* Divider */}
+                  <div style={{ height: '1px', background: '#1a1a1a', marginBottom: '12px' }} />
+
+                  {/* Features */}
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                     {plan.features.map((f, i) => (
-                      <li key={i} className="flex items-start gap-1.5">
-                        <Check className="w-3 h-3 text-white/50 mt-0.5 flex-shrink-0" />
-                        <span className="text-[12px] text-white/60">{f}</span>
+                      <li
+                        key={i}
+                        style={{
+                          display: 'flex', alignItems: 'flex-start', gap: '8px',
+                          fontSize: '12px', lineHeight: 1.5, color: 'rgba(255,255,255,0.75)',
+                          paddingTop: '8px', paddingBottom: '8px',
+                          borderBottom: i < plan.features.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                        }}
+                      >
+                        <FeatureTick />
+                        {f}
                       </li>
                     ))}
                   </ul>
 
-                  <button
-                    onClick={() => { onClose(); router.push(`/checkout/${plan.id}`) }}
-                    className={`w-full py-2 rounded-lg text-sm font-medium transition-all ${plan.highlighted ? 'bg-white text-black hover:bg-white/90' : 'bg-white/8 text-white hover:bg-white/12 border border-white/10'}`}
-                  >
-                    Elegir {plan.name}
-                  </button>
+                  {/* Footer — character count */}
+                  <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
+                    <p style={{ fontSize: '13px', fontWeight: 500, color: 'rgba(255,255,255,0.50)' }}>
+                      {plan.characters.toLocaleString('es-ES')} caracteres/mes
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Separador */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-white/8" />
-            <span className="text-xs text-white/30">o añade créditos extra</span>
-            <div className="flex-1 h-px bg-white/8" />
+          {/* Separator */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+            <span style={{ fontSize: '12px', color: '#444444', whiteSpace: 'nowrap' }}>o añade créditos extra</span>
+            <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
           </div>
 
-          {extraPacksGrid}
+          {/* Credit packs */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+            {EXTRA_PACKS.map((pack) => (
+              <button
+                key={pack.id}
+                onClick={() => handlePack(pack.id)}
+                onMouseEnter={() => setHoveredPack(pack.id)}
+                onMouseLeave={() => setHoveredPack(null)}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  padding: '14px 10px', borderRadius: '12px',
+                  border: `1px solid ${hoveredPack === pack.id ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)'}`,
+                  background: hoveredPack === pack.id ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.01)',
+                  cursor: 'pointer', transition: 'all 0.15s',
+                }}
+              >
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '2px' }}>{pack.label}</span>
+                <span style={{ fontSize: '22px', fontWeight: 800, color: '#fff' }}>${pack.price}</span>
+                <span style={{ fontSize: '11px', color: '#555555', marginTop: '4px' }}>Añadir ahora →</span>
+              </button>
+            ))}
+          </div>
 
         </div>
       </div>
