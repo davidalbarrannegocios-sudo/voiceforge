@@ -588,6 +588,7 @@ function GenerateTab({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const [tagsOpen, setTagsOpen] = useState(false);
+  const [isAutoTagging, setIsAutoTagging] = useState(false);
   const tagsAreaRef = useRef<HTMLDivElement>(null);
   const [rightTab, setRightTab] = useState<"ajustes" | "historial">("ajustes");
   const { t } = useLang();
@@ -730,9 +731,7 @@ function GenerateTab({
     ? "Las etiquetas (…) deben ir al inicio de cada frase"
     : "Las etiquetas […] deben ir al inicio de cada frase";
 
-  const hasTagHighlights = selectedModel !== "turbo" && text.length > 0 && (
-    selectedModel === "speech-1.5" ? /\([^)]+\)/.test(text) : /\[[^\]]+\]/.test(text)
-  );
+  const showTagOverlay = selectedModel !== "turbo";
 
   function getHighlightedHTML(raw: string): string {
     const escaped = raw
@@ -740,11 +739,10 @@ function GenerateTab({
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/\n/g, "<br>");
-    const markStyle = "background:rgba(139,92,246,0.22);color:#c4b5fd;border-radius:3px;padding:0 2px";
     if (selectedModel === "speech-1.5") {
-      return escaped.replace(/\(([^)]+)\)/g, `<mark style="${markStyle}">($1)</mark>`);
+      return escaped.replace(/\(([^)]+)\)/g, '<mark class="tag-highlight-s1">($1)</mark>');
     }
-    return escaped.replace(/\[([^\]]+)\]/g, `<mark style="${markStyle}">[$1]</mark>`);
+    return escaped.replace(/\[([^\]]+)\]/g, '<mark class="tag-highlight-s2">[$1]</mark>');
   }
 
   function insertTagAtCursor(tag: string) {
@@ -758,6 +756,26 @@ function GenerateTab({
       ta.selectionStart = ta.selectionEnd = start + tag.length;
       ta.focus();
     }, 0);
+  }
+
+  async function handleAutoTag() {
+    if (!text.trim() || isAutoTagging) return;
+    setIsAutoTagging(true);
+    try {
+      const res = await fetch("/api/tts/auto-tag", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, model: selectedModel }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al etiquetar");
+      if (data.taggedText) setText(data.taggedText);
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : "Error al etiquetar automáticamente");
+      setTimeout(() => setFormError(null), 3000);
+    } finally {
+      setIsAutoTagging(false);
+    }
   }
 
   async function handleGenerate() {
@@ -929,11 +947,14 @@ function GenerateTab({
                   <span style={{ display: "inline-block", transition: "transform 0.15s", transform: tagsOpen ? "rotate(90deg)" : "none", fontSize: "10px" }}>›</span>
                 </button>
                 <button
-                  disabled
-                  title="Próximamente: etiquetado automático con IA"
-                  style={{ display: "flex", alignItems: "center", gap: "4px", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, background: "transparent", border: "1px solid rgba(255,255,255,0.06)", color: "#444444", cursor: "not-allowed" }}
+                  onClick={handleAutoTag}
+                  disabled={isAutoTagging || !text.trim()}
+                  title="Añade etiquetas de emoción automáticamente con IA"
+                  style={{ display: "flex", alignItems: "center", gap: "4px", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: isAutoTagging || !text.trim() ? "#444444" : "#9ca3af", cursor: isAutoTagging || !text.trim() ? "not-allowed" : "pointer", transition: "color 0.15s, border-color 0.15s" }}
                 >
-                  ✦ Etiquetado automático
+                  {isAutoTagging ? (
+                    <><svg style={{ width: "11px", height: "11px", animation: "spin 1s linear infinite" }} viewBox="0 0 24 24" fill="none"><circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Etiquetando...</>
+                  ) : <>✦ Etiquetado automático</>}
                 </button>
               </div>
 
@@ -967,11 +988,11 @@ function GenerateTab({
 
           {/* Textarea with highlight overlay */}
           <div style={{ position: "relative", flex: 1, overflow: "hidden" }}>
-            {hasTagHighlights && (
+            {showTagOverlay && (
               <div
                 ref={overlayRef}
                 aria-hidden="true"
-                style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "16px", fontSize: "14px", lineHeight: "1.75", fontFamily: "inherit", color: "#e2e8f0", whiteSpace: "pre-wrap", wordBreak: "break-word", pointerEvents: "none", overflowY: "scroll", scrollbarWidth: "none", height: "100%", boxSizing: "border-box" }}
+                style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "16px", fontSize: "14px", lineHeight: "1.75", fontFamily: "inherit", color: "transparent", whiteSpace: "pre-wrap", wordBreak: "break-word", pointerEvents: "none", overflowY: "scroll", scrollbarWidth: "none", height: "100%", boxSizing: "border-box" }}
                 dangerouslySetInnerHTML={{ __html: getHighlightedHTML(text) }}
               />
             )}
@@ -982,7 +1003,7 @@ function GenerateTab({
               onScroll={(e) => { if (overlayRef.current) overlayRef.current.scrollTop = e.currentTarget.scrollTop; }}
               placeholder={t.generate.placeholder}
               disabled={submitting}
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", padding: "16px", background: "transparent", border: "none", outline: "none", resize: "none", fontSize: "14px", color: hasTagHighlights ? "transparent" : "#e2e8f0", caretColor: "#e2e8f0", lineHeight: "1.75", opacity: submitting ? 0.6 : 1, fontFamily: "inherit", boxSizing: "border-box" }}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", padding: "16px", background: "transparent", border: "none", outline: "none", resize: "none", fontSize: "14px", color: "rgba(255,255,255,0.9)", caretColor: "#e2e8f0", lineHeight: "1.75", opacity: submitting ? 0.6 : 1, fontFamily: "inherit", boxSizing: "border-box" }}
             />
           </div>
 

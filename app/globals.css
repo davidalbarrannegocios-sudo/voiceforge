@@ -252,3 +252,20 @@ input[type="range"]::-moz-range-thumb {
   color: white !important;
   border: none !important;
 }
+
+
+/* ── Fish Audio tag highlight marks ──────────────────────────── */
+.tag-highlight-s2 {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  padding: 1px 4px;
+  font-style: normal;
+}
+.tag-highlight-s1 {
+  background: rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.85);
+  border-radius: 4px;
+  padding: 1px 4px;
+  font-style: normal;
+}
