@@ -60,8 +60,11 @@ export function TaggedTextEditor({ value, onChange, isS2, placeholder, disabled 
           const range = document.createRange()
           range.setStart(node, pos - charCount)
           range.collapse(true)
-          sel.removeAllRanges()
-          sel.addRange(range)
+          const selection = window.getSelection()
+          if (selection) {
+            selection.removeAllRanges()
+            selection.addRange(range)
+          }
           found = true
         }
         charCount += len
