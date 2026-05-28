@@ -1625,7 +1625,7 @@ function VoicesTab({
         <button
           onClick={() => !atLimit && setShowModal(true)}
           disabled={atLimit}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white flex-shrink-0 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-black flex-shrink-0 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ background: "#ffffff" }}
         >
           <span className="text-base leading-none">+</span>
