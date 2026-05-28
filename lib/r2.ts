@@ -29,12 +29,19 @@ export async function uploadToR2(
   return `${PUBLIC_URL}/${key}`;
 }
 
-export async function getPresignedUploadUrl(key: string, contentType: string) {
+export async function getPresignedUploadUrl(key: string, contentType: string, expiresIn = 3600) {
   return getSignedUrl(
     r2Client,
     new PutObjectCommand({ Bucket: BUCKET, Key: key, ContentType: contentType }),
-    { expiresIn: 3600 }
+    { expiresIn }
   );
+}
+
+export async function downloadFromR2(key: string): Promise<Buffer> {
+  const { GetObjectCommand } = await import("@aws-sdk/client-s3");
+  const obj = await r2Client.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
+  if (!obj.Body) throw new Error(`R2 object ${key} has no body`);
+  return Buffer.from(await obj.Body.transformToByteArray());
 }
 
 export function getPublicUrl(key: string): string {

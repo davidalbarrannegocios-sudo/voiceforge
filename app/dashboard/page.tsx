@@ -2609,27 +2609,86 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 
   async function handleTranslate() {
     if (!file) return;
-    if (file.size > 50 * 1024 * 1024) {
-      setError("El archivo es demasiado grande. Máximo 50 MB.");
+    if (file.size > 200 * 1024 * 1024) {
+      setError("El archivo es demasiado grande. Máximo 200 MB.");
       return;
     }
     setLoading(true);
     setError(null);
     setResult(null);
     stepTimers.current.forEach(clearTimeout);
-    stepTimers.current = TRANSLATE_STEPS.map(({ after, label }) =>
-      setTimeout(() => setStepLabel(label), after)
-    );
+
     try {
-      const fd = new FormData();
-      fd.append("audio", file);
-      fd.append("target_lang", targetLang);
-      if (voiceSubTab === "model" && selectedVoice?.referenceId) {
-        fd.append("reference_id", selectedVoice.referenceId);
-      } else if (voiceSubTab === "reference" && referenceFile) {
-        fd.append("reference_audio", referenceFile);
+      // ── Paso 1: obtener presigned URL para el audio principal ──
+      setStepLabel("Preparando subida...");
+      const presignRes = await fetch("/api/upload-presigned", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: file.name, contentType: file.type || "audio/mpeg", size: file.size }),
+      });
+      const presignData = await presignRes.json();
+      if (!presignRes.ok) throw new Error(presignData.error || "Error al preparar la subida");
+      const { uploadUrl, fileKey } = presignData as { uploadUrl: string; fileKey: string };
+
+      // ── Paso 1b: presigned URL para audio de referencia (si hay) ──
+      let referenceFileKey: string | undefined;
+      if (voiceSubTab === "reference" && referenceFile) {
+        setStepLabel("Preparando audio de referencia...");
+        const refPresignRes = await fetch("/api/upload-presigned", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: referenceFile.name, contentType: referenceFile.type || "audio/mpeg", size: referenceFile.size }),
+        });
+        const refPresignData = await refPresignRes.json();
+        if (!refPresignRes.ok) throw new Error(refPresignData.error || "Error al preparar referencia");
+        const { uploadUrl: refUrl, fileKey: refKey } = refPresignData as { uploadUrl: string; fileKey: string };
+
+        setStepLabel("Subiendo audio de referencia...");
+        const refUploadRes = await fetch(refUrl, {
+          method: "PUT",
+          body: referenceFile,
+          headers: { "Content-Type": referenceFile.type || "audio/mpeg" },
+        });
+        if (!refUploadRes.ok) throw new Error("Error al subir el audio de referencia");
+        referenceFileKey = refKey;
       }
-      const res = await fetch("/api/translate", { method: "POST", body: fd });
+
+      // ── Paso 2: subir audio principal a R2 con progreso ──
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", uploadUrl);
+        xhr.setRequestHeader("Content-Type", file.type || "audio/mpeg");
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            setStepLabel(`Subiendo audio... ${pct}%`);
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status < 400) resolve();
+          else reject(new Error(`Error al subir el archivo (${xhr.status})`));
+        };
+        xhr.onerror = () => reject(new Error("Error de red al subir el archivo"));
+        xhr.send(file);
+      });
+
+      // ── Paso 3: traducir (el servidor descarga de R2 internamente) ──
+      setStepLabel("Transcribiendo audio...");
+      stepTimers.current = [
+        setTimeout(() => setStepLabel("Traduciendo texto..."), 9000),
+        setTimeout(() => setStepLabel("Generando audio traducido..."), 18000),
+      ];
+
+      const res = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileKey,
+          targetLang,
+          referenceId: voiceSubTab === "model" ? (selectedVoice?.referenceId || undefined) : undefined,
+          referenceFileKey,
+        }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error desconocido");
       setResult(data);
