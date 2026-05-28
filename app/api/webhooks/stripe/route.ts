@@ -4,6 +4,7 @@ import { getStripe, getPlanFromPriceId, PLAN_CREDITS } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
 import { Resend } from "resend";
+import { log } from "@/lib/logger";
 
 function addMonths(date: Date, months: number): Date {
   const d = new Date(date);
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
   try {
     event = getStripe().webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
   } catch (err) {
-    console.error("[webhook] signature failed:", err);
+    log("error", "stripe-webhook", "signature validation failed", { err: String(err) });
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
@@ -34,20 +35,14 @@ export async function POST(req: Request) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     try {
-      console.log("[webhook] checkout.session.completed iniciando");
-      console.log("[webhook] session.id:", session.id);
-      console.log("[webhook] session.mode:", session.mode);
-      console.log("[webhook] metadata:", JSON.stringify(session.metadata));
-      console.log("[webhook] userId:", session.metadata?.userId);
-      console.log("[webhook] plan:", session.metadata?.plan);
-      console.log("[webhook] subscription:", session.subscription);
+      log("info", "stripe-webhook", "checkout.session.completed", { sessionId: session.id, mode: session.mode, plan: session.metadata?.plan, userId: session.metadata?.userId });
 
       // ── Credit pack (one-time payment) ────────────────────
       if (session.mode === "payment") {
         const userId  = session.metadata?.userId;
         const credits = parseInt(session.metadata?.credits ?? "0", 10);
         if (!userId || !credits) {
-          console.error("[webhook] missing metadata in payment session", session.id);
+          log("error", "stripe-webhook", "missing metadata in payment session", { sessionId: session.id });
           return NextResponse.json({ received: true });
         }
 
@@ -57,7 +52,6 @@ export async function POST(req: Request) {
 
         const expiresAt = addMonths(new Date(), 3);
 
-        console.log("[webhook] Actualizando usuario en DB (credit pack)...");
         await prisma.$transaction([
           prisma.user.update({
             where: { id: userId },
@@ -68,7 +62,7 @@ export async function POST(req: Request) {
           }),
         ]);
 
-        console.log(`[webhook] credit pack purchased: user=${userId} credits=${credits}`);
+        log("info", "stripe-webhook", "credit pack purchased", { userId, credits });
 
         // 5% referral commission on credit pack purchase
         if (session.amount_total && session.amount_total > 0) {
@@ -79,7 +73,7 @@ export async function POST(req: Request) {
               where: { id: payer.referredBy },
               data: { referralBalance: { increment: commission }, referralEarned: { increment: commission } },
             });
-            console.log(`[webhook] referral commission: referrer=${payer.referredBy} +${commission} cents`);
+            log("info", "stripe-webhook", "referral commission (credit pack)", { referrer: payer.referredBy, commission });
           }
         }
 
@@ -91,7 +85,7 @@ export async function POST(req: Request) {
       const userId = session.metadata?.userId;
       const planKey = session.metadata?.plan;
       if (!userId || !planKey) {
-        console.error("[webhook] missing metadata in session", session.id);
+        log("error", "stripe-webhook", "missing metadata in session", { sessionId: session.id });
         return NextResponse.json({ received: true });
       }
 
@@ -99,20 +93,16 @@ export async function POST(req: Request) {
         ? session.subscription
         : session.subscription?.id;
       if (!subscriptionId) {
-        console.error("[webhook] no subscription ID in session", session.id);
+        log("error", "stripe-webhook", "no subscription ID in session", { sessionId: session.id });
         return NextResponse.json({ received: true });
       }
 
-      console.log("[webhook] Recuperando suscripción de Stripe:", subscriptionId);
       const sub = await stripe.subscriptions.retrieve(subscriptionId);
-      console.log("[webhook] sub.items.data[0]:", JSON.stringify(sub.items.data[0]?.current_period_end));
       const periodEnd = new Date(sub.items.data[0].current_period_end * 1000);
       const credits = PLAN_CREDITS[planKey] ?? 0;
       const interval = sub.items.data[0].plan.interval;
       const billingInterval = interval === "year" ? "annual" : "monthly";
-      console.log("[webhook] periodEnd:", periodEnd, "credits:", credits, "interval:", billingInterval);
 
-      console.log("[webhook] Actualizando usuario en DB...");
       await prisma.user.update({
         where: { id: userId },
         data: {
@@ -126,7 +116,7 @@ export async function POST(req: Request) {
         },
       });
 
-      console.log(`[webhook] subscription activated: user=${userId} plan=${planKey} credits=${credits}`);
+      log("info", "stripe-webhook", "subscription activated", { userId, plan: planKey, credits }, userId);
 
       // 5% referral commission on first subscription payment
       const subAmount = sub.items.data[0]?.plan?.amount ?? 0;
@@ -138,12 +128,11 @@ export async function POST(req: Request) {
             where: { id: subscriber.referredBy },
             data: { referralBalance: { increment: commission }, referralEarned: { increment: commission } },
           });
-          console.log(`[webhook] referral commission (sub): referrer=${subscriber.referredBy} +${commission} cents`);
+          log("info", "stripe-webhook", "referral commission (subscription)", { referrer: subscriber.referredBy, commission });
         }
       }
     } catch (error) {
-      console.error("[webhook] Error completo:", error);
-      console.error("[webhook] Stack:", error instanceof Error ? error.stack : error);
+      log("error", "stripe-webhook", "checkout.session.completed handler error", { error: String(error), stack: error instanceof Error ? error.stack : undefined });
       return NextResponse.json({ received: true }, { status: 200 });
     }
   }
@@ -165,7 +154,7 @@ export async function POST(req: Request) {
 
     const user = await prisma.user.findFirst({ where: { stripeSubscriptionId: subscriptionId } });
     if (!user) {
-      console.error("[webhook] no user for subscription", subscriptionId);
+      log("error", "stripe-webhook", "no user for subscription", { subscriptionId });
       return NextResponse.json({ received: true });
     }
 
@@ -203,7 +192,7 @@ export async function POST(req: Request) {
           ),
         ]);
 
-        console.log(`[webhook] enterprise renewal distributed: user=${user.id} ownerCredits=${ownerCredits} members=${distributions.length}`);
+        log("info", "stripe-webhook", "enterprise renewal distributed", { userId: user.id, ownerCredits, members: distributions.length }, user.id);
         return NextResponse.json({ received: true });
       }
     }
@@ -219,7 +208,7 @@ export async function POST(req: Request) {
       data: { ...creditsUpdate, planExpiresAt: periodEnd },
     });
 
-    console.log(`[webhook] credits updated: user=${user.id} plan=${user.plan} reason=${billingReason} credits=${planCredits}`);
+    log("info", "stripe-webhook", "credits updated on invoice.paid", { userId: user.id, plan: user.plan, reason: billingReason, credits: planCredits }, user.id);
 
     // 5% referral commission on renewal
     if (invoice.amount_paid > 0 && user.referredBy) {
@@ -228,7 +217,7 @@ export async function POST(req: Request) {
         where: { id: user.referredBy },
         data: { referralBalance: { increment: commission }, referralEarned: { increment: commission } },
       });
-      console.log(`[webhook] referral commission (renewal): referrer=${user.referredBy} +${commission} cents`);
+      log("info", "stripe-webhook", "referral commission (renewal)", { referrer: user.referredBy, commission });
     }
   }
 
@@ -276,11 +265,11 @@ export async function POST(req: Request) {
                   <p style="margin-top: 24px; font-size: 12px; color: #6b7280;">Elite Labs · elitelabs.es</p>
                 </div>
               `,
-            }).catch((err) => console.error("[webhook] member cancellation email error:", err));
+            }).catch((err) => log("error", "stripe-webhook", "member cancellation email error", { err: String(err) }));
           }
         }
 
-        console.log(`[webhook] enterprise team credits zeroed: team=${team.id} members=${team.members.length}`);
+        log("info", "stripe-webhook", "enterprise team credits zeroed", { teamId: team.id, members: team.members.length }, user.id);
       }
     }
 
@@ -294,7 +283,7 @@ export async function POST(req: Request) {
       },
     });
 
-    console.log(`[webhook] subscription cancelled: user=${user.id}`);
+    log("info", "stripe-webhook", "subscription cancelled", { userId: user.id }, user.id);
   }
 
   // ── customer.subscription.updated ────────────────────────
@@ -327,7 +316,7 @@ export async function POST(req: Request) {
 
     await prisma.user.update({ where: { id: user.id }, data: updateData });
 
-    console.log(`[webhook] subscription updated: user=${user.id} plan=${newPlan} billing=${newBillingInterval}`);
+    log("info", "stripe-webhook", "subscription updated", { userId: user.id, plan: newPlan, billing: newBillingInterval }, user.id);
   }
 
   // ── payment_intent.succeeded (credit pack backup) ─────────
@@ -354,7 +343,7 @@ export async function POST(req: Request) {
       }),
     ]);
 
-    console.log(`[webhook] credit pack (pi.succeeded): user=${userId} credits=${credits}`);
+    log("info", "stripe-webhook", "credit pack via payment_intent.succeeded", { userId, credits });
   }
 
   return NextResponse.json({ received: true });

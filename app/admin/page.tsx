@@ -8,6 +8,7 @@ import {
   LayoutDashboard, Users, CreditCard, Mic2, Ticket, Handshake, Wallet,
   BarChart2, Settings, RefreshCw, Check, X, AlertTriangle, Play, Pause,
   ExternalLink, Search, Filter, Plus, Minus, ArrowLeft, ChevronRight,
+  ScrollText, Monitor, ChevronDown,
 } from "lucide-react";
 
 /* ─── Types ───────────────────────────────────────────────── */
@@ -62,7 +63,17 @@ interface Payment {
   amountRefunded: number; last4: string | null; createdAt: string;
 }
 
-type Section = "dashboard" | "users" | "subscriptions" | "engines" | "support" | "affiliates" | "withdrawals" | "analytics" | "config";
+type Section = "dashboard" | "users" | "subscriptions" | "engines" | "support" | "affiliates" | "withdrawals" | "analytics" | "config" | "logs";
+
+interface UserSession {
+  id: string; ip: string | null; browser: string | null; os: string | null;
+  device: string | null; createdAt: string;
+}
+
+interface AppLog {
+  id: string; level: string; category: string; message: string;
+  details: string | null; userId: string | null; createdAt: string;
+}
 
 /* ─── Style helpers ───────────────────────────────────────── */
 const card = {
@@ -199,7 +210,7 @@ function UserDetailModal({
   const [detail, setDetail] = useState<UserDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [refunding, setRefunding] = useState<string | null>(null);
-  const [modalTab, setModalTab] = useState<"generaciones" | "pagos">("generaciones");
+  const [modalTab, setModalTab] = useState<"generaciones" | "pagos" | "accesos">("generaciones");
   const [payments, setPayments] = useState<Payment[] | null>(null);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
   const [refundingPayment, setRefundingPayment] = useState<string | null>(null);
@@ -207,6 +218,8 @@ function UserDetailModal({
   const [stripeSubLoading, setStripeSubLoading] = useState(false);
   const [planValue, setPlanValue] = useState("");
   const [planLoading, setPlanLoading] = useState(false);
+  const [sessions, setSessions] = useState<UserSession[] | null>(null);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
 
   const fetchDetail = useCallback(async () => {
     setLoading(true);
@@ -243,10 +256,21 @@ function UserDetailModal({
     finally { setStripeSubLoading(false); }
   }, [userId]);
 
+  const fetchSessions = useCallback(async () => {
+    setSessionsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/sessions`);
+      const data = await res.json();
+      setSessions(Array.isArray(data) ? data : []);
+    } catch { setSessions([]); }
+    finally { setSessionsLoading(false); }
+  }, [userId]);
+
   useEffect(() => { fetchDetail(); }, [fetchDetail]);
   useEffect(() => { fetchStripeSub(); }, [fetchStripeSub]);
   useEffect(() => { if (detail?.user.plan) setPlanValue(detail.user.plan); }, [detail]);
   useEffect(() => { if (modalTab === "pagos" && payments === null) fetchPayments(); }, [modalTab, payments, fetchPayments]);
+  useEffect(() => { if (modalTab === "accesos" && sessions === null) fetchSessions(); }, [modalTab, sessions, fetchSessions]);
 
   async function handleAssignPlan() {
     if (!planValue || planValue === detail?.user.plan) return;
@@ -382,9 +406,9 @@ function UserDetailModal({
               </div>
             </div>
             <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: "1rem" }}>
-              {(["generaciones", "pagos"] as const).map((t) => (
+              {(["generaciones", "pagos", "accesos"] as const).map((t) => (
                 <button key={t} onClick={() => setModalTab(t)} style={{ padding: "0.6rem 1.25rem", fontSize: "0.85rem", fontWeight: 600, background: "none", border: "none", cursor: "pointer", color: modalTab === t ? "#fff" : "#555555", borderBottom: modalTab === t ? "2px solid #ffffff" : "2px solid transparent", textTransform: "capitalize" }}>
-                  {t === "generaciones" ? `Generaciones (${detail.generations.length})` : "Pagos"}
+                  {t === "generaciones" ? `Generaciones (${detail.generations.length})` : t === "pagos" ? "Pagos" : "Accesos"}
                 </button>
               ))}
             </div>
@@ -467,6 +491,36 @@ function UserDetailModal({
                               </button>
                             )}
                           </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            )}
+            {modalTab === "accesos" && (
+              sessionsLoading ? (
+                <div style={{ padding: "2rem", textAlign: "center", color: "#555555" }}>Cargando accesos...</div>
+              ) : !sessions || sessions.length === 0 ? (
+                <p style={{ color: "#555555", fontSize: "0.85rem", padding: "1rem 0" }}>Sin accesos registrados.</p>
+              ) : (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                        {["Fecha", "IP", "Navegador", "OS", "Dispositivo"].map((h) => (
+                          <th key={h} style={{ padding: "0.5rem 0.75rem", textAlign: "left", color: "#555555", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sessions.map((s, i) => (
+                        <tr key={s.id} style={{ borderBottom: "1px solid #1a1a1a", background: i === 0 ? "rgba(255,255,255,0.02)" : "transparent" }}>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", whiteSpace: "nowrap" }}>{new Date(s.createdAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}</td>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "#aaaaaa", fontFamily: "monospace" }}>{s.ip ?? "—"}</td>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af" }}>{s.browser ?? "—"}</td>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af" }}>{s.os ?? "—"}</td>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af" }}>{s.device ?? "—"}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1249,6 +1303,127 @@ function ConfigSection(props: {
   );
 }
 
+/* ─── Logs Section ────────────────────────────────────────── */
+function LogsSection() {
+  const [logs, setLogs] = useState<AppLog[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [levelFilter, setLevelFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [clearing, setClearing] = useState(false);
+
+  const fetchLogs = useCallback(async () => {
+    const params = new URLSearchParams({ limit: "100" });
+    if (levelFilter) params.set("level", levelFilter);
+    if (categoryFilter) params.set("category", categoryFilter);
+    try {
+      const res = await fetch(`/api/admin/logs?${params}`);
+      const data = await res.json();
+      setLogs(Array.isArray(data.logs) ? data.logs : []);
+      setTotal(typeof data.total === "number" ? data.total : 0);
+    } catch { /* ignore */ }
+    finally { setLoading(false); }
+  }, [levelFilter, categoryFilter]);
+
+  useEffect(() => {
+    fetchLogs();
+    const id = setInterval(fetchLogs, 30000);
+    return () => clearInterval(id);
+  }, [fetchLogs]);
+
+  async function clearLogs() {
+    setClearing(true);
+    await fetch("/api/admin/logs", { method: "DELETE" });
+    setLogs([]); setTotal(0);
+    setClearing(false);
+  }
+
+  function toggleExpand(id: string) {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  const levelColor: Record<string, string> = {
+    info: "#60a5fa",
+    warn: "#f59e0b",
+    error: "#f87171",
+    debug: "#888888",
+  };
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+        <div>
+          <p style={{ fontWeight: 800, fontSize: "20px", color: "#fff", margin: 0 }}>Errores y Logs</p>
+          <p style={{ fontSize: "12px", color: "#555555", marginTop: "4px", margin: 0 }}>{total.toLocaleString("es-ES")} entradas · actualiza cada 30s</p>
+        </div>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <button onClick={fetchLogs} style={{ ...btn("#1a1a1a", { border: "1px solid rgba(255,255,255,0.08)", color: "#888888", display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", fontSize: "12px" }) }}>
+            <RefreshCw size={11} /> Actualizar
+          </button>
+          <button onClick={clearLogs} disabled={clearing || logs.length === 0} style={{ ...btn("#ef4444", { padding: "6px 12px", fontSize: "12px", opacity: clearing || logs.length === 0 ? 0.5 : 1 }) }}>
+            Limpiar todo
+          </button>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
+        <CustomSelect
+          options={[{ value: "", label: "Todos los niveles" }, { value: "error", label: "Error" }, { value: "warn", label: "Warn" }, { value: "info", label: "Info" }, { value: "debug", label: "Debug" }]}
+          value={levelFilter} onChange={setLevelFilter} style={{ minWidth: "160px" }}
+        />
+        <input
+          placeholder="Filtrar por categoría..."
+          value={categoryFilter}
+          onChange={e => setCategoryFilter(e.target.value)}
+          style={{ ...input, width: "200px" }}
+        />
+      </div>
+
+      {loading ? (
+        <div style={{ padding: "3rem", textAlign: "center", color: "#555555" }}>Cargando logs...</div>
+      ) : logs.length === 0 ? (
+        <div style={{ ...card, textAlign: "center", padding: "3rem", color: "#555555" }}>
+          <Monitor size={32} style={{ marginBottom: "12px", opacity: 0.3 }} />
+          <p>Sin logs registrados</p>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+          {logs.map(log => (
+            <div key={log.id} style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", overflow: "hidden" }}>
+              <div
+                onClick={() => log.details && toggleExpand(log.id)}
+                style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", cursor: log.details ? "pointer" : "default" }}
+              >
+                <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", color: levelColor[log.level] ?? "#888", background: `${levelColor[log.level] ?? "#888"}18`, border: `1px solid ${levelColor[log.level] ?? "#888"}33`, flexShrink: 0 }}>
+                  {log.level.toUpperCase()}
+                </span>
+                <span style={{ fontSize: "11px", color: "#555555", fontFamily: "monospace", flexShrink: 0 }}>{log.category}</span>
+                <span style={{ fontSize: "13px", color: "#e5e7eb", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{log.message}</span>
+                <span style={{ fontSize: "11px", color: "#444444", flexShrink: 0, whiteSpace: "nowrap" }}>{new Date(log.createdAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}</span>
+                {log.details && (
+                  <ChevronDown size={13} style={{ color: "#555555", flexShrink: 0, transform: expanded.has(log.id) ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+                )}
+              </div>
+              {expanded.has(log.id) && log.details && (
+                <div style={{ padding: "0 14px 12px" }}>
+                  <pre style={{ margin: 0, fontSize: "11px", color: "#9ca3af", background: "#000000", borderRadius: "6px", padding: "10px 12px", overflowX: "auto", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+                    {(() => { try { return JSON.stringify(JSON.parse(log.details), null, 2); } catch { return log.details; } })()}
+                  </pre>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── NAV config ──────────────────────────────────────────── */
 const NAV_ITEMS_BASE: { key: Section; label: string; Icon: React.ElementType }[] = [
   { key: "dashboard",     label: "Dashboard",      Icon: LayoutDashboard },
@@ -1260,6 +1435,7 @@ const NAV_ITEMS_BASE: { key: Section; label: string; Icon: React.ElementType }[]
   { key: "withdrawals",   label: "Retiros",          Icon: Wallet },
   { key: "analytics",     label: "Analytics",        Icon: BarChart2 },
   { key: "config",        label: "Configuración",    Icon: Settings },
+  { key: "logs",          label: "Logs",             Icon: ScrollText },
 ];
 
 /* ─── Main ────────────────────────────────────────────────── */
@@ -1298,10 +1474,23 @@ export default function AdminPage() {
   const [turboManualOverridePending, setTurboManualOverridePending] = useState(false);
   const [turboStatusSaving, setTurboStatusSaving] = useState(false);
   const [ai33Health, setAi33Health] = useState<{ elevenlabs: string; isDown: boolean } | null>(null);
+  const [logErrorCount, setLogErrorCount] = useState(0);
 
   const toast = useCallback((msg: string, ok = true) => {
     setFeedback({ msg, ok });
     setTimeout(() => setFeedback(null), 3500);
+  }, []);
+
+  useEffect(() => {
+    function refreshErrorCount() {
+      fetch("/api/admin/logs?level=error&limit=1")
+        .then(r => r.json())
+        .then(d => setLogErrorCount(typeof d.total === "number" ? d.total : 0))
+        .catch(() => {});
+    }
+    refreshErrorCount();
+    const id = setInterval(refreshErrorCount, 60000);
+    return () => clearInterval(id);
   }, []);
 
   const fetchAll = useCallback(async () => {
@@ -1436,7 +1625,7 @@ export default function AdminPage() {
 
   const NAV_ITEMS = NAV_ITEMS_BASE.map(item => ({
     ...item,
-    badge: item.key === "support" ? pendingTickets : item.key === "affiliates" ? pendingAffiliates : item.key === "withdrawals" ? pendingWithdrawals : 0,
+    badge: item.key === "support" ? pendingTickets : item.key === "affiliates" ? pendingAffiliates : item.key === "withdrawals" ? pendingWithdrawals : item.key === "logs" ? logErrorCount : 0,
   }));
 
   const engineProps = { turboStatus, turboStatusPending, setTurboStatusPending, turboManualOverride, turboManualOverridePending, setTurboManualOverridePending, turboStatusSaving, onSave: saveTurboStatus, ai33Health };
@@ -1522,6 +1711,7 @@ export default function AdminPage() {
         )}
         {activeSection === "analytics" && <AnalyticsSection users={users} stats={stats} />}
         {activeSection === "config" && <ConfigSection {...engineProps} />}
+        {activeSection === "logs" && <LogsSection />}
       </main>
     </div>
   );

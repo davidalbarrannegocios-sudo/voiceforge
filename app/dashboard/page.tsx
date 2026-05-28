@@ -4578,6 +4578,7 @@ export default function DashboardPage() {
     fetchCredits();
     fetchVoices();
     fetchMemberInfo();
+    fetch("/api/auth-session", { method: "POST" }).catch(() => {});
   }, [fetchCredits, fetchVoices, fetchMemberInfo]);
 
   // Restore selected voice from localStorage once userId is available

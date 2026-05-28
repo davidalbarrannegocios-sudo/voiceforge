@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { calculateCharCost } from "@/lib/utils";
 import { FREE_VOICE_IDS } from "@/lib/free-voice-ids";
 import { getEffectivePlan } from "@/lib/plan";
+import { log } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -84,7 +85,7 @@ export async function POST(req: Request) {
       }),
     ]);
 
-    console.log(`[tts-job] created jobId=${job.id} chars=${trimmed.length} userId=${user.id}`);
+    log("info", "tts-job", `created jobId=${job.id} chars=${trimmed.length}`, { jobId: job.id, chars: trimmed.length }, user.id);
 
     return NextResponse.json({
       jobId: job.id,
@@ -93,7 +94,7 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[tts-job] create error:", message);
+    log("error", "tts-job", "create error", { message });
     return NextResponse.json({ error: "Error interno", detail: message }, { status: 500 });
   }
 }

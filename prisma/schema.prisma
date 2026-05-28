@@ -45,6 +45,7 @@ model User {
   teamMember            TeamMember?
   transcriptionTasks    TranscriptionTask[]
   translationTasks      TranslationTask[]
+  userSessions          UserSession[]
   withdrawalRequests    WithdrawalRequest[]
 }
 
@@ -276,4 +277,28 @@ model SystemConfig {
   elitelabsTurboStatus         String   @default("active")
   updatedAt                    DateTime @updatedAt
   elitelabsTurboManualOverride Boolean  @default(false)
+}
+
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    String
+  ip        String?
+  userAgent String?
+  device    String?
+  browser   String?
+  os        String?
+  country   String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model AppLog {
+  id        String   @id @default(cuid())
+  level     String
+  category  String
+  message   String
+  details   String?
+  userId    String?
+  requestId String?
+  createdAt DateTime @default(now())
 }
