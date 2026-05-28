@@ -17,6 +17,7 @@ import AudioHistoryList from "@/components/AudioHistoryList";
 import { CustomSelect } from "@/components/CustomSelect";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 import { TaggedTextEditor } from "@/components/TaggedTextEditor";
+import { NoCreditsModal } from "@/components/NoCreditsModal";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface Voice {
@@ -562,6 +563,7 @@ function GenerateTab({
   const [showBrowser, setShowBrowser] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [showNoCredits, setShowNoCredits] = useState(false);
   const [speed, setSpeed] = useState<number>(() => { try { const s = localStorage.getItem("elitelabs_fish_settings"); return s ? (JSON.parse(s).speed ?? 1.0) : 1.0; } catch { return 1.0; } });
   const [volume, setVolume] = useState<number>(() => { try { const s = localStorage.getItem("elitelabs_fish_settings"); return s ? (JSON.parse(s).volume ?? 1.0) : 1.0; } catch { return 1.0; } });
 
@@ -789,6 +791,7 @@ function GenerateTab({
           body: JSON.stringify(turboBody),
         });
         const data = await res.json();
+        if (res.status === 402) { setSubmitting(false); setShowNoCredits(true); return; }
         if (!res.ok) throw new Error(data.error || "Error al generar");
         window.dispatchEvent(new CustomEvent("audio-history-changed"));
         onGenerated();
@@ -815,6 +818,7 @@ function GenerateTab({
           }),
         });
         const data = await res.json();
+        if (res.status === 402) { setSubmitting(false); setShowNoCredits(true); return; }
         if (!res.ok) throw new Error(data.error || "Error al generar");
 
         const { jobId } = data as { jobId: string };
@@ -1280,6 +1284,12 @@ function GenerateTab({
           defaultLanguage={selectedModel === "turbo" ? "en" : "es"}
         />
       )}
+
+      <NoCreditsModal
+        isOpen={showNoCredits}
+        onClose={() => setShowNoCredits(false)}
+        currentPlan={plan.toLowerCase()}
+      />
     </div>
   );
 }
