@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { fishAudioGenerate } from "@/lib/fishaudio";
 import { getEffectivePlan } from "@/lib/plan";
+import { log } from "@/lib/logger";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -36,6 +37,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, status: job.status });
   }
 
+  const startTime = Date.now();
+
   await prisma.generationJob.update({
     where: { id: jobId },
     data: { status: "processing" },
@@ -60,7 +63,7 @@ export async function POST(req: Request) {
     });
   } catch (fishErr) {
     const errMsg = fishErr instanceof Error ? fishErr.message : String(fishErr);
-    console.error(`[tts-job/process] Fish Audio error:`, { jobId, message: errMsg });
+    await log("error", "tts-job", `error jobId=${jobId} userId=${job.userId}`, { jobId, userId: job.userId, error: errMsg, chars: job.text.length, voiceName: job.voiceName }, job.userId);
 
     await prisma.$transaction([
       prisma.generationJob.update({
@@ -102,6 +105,6 @@ export async function POST(req: Request) {
     }),
   ]);
 
-  console.log(`[tts-job/process] done jobId=${jobId} audioUrl=${result.audio_url}`);
+  await log("info", "tts-job", `done jobId=${jobId} userId=${job.userId}`, { jobId, userId: job.userId, chars: job.text.length, voiceName: job.voiceName, audioUrl: result.audio_url, durationMs: Date.now() - startTime }, job.userId);
   return NextResponse.json({ ok: true, status: "done", audioUrl: result.audio_url });
 }

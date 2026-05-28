@@ -85,7 +85,7 @@ export async function POST(req: Request) {
       }),
     ]);
 
-    log("info", "tts-job", `created jobId=${job.id} chars=${trimmed.length}`, { jobId: job.id, chars: trimmed.length }, user.id);
+    log("info", "tts-job", `created jobId=${job.id} userId=${user.id} chars=${trimmed.length}`, { jobId: job.id, userId: user.id, chars: trimmed.length, voiceName: resolvedVoiceName }, user.id);
 
     return NextResponse.json({
       jobId: job.id,

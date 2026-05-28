@@ -702,6 +702,15 @@ function UsersSection({
   onSearch: (v: string) => void;
 }) {
   const [planFilter, setPlanFilter] = useState("all");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  function copyId(id: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    navigator.clipboard.writeText(id).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 1500);
+    });
+  }
 
   const filtered = users.filter(u => {
     const matchSearch = u.email.toLowerCase().includes(search.toLowerCase()) || u.id.includes(search);
@@ -731,7 +740,7 @@ function UsersSection({
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", background: "#0d0d0d" }}>
-                {["Email", "Plan", "Créditos", "Generaciones", "Rol", "Registro", "Acciones"].map((h) => (
+                {["CUID", "Email", "Plan", "Créditos", "Generaciones", "Rol", "Registro", "Acciones"].map((h) => (
                   <th key={h} style={{ padding: "10px 14px", textAlign: "left", color: "#555555", fontWeight: 600, whiteSpace: "nowrap", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
                 ))}
               </tr>
@@ -739,6 +748,18 @@ function UsersSection({
             <tbody>
               {filtered.map((u, idx) => (
                 <tr key={u.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", background: idx % 2 === 0 ? "#0d0d0d" : "#111111", cursor: "pointer" }} onClick={() => onSelectUser(u.id)}>
+                  <td style={{ padding: "10px 14px" }} onClick={e => e.stopPropagation()}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span title={u.id} style={{ fontFamily: "monospace", fontSize: "11px", color: "#666666" }}>{u.id.slice(0, 8)}…</span>
+                      <button
+                        onClick={e => copyId(u.id, e)}
+                        title={copiedId === u.id ? "Copiado!" : "Copiar CUID"}
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 4px", borderRadius: "4px", fontSize: "11px", color: copiedId === u.id ? "#4ade80" : "#555555", transition: "color 0.15s" }}
+                      >
+                        {copiedId === u.id ? "✓" : "⎘"}
+                      </button>
+                    </div>
+                  </td>
                   <td style={{ padding: "10px 14px", color: "#e5e7eb" }}>{u.email}</td>
                   <td style={{ padding: "10px 14px" }}><PlanBadge plan={u.plan} /></td>
                   <td style={{ padding: "10px 14px", color: "#aaaaaa", fontWeight: 600 }}>{u.credits.toLocaleString("es-ES")}</td>
@@ -753,7 +774,7 @@ function UsersSection({
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={7} style={{ padding: "2rem", textAlign: "center", color: "#555555" }}>No se encontraron usuarios</td></tr>
+                <tr><td colSpan={8} style={{ padding: "2rem", textAlign: "center", color: "#555555" }}>No se encontraron usuarios</td></tr>
               )}
             </tbody>
           </table>
