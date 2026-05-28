@@ -76,9 +76,15 @@ function splitTextIntoChunks(text: string, maxChars = CHUNK_MAX): string[] {
   return chunks.filter((c) => c.length > 0);
 }
 
+function toFishModel(model: string): string {
+  if (model === "speech-1.5") return "s1";
+  return "s2-pro";
+}
+
 async function fetchChunk(
   apiKey: string,
   payload: Record<string, unknown>,
+  fishModel: string,
   chunkIndex: number,
   total: number,
   externalSignal?: AbortSignal,
@@ -101,6 +107,7 @@ async function fetchChunk(
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
+          model: fishModel,
         },
         body: JSON.stringify(payload),
         signal: controller.signal,
@@ -225,7 +232,6 @@ export async function fishAudioGenerate({
     const chunkHasTags = /\[[^\]]+\]|\([^)]+\)/.test(chunks[i]);
     const payload: Record<string, unknown> = {
       text: chunks[i],
-      model,
       format: "mp3",
       mp3_bitrate: mp3Bitrate ?? 128,
       normalize: chunkHasTags ? false : (normalizeText ?? true),
@@ -246,7 +252,7 @@ export async function fishAudioGenerate({
     }
     payload.prosody = prosodyObj;
     console.log("[fishaudio] payload prosody:", JSON.stringify(payload.prosody));
-    return withSlot(() => fetchChunk(apiKey, payload, i, chunks.length, signal));
+    return withSlot(() => fetchChunk(apiKey, payload, toFishModel(model), i, chunks.length, signal));
   }));
 
   let audioBuffer = audioBuffers.length === 1 ? audioBuffers[0] : Buffer.concat(audioBuffers);
