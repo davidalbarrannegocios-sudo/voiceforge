@@ -938,7 +938,7 @@ function GenerateTab({
               </div>
 
               {tagsOpen && (
-                <div style={{ position: "absolute", top: "calc(100% + 4px)", left: "12px", zIndex: 50, background: "#111111", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", padding: "14px 16px", minWidth: "340px", maxWidth: "520px", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
+                <div className="tags-panel" style={{ position: "absolute", top: "calc(100% + 4px)", left: "12px", zIndex: 50, background: "#111111", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", padding: "14px 16px", minWidth: "340px", maxWidth: "520px", boxShadow: "0 8px 32px rgba(0,0,0,0.5)", maxHeight: "60vh", overflowY: "auto" }}>
                   {TAG_GROUPS.map((group, gi) => (
                     <div key={group.label} style={{ marginBottom: gi < TAG_GROUPS.length - 1 ? "12px" : "10px" }}>
                       <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#555555", marginBottom: "8px" }}>{group.label}</p>
