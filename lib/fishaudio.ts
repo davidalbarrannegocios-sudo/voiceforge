@@ -221,12 +221,14 @@ export async function fishAudioGenerate({
   console.log(`[chunking] Total chars: ${text.length}, chunks: ${chunks.length}, batchSize: global-queue(max 15)`);
 
   const audioBuffers = await Promise.all(chunks.map((_, i) => {
+    // Disable text normalization when bracket/parenthesis tags are present — normalization can strip them
+    const chunkHasTags = /\[[^\]]+\]|\([^)]+\)/.test(chunks[i]);
     const payload: Record<string, unknown> = {
       text: chunks[i],
       model,
       format: "mp3",
       mp3_bitrate: mp3Bitrate ?? 128,
-      normalize: normalizeText ?? true,
+      normalize: chunkHasTags ? false : (normalizeText ?? true),
       latency: "balanced",
       chunk_length: 200,
     };

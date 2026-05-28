@@ -586,6 +586,7 @@ function GenerateTab({
   const [previewing, setPreviewing] = useState<"idle" | "loading" | "playing">("idle");
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const [tagsOpen, setTagsOpen] = useState(false);
   const tagsAreaRef = useRef<HTMLDivElement>(null);
   const [rightTab, setRightTab] = useState<"ajustes" | "historial">("ajustes");
@@ -711,16 +712,40 @@ function GenerateTab({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [tagsOpen]);
 
-  const TAG_GROUPS = [
-    {
-      label: "Tono emocional",
-      tags: ["[angry]", "[sad]", "[embarrassed]", "[emphasis]", "[whispering]", "[soft]", "[breathy]", "[excited]"],
-    },
-    {
-      label: "Efectos de audio",
-      tags: ["[laughing]", "[chuckling]", "[moaning]", "[clear throat]", "[sobbing]", "[crying loudly]", "[sighing]", "[panting]", "[groaning]", "[crowd laughing]", "[background laughter]", "[audience laughing]", "[pause]", "[long pause]"],
-    },
-  ];
+  const TAG_GROUPS = selectedModel === "speech-1.5"
+    ? [
+        { label: "Emociones básicas", tags: ["(happy)", "(sad)", "(angry)", "(excited)", "(calm)", "(nervous)", "(confident)", "(surprised)", "(satisfied)", "(delighted)", "(scared)", "(worried)", "(upset)", "(frustrated)", "(embarrassed)", "(empathetic)", "(disgusted)", "(moved)", "(proud)", "(relaxed)", "(grateful)", "(curious)", "(sarcastic)"] },
+        { label: "Emociones avanzadas", tags: ["(disdainful)", "(unhappy)", "(anxious)", "(hysterical)", "(indifferent)", "(confused)", "(disappointed)", "(regretful)", "(guilty)", "(hopeful)", "(optimistic)", "(pessimistic)", "(nostalgic)", "(lonely)", "(bored)", "(contemptuous)", "(sympathetic)", "(determined)"] },
+        { label: "Tono", tags: ["(in a hurry tone)", "(shouting)", "(screaming)", "(whispering)", "(soft tone)"] },
+        { label: "Efectos de audio", tags: ["(laughing)", "(chuckling)", "(sobbing)", "(crying loudly)", "(sighing)", "(groaning)", "(panting)", "(gasping)", "(yawning)"] },
+        { label: "Efectos especiales", tags: ["(audience laughing)", "(background laughter)", "(crowd laughing)", "(break)", "(long-break)"] },
+      ]
+    : [
+        { label: "Tono emocional", tags: ["[angry]", "[sad]", "[embarrassed]", "[emphasis]", "[whispering]", "[soft]", "[breathy]", "[excited]"] },
+        { label: "Efectos de audio", tags: ["[laughing]", "[chuckling]", "[moaning]", "[clear throat]", "[sobbing]", "[crying loudly]", "[sighing]", "[panting]", "[groaning]", "[crowd laughing]", "[background laughter]", "[audience laughing]", "[pause]", "[long pause]"] },
+        { label: "Avanzadas", tags: ["[inhale]", "[exhale]", "[singing]", "[screaming]", "[shouting]", "[surprised]", "[shocked]", "[volume up]", "[volume down]", "[echo]", "[loud]", "[low volume]", "[whisper]", "[sigh]", "[short pause]", "[clearing throat]", "[delight]", "[with strong accent]"] },
+      ];
+
+  const tagSyntaxHint = selectedModel === "speech-1.5"
+    ? "Las etiquetas (…) deben ir al inicio de cada frase"
+    : "Las etiquetas […] deben ir al inicio de cada frase";
+
+  const hasTagHighlights = selectedModel !== "turbo" && text.length > 0 && (
+    selectedModel === "speech-1.5" ? /\([^)]+\)/.test(text) : /\[[^\]]+\]/.test(text)
+  );
+
+  function getHighlightedHTML(raw: string): string {
+    const escaped = raw
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\n/g, "<br>");
+    const markStyle = "background:rgba(139,92,246,0.22);color:#c4b5fd;border-radius:3px;padding:0 2px";
+    if (selectedModel === "speech-1.5") {
+      return escaped.replace(/\(([^)]+)\)/g, `<mark style="${markStyle}">($1)</mark>`);
+    }
+    return escaped.replace(/\[([^\]]+)\]/g, `<mark style="${markStyle}">[$1]</mark>`);
+  }
 
   function insertTagAtCursor(tag: string) {
     const ta = textareaRef.current;
@@ -914,8 +939,8 @@ function GenerateTab({
 
               {tagsOpen && (
                 <div style={{ position: "absolute", top: "calc(100% + 4px)", left: "12px", zIndex: 50, background: "#111111", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", padding: "14px 16px", minWidth: "340px", maxWidth: "520px", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
-                  {TAG_GROUPS.map(group => (
-                    <div key={group.label} style={{ marginBottom: "12px" }}>
+                  {TAG_GROUPS.map((group, gi) => (
+                    <div key={group.label} style={{ marginBottom: gi < TAG_GROUPS.length - 1 ? "12px" : "10px" }}>
                       <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#555555", marginBottom: "8px" }}>{group.label}</p>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
                         {group.tags.map(tag => (
@@ -932,20 +957,34 @@ function GenerateTab({
                       </div>
                     </div>
                   ))}
+                  <p style={{ fontSize: "10px", color: "#444444", marginTop: "6px", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "8px" }}>
+                    💡 {tagSyntaxHint}
+                  </p>
                 </div>
               )}
             </div>
           )}
 
-          {/* Textarea */}
-          <textarea
-            ref={textareaRef}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={t.generate.placeholder}
-            disabled={submitting}
-            style={{ flex: 1, padding: "16px", background: "transparent", border: "none", outline: "none", resize: "none", fontSize: "14px", color: "#e2e8f0", lineHeight: "1.75", opacity: submitting ? 0.6 : 1, fontFamily: "inherit" }}
-          />
+          {/* Textarea with highlight overlay */}
+          <div style={{ position: "relative", flex: 1, overflow: "hidden" }}>
+            {hasTagHighlights && (
+              <div
+                ref={overlayRef}
+                aria-hidden="true"
+                style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "16px", fontSize: "14px", lineHeight: "1.75", fontFamily: "inherit", color: "#e2e8f0", whiteSpace: "pre-wrap", wordBreak: "break-word", pointerEvents: "none", overflowY: "scroll", scrollbarWidth: "none", height: "100%", boxSizing: "border-box" }}
+                dangerouslySetInnerHTML={{ __html: getHighlightedHTML(text) }}
+              />
+            )}
+            <textarea
+              ref={textareaRef}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onScroll={(e) => { if (overlayRef.current) overlayRef.current.scrollTop = e.currentTarget.scrollTop; }}
+              placeholder={t.generate.placeholder}
+              disabled={submitting}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", padding: "16px", background: "transparent", border: "none", outline: "none", resize: "none", fontSize: "14px", color: hasTagHighlights ? "transparent" : "#e2e8f0", caretColor: "#e2e8f0", lineHeight: "1.75", opacity: submitting ? 0.6 : 1, fontFamily: "inherit", boxSizing: "border-box" }}
+            />
+          </div>
 
           {/* Left footer */}
           <div style={{ flexShrink: 0 }}>
