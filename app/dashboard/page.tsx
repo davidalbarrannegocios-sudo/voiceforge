@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, Info, Settings, MessageSquare } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronDown, Info, Settings, MessageSquare } from "lucide-react";
 import { DialogueEditor } from "@/components/DialogueEditor";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { UserMenu } from "@/components/UserMenu";
@@ -4671,6 +4671,7 @@ export default function DashboardPage() {
   const [translateVoice, setTranslateVoice] = useState<SelectedVoice | null>(null);
   const [supportOpen, setSupportOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showProductMenu, setShowProductMenu] = useState(false);
   const [nextRenewalDate, setNextRenewalDate] = useState<string | null>(null);
   const [daysUntilRenewal, setDaysUntilRenewal] = useState<number | null>(null);
   const { t: tt, toggle: toggleLang } = useLang();
@@ -4779,16 +4780,86 @@ export default function DashboardPage() {
           const { title, Icon } = TAB_META[activeTab] ?? { title: "", Icon: Home };
           return (
             <div style={{ height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", position: "sticky", top: 0, zIndex: 10, borderBottom: "1px solid #1a1a1a", background: "#000000", flexShrink: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                {/* Hamburger — opens mobile drawer / collapses desktop sidebar */}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                {/* Hamburger — opens mobile drawer */}
                 <button
                   onClick={() => setSidebarOpen(true)}
                   style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #222222", background: "transparent", cursor: "pointer", color: "#888888", flexShrink: 0 }}
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect y="2" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="7.25" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="12.5" width="16" height="1.5" rx="0.75" fill="currentColor"/></svg>
                 </button>
-                <Icon size={16} style={{ color: "#444444" }} />
-                <span className="hidden sm:inline" style={{ fontSize: "14px", fontWeight: 600, color: "#e5e7eb" }}>{title}</span>
+
+                {/* Product selector */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowProductMenu(p => !p)}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl
+                               hover:bg-white/5 border border-transparent
+                               hover:border-white/10 transition-all"
+                  >
+                    <Image src="/elitelabs.png" alt="Elite Labs" width={20} height={20}
+                      style={{ height: "20px", width: "auto", objectFit: "contain", flexShrink: 0 }}
+                      className="rounded-md"
+                    />
+                    <span className="hidden sm:inline text-sm font-semibold text-white">Elite Studio</span>
+                    <ChevronDown className={`w-3.5 h-3.5 text-white/40 transition-transform ${showProductMenu ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {showProductMenu && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowProductMenu(false)} />
+                      <div className="absolute top-full left-0 mt-2 z-50 w-72
+                                      bg-[#111] border border-white/10 rounded-2xl
+                                      shadow-2xl overflow-hidden p-1.5">
+                        {/* Elite Studio */}
+                        <button
+                          onClick={() => setShowProductMenu(false)}
+                          className="w-full flex items-center gap-3 p-3 rounded-xl text-left bg-white/8 transition-all"
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-white/20 to-white/5
+                                          flex items-center justify-center flex-shrink-0
+                                          border border-white/10 text-xl">
+                            🎙️
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-semibold text-white">Elite Studio</span>
+                            <p className="text-xs text-white/40 mt-0.5">Genera, clona y edita voz con IA</p>
+                          </div>
+                          <div className="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0" />
+                        </button>
+
+                        {/* Elite API — En desarrollo */}
+                        <button
+                          disabled
+                          className="w-full flex items-center gap-3 p-3 rounded-xl text-left
+                                     opacity-50 cursor-not-allowed transition-all"
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-500/5
+                                          flex items-center justify-center flex-shrink-0
+                                          border border-white/10 text-xl">
+                            ⚡
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold text-white">Elite API</span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full
+                                               bg-white/5 text-white/30 border border-white/8">
+                                En desarrollo
+                              </span>
+                            </div>
+                            <p className="text-xs text-white/40 mt-0.5">Accede a nuestros modelos via API</p>
+                          </div>
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Current tab indicator */}
+                <div className="hidden md:flex items-center gap-2 pl-1 border-l border-white/8">
+                  <Icon size={14} style={{ color: "#555555" }} />
+                  <span style={{ fontSize: "13px", fontWeight: 500, color: "#888888" }}>{title}</span>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
