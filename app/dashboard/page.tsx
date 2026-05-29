@@ -342,11 +342,12 @@ function HomeTab({
   const { t } = useLang();
 
   const cards: { key: Tab; Icon: React.ElementType; title: string; desc: string }[] = [
-    { key: "generate",   Icon: Mic,       title: t.home.cardGenerate,   desc: t.home.cardGenerateDesc },
-    { key: "voices",     Icon: Users,     title: t.home.cardVoices,     desc: t.home.cardVoicesDesc },
-    { key: "history",    Icon: Clock,     title: t.home.cardHistory,    desc: t.home.cardHistoryDesc },
-    { key: "transcribe", Icon: FileAudio, title: t.home.cardTranscribe, desc: t.home.cardTranscribeDesc },
-    { key: "translate",  Icon: Languages, title: t.home.cardTranslate,  desc: t.home.cardTranslateDesc },
+    { key: "generate",   Icon: Mic,           title: t.home.cardGenerate,   desc: t.home.cardGenerateDesc },
+    { key: "dialogue",   Icon: MessageSquare, title: "Texto a Diálogo",     desc: "Genera audios con múltiples voces y personajes" },
+    { key: "voices",     Icon: Users,         title: t.home.cardVoices,     desc: t.home.cardVoicesDesc },
+    { key: "history",    Icon: Clock,         title: t.home.cardHistory,    desc: t.home.cardHistoryDesc },
+    { key: "transcribe", Icon: FileAudio,     title: t.home.cardTranscribe, desc: t.home.cardTranscribeDesc },
+    { key: "translate",  Icon: Languages,     title: t.home.cardTranslate,  desc: t.home.cardTranslateDesc },
   ];
 
   return (
@@ -363,7 +364,7 @@ function HomeTab({
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 items-stretch">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 items-stretch">
         {cards.map(({ key, Icon, title, desc }, i) => (
           <button
             key={key}
