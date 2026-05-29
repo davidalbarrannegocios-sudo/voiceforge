@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronDown, ChevronsUpDown, Info, Settings, MessageSquare } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare } from "lucide-react";
 import { DialogueEditor } from "@/components/DialogueEditor";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { UserMenu } from "@/components/UserMenu";
@@ -393,6 +393,22 @@ function Sidebar({
 }
 
 /* ─── Home Tab ────────────────────────────────────────────── */
+interface RecentGeneration {
+  id: string
+  voiceId?: string
+  voiceName?: string
+  text?: string
+  audioUrl?: string
+  createdAt: string
+}
+
+interface ClonedVoiceItem {
+  id: string
+  name: string
+  provider?: string
+  isSystem?: boolean
+}
+
 function HomeTab({
   user,
   credits,
@@ -402,17 +418,17 @@ function HomeTab({
   credits: number | null;
   setActiveTab: (t: Tab) => void;
 }) {
-  const [recentGenerations, setRecentGenerations] = useState<any[]>([])
-  const [clonedVoices, setClonedVoices] = useState<any[]>([])
+  const [recentGenerations, setRecentGenerations] = useState<RecentGeneration[]>([])
+  const [clonedVoices, setClonedVoices] = useState<ClonedVoiceItem[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/history?page=1').then(r => r.json()),
-      fetch('/api/voices').then(r => r.json()),
+      fetch('/api/history?page=1').then(r => r.json()) as Promise<{ generations: RecentGeneration[] }>,
+      fetch('/api/voices').then(r => r.json()) as Promise<ClonedVoiceItem[]>,
     ]).then(([gens, voices]) => {
       setRecentGenerations((gens.generations ?? []).slice(0, 4))
-      setClonedVoices((Array.isArray(voices) ? voices : []).filter((v: any) => !v.isSystem).slice(0, 4))
+      setClonedVoices(voices.filter(v => !v.isSystem).slice(0, 4))
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [])
