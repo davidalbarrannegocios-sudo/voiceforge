@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Home, Mic2, Type, FileAudio, Globe, Clock,
-  CreditCard, Gift, Zap, Settings, Users,
+  CreditCard, Gift, Zap, Settings, Users, Code,
 } from "lucide-react";
 import { useLang } from "./LanguageContext";
 
@@ -28,7 +28,8 @@ export function DashboardSidebar() {
   const [leaving, setLeaving] = useState(false);
 
   const isMiCuenta = pathname === "/dashboard/mi-cuenta";
-  const activeTab: Tab | null = isMiCuenta
+  const isDevelopers = pathname === "/dashboard/developers";
+  const activeTab: Tab | null = isMiCuenta || isDevelopers
     ? null
     : ((searchParams.get("tab") as Tab | null) ?? "home");
 
@@ -155,6 +156,31 @@ export function DashboardSidebar() {
             </div>
           </div>
         ))}
+
+        {/* Desarrollador */}
+        <Link
+          href="/dashboard/developers"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            padding: "8px 12px",
+            borderRadius: "8px",
+            fontSize: "13px",
+            fontWeight: 500,
+            textDecoration: "none",
+            marginTop: "2px",
+            transition: "background 0.15s",
+            background: isDevelopers ? "rgba(255,255,255,0.08)" : "transparent",
+            color: isDevelopers ? "#ffffff" : "#555555",
+          }}
+          onMouseEnter={(e) => { if (!isDevelopers) { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#d1d5db"; } }}
+          onMouseLeave={(e) => { if (!isDevelopers) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#555555"; } }}
+        >
+          <Code size={15} style={{ color: isDevelopers ? "#ffffff" : "#444444", flexShrink: 0 }} />
+          <span style={{ flex: 1 }}>Desarrollador</span>
+          {isDevelopers && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
+        </Link>
 
         {/* Mi cuenta */}
         <Link

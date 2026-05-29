@@ -47,6 +47,9 @@ model User {
   translationTasks      TranslationTask[]
   userSessions          UserSession[]
   withdrawalRequests    WithdrawalRequest[]
+  apiKeys              ApiKey[]
+  apiUsageLogs         ApiUsageLog[]
+  apiWallet            ApiWallet?
 }
 
 model Job {
@@ -301,4 +304,43 @@ model AppLog {
   userId    String?
   requestId String?
   createdAt DateTime @default(now())
+}
+
+model ApiKey {
+  id         String        @id @default(cuid())
+  userId     String
+  name       String
+  keyHash    String        @unique
+  prefix     String
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime      @default(now())
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usageLogs  ApiUsageLog[]
+
+  @@index([userId])
+}
+
+model ApiUsageLog {
+  id        String   @id @default(cuid())
+  userId    String
+  apiKeyId  String
+  bytes     Int      @default(0)
+  endpoint  String
+  createdAt DateTime @default(now())
+  apiKey    ApiKey   @relation(fields: [apiKeyId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([apiKeyId])
+}
+
+model ApiWallet {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  bytes      BigInt   @default(0)
+  totalSpent Float    @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

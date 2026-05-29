@@ -37,6 +37,26 @@ export async function POST(req: Request) {
     try {
       log("info", "stripe-webhook", "checkout.session.completed", { sessionId: session.id, mode: session.mode, plan: session.metadata?.plan, userId: session.metadata?.userId });
 
+      // ── API wallet recharge ───────────────────────────────
+      if (session.mode === "payment" && session.metadata?.type === "api_recharge") {
+        const clerkId = session.metadata.userId;
+        const bytes   = session.metadata.bytes;
+        const euros   = Number(session.metadata.euros);
+        const dbUser  = await prisma.user.findFirst({ where: { clerkId } });
+        if (dbUser && bytes) {
+          await prisma.apiWallet.upsert({
+            where: { userId: dbUser.id },
+            create: { userId: dbUser.id, bytes: BigInt(bytes), totalSpent: euros },
+            update: {
+              bytes: { increment: BigInt(bytes) },
+              totalSpent: { increment: euros },
+            },
+          });
+          log("info", "stripe-webhook", "api_recharge completed", { userId: dbUser.id, bytes, euros });
+        }
+        return NextResponse.json({ received: true });
+      }
+
       // ── Credit pack (one-time payment) ────────────────────
       if (session.mode === "payment") {
         const userId  = session.metadata?.userId;

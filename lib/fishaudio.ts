@@ -274,6 +274,34 @@ export async function fishAudioGenerate({
   return { audio_url, duration_seconds, characters_used: text.length };
 }
 
+export async function fishAudioGenerateBuffer({
+  text,
+  referenceId,
+  model = 'speech-1.6',
+}: {
+  text: string
+  referenceId?: string
+  model?: string
+}): Promise<Buffer> {
+  const apiKey = getApiKey()
+  const chunks = splitTextIntoChunks(text)
+  const audioBuffers = await Promise.all(
+    chunks.map((chunk, i) => {
+      const payload: Record<string, unknown> = {
+        text: chunk,
+        format: 'mp3',
+        mp3_bitrate: 128,
+        normalize: true,
+        latency: 'balanced',
+        chunk_length: 200,
+      }
+      if (referenceId) payload.reference_id = referenceId
+      return withSlot(() => fetchChunk(apiKey, payload, toFishModel(model), i, chunks.length))
+    }),
+  )
+  return audioBuffers.length === 1 ? audioBuffers[0] : Buffer.concat(audioBuffers)
+}
+
 export interface CloneResult {
   model_id: string;
 }
