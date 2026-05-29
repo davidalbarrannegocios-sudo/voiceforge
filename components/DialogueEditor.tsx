@@ -91,6 +91,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
   const [showVoicePicker, setShowVoicePicker] = useState<string | null>(null)
   const [dialogueLang, setDialogueLang] = useState('es')
   const [showLangPicker, setShowLangPicker] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const prevLanguage = useRef(language)
   const audioRef = useRef<HTMLAudioElement>(null)
 
@@ -180,6 +181,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
     if (!canGenerate || !parsedLines) return
     setIsGenerating(true)
     setAudioUrl(null)
+    setError(null)
 
     try {
       const res = await fetch('/api/dialogue/generate', {
@@ -199,7 +201,11 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
       })
 
       const data = await res.json()
-      if (res.status === 402) return
+
+      if (!res.ok) {
+        setError(data.error ?? 'Error al generar el diálogo')
+        return
+      }
 
       if (data.audioUrl) {
         setAudioUrl(data.audioUrl)
@@ -210,6 +216,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
       }
     } catch (err) {
       console.error('Generate error:', err)
+      setError('Error de red al generar el diálogo')
     } finally {
       setIsGenerating(false)
     }
@@ -473,6 +480,14 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
             <p className="text-xs text-amber-400/70 text-center">
               Asigna una voz a todos los personajes
             </p>
+          )}
+
+          {error && (
+            <div className="flex items-center gap-2 text-red-400/80 text-sm
+                            bg-red-400/5 border border-red-400/15 rounded-xl px-4 py-3">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              {error}
+            </div>
           )}
 
           {audioUrl && (

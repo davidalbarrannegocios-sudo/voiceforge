@@ -39,6 +39,15 @@ export async function POST(req: NextRequest) {
   const { lines }: { lines: DialogueLineInput[] } = await req.json()
   if (!lines?.length) return NextResponse.json({ error: 'No lines' }, { status: 400 })
 
+  // Validate all voiceIds before starting generation
+  for (const line of lines) {
+    if (!line.voiceId || line.voiceId.trim() === '') {
+      return NextResponse.json({
+        error: `Voz no asignada para el personaje: ${line.characterName}`,
+      }, { status: 400 })
+    }
+  }
+
   const totalChars = lines.reduce((sum, l) => sum + l.text.length, 0)
   if (dbUser.credits < totalChars) {
     return NextResponse.json({ error: 'Insufficient credits' }, { status: 402 })
@@ -47,10 +56,16 @@ export async function POST(req: NextRequest) {
   const sessionId = randomUUID()
   const audioPaths: string[] = []
 
+  console.log('[dialogue] Starting generation:', { lines: lines.length, totalChars, userId: dbUser.id })
+
   try {
     // Generate each line sequentially to preserve order
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i]
+      console.log(`[dialogue] Generating line ${i + 1}/${lines.length}:`, {
+        model: line.model, voiceId: line.voiceId, chars: line.text.length,
+      })
+
       let audioBuffer: Buffer
 
       if (line.model === 'elite-turbo' && process.env.AI33_BASE_URL && process.env.AI33_API_KEY) {
@@ -76,26 +91,33 @@ export async function POST(req: NextRequest) {
         })
       }
 
+      console.log(`[dialogue] Line ${i + 1} done, buffer size:`, audioBuffer.length)
+
       const chunkPath = join('/tmp', `${sessionId}_chunk_${String(i).padStart(3, '0')}.mp3`)
       await writeFile(chunkPath, audioBuffer)
       audioPaths.push(chunkPath)
     }
 
-    // Concatenate with ffmpeg
+    // Concatenate with ffmpeg (re-encode to avoid header incompatibility issues)
     const listPath = join('/tmp', `${sessionId}_list.txt`)
     const listContent = audioPaths.map(p => `file '${p}'`).join('\n')
     await writeFile(listPath, listContent)
 
     const outputPath = join('/tmp', `${sessionId}_output.mp3`)
+    console.log('[dialogue] Starting ffmpeg concat, files:', audioPaths.length)
+
     await execFileAsync('ffmpeg', [
       '-f', 'concat', '-safe', '0',
       '-i', listPath,
-      '-c', 'copy',
+      '-c:a', 'libmp3lame', '-q:a', '2',
       outputPath, '-y',
     ])
 
     const outputBuffer = await readFile(outputPath)
+    console.log('[dialogue] ffmpeg done, output size:', outputBuffer.length)
+
     const r2Key = `dialogues/${dbUser.id}/${sessionId}.mp3`
+    console.log('[dialogue] Uploading to R2:', r2Key)
     const audioUrl = await uploadToR2(r2Key, outputBuffer, 'audio/mpeg')
 
     const charNames = [...new Set(lines.map(l => l.characterName))].join(', ')
@@ -132,9 +154,15 @@ export async function POST(req: NextRequest) {
       audioUrl,
       creditsRemaining: dbUser.credits - totalChars,
     })
-  } catch (err) {
+  } catch (err: unknown) {
     await Promise.all(audioPaths.map(p => unlink(p).catch(() => {})))
-    console.error('Dialogue generate error:', err)
-    return NextResponse.json({ error: 'Generation failed' }, { status: 500 })
+    const e = err as { message?: string; stack?: string }
+    console.error('[dialogue] ERROR:', {
+      message: e?.message,
+      stack: e?.stack?.split('\n').slice(0, 5),
+    })
+    return NextResponse.json({
+      error: e?.message ?? 'Generation failed',
+    }, { status: 500 })
   }
 }
