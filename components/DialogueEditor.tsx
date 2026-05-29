@@ -126,7 +126,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
           id: `char_${i}_${Date.now()}`,
           name,
           voiceId: '',
-          voiceName: 'Sin voz asignada',
+          voiceName: 'Voz estándar',
           model: 'elite-pro' as const,
           color: CHARACTER_COLORS[i % CHARACTER_COLORS.length],
         }
@@ -409,37 +409,29 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                       {showVoicePicker === char.name && (
                         <div className="absolute top-full left-0 right-0 mt-1 z-50
                                         bg-[#111] border border-white/10 rounded-xl
-                                        shadow-2xl max-h-[200px] overflow-y-auto">
-
-                          {/* Elite Pro voices */}
-                          <p className="px-3 pt-2 pb-1 text-[10px] text-white/30 uppercase tracking-wider sticky top-0 bg-[#111]">
-                            Elite Pro
-                          </p>
-                          {userVoices.map(voice => (
-                            <button
-                              key={`pro-${voice.id}`}
-                              onClick={() => assignVoice(char.name, voice.id, voice.name, 'elite-pro')}
-                              className="w-full text-left px-3 py-2 text-xs text-white/70
-                                         hover:bg-white/8 hover:text-white transition-colors"
-                            >
-                              {voice.name}
-                            </button>
-                          ))}
-
-                          {/* Elite Legacy voices */}
-                          <p className="px-3 pt-2 pb-1 text-[10px] text-white/30 uppercase tracking-wider sticky top-0 bg-[#111]">
-                            Elite Legacy
-                          </p>
-                          {userVoices.map(voice => (
-                            <button
-                              key={`legacy-${voice.id}`}
-                              onClick={() => assignVoice(char.name, voice.id, voice.name, 'elite-legacy')}
-                              className="w-full text-left px-3 py-2 text-xs text-white/70
-                                         hover:bg-white/8 hover:text-white transition-colors"
-                            >
-                              {voice.name} <span className="text-white/30">(Legacy)</span>
-                            </button>
-                          ))}
+                                        shadow-2xl max-h-[220px] overflow-y-auto">
+                          {userVoices.length === 0 ? (
+                            <p className="px-3 py-4 text-xs text-white/30 text-center leading-relaxed">
+                              No tienes voces guardadas.<br />
+                              Ve a <span className="text-white/50">Mis Voces</span> para añadir.
+                            </p>
+                          ) : (
+                            <>
+                              <p className="px-3 pt-2 pb-1 text-[10px] text-white/30 uppercase tracking-wider sticky top-0 bg-[#111]">
+                                Mis voces
+                              </p>
+                              {userVoices.map(voice => (
+                                <button
+                                  key={voice.id}
+                                  onClick={() => assignVoice(char.name, voice.id, voice.name, 'elite-pro')}
+                                  className="w-full text-left px-3 py-2 text-xs text-white/70
+                                             hover:bg-white/8 hover:text-white transition-colors"
+                                >
+                                  {voice.name}
+                                </button>
+                              ))}
+                            </>
+                          )}
                         </div>
                       )}
                     </div>

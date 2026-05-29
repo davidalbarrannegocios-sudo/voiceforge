@@ -84,9 +84,13 @@ export async function POST(req: NextRequest) {
         audioBuffer = Buffer.from(await res.arrayBuffer())
       } else {
         const fishModel = line.model === 'elite-legacy' ? 'speech-1.5' : 'speech-1.6'
+        const validVoiceId = (line.voiceId && line.voiceId !== 'default')
+          ? line.voiceId
+          : undefined
+
         audioBuffer = await fishAudioGenerateBuffer({
           text: line.text,
-          referenceId: line.voiceId,
+          referenceId: validVoiceId,
           model: fishModel,
         })
       }
