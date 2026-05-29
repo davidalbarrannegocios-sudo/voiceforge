@@ -63,6 +63,7 @@ function Sidebar({
   const { t } = useLang();
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [showProductMenu, setShowProductMenu] = useState(false);
 
   async function handleLeave() {
     setLeaving(true);
@@ -4761,7 +4762,6 @@ export default function DashboardPage() {
   const [translateVoice, setTranslateVoice] = useState<SelectedVoice | null>(null);
   const [supportOpen, setSupportOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showProductMenu, setShowProductMenu] = useState(false);
   const [nextRenewalDate, setNextRenewalDate] = useState<string | null>(null);
   const [daysUntilRenewal, setDaysUntilRenewal] = useState<number | null>(null);
   const { t: tt, toggle: toggleLang } = useLang();
