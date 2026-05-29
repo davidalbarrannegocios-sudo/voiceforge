@@ -6,11 +6,11 @@ import Image from "next/image";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Home, Mic2, Type, FileAudio, Globe, Clock,
-  CreditCard, Gift, Zap, Settings, Users, Code,
+  CreditCard, Gift, Zap, Settings, Users, Code, MessageSquare, ChevronsUpDown,
 } from "lucide-react";
 import { useLang } from "./LanguageContext";
 
-type Tab = "home" | "voices" | "generate" | "transcribe" | "translate" | "history" | "billing" | "referral" | "team";
+type Tab = "home" | "voices" | "generate" | "dialogue" | "transcribe" | "translate" | "history" | "billing" | "referral" | "team";
 
 export function DashboardSidebar() {
   const router = useRouter();
@@ -26,6 +26,7 @@ export function DashboardSidebar() {
   } | null>(null);
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [showProductMenu, setShowProductMenu] = useState(false);
 
   const isMiCuenta = pathname === "/dashboard/mi-cuenta";
   const activeTab: Tab | null = isMiCuenta
@@ -72,6 +73,7 @@ export function DashboardSidebar() {
       label: t.nav.products,
       items: [
         { key: "generate" as Tab, label: t.nav.generate, Icon: Type },
+        { key: "dialogue" as Tab, label: "Texto a Diálogo", Icon: MessageSquare },
         { key: "transcribe" as Tab, label: t.nav.transcribe, Icon: FileAudio },
         { key: "translate" as Tab, label: t.nav.translate, Icon: Globe },
         { key: "history" as Tab, label: t.nav.history, Icon: Clock },
@@ -111,6 +113,59 @@ export function DashboardSidebar() {
           />
           <span className="font-bold text-white tracking-tight text-sm">Elite Labs</span>
         </Link>
+      </div>
+
+      {/* Product selector */}
+      <div style={{ padding: "0 12px 8px", position: "relative", flexShrink: 0 }}>
+        <button
+          onClick={() => setShowProductMenu(p => !p)}
+          style={{
+            width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+            gap: "8px", padding: "8px 12px", borderRadius: "10px",
+            background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
+            cursor: "pointer", transition: "background 0.15s",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "14px" }}>🎙️</span>
+            <span style={{ fontSize: "13px", fontWeight: 500, color: "#ffffff" }}>Elite Studio</span>
+          </div>
+          <ChevronsUpDown size={14} style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
+        </button>
+
+        {showProductMenu && (
+          <>
+            <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setShowProductMenu(false)} />
+            <div style={{
+              position: "absolute", top: "100%", left: "12px", right: "12px", marginTop: "4px",
+              zIndex: 50, background: "#111111", border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "12px", boxShadow: "0 16px 48px rgba(0,0,0,0.6)", padding: "4px",
+            }}>
+              {/* Elite Studio — activo */}
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px", borderRadius: "8px", background: "rgba(255,255,255,0.08)" }}>
+                <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", flexShrink: 0 }}>🎙️</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: "13px", fontWeight: 500, color: "#ffffff", margin: 0 }}>Elite Studio</p>
+                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", margin: 0 }}>Genera y clona voz con IA</p>
+                </div>
+                <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />
+              </div>
+              {/* Elite API — en desarrollo */}
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px", borderRadius: "8px", opacity: 0.4, cursor: "not-allowed" }}>
+                <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", flexShrink: 0 }}>⚡</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <p style={{ fontSize: "13px", fontWeight: 500, color: "#ffffff", margin: 0 }}>Elite API</p>
+                    <span style={{ fontSize: "10px", padding: "2px 6px", borderRadius: "999px", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.3)", border: "1px solid rgba(255,255,255,0.08)" }}>Pronto</span>
+                  </div>
+                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", margin: 0 }}>API de síntesis de voz</p>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Nav */}
