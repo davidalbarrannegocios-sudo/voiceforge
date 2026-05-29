@@ -441,12 +441,12 @@ function HomeTab({
   ]
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8 space-y-10">
+    <div className="space-y-8">
 
       {/* Saludo */}
       <div>
         <h1 className="text-2xl font-bold text-white">
-          Hola, {user?.firstName ?? 'Usuario'} 👋
+          Hola, {user?.firstName ?? 'Usuario'}
         </h1>
         <p className="text-sm mt-1" style={{ color: "#555555" }}>
           <span style={{ color: "#aaaaaa", fontWeight: 600 }}>
