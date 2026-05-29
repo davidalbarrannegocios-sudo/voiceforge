@@ -18,6 +18,7 @@ import { useLang } from "./LanguageContext";
 import AudioHistoryList from "@/components/AudioHistoryList";
 import { CustomSelect } from "@/components/CustomSelect";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
+import { generateVoiceGradient } from "@/lib/voice-gradient";
 import { TaggedTextEditor } from "@/components/TaggedTextEditor";
 import { NoCreditsModal } from "@/components/NoCreditsModal";
 
@@ -401,119 +402,221 @@ function HomeTab({
   credits: number | null;
   setActiveTab: (t: Tab) => void;
 }) {
-  const { t } = useLang();
+  const [recentGenerations, setRecentGenerations] = useState<any[]>([])
+  const [clonedVoices, setClonedVoices] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const cards: { key: Tab; Icon: React.ElementType; title: string; desc: string }[] = [
-    { key: "generate",   Icon: Mic,           title: t.home.cardGenerate,   desc: t.home.cardGenerateDesc },
-    { key: "dialogue",   Icon: MessageSquare, title: "Texto a Diálogo",     desc: "Genera audios con múltiples voces y personajes" },
-    { key: "voices",     Icon: Users,         title: t.home.cardVoices,     desc: t.home.cardVoicesDesc },
-    { key: "history",    Icon: Clock,         title: t.home.cardHistory,    desc: t.home.cardHistoryDesc },
-    { key: "transcribe", Icon: FileAudio,     title: t.home.cardTranscribe, desc: t.home.cardTranscribeDesc },
-    { key: "translate",  Icon: Languages,     title: t.home.cardTranslate,  desc: t.home.cardTranslateDesc },
-  ];
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/history?page=1').then(r => r.json()),
+      fetch('/api/voices').then(r => r.json()),
+    ]).then(([gens, voices]) => {
+      setRecentGenerations((gens.generations ?? []).slice(0, 4))
+      setClonedVoices((Array.isArray(voices) ? voices : []).filter((v: any) => !v.isSystem).slice(0, 4))
+      setLoading(false)
+    }).catch(() => setLoading(false))
+  }, [])
+
+  const PRODUCT_CARDS = [
+    { id: 'generate',   title: 'Texto a Voz',         description: 'Convierte texto en voz natural al instante',            Icon: Type },
+    { id: 'dialogue',   title: 'Texto a Diálogo',      description: 'Genera audios con múltiples voces y personajes',        Icon: MessageSquare },
+    { id: 'transcribe', title: 'Audio a Texto',         description: 'Transcribe cualquier audio a texto al instante',        Icon: FileAudio },
+    { id: 'translate',  title: 'Traducción de Audio',   description: 'Traduce tus audios a otros idiomas automáticamente',   Icon: Globe },
+  ]
 
   return (
-    <div>
-      <div className="mb-10">
-        <h1 className="text-3xl font-bold text-white mb-2">
-          {t.home.greeting} {user?.firstName ?? t.home.defaultName}
+    <div className="max-w-5xl mx-auto px-6 py-8 space-y-10">
+
+      {/* Saludo */}
+      <div>
+        <h1 className="text-2xl font-bold text-white">
+          Hola, {user?.firstName ?? 'Usuario'} 👋
         </h1>
-        <p style={{ color: "#888888" }}>
-          <span className="font-semibold" style={{ color: "#aaaaaa" }}>
-            {credits !== null ? credits.toLocaleString("es-ES") : "—"}
-          </span>{" "}
-          {t.home.available}
+        <p className="text-sm mt-1" style={{ color: "#555555" }}>
+          <span style={{ color: "#aaaaaa", fontWeight: 600 }}>
+            {credits !== null ? credits.toLocaleString('es-ES') : '—'}
+          </span>{' '}
+          caracteres disponibles
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 items-stretch">
-        {cards.map(({ key, Icon, title, desc }, i) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            className="group relative overflow-hidden flex flex-col p-4 sm:p-6 rounded-2xl border border-[#222222] hover:border-white/20 text-left transition-all hover:-translate-y-0.5 h-full"
-            style={{ background: "#111111" }}
-          >
-            <svg className={`absolute top-0 right-0 w-40 h-40 opacity-20 group-hover:opacity-30 transition-opacity duration-300 wave-anim-${(i % 3) + 1}`} style={{ animationDelay: `${-i * 2}s` }} viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-              {i === 0 && <>
-                {/* Texto a Voz: ondas suaves desde esquina */}
-                <path d="M160 0 Q120 40 160 80" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q100 50 160 100" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q80 60 160 120" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none"/>
-                <path d="M160 10 Q90 60 160 110" stroke="rgba(255,255,255,0.2)" strokeWidth="1" fill="none"/>
-                <path d="M160 20 Q100 65 160 120" stroke="rgba(255,255,255,0.25)" strokeWidth="1" fill="none"/>
-                <path d="M160 0 Q110 70 160 140" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none"/>
-                <path d="M160 10 Q120 75 160 150" stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"/>
-                <path d="M140 0 Q100 55 150 120" stroke="rgba(255,255,255,0.25)" strokeWidth="1" fill="none"/>
-                <path d="M120 0 Q90 50 140 110" stroke="rgba(255,255,255,0.2)" strokeWidth="0.8" fill="none"/>
-                <path d="M100 0 Q75 45 130 100" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" fill="none"/>
-              </>}
-              {i === 1 && <>
-                {/* Mis Voces: ondas cerradas y apretadas */}
-                <path d="M160 0 Q145 20 160 40" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q140 30 160 60" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q135 40 160 80" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q130 50 160 100" stroke="rgba(255,255,255,0.2)" strokeWidth="1" fill="none"/>
-                <path d="M160 0 Q125 60 160 120" stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"/>
-                <path d="M160 0 Q120 70 160 140" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none"/>
-                <path d="M150 0 Q135 35 155 70" stroke="rgba(255,255,255,0.25)" strokeWidth="1" fill="none"/>
-                <path d="M140 0 Q128 30 148 65" stroke="rgba(255,255,255,0.2)" strokeWidth="0.8" fill="none"/>
-                <path d="M130 0 Q118 28 142 58" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" fill="none"/>
-                <path d="M160 10 Q142 45 158 90" stroke="rgba(255,255,255,0.25)" strokeWidth="0.8" fill="none"/>
-              </>}
-              {i === 2 && <>
-                {/* Historial: ondas abiertas y espaciadas */}
-                <path d="M160 0 Q90 80 160 160" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q70 70 150 150" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q110 60 160 120" stroke="rgba(255,255,255,0.25)" strokeWidth="1" fill="none"/>
-                <path d="M160 20 Q95 85 155 150" stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"/>
-                <path d="M140 0 Q70 65 135 145" stroke="rgba(255,255,255,0.2)" strokeWidth="1" fill="none"/>
-                <path d="M120 0 Q55 60 120 135" stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"/>
-                <path d="M160 40 Q100 90 155 145" stroke="rgba(255,255,255,0.25)" strokeWidth="0.8" fill="none"/>
-                <path d="M100 0 Q40 55 105 125" stroke="rgba(255,255,255,0.2)" strokeWidth="0.8" fill="none"/>
-                <path d="M80 0 Q25 50 90 115" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" fill="none"/>
-                <path d="M160 60 Q105 100 150 148" stroke="rgba(255,255,255,0.25)" strokeWidth="0.8" fill="none"/>
-              </>}
-              {i === 3 && <>
-                {/* Audio a Texto: diagonal pronunciada */}
-                <path d="M160 0 Q60 60 100 160" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q70 55 110 160" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q80 50 120 160" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q90 45 130 160" stroke="rgba(255,255,255,0.25)" strokeWidth="1" fill="none"/>
-                <path d="M160 0 Q100 40 140 160" stroke="rgba(255,255,255,0.2)" strokeWidth="1" fill="none"/>
-                <path d="M160 10 Q65 65 105 160" stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"/>
-                <path d="M160 20 Q75 65 115 160" stroke="rgba(255,255,255,0.25)" strokeWidth="0.8" fill="none"/>
-                <path d="M160 30 Q85 65 125 160" stroke="rgba(255,255,255,0.2)" strokeWidth="0.8" fill="none"/>
-                <path d="M160 0 Q55 70 95 160" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" fill="none"/>
-                <path d="M160 0 Q50 80 90 160" stroke="rgba(255,255,255,0.25)" strokeWidth="0.8" fill="none"/>
-              </>}
-              {i === 4 && <>
-                {/* Traducción: ondas cortas y densas */}
-                <path d="M160 0 Q148 12 160 24" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q144 16 160 32" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q140 20 160 40" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none"/>
-                <path d="M160 0 Q135 25 160 50" stroke="rgba(255,255,255,0.25)" strokeWidth="1" fill="none"/>
-                <path d="M160 0 Q130 30 160 60" stroke="rgba(255,255,255,0.2)" strokeWidth="1" fill="none"/>
-                <path d="M160 0 Q124 36 160 72" stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"/>
-                <path d="M160 0 Q118 42 160 84" stroke="rgba(255,255,255,0.25)" strokeWidth="1" fill="none"/>
-                <path d="M155 0 Q140 20 158 42" stroke="rgba(255,255,255,0.2)" strokeWidth="0.8" fill="none"/>
-                <path d="M150 0 Q133 22 154 46" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" fill="none"/>
-                <path d="M145 0 Q126 24 150 50" stroke="rgba(255,255,255,0.25)" strokeWidth="0.8" fill="none"/>
-              </>}
-            </svg>
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 flex-shrink-0"
-              style={{ background: "rgba(255,255,255,0.08)" }}
+      {/* 4 cards de productos */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {PRODUCT_CARDS.map((card, i) => {
+          const Icon = card.Icon
+          return (
+            <button
+              key={card.id}
+              onClick={() => setActiveTab(card.id as Tab)}
+              className="group relative overflow-hidden flex flex-col p-5 rounded-2xl border hover:border-white/20 text-left transition-all hover:-translate-y-0.5"
+              style={{ background: "#111111", borderColor: "#1e1e1e" }}
             >
-              <Icon size={20} style={{ color: "#aaaaaa" }} />
-            </div>
-            <h3 className="font-semibold text-white">{title}</h3>
-            <p className="text-sm mt-1" style={{ color: "#888888" }}>{desc}</p>
-          </button>
-        ))}
+              <svg
+                className={`absolute top-0 right-0 w-36 h-36 opacity-15 group-hover:opacity-25 transition-opacity duration-300 wave-anim-${(i % 3) + 1}`}
+                style={{ animationDelay: `${-i * 2}s` }}
+                viewBox="0 0 160 160" fill="none"
+              >
+                {i === 0 && <>
+                  <path d="M160 0 Q120 40 160 80" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none"/>
+                  <path d="M160 20 Q110 60 160 100" stroke="rgba(255,255,255,0.2)" strokeWidth="1" fill="none"/>
+                  <path d="M160 40 Q100 80 160 120" stroke="rgba(255,255,255,0.1)" strokeWidth="0.8" fill="none"/>
+                </>}
+                {i === 1 && <>
+                  <ellipse cx="130" cy="30" rx="40" ry="20" stroke="rgba(255,255,255,0.25)" strokeWidth="1.2" fill="none"/>
+                  <ellipse cx="140" cy="60" rx="30" ry="15" stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"/>
+                  <ellipse cx="148" cy="85" rx="20" ry="10" stroke="rgba(255,255,255,0.1)" strokeWidth="0.8" fill="none"/>
+                </>}
+                {i === 2 && <>
+                  <path d="M120 0 L160 40 L160 0 Z" fill="rgba(255,255,255,0.08)"/>
+                  <path d="M140 0 L160 20 L160 0 Z" fill="rgba(255,255,255,0.12)"/>
+                  <circle cx="150" cy="60" r="25" stroke="rgba(255,255,255,0.1)" strokeWidth="1" fill="none"/>
+                </>}
+                {i === 3 && <>
+                  <path d="M80 0 Q120 30 160 20 Q140 60 160 80" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none"/>
+                  <path d="M100 0 Q130 40 160 40" stroke="rgba(255,255,255,0.12)" strokeWidth="1" fill="none"/>
+                  <path d="M120 0 Q145 35 160 60" stroke="rgba(255,255,255,0.08)" strokeWidth="0.8" fill="none"/>
+                </>}
+              </svg>
+
+              <div className="relative z-10">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3 flex-shrink-0"
+                     style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <Icon size={16} style={{ color: "#aaaaaa" }} />
+                </div>
+                <p className="text-sm font-semibold text-white mb-1">{card.title}</p>
+                <p className="text-xs leading-relaxed" style={{ color: "#555555" }}>{card.description}</p>
+              </div>
+            </button>
+          )
+        })}
       </div>
+
+      {/* Últimas generaciones */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-white">Historia de la generación</h2>
+          <button onClick={() => setActiveTab('history')}
+                  className="text-xs transition-colors"
+                  style={{ color: "#555555" }}
+                  onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
+                  onMouseLeave={e => (e.currentTarget.style.color = "#555555")}>
+            Ver todo →
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="space-y-2">
+            {[1,2,3].map(i => (
+              <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: "rgba(255,255,255,0.03)" }} />
+            ))}
+          </div>
+        ) : recentGenerations.length === 0 ? (
+          <div className="text-center py-8 text-sm rounded-xl"
+               style={{ color: "#444444", border: "1px dashed #222222" }}>
+            Aún no tienes generaciones.{' '}
+            <button onClick={() => setActiveTab('generate')}
+                    className="underline transition-colors"
+                    style={{ color: "#666666" }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "#666666")}>
+              Crear primera →
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {recentGenerations.map(gen => (
+              <div key={gen.id}
+                   className="flex items-center gap-3 p-3 rounded-xl transition-colors"
+                   style={{ border: "1px solid #1a1a1a", background: "rgba(255,255,255,0.01)" }}
+                   onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                   onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.01)")}>
+                <div className="w-9 h-9 rounded-lg flex-shrink-0"
+                     style={{ background: generateVoiceGradient(gen.voiceId ?? gen.id) }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate" style={{ color: "#cccccc" }}>
+                    {gen.voiceName ?? 'Voz'}
+                  </p>
+                  <p className="text-xs truncate" style={{ color: "#444444" }}>
+                    {gen.text?.slice(0, 70)}{(gen.text?.length ?? 0) > 70 ? '…' : ''}
+                  </p>
+                </div>
+                <div className="text-right flex-shrink-0 flex flex-col items-end gap-1">
+                  <p className="text-xs" style={{ color: "#444444" }}>
+                    {new Date(gen.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                  </p>
+                  {gen.audioUrl && (
+                    <a href={gen.audioUrl} download
+                       className="text-xs transition-colors"
+                       style={{ color: "#555555" }}
+                       onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
+                       onMouseLeave={e => (e.currentTarget.style.color = "#555555")}>
+                      ↓ MP3
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Últimas voces clonadas */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-white">Mis voces clonadas</h2>
+          <button onClick={() => setActiveTab('voices')}
+                  className="text-xs transition-colors"
+                  style={{ color: "#555555" }}
+                  onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
+                  onMouseLeave={e => (e.currentTarget.style.color = "#555555")}>
+            Ver todo →
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: "rgba(255,255,255,0.03)" }} />
+            ))}
+          </div>
+        ) : clonedVoices.length === 0 ? (
+          <div className="text-center py-8 text-sm rounded-xl"
+               style={{ color: "#444444", border: "1px dashed #222222" }}>
+            No tienes voces clonadas.{' '}
+            <button onClick={() => setActiveTab('voices')}
+                    className="underline transition-colors"
+                    style={{ color: "#666666" }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "#666666")}>
+              Clonar voz →
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {clonedVoices.map(voice => (
+              <button
+                key={voice.id}
+                onClick={() => setActiveTab('voices')}
+                className="flex items-center gap-3 p-3 rounded-xl text-left transition-colors"
+                style={{ border: "1px solid #1a1a1a", background: "rgba(255,255,255,0.01)" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.01)")}>
+                <div className="w-10 h-10 rounded-lg flex-shrink-0"
+                     style={{ background: generateVoiceGradient(voice.id) }} />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate" style={{ color: "#cccccc" }}>{voice.name}</p>
+                  <p className="text-xs capitalize" style={{ color: "#444444" }}>
+                    {voice.provider === 'minimax' ? 'MiniMax' : 'Fish Audio'}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
     </div>
-  );
+  )
 }
 
 /* ─── Slider + numeric input control ─────────────────────── */
