@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Play, Download, Loader2, ChevronDown, AlertCircle, Mic } from 'lucide-react'
+import { Play, Download, Loader2, ChevronDown, AlertCircle, Mic, X, ChevronRight } from 'lucide-react'
+import { VoiceBrowser, SelectedVoice } from '@/app/dashboard/VoiceBrowser'
 
 // ─── Types ───────────────────────────────────────────────────
 interface Character {
@@ -88,7 +89,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
   const [isTranslating, setIsTranslating] = useState(false)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [jobId, setJobId] = useState<string | null>(null)
-  const [showVoicePicker, setShowVoicePicker] = useState<string | null>(null)
+  const [selectingVoiceFor, setSelectingVoiceFor] = useState<string | null>(null)
   const [dialogueLang, setDialogueLang] = useState('es')
   const [showLangPicker, setShowLangPicker] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -170,7 +171,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
     setCharacters(prev => prev.map(c =>
       c.name === charName ? { ...c, voiceId, voiceName, model } : c
     ))
-    setShowVoicePicker(null)
+    setSelectingVoiceFor(null)
   }, [])
 
   const totalChars = parsedLines?.reduce((sum, l) => sum + l.text.length, 0) ?? 0
@@ -389,52 +390,23 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                       <span className="text-sm text-white font-medium">{char.name}</span>
                     </div>
 
-                    <div className="relative">
-                      <button
-                        onClick={() => setShowVoicePicker(showVoicePicker === char.name ? null : char.name)}
-                        className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg
-                                   text-sm transition-colors border ${char.voiceId
-                                     ? 'border-white/10 bg-white/5 text-white/80'
-                                     : 'border-dashed border-white/20 text-white/30'}`}
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <Mic className="w-3.5 h-3.5 flex-shrink-0" />
-                          <span className="truncate text-xs">
-                            {char.voiceId ? char.voiceName : 'Seleccionar voz'}
-                          </span>
-                        </div>
-                        <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
-                      </button>
-
-                      {showVoicePicker === char.name && (
-                        <div className="absolute top-full left-0 right-0 mt-1 z-50
-                                        bg-[#111] border border-white/10 rounded-xl
-                                        shadow-2xl max-h-[220px] overflow-y-auto">
-                          {userVoices.length === 0 ? (
-                            <p className="px-3 py-4 text-xs text-white/30 text-center leading-relaxed">
-                              No tienes voces guardadas.<br />
-                              Ve a <span className="text-white/50">Mis Voces</span> para añadir.
-                            </p>
-                          ) : (
-                            <>
-                              <p className="px-3 pt-2 pb-1 text-[10px] text-white/30 uppercase tracking-wider sticky top-0 bg-[#111]">
-                                Mis voces
-                              </p>
-                              {userVoices.map(voice => (
-                                <button
-                                  key={voice.id}
-                                  onClick={() => assignVoice(char.name, voice.id, voice.name, 'elite-pro')}
-                                  className="w-full text-left px-3 py-2 text-xs text-white/70
-                                             hover:bg-white/8 hover:text-white transition-colors"
-                                >
-                                  {voice.name}
-                                </button>
-                              ))}
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    <button
+                      onClick={() => setSelectingVoiceFor(char.name)}
+                      className={`w-full flex items-center justify-between gap-2
+                                 px-3 py-2.5 rounded-xl text-sm transition-colors border ${
+                        char.voiceId
+                          ? 'border-white/10 bg-white/5 text-white/80'
+                          : 'border-dashed border-white/20 text-white/30'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Mic className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span className="truncate text-xs">
+                          {char.voiceId ? char.voiceName : 'Seleccionar voz →'}
+                        </span>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 flex-shrink-0 opacity-40" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -506,6 +478,56 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
           )}
         </div>
       </div>
+
+      {/* VoiceBrowser modal */}
+      {selectingVoiceFor && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setSelectingVoiceFor(null)}
+          />
+          <div className="relative w-full max-w-4xl max-h-[85vh] overflow-hidden
+                          bg-[#0a0a0a] border border-white/10 rounded-2xl flex flex-col">
+
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/8 flex-shrink-0">
+              <div>
+                <h3 className="text-sm font-semibold text-white">Seleccionar voz</h3>
+                <p className="text-xs text-white/40 mt-0.5">
+                  Para:{' '}
+                  <span style={{ color: characters.find(c => c.name === selectingVoiceFor)?.color }}>
+                    {selectingVoiceFor}
+                  </span>
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectingVoiceFor(null)}
+                className="p-1.5 rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* VoiceBrowser */}
+            <div className="flex-1 overflow-hidden">
+              <VoiceBrowser
+                clonedVoices={userVoices.map(v => ({ id: v.id, name: v.name }))}
+                onSelect={(voice: SelectedVoice | null) => {
+                  if (!voice || !selectingVoiceFor) return
+                  assignVoice(
+                    selectingVoiceFor,
+                    voice.referenceId,
+                    voice.name,
+                    'elite-pro'
+                  )
+                }}
+                onClose={() => setSelectingVoiceFor(null)}
+                plan={plan}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
