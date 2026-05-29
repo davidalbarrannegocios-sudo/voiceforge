@@ -5,7 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, Info, Settings } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, Info, Settings, MessageSquare } from "lucide-react";
+import { DialogueEditor } from "@/components/DialogueEditor";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { UserMenu } from "@/components/UserMenu";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, formatCount } from "./VoiceBrowser";
@@ -34,7 +35,7 @@ interface Voice {
   isPublic?: boolean;
 }
 
-type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral" | "translate" | "transcribe" | "team";
+type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral" | "translate" | "transcribe" | "team" | "dialogue";
 
 /* ─── Sidebar ─────────────────────────────────────────────── */
 type NavSection = {
@@ -92,6 +93,7 @@ function Sidebar({
       label: t.nav.products,
       items: [
         { key: "generate",   label: t.nav.generate,   Icon: Type },
+        { key: "dialogue",   label: "Texto a Diálogo", Icon: MessageSquare },
         { key: "transcribe", label: t.nav.transcribe,  Icon: FileAudio },
         { key: "translate",  label: t.nav.translate,   Icon: Globe },
         { key: "history",    label: t.nav.history,     Icon: Clock },
@@ -4762,15 +4764,16 @@ export default function DashboardPage() {
         {/* Topbar */}
         {(() => {
           const TAB_META: Record<Tab, { title: string; Icon: React.ElementType }> = {
-            home:       { title: tt.tabs.home,       Icon: Home },
-            generate:   { title: tt.tabs.generate,   Icon: Type },
-            transcribe: { title: tt.tabs.transcribe, Icon: FileAudio },
-            translate:  { title: tt.tabs.translate,  Icon: Globe },
-            history:    { title: tt.tabs.history,    Icon: Clock },
-            billing:    { title: tt.tabs.billing,    Icon: CreditCard },
-            voices:     { title: tt.tabs.voices,     Icon: Mic2 },
-            referral:   { title: tt.tabs.referral,   Icon: Gift },
-            team:       { title: "Equipo",            Icon: Users },
+            home:       { title: tt.tabs.home,        Icon: Home },
+            generate:   { title: tt.tabs.generate,    Icon: Type },
+            dialogue:   { title: "Texto a Diálogo",   Icon: MessageSquare },
+            transcribe: { title: tt.tabs.transcribe,  Icon: FileAudio },
+            translate:  { title: tt.tabs.translate,   Icon: Globe },
+            history:    { title: tt.tabs.history,     Icon: Clock },
+            billing:    { title: tt.tabs.billing,     Icon: CreditCard },
+            voices:     { title: tt.tabs.voices,      Icon: Mic2 },
+            referral:   { title: tt.tabs.referral,    Icon: Gift },
+            team:       { title: "Equipo",             Icon: Users },
           };
           const { title, Icon } = TAB_META[activeTab] ?? { title: "", Icon: Home };
           return (
@@ -4891,6 +4894,16 @@ export default function DashboardPage() {
           />
         )}
         {activeTab === "team" && <TeamTab />}
+        {activeTab === "dialogue" && (
+          <div style={{ padding: "24px", maxWidth: "1100px" }}>
+            <DialogueEditor
+              userVoices={voices}
+              plan={effectivePlan}
+              credits={credits ?? 0}
+              onCreditsUpdate={(newCredits) => setCredits(newCredits)}
+            />
+          </div>
+        )}
         </div>{/* end page content */}
       </main>
     </div>
