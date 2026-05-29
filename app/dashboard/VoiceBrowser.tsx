@@ -364,7 +364,7 @@ function VoiceAvatar({ name, coverImage, size = "md", id }: { name: string; cove
         src={proxiedSrc}
         alt=""
         className={`${cls} flex-shrink-0`}
-        style={{ borderRadius: "50%", objectFit: "cover" }}
+        style={{ borderRadius: "8px", objectFit: "cover" }}
         onError={() => setImgFailed(true)}
       />
     );
@@ -1618,7 +1618,7 @@ export function VoiceBrowser({
                     onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)")}
                     onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1a1a1a")}
                   >
-                    <div className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#111111" }}>🎙️</div>
+                    <div className="w-11 h-11 rounded-lg flex items-center justify-center text-lg flex-shrink-0" style={{ background: "#111111" }}>🎙️</div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white">Voz por defecto</p>
                       <p className="text-xs mt-0.5" style={{ color: "#666666" }}>Se generará una voz estándar</p>

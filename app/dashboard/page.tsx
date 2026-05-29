@@ -977,7 +977,7 @@ function GenerateTab({
             onClick={() => setShowBrowser(true)}
             style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", flexShrink: 0, width: "100%", textAlign: "left", background: "transparent", cursor: "pointer", border: "none" }}
           >
-            <div className="ring-2 ring-white/30 ring-offset-1 ring-offset-[#000000] rounded-full flex-shrink-0">
+            <div className="ring-2 ring-white/30 ring-offset-1 ring-offset-[#000000] rounded-lg flex-shrink-0">
               <VoiceAvatar name={selectedVoice?.name ?? "V"} coverImage={selectedVoice?.coverImage} size="xs" id={selectedVoice?.referenceId} />
             </div>
             <span style={{ fontSize: "13px", fontWeight: 400, color: "#9ca3af" }}>{selectedVoice?.name ?? t.generate.defaultVoice}</span>

@@ -13,7 +13,7 @@ export function VoiceAvatarGenerative({
 }) {
   return (
     <div
-      className={`rounded-full ${className}`}
+      className={`rounded-lg ${className}`}
       style={{
         width: size,
         height: size,
