@@ -8,6 +8,8 @@ import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare } from "lucide-react";
 import { DialogueEditor } from "@/components/DialogueEditor";
+import { ImageVideoEditor } from "@/components/ImageVideoEditor";
+import { Image as ImageIcon } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { UserMenu } from "@/components/UserMenu";
 import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, formatCount } from "./VoiceBrowser";
@@ -37,7 +39,7 @@ interface Voice {
   isPublic?: boolean;
 }
 
-type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral" | "translate" | "transcribe" | "team" | "dialogue";
+type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral" | "translate" | "transcribe" | "team" | "dialogue" | "imagevideo";
 
 /* ─── Sidebar ─────────────────────────────────────────────── */
 type NavSection = {
@@ -437,7 +439,8 @@ function HomeTab({
     { id: 'generate',   title: 'Texto a Voz',         description: 'Convierte texto en voz natural al instante',            Icon: Type },
     { id: 'dialogue',   title: 'Texto a Diálogo',      description: 'Genera audios con múltiples voces y personajes',        Icon: MessageSquare },
     { id: 'transcribe', title: 'Audio a Texto',         description: 'Transcribe cualquier audio a texto al instante',        Icon: FileAudio },
-    { id: 'translate',  title: 'Traducción de Audio',   description: 'Traduce tus audios a otros idiomas automáticamente',   Icon: Globe },
+    { id: 'translate',   title: 'Traducción de Audio',   description: 'Traduce tus audios a otros idiomas automáticamente',  Icon: Globe },
+    { id: 'imagevideo',  title: 'Imagen y Video',        description: 'Genera imágenes y vídeos con IA',                      Icon: ImageIcon },
   ]
 
   return (
@@ -4956,6 +4959,7 @@ export default function DashboardPage() {
             voices:     { title: tt.tabs.voices,      Icon: Mic2 },
             referral:   { title: tt.tabs.referral,    Icon: Gift },
             team:       { title: "Equipo",             Icon: Users },
+            imagevideo: { title: "Imagen y Video",     Icon: ImageIcon },
           };
           const { title, Icon } = TAB_META[activeTab] ?? { title: "", Icon: Home };
           return (
@@ -5084,6 +5088,11 @@ export default function DashboardPage() {
               credits={credits ?? 0}
               onCreditsUpdate={(newCredits) => setCredits(newCredits)}
             />
+          </div>
+        )}
+        {activeTab === "imagevideo" && (
+          <div style={{ height: "calc(100vh - 56px)" }}>
+            <ImageVideoEditor />
           </div>
         )}
         </div>{/* end page content */}

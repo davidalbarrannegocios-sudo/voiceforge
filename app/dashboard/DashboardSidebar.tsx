@@ -7,10 +7,11 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Home, Mic2, Type, FileAudio, Globe, Clock,
   CreditCard, Gift, Zap, Settings, Users, Code, MessageSquare, ChevronsUpDown,
+  Image as ImageIcon,
 } from "lucide-react";
 import { useLang } from "./LanguageContext";
 
-type Tab = "home" | "voices" | "generate" | "dialogue" | "transcribe" | "translate" | "history" | "billing" | "referral" | "team";
+type Tab = "home" | "voices" | "generate" | "dialogue" | "imagevideo" | "transcribe" | "translate" | "history" | "billing" | "referral" | "team";
 
 export function DashboardSidebar() {
   const router = useRouter();
@@ -74,6 +75,7 @@ export function DashboardSidebar() {
       items: [
         { key: "generate" as Tab, label: t.nav.generate, Icon: Type },
         { key: "dialogue" as Tab, label: "Texto a Diálogo", Icon: MessageSquare },
+        { key: "imagevideo" as Tab, label: "Imagen y Video", Icon: ImageIcon },
         { key: "transcribe" as Tab, label: t.nav.transcribe, Icon: FileAudio },
         { key: "translate" as Tab, label: t.nav.translate, Icon: Globe },
         { key: "history" as Tab, label: t.nav.history, Icon: Clock },
