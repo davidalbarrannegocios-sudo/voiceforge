@@ -129,7 +129,13 @@ export function DashboardSidebar() {
           onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "14px" }}>🎙️</span>
+            <div style={{ width: "24px", height: "24px", borderRadius: "6px", background: "linear-gradient(135deg, #1a3a5c, #0ea5e9)", border: "1px solid rgba(14,165,233,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
+                <path d="M2 9 Q5 3 9 6 Q13 9 16 4" stroke="rgba(255,255,255,0.9)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                <path d="M2 12 Q6 7 9 10 Q12 13 16 8" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                <circle cx="9" cy="9" r="1.5" fill="white" opacity="0.8"/>
+              </svg>
+            </div>
             <span style={{ fontSize: "13px", fontWeight: 500, color: "#ffffff" }}>Elite Studio</span>
           </div>
           <ChevronsUpDown size={14} style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
@@ -145,7 +151,13 @@ export function DashboardSidebar() {
             }}>
               {/* Elite Studio — activo */}
               <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px", borderRadius: "8px", background: "rgba(255,255,255,0.08)" }}>
-                <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", flexShrink: 0 }}>🎙️</div>
+                <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "linear-gradient(135deg, #1a3a5c, #0ea5e9)", border: "1px solid rgba(14,165,233,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M2 9 Q5 3 9 6 Q13 9 16 4" stroke="rgba(255,255,255,0.9)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                    <path d="M2 12 Q6 7 9 10 Q12 13 16 8" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                    <circle cx="9" cy="9" r="1.5" fill="white" opacity="0.8"/>
+                  </svg>
+                </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: "13px", fontWeight: 500, color: "#ffffff", margin: 0 }}>Elite Studio</p>
                   <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", margin: 0 }}>Genera y clona voz con IA</p>
@@ -154,7 +166,14 @@ export function DashboardSidebar() {
               </div>
               {/* Elite API — en desarrollo */}
               <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px", borderRadius: "8px", opacity: 0.4, cursor: "not-allowed" }}>
-                <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", flexShrink: 0 }}>⚡</div>
+                <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "linear-gradient(135deg, #1a1a1a, #2a2a2a)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <rect x="3" y="3" width="5" height="5" rx="1.5" fill="rgba(255,255,255,0.7)"/>
+                    <rect x="10" y="3" width="5" height="5" rx="1.5" fill="rgba(255,255,255,0.3)"/>
+                    <rect x="3" y="10" width="5" height="5" rx="1.5" fill="rgba(255,255,255,0.3)"/>
+                    <rect x="10" y="10" width="5" height="5" rx="1.5" fill="rgba(255,255,255,0.15)"/>
+                  </svg>
+                </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <p style={{ fontSize: "13px", fontWeight: 500, color: "#ffffff", margin: 0 }}>Elite API</p>
