@@ -288,3 +288,28 @@ input[type="range"]::-moz-range-thumb {
   background: rgba(255, 255, 255, 0.15);
   border-radius: 2px;
 }
+
+/* ── Home card wave animations ──────────────────────────────────── */
+@keyframes wave-float {
+  0%   { transform: translateX(0px) translateY(0px) scale(1); }
+  33%  { transform: translateX(6px) translateY(-4px) scale(1.02); }
+  66%  { transform: translateX(-4px) translateY(3px) scale(0.98); }
+  100% { transform: translateX(0px) translateY(0px) scale(1); }
+}
+
+@keyframes wave-float-2 {
+  0%   { transform: translateX(0px) translateY(0px) rotate(0deg); }
+  50%  { transform: translateX(-5px) translateY(5px) rotate(2deg); }
+  100% { transform: translateX(0px) translateY(0px) rotate(0deg); }
+}
+
+@keyframes wave-float-3 {
+  0%   { transform: translateX(0px) scale(1); }
+  40%  { transform: translateX(4px) scale(1.03); }
+  80%  { transform: translateX(-3px) scale(0.97); }
+  100% { transform: translateX(0px) scale(1); }
+}
+
+.wave-anim-1 { animation: wave-float   8s ease-in-out infinite; }
+.wave-anim-2 { animation: wave-float-2 11s ease-in-out infinite; }
+.wave-anim-3 { animation: wave-float-3 14s ease-in-out infinite; }

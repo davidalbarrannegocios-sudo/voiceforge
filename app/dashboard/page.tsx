@@ -434,7 +434,7 @@ function HomeTab({
             className="group relative overflow-hidden flex flex-col p-4 sm:p-6 rounded-2xl border border-[#222222] hover:border-white/20 text-left transition-all hover:-translate-y-0.5 h-full"
             style={{ background: "#111111" }}
           >
-            <svg className="absolute top-0 right-0 w-40 h-40 opacity-20 group-hover:opacity-30 transition-opacity duration-300" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg className={`absolute top-0 right-0 w-40 h-40 opacity-20 group-hover:opacity-30 transition-opacity duration-300 wave-anim-${(i % 3) + 1}`} style={{ animationDelay: `${-i * 2}s` }} viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
               {i === 0 && <>
                 {/* Texto a Voz: ondas suaves desde esquina */}
                 <path d="M160 0 Q120 40 160 80" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" fill="none"/>
