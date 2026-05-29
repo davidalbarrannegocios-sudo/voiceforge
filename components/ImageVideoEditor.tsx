@@ -6,14 +6,14 @@ import { Image as ImageIcon, Video, Sparkles, Upload, X, ChevronDown, Lock } fro
 type Mode = 'image' | 'video'
 type AspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4'
 type Quality = '1K' | '2K' | '4K'
-type ImageModel = 'flux-pro' | 'flux-dev' | 'dalle3' | 'stable-diffusion'
+type ImageModel = 'flux-pro-1.1' | 'flux-2-pro' | 'flux-kontext' | 'flux-dev'
 type VideoModel = 'sora' | 'runway' | 'kling'
 
 const IMAGE_MODELS: { id: ImageModel; name: string; badge?: string; locked?: boolean }[] = [
-  { id: 'flux-pro',         name: 'Flux Pro',          badge: 'Recomendado' },
-  { id: 'flux-dev',         name: 'Flux Dev',           badge: 'Rápido' },
-  { id: 'dalle3',           name: 'DALL·E 3',           locked: true },
-  { id: 'stable-diffusion', name: 'Stable Diffusion',   locked: true },
+  { id: 'flux-pro-1.1', name: 'FLUX 1.1 Pro',    badge: 'Recomendado' },
+  { id: 'flux-2-pro',   name: 'FLUX 2 Pro',       badge: 'Mejor calidad' },
+  { id: 'flux-kontext', name: 'FLUX Kontext Pro',  badge: 'Con referencia' },
+  { id: 'flux-dev',     name: 'FLUX Dev',          badge: 'Rápido' },
 ]
 
 const VIDEO_MODELS: { id: VideoModel; name: string; badge?: string; locked?: boolean }[] = [
@@ -30,7 +30,7 @@ export function ImageVideoEditor() {
   const [prompt, setPrompt] = useState('')
   const [negativePrompt, setNegativePrompt] = useState('')
   const [showNegative, setShowNegative] = useState(false)
-  const [imageModel, setImageModel] = useState<ImageModel>('flux-pro')
+  const [imageModel, setImageModel] = useState<ImageModel>('flux-pro-1.1')
   const [videoModel, setVideoModel] = useState<VideoModel>('sora')
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1')
   const [quality, setQuality] = useState<Quality>('1K')
@@ -38,6 +38,7 @@ export function ImageVideoEditor() {
   const [imageRefs, setImageRefs] = useState<File[]>([])
   const [results, setResults] = useState<string[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const currentModels = mode === 'image' ? IMAGE_MODELS : VIDEO_MODELS
   const activeModel = mode === 'image' ? imageModel : videoModel
@@ -45,8 +46,31 @@ export function ImageVideoEditor() {
   async function handleGenerate() {
     if (!prompt.trim() || isGenerating) return
     setIsGenerating(true)
-    await new Promise(r => setTimeout(r, 2000))
-    setIsGenerating(false)
+    setResults([])
+    setError(null)
+    try {
+      const res = await fetch('/api/image/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          negativePrompt: showNegative ? negativePrompt : undefined,
+          model: imageModel,
+          aspectRatio,
+          count,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error ?? 'Error al generar')
+        return
+      }
+      setResults(data.images)
+    } catch {
+      setError('Error de conexión')
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   return (
@@ -254,7 +278,7 @@ export function ImageVideoEditor() {
                 Escribe un prompt y genera tu primera imagen
               </p>
               <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.15)', marginTop: '6px' }}>
-                Próximamente: Flux Pro, DALL·E 3, Stable Diffusion
+                Flux 1.1 Pro · Flux 2 Pro · Flux Kontext · Flux Dev
               </p>
             </div>
           ) : isGenerating ? (
@@ -364,9 +388,9 @@ export function ImageVideoEditor() {
             </button>
           </div>
 
-          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.15)', textAlign: 'center' }}>
-            Las APIs de imagen estarán disponibles próximamente
-          </p>
+          {error && (
+            <p style={{ fontSize: '11px', color: '#f87171', textAlign: 'center' }}>{error}</p>
+          )}
         </div>
       </div>
 
