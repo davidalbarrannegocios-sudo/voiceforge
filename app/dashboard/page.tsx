@@ -5092,7 +5092,10 @@ export default function DashboardPage() {
         )}
         {activeTab === "imagevideo" && (
           <div style={{ height: "calc(100vh - 56px)" }}>
-            <ImageVideoEditor />
+            <ImageVideoEditor
+              credits={credits ?? 0}
+              onCreditsUpdate={(newCredits) => setCredits(newCredits)}
+            />
           </div>
         )}
         </div>{/* end page content */}

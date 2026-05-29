@@ -5,46 +5,61 @@ import { Image as ImageIcon, Video, Sparkles, Upload, X, ChevronDown, Lock } fro
 
 type Mode = 'image' | 'video'
 type AspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4'
-type Quality = '1K' | '2K' | '4K'
-type ImageModel = 'flux-pro-1.1' | 'flux-2-pro' | 'flux-kontext' | 'flux-dev'
 type VideoModel = 'sora' | 'runway' | 'kling'
 
-const IMAGE_MODELS: { id: ImageModel; name: string; badge?: string; locked?: boolean }[] = [
-  { id: 'flux-pro-1.1', name: 'FLUX 1.1 Pro',    badge: 'Recomendado' },
-  { id: 'flux-2-pro',   name: 'FLUX 2 Pro',       badge: 'Mejor calidad' },
-  { id: 'flux-kontext', name: 'FLUX Kontext Pro',  badge: 'Con referencia' },
-  { id: 'flux-dev',     name: 'FLUX Dev',          badge: 'Rápido' },
+const IMAGE_MODELS = [
+  // FLUX.2
+  { id: 'flux-2-klein-4b', name: 'FLUX.2 Klein 4B', badge: 'Más barato',    credits: 571,  priceUsd: 0.02, group: 'FLUX.2' },
+  { id: 'flux-2-pro',      name: 'FLUX.2 Pro',      badge: 'Rápido',         credits: 2285, priceUsd: 0.08, group: 'FLUX.2' },
+  { id: 'flux-2-flex',     name: 'FLUX.2 Flex',     badge: null,             credits: 3142, priceUsd: 0.11, group: 'FLUX.2' },
+  { id: 'flux-2-max',      name: 'FLUX.2 Max',      badge: 'Alta calidad',   credits: 3428, priceUsd: 0.12, group: 'FLUX.2' },
+  { id: 'flux-2-klein-9b', name: 'FLUX.2 Klein 9B', badge: null,             credits: 6000, priceUsd: 0.21, group: 'FLUX.2' },
+  // FLUX.1
+  { id: 'flux-pro-1.1',       name: 'FLUX 1.1 Pro',       badge: 'Recomendado',  credits: 2000, priceUsd: 0.07, group: 'FLUX.1' },
+  { id: 'flux-pro-1.1-ultra', name: 'FLUX 1.1 Pro Ultra', badge: '4K',           credits: 2857, priceUsd: 0.10, group: 'FLUX.1' },
+  { id: 'flux-kontext-pro',   name: 'FLUX Kontext Pro',   badge: 'Con edición',  credits: 2000, priceUsd: 0.07, group: 'FLUX.1' },
+  { id: 'flux-kontext-max',   name: 'FLUX Kontext Max',   badge: null,           credits: 3428, priceUsd: 0.12, group: 'FLUX.1' },
+  { id: 'flux-pro-1.0-fill',  name: 'FLUX.1 Fill Pro',    badge: 'Inpainting',   credits: 2571, priceUsd: 0.09, group: 'FLUX.1' },
 ]
 
-const VIDEO_MODELS: { id: VideoModel; name: string; badge?: string; locked?: boolean }[] = [
+const VIDEO_MODELS: { id: VideoModel; name: string; locked: boolean }[] = [
   { id: 'sora',   name: 'Sora',   locked: true },
   { id: 'runway', name: 'Runway', locked: true },
   { id: 'kling',  name: 'Kling',  locked: true },
 ]
 
 const ASPECT_RATIOS: AspectRatio[] = ['1:1', '16:9', '9:16', '4:3', '3:4']
-const QUALITIES: Quality[] = ['1K', '2K', '4K']
 
-export function ImageVideoEditor() {
+const groupedImageModels: Record<string, typeof IMAGE_MODELS> = {
+  'FLUX.2': IMAGE_MODELS.filter(m => m.group === 'FLUX.2'),
+  'FLUX.1': IMAGE_MODELS.filter(m => m.group === 'FLUX.1'),
+}
+
+interface Props {
+  credits: number
+  onCreditsUpdate: (newCredits: number) => void
+}
+
+export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
   const [mode, setMode] = useState<Mode>('image')
   const [prompt, setPrompt] = useState('')
   const [negativePrompt, setNegativePrompt] = useState('')
   const [showNegative, setShowNegative] = useState(false)
-  const [imageModel, setImageModel] = useState<ImageModel>('flux-pro-1.1')
+  const [imageModel, setImageModel] = useState('flux-pro-1.1')
   const [videoModel, setVideoModel] = useState<VideoModel>('sora')
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1')
-  const [quality, setQuality] = useState<Quality>('1K')
   const [count, setCount] = useState(4)
   const [imageRefs, setImageRefs] = useState<File[]>([])
   const [results, setResults] = useState<string[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const currentModels = mode === 'image' ? IMAGE_MODELS : VIDEO_MODELS
-  const activeModel = mode === 'image' ? imageModel : videoModel
+  const selectedModelData = IMAGE_MODELS.find(m => m.id === imageModel)
+  const totalCreditsNeeded = (selectedModelData?.credits ?? 2000) * count
+  const canAfford = credits >= totalCreditsNeeded
 
   async function handleGenerate() {
-    if (!prompt.trim() || isGenerating) return
+    if (!prompt.trim() || isGenerating || !canAfford) return
     setIsGenerating(true)
     setResults([])
     setError(null)
@@ -66,6 +81,9 @@ export function ImageVideoEditor() {
         return
       }
       setResults(data.images)
+      if (data.creditsRemaining !== undefined) {
+        onCreditsUpdate(data.creditsRemaining)
+      }
     } catch {
       setError('Error de conexión')
     } finally {
@@ -109,54 +127,109 @@ export function ImageVideoEditor() {
 
           {/* Selector de modelo */}
           <div>
-            <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#444', marginBottom: '8px' }}>
+            <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#444', marginBottom: '4px' }}>
               Modelo
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {currentModels.map(model => {
-                const isActive = activeModel === model.id
-                return (
+
+            {mode === 'image' ? (
+              <>
+                {Object.entries(groupedImageModels).map(([group, models], gi) => (
+                  <div key={group}>
+                    <p style={{
+                      fontSize: '10px', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase',
+                      letterSpacing: '0.08em', padding: '0 4px', marginBottom: '6px',
+                      marginTop: gi === 0 ? '8px' : '12px',
+                    }}>
+                      {group}
+                    </p>
+                    {models.map(model => {
+                      const isActive = imageModel === model.id
+                      return (
+                        <button
+                          key={model.id}
+                          onClick={() => setImageModel(model.id)}
+                          style={{
+                            width: '100%', display: 'flex', alignItems: 'center',
+                            justifyContent: 'space-between', padding: '9px 12px',
+                            borderRadius: '10px', fontSize: '12px', fontWeight: 500,
+                            border: `1px solid ${isActive ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.07)'}`,
+                            background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
+                            color: isActive ? '#fff' : 'rgba(255,255,255,0.55)',
+                            cursor: 'pointer', transition: 'all 0.15s', textAlign: 'left',
+                            marginBottom: '4px',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {model.name}
+                            </span>
+                            {model.badge && (
+                              <span style={{
+                                fontSize: '9px', padding: '1px 5px', borderRadius: '999px',
+                                background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)',
+                                flexShrink: 0,
+                              }}>
+                                {model.badge}
+                              </span>
+                            )}
+                          </div>
+                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.28)', flexShrink: 0, marginLeft: '8px' }}>
+                            {model.credits.toLocaleString()}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                ))}
+
+                {/* Indicador de créditos */}
+                {selectedModelData && (
+                  <div style={{
+                    marginTop: '12px', padding: '10px 12px', borderRadius: '10px', fontSize: '12px',
+                    border: canAfford ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(248,113,113,0.2)',
+                    background: canAfford ? 'rgba(255,255,255,0.03)' : 'rgba(248,113,113,0.05)',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: canAfford ? 'rgba(255,255,255,0.4)' : '#f87171' }}>
+                      <span>{count} imagen{count > 1 ? 'es' : ''}</span>
+                      <span>{totalCreditsNeeded.toLocaleString()} cr</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3px', color: 'rgba(255,255,255,0.25)', fontSize: '11px' }}>
+                      <span>Disponibles</span>
+                      <span style={{ color: canAfford ? 'rgba(255,255,255,0.5)' : '#f87171' }}>
+                        {credits.toLocaleString()} cr
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
+                {VIDEO_MODELS.map(model => (
                   <button
                     key={model.id}
-                    onClick={() => {
-                      if (model.locked) return
-                      if (mode === 'image') setImageModel(model.id as ImageModel)
-                      else setVideoModel(model.id as VideoModel)
-                    }}
-                    disabled={model.locked}
+                    disabled
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center',
                       justifyContent: 'space-between', padding: '10px 12px',
                       borderRadius: '10px', fontSize: '13px', fontWeight: 500,
-                      border: `1px solid ${isActive ? 'rgba(255,255,255,0.3)' : model.locked ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.08)'}`,
-                      background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
-                      color: isActive ? '#fff' : model.locked ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)',
-                      cursor: model.locked ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.15s',
-                      textAlign: 'left',
+                      border: '1px solid rgba(255,255,255,0.05)', background: 'transparent',
+                      color: 'rgba(255,255,255,0.2)', cursor: 'not-allowed', textAlign: 'left',
                     }}
                   >
-                    <span>{model.name}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      {model.locked && <Lock size={11} />}
-                      {model.badge && !model.locked && (
-                        <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '999px', background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}>
-                          {model.badge}
-                        </span>
-                      )}
-                      {model.locked && (
-                        <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '999px', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                          Pronto
-                        </span>
-                      )}
+                      <Lock size={11} />
+                      <span>{model.name}</span>
                     </div>
+                    <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '999px', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      Pronto
+                    </span>
                   </button>
-                )
-              })}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Solo imagen: ratio, calidad, cantidad */}
+          {/* Solo imagen: ratio y cantidad */}
           {mode === 'image' && (
             <>
               <div>
@@ -176,28 +249,6 @@ export function ImageVideoEditor() {
                       }}
                     >
                       {ratio}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#444', marginBottom: '8px' }}>
-                  Resolución
-                </p>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  {QUALITIES.map(q => (
-                    <button
-                      key={q}
-                      onClick={() => setQuality(q)}
-                      style={{
-                        flex: 1, padding: '6px', borderRadius: '8px', fontSize: '12px',
-                        fontWeight: 500, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-                        background: quality === q ? '#ffffff' : 'rgba(255,255,255,0.06)',
-                        color: quality === q ? '#000000' : 'rgba(255,255,255,0.5)',
-                      }}
-                    >
-                      {q}
                     </button>
                   ))}
                 </div>
@@ -278,7 +329,7 @@ export function ImageVideoEditor() {
                 Escribe un prompt y genera tu primera imagen
               </p>
               <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.15)', marginTop: '6px' }}>
-                Flux 1.1 Pro · Flux 2 Pro · Flux Kontext · Flux Dev
+                FLUX.2 · FLUX 1.1 Pro · Kontext · Fill
               </p>
             </div>
           ) : isGenerating ? (
@@ -310,6 +361,20 @@ export function ImageVideoEditor() {
                 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={url} alt={`Generated ${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{
+                    position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)',
+                    opacity: 0, transition: 'opacity 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                    onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                    onMouseLeave={e => (e.currentTarget.style.opacity = '0')}
+                  >
+                    <a href={url} download={`imagen-${i + 1}.jpg`} style={{
+                      padding: '8px 16px', background: '#ffffff', color: '#000000',
+                      fontSize: '12px', fontWeight: 600, borderRadius: '8px', textDecoration: 'none',
+                    }}>
+                      Descargar
+                    </a>
+                  </div>
                 </div>
               ))}
             </div>
@@ -373,12 +438,12 @@ export function ImageVideoEditor() {
 
             <button
               onClick={handleGenerate}
-              disabled={!prompt.trim() || isGenerating}
+              disabled={!prompt.trim() || isGenerating || !canAfford}
               style={{
                 padding: '0 20px', background: '#ffffff', color: '#000000',
                 fontSize: '13px', fontWeight: 600, borderRadius: '12px', border: 'none',
-                cursor: !prompt.trim() || isGenerating ? 'not-allowed' : 'pointer',
-                opacity: !prompt.trim() || isGenerating ? 0.3 : 1,
+                cursor: !prompt.trim() || isGenerating || !canAfford ? 'not-allowed' : 'pointer',
+                opacity: !prompt.trim() || isGenerating || !canAfford ? 0.3 : 1,
                 display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
                 transition: 'opacity 0.15s',
               }}
