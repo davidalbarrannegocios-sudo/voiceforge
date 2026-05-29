@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronDown, Info, Settings, MessageSquare } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronDown, ChevronsUpDown, Info, Settings, MessageSquare } from "lucide-react";
 import { DialogueEditor } from "@/components/DialogueEditor";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { UserMenu } from "@/components/UserMenu";
@@ -147,88 +147,58 @@ function Sidebar({
 
       {/* Product selector */}
       {!(collapsed && desktop) && (
-        <div style={{ paddingLeft: "12px", paddingRight: "12px", paddingBottom: "8px", flexShrink: 0, position: "relative" }}>
+        <div className="px-3 pb-2 relative flex-shrink-0">
           <button
             onClick={() => setShowProductMenu(p => !p)}
-            style={{
-              width: "100%", display: "flex", alignItems: "center", gap: "10px",
-              padding: "8px 10px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.07)",
-              background: "rgba(255,255,255,0.03)", cursor: "pointer", textAlign: "left",
-              transition: "background 0.15s",
-            }}
+            className="w-full flex items-center justify-between gap-2
+                       px-3 py-2 rounded-xl bg-white/5 hover:bg-white/8
+                       border border-white/8 transition-all"
           >
-            <div style={{
-              width: "28px", height: "28px", borderRadius: "8px", flexShrink: 0,
-              background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)",
-              display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px",
-            }}>
-              🎙️
+            <div className="flex items-center gap-2">
+              <span className="text-base">🎙️</span>
+              <span className="text-sm font-medium text-white">Elite Studio</span>
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: "12px", fontWeight: 600, color: "#e5e7eb", lineHeight: 1.2 }}>Elite Studio</p>
-              <p style={{ fontSize: "10px", color: "#555555", marginTop: "1px" }}>Generación de voz con IA</p>
-            </div>
-            <ChevronDown size={14} style={{ color: "#444444", flexShrink: 0, transform: showProductMenu ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.15s" }} />
+            <ChevronsUpDown className="w-3.5 h-3.5 text-white/30" />
           </button>
 
           {showProductMenu && (
             <>
-              <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setShowProductMenu(false)} />
-              <div style={{
-                position: "absolute", top: "calc(100% - 4px)", left: "12px", right: "12px",
-                zIndex: 50, background: "#111", border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "14px", boxShadow: "0 20px 60px rgba(0,0,0,0.8)",
-                overflow: "hidden", padding: "6px",
-              }}>
-                {/* Elite Studio — activo */}
-                <button
-                  onClick={() => setShowProductMenu(false)}
-                  style={{
-                    width: "100%", display: "flex", alignItems: "center", gap: "10px",
-                    padding: "10px", borderRadius: "10px", border: "none",
-                    background: "rgba(255,255,255,0.07)", cursor: "pointer", textAlign: "left",
-                    marginBottom: "2px",
-                  }}
-                >
-                  <div style={{
-                    width: "36px", height: "36px", borderRadius: "10px", flexShrink: 0,
-                    background: "linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.03))",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px",
-                  }}>🎙️</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: "13px", fontWeight: 600, color: "#ffffff" }}>Elite Studio</p>
-                    <p style={{ fontSize: "11px", color: "#666666", marginTop: "1px" }}>Genera, clona y edita voz con IA</p>
-                  </div>
-                  <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />
-                </button>
+              <div className="fixed inset-0 z-40" onClick={() => setShowProductMenu(false)} />
+              <div className="absolute top-full left-3 right-3 mt-1 z-50
+                              bg-[#111] border border-white/10 rounded-xl
+                              shadow-2xl p-1">
 
-                {/* Elite API — En desarrollo */}
-                <div
-                  style={{
-                    display: "flex", alignItems: "center", gap: "10px",
-                    padding: "10px", borderRadius: "10px",
-                    opacity: 0.45, cursor: "not-allowed",
-                  }}
-                >
-                  <div style={{
-                    width: "36px", height: "36px", borderRadius: "10px", flexShrink: 0,
-                    background: "linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59,130,246,0.03))",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px",
-                  }}>⚡</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <p style={{ fontSize: "13px", fontWeight: 600, color: "#ffffff" }}>Elite API</p>
-                      <span style={{
-                        fontSize: "9px", padding: "2px 5px", borderRadius: "999px",
-                        background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.3)",
-                        border: "1px solid rgba(255,255,255,0.08)", fontWeight: 500,
-                      }}>En desarrollo</span>
+                {/* Elite Studio — activo */}
+                <div className="flex items-center gap-3 p-2.5 rounded-lg bg-white/8">
+                  <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/10
+                                  flex items-center justify-center text-sm flex-shrink-0">
+                    🎙️
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white">Elite Studio</p>
+                    <p className="text-xs text-white/40">Genera y clona voz con IA</p>
+                  </div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0" />
+                </div>
+
+                {/* Elite API — en desarrollo */}
+                <div className="flex items-center gap-3 p-2.5 rounded-lg opacity-40 cursor-not-allowed">
+                  <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/8
+                                  flex items-center justify-center text-sm flex-shrink-0">
+                    ⚡
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium text-white">Elite API</p>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full
+                                       bg-white/5 text-white/30 border border-white/8">
+                        Pronto
+                      </span>
                     </div>
-                    <p style={{ fontSize: "11px", color: "#666666", marginTop: "1px" }}>Accede a nuestros modelos via API</p>
+                    <p className="text-xs text-white/40">API de síntesis de voz</p>
                   </div>
                 </div>
+
               </div>
             </>
           )}
