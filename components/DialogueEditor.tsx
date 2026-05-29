@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Play, Download, Loader2, ChevronDown, AlertCircle, Mic, X, ChevronRight } from 'lucide-react'
+import { Play, Pause, Download, Loader2, ChevronDown, AlertCircle, Mic, X, ChevronRight } from 'lucide-react'
 import { VoiceBrowser, SelectedVoice } from '@/app/dashboard/VoiceBrowser'
 
 // ─── Types ───────────────────────────────────────────────────
@@ -93,8 +93,26 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
   const [dialogueLang, setDialogueLang] = useState('es')
   const [showLangPicker, setShowLangPicker] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
   const prevLanguage = useRef(language)
   const audioRef = useRef<HTMLAudioElement>(null)
+
+  function formatTime(s: number): string {
+    const m = Math.floor(s / 60)
+    const sec = Math.floor(s % 60)
+    return `${m}:${sec.toString().padStart(2, '0')}`
+  }
+
+  function togglePlay() {
+    if (!audioRef.current) return
+    if (isPlaying) {
+      audioRef.current.pause()
+    } else {
+      audioRef.current.play()
+    }
+  }
 
   const handleTextChange = useCallback((text: string) => {
     setRawText(text)
@@ -210,6 +228,9 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
 
       if (data.audioUrl) {
         setAudioUrl(data.audioUrl)
+        setIsPlaying(false)
+        setCurrentTime(0)
+        setDuration(0)
         onCreditsUpdate(data.creditsRemaining)
       } else if (data.jobId) {
         setJobId(data.jobId)
@@ -457,12 +478,56 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
           {audioUrl && (
             <div className="bg-white/[0.02] border border-white/8 rounded-xl p-4">
               <p className="text-xs text-white/40 mb-3">Diálogo generado</p>
+
+              {/* Hidden audio element */}
               <audio
                 ref={audioRef}
                 src={audioUrl}
-                controls
-                className="w-full h-10"
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                onEnded={() => { setIsPlaying(false); setCurrentTime(0) }}
+                onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime ?? 0)}
+                onLoadedMetadata={() => setDuration(audioRef.current?.duration ?? 0)}
               />
+
+              {/* Custom player */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={togglePlay}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full
+                             bg-white text-black text-xs font-medium
+                             hover:bg-white/90 transition-colors flex-shrink-0"
+                >
+                  {isPlaying ? (
+                    <>
+                      <Pause className="w-3 h-3" />
+                      <span>{formatTime(currentTime)}/{formatTime(duration)}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-3 h-3" />
+                      <span>Reproducir</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Progress bar */}
+                <div
+                  className="flex-1 h-1 bg-white/10 rounded-full cursor-pointer relative"
+                  onClick={(e) => {
+                    if (!audioRef.current || !duration) return
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    const ratio = (e.clientX - rect.left) / rect.width
+                    audioRef.current.currentTime = ratio * duration
+                  }}
+                >
+                  <div
+                    className="h-full bg-white rounded-full"
+                    style={{ width: duration ? `${(currentTime / duration) * 100}%` : '0%' }}
+                  />
+                </div>
+              </div>
+
               <a
                 href={audioUrl}
                 download="dialogo.mp3"
