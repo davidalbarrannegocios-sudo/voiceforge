@@ -28,8 +28,7 @@ export function DashboardSidebar() {
   const [leaving, setLeaving] = useState(false);
 
   const isMiCuenta = pathname === "/dashboard/mi-cuenta";
-  const isDevelopers = pathname === "/dashboard/developers";
-  const activeTab: Tab | null = isMiCuenta || isDevelopers
+  const activeTab: Tab | null = isMiCuenta
     ? null
     : ((searchParams.get("tab") as Tab | null) ?? "home");
 
@@ -157,9 +156,8 @@ export function DashboardSidebar() {
           </div>
         ))}
 
-        {/* Desarrollador */}
-        <Link
-          href="/dashboard/developers"
+        {/* Desarrollador — bloqueado */}
+        <div
           style={{
             display: "flex",
             alignItems: "center",
@@ -168,19 +166,29 @@ export function DashboardSidebar() {
             borderRadius: "8px",
             fontSize: "13px",
             fontWeight: 500,
-            textDecoration: "none",
             marginTop: "2px",
-            transition: "background 0.15s",
-            background: isDevelopers ? "rgba(255,255,255,0.08)" : "transparent",
-            color: isDevelopers ? "#ffffff" : "#555555",
+            opacity: 0.4,
+            cursor: "not-allowed",
+            userSelect: "none",
+            color: "#555555",
           }}
-          onMouseEnter={(e) => { if (!isDevelopers) { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#d1d5db"; } }}
-          onMouseLeave={(e) => { if (!isDevelopers) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#555555"; } }}
         >
-          <Code size={15} style={{ color: isDevelopers ? "#ffffff" : "#444444", flexShrink: 0 }} />
+          <Code size={15} style={{ color: "#444444", flexShrink: 0 }} />
           <span style={{ flex: 1 }}>Desarrollador</span>
-          {isDevelopers && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
-        </Link>
+          <span style={{
+            fontSize: "10px",
+            padding: "2px 6px",
+            borderRadius: "999px",
+            background: "rgba(255,255,255,0.05)",
+            color: "rgba(255,255,255,0.3)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            fontWeight: 500,
+            lineHeight: 1,
+            whiteSpace: "nowrap",
+          }}>
+            En desarrollo
+          </span>
+        </div>
 
         {/* Mi cuenta */}
         <Link
