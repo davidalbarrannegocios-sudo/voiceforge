@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2024-06-20' as never,
+})
 
 const RECHARGE_OPTIONS = [
   { id: 'r18',  euros: 18,  bytes: 1_000_000,  label: '1M bytes — 18€' },
