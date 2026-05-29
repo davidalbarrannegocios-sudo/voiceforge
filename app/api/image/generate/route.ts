@@ -79,7 +79,11 @@ export async function POST(req: NextRequest) {
     })
 
     const submitData = await submitRes.json()
-    if (!submitRes.ok) throw new Error(submitData.message ?? 'BFL submit error')
+    console.log('[BFL] key exists:', !!BFL_KEY, '| key prefix:', BFL_KEY?.slice(0, 8))
+    console.log('[BFL] endpoint:', endpoint)
+    console.log('[BFL] status:', submitRes.status)
+    console.log('[BFL] response:', JSON.stringify(submitData))
+    if (!submitRes.ok) throw new Error(`BFL submit error ${submitRes.status}: ${JSON.stringify(submitData)}`)
 
     const { polling_url } = submitData
 
