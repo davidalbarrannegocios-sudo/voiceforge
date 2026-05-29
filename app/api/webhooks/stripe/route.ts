@@ -339,9 +339,28 @@ export async function POST(req: Request) {
     log("info", "stripe-webhook", "subscription updated", { userId: user.id, plan: newPlan, billing: newBillingInterval }, user.id);
   }
 
-  // ── payment_intent.succeeded (credit pack backup) ─────────
+  // ── payment_intent.succeeded ──────────────────────────────
   if (event.type === "payment_intent.succeeded") {
     const pi = event.data.object as Stripe.PaymentIntent;
+
+    // ── API wallet recharge ──────────────────────────────────
+    if (pi.metadata?.type === "api_recharge") {
+      const { userId, bytes, euros } = pi.metadata;
+      const dbUser = await prisma.user.findFirst({ where: { clerkId: userId } });
+      if (dbUser && bytes) {
+        await prisma.apiWallet.upsert({
+          where: { userId: dbUser.id },
+          create: { userId: dbUser.id, bytes: BigInt(bytes), totalSpent: Number(euros) },
+          update: {
+            bytes: { increment: BigInt(bytes) },
+            totalSpent: { increment: Number(euros) },
+          },
+        });
+        log("info", "stripe-webhook", "api_recharge via payment_intent", { userId: dbUser.id, bytes, euros });
+      }
+      return NextResponse.json({ received: true });
+    }
+
     const userId  = pi.metadata?.userId;
     const credits = parseInt(pi.metadata?.credits ?? "0", 10);
 

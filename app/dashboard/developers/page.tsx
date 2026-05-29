@@ -88,7 +88,6 @@ export default function DevelopersPage() {
   const [copied, setCopied] = useState<string | null>(null)
   const [codeTab, setCodeTab] = useState<'curl' | 'javascript' | 'python'>('curl')
   const [showRecharge, setShowRecharge] = useState(false)
-  const [recharging, setRecharging] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -141,19 +140,8 @@ export default function DevelopersPage() {
     fetchData()
   }
 
-  async function recharge(optionId: string) {
-    setRecharging(true)
-    try {
-      const res = await fetch('/api/developer/wallet/recharge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ optionId }),
-      })
-      const data = await res.json()
-      if (data.url) router.push(data.url)
-    } finally {
-      setRecharging(false)
-    }
+  function recharge(optionId: string) {
+    router.push(`/checkout/api-recharge/${optionId}`)
   }
 
   function copyText(text: string, id: string) {
@@ -352,13 +340,12 @@ export default function DevelopersPage() {
                 <button
                   key={opt.id}
                   onClick={() => recharge(opt.id)}
-                  disabled={recharging}
                   style={{
                     display: 'flex', flexDirection: 'column', alignItems: 'center',
                     padding: '14px 8px', borderRadius: '10px',
                     border: '1px solid rgba(255,255,255,0.08)',
                     background: 'transparent', cursor: 'pointer',
-                    opacity: recharging ? 0.6 : 1, transition: 'all 0.15s',
+                    transition: 'all 0.15s',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'
