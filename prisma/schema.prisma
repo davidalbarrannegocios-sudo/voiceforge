@@ -355,6 +355,7 @@ model SharedImage {
   aspectRatio String
   r2Key       String
   imageUrl    String
+  type        String   @default("image")
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 

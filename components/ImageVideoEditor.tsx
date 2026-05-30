@@ -83,6 +83,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
   const [error, setError] = useState<string | null>(null)
   const [modalImage, setModalImage] = useState<{
     url: string
+    videoUrl?: string
+    type: 'image' | 'video'
     prompt: string
     model: string
     aspectRatio: string
@@ -93,7 +95,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
   const [progress, setProgress] = useState(0)
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
   const [sharedIds, setSharedIds] = useState<Set<string>>(new Set())
-  const [galleryImages, setGalleryImages] = useState<{ id: string; imageUrl: string; prompt: string; model: string; aspectRatio: string }[]>([])
+  const [galleryImages, setGalleryImages] = useState<{ id: string; imageUrl: string; prompt: string; model: string; aspectRatio: string; type?: string }[]>([])
   const [galleryLoading, setGalleryLoading] = useState(false)
   const [rightView, setRightView] = useState<'history' | 'explore'>('history')
   const [videoProgress, setVideoProgress] = useState(0)
@@ -331,24 +333,25 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
   }
 
   async function handleShare(item: ImageHistoryItem, imgIndex: number) {
-    const img = item.images[imgIndex]
-    if (!img || !img.startsWith('data:')) return
-
     const shareKey = `${item.id}-${imgIndex}`
     try {
+      let body: Record<string, unknown>
+      if (item.type === 'video') {
+        if (!item.videoUrl) return
+        body = { type: 'video', videoUrl: item.videoUrl, prompt: item.prompt, model: item.model, aspectRatio: item.aspectRatio }
+      } else {
+        const img = item.images[imgIndex]
+        if (!img || !img.startsWith('data:')) return
+        body = { type: 'image', imageBase64: img, prompt: item.prompt, model: item.model, aspectRatio: item.aspectRatio }
+      }
       const res = await fetch('/api/gallery/share', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageBase64: img,
-          prompt: item.prompt,
-          model: item.model,
-          aspectRatio: item.aspectRatio,
-        }),
+        body: JSON.stringify(body),
       })
       if (res.ok) {
         setSharedIds(prev => new Set(prev).add(shareKey))
-        showToast('¡Imagen compartida en la galería!', 'success')
+        showToast(item.type === 'video' ? '¡Vídeo compartido en la galería!' : '¡Imagen compartida en la galería!', 'success')
       } else {
         showToast('Error al compartir', 'error')
       }
@@ -531,14 +534,23 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                             className="w-full max-w-sm rounded-xl border border-white/[0.08]"
                             style={{ aspectRatio: item.aspectRatio.replace(':', '/') }}
                           />
-                          <a
-                            href={item.videoUrl}
-                            download="elitelabs-video.mp4"
-                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/[0.08] hover:bg-white/[0.12] border border-white/10 rounded-lg text-xs text-white/60 hover:text-white transition-colors"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                            Descargar vídeo
-                          </a>
+                          <div className="flex items-center gap-2 mt-1">
+                            <a
+                              href={item.videoUrl}
+                              download="elitelabs-video.mp4"
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.05] hover:bg-white/10 border border-white/[0.08] rounded-lg text-xs text-white/50 hover:text-white transition-colors"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              Descargar
+                            </a>
+                            <button
+                              onClick={() => handleShare(item, 0)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.05] hover:bg-white/10 border border-white/[0.08] rounded-lg text-xs text-white/50 hover:text-white transition-colors"
+                            >
+                              <Share2 className="w-3.5 h-3.5" />
+                              Compartir
+                            </button>
+                          </div>
                         </>
                       ) : (
                         <div className="w-full max-w-sm aspect-video rounded-xl bg-white/[0.03] border border-dashed border-white/[0.08] flex items-center justify-center">
@@ -560,6 +572,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                             className={`relative group overflow-hidden rounded-xl border border-white/[0.08] cursor-pointer ${ASPECT_CLASSES[item.aspectRatio] ?? 'aspect-square'}`}
                             onClick={() => setModalImage({
                               url: img,
+                              type: 'image',
                               prompt: item.prompt,
                               model: item.model,
                               aspectRatio: item.aspectRatio,
@@ -604,19 +617,32 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                          className="mb-2 break-inside-avoid group relative rounded-xl overflow-hidden border border-white/[0.08] cursor-pointer"
                          onClick={() => setModalImage({
                            url: img.imageUrl,
+                           type: (img as { type?: string }).type === 'video' ? 'video' : 'image',
                            prompt: img.prompt,
                            model: img.model,
                            aspectRatio: img.aspectRatio,
                            allImages: [img.imageUrl],
                            currentIndex: 0,
                          })}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={img.imageUrl}
-                        alt={img.prompt}
-                        className="w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        loading="lazy"
-                      />
+                      {img.imageUrl.endsWith('.mp4') ? (
+                        /* eslint-disable-next-line jsx-a11y/media-has-caption */
+                        <video
+                          src={img.imageUrl}
+                          className="w-full object-cover"
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                        />
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={img.imageUrl}
+                          alt={img.prompt}
+                          className="w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
                         <p className="text-xs text-white/90 line-clamp-2">{img.prompt}</p>
                         <p className="text-[10px] text-white/40 mt-0.5">{img.model}</p>
@@ -936,7 +962,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
 
               <button
                 onClick={() => {
-                  handleShare({ id: '', type: 'image', prompt: modalImage.prompt, model: modalImage.model, aspectRatio: modalImage.aspectRatio, images: [modalImage.url], createdAt: new Date(), expiresAt: new Date(), provider: 'bfl' }, 0)
+                  handleShare({ id: '', type: modalImage.type, prompt: modalImage.prompt, model: modalImage.model, aspectRatio: modalImage.aspectRatio, images: [modalImage.url], videoUrl: modalImage.videoUrl, createdAt: new Date(), expiresAt: new Date(), provider: 'bfl' }, 0)
                   setModalImage(null)
                 }}
                 className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] text-sm text-white/70 hover:text-white transition-all text-left"

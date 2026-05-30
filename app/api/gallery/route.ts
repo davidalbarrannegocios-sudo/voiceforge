@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
       prompt: true,
       model: true,
       aspectRatio: true,
+      type: true,
       createdAt: true,
     },
   })

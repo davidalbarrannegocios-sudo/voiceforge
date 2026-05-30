@@ -12,14 +12,31 @@ export async function POST(req: NextRequest) {
   const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } })
   if (!dbUser) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-  const { imageBase64, prompt, model, aspectRatio } = await req.json()
-  if (!imageBase64 || !prompt) return NextResponse.json({ error: 'Missing data' }, { status: 400 })
+  const { imageBase64, videoUrl, prompt, model, aspectRatio, type } = await req.json()
+  if (!prompt) return NextResponse.json({ error: 'Missing data' }, { status: 400 })
 
-  const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '')
-  const buffer = Buffer.from(base64Data, 'base64')
+  let buffer: Buffer
+  let contentType: string
+  let r2Key: string
+  let mediaType: string
 
-  const r2Key = `gallery/${dbUser.id}/${Date.now()}.jpg`
-  const imageUrl = await uploadToR2(r2Key, buffer, 'image/jpeg')
+  if (type === 'video' && videoUrl) {
+    const res = await fetch(videoUrl)
+    buffer = Buffer.from(await res.arrayBuffer())
+    contentType = 'video/mp4'
+    r2Key = `gallery/videos/${dbUser.id}/${Date.now()}.mp4`
+    mediaType = 'video'
+  } else if (imageBase64) {
+    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '')
+    buffer = Buffer.from(base64Data, 'base64')
+    contentType = 'image/jpeg'
+    r2Key = `gallery/${dbUser.id}/${Date.now()}.jpg`
+    mediaType = 'image'
+  } else {
+    return NextResponse.json({ error: 'Missing media data' }, { status: 400 })
+  }
+
+  const mediaUrl = await uploadToR2(r2Key, buffer, contentType)
 
   await prisma.sharedImage.create({
     data: {
@@ -28,9 +45,10 @@ export async function POST(req: NextRequest) {
       model,
       aspectRatio,
       r2Key,
-      imageUrl,
+      imageUrl: mediaUrl,
+      type: mediaType,
     },
   })
 
-  return NextResponse.json({ success: true, imageUrl })
+  return NextResponse.json({ success: true, mediaUrl })
 }
