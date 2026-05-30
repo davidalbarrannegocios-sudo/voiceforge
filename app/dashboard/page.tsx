@@ -2989,6 +2989,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
     try {
       const res = await fetch("/api/translation-tasks");
       const data = await res.json();
+      console.log('[translation history] raw data:', JSON.stringify((data.tasks ?? []).slice(0, 2), null, 2));
       setHistoryTasks(data.tasks ?? []);
     } catch { /* ignore */ } finally { setLoadingHistory(false); }
   }
@@ -3459,6 +3460,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                     <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>Estado</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>Fecha</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>Retención</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#f59e0b" }}>DEBUG keys</th>
                     <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>Acciones</th>
                   </tr>
                 </thead>
@@ -3510,6 +3512,9 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                               ? <span style={{ fontSize: "11px", color: "#f87171" }}>Expirado</span>
                               : <span style={{ fontSize: "11px", color: daysLeft <= 3 ? "#f59e0b" : "#6b7280" }}>Expira en {daysLeft}d</span>;
                           })()}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-white/30 font-mono max-w-[200px] break-all">
+                          {JSON.stringify(Object.keys(task))}
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-end gap-1">
