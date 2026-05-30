@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Image as ImageIcon, Video, Sparkles, Upload, X, ChevronDown, Lock, Download } from 'lucide-react'
 
 type Mode = 'image' | 'video'
@@ -57,6 +57,8 @@ interface HistoryItem {
   images: string[]
   videoUrl?: string
   createdAt: Date
+  expiresAt: Date
+  provider: 'bfl' | 'xai'
 }
 
 interface Props {
@@ -81,6 +83,25 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [expandedImage, setExpandedImage] = useState<string | null>(null)
+
+  // Re-render each minute so expiry countdowns stay fresh
+  useEffect(() => {
+    const interval = setInterval(() => setHistory(prev => [...prev]), 60_000)
+    return () => clearInterval(interval)
+  }, [])
+
+  function isExpired(item: HistoryItem): boolean {
+    return new Date() > item.expiresAt
+  }
+
+  function timeRemaining(item: HistoryItem): string {
+    const diff = item.expiresAt.getTime() - Date.now()
+    if (diff <= 0) return 'Expirado'
+    const mins = Math.floor(diff / 60000)
+    const hours = Math.floor(mins / 60)
+    if (hours > 0) return `${hours}h ${mins % 60}m`
+    return `${mins}m`
+  }
 
   const selectedImageModel = IMAGE_MODELS.find(m => m.id === imageModel)
   const selectedVideoModel = VIDEO_MODELS.find(m => m.id === videoModel)
@@ -133,6 +154,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
           aspectRatio: currentAspectRatio,
           images: data.images as string[],
           createdAt: new Date(),
+          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // base64 — no expira
+          provider: 'xai',
         }, ...prev])
         return
       }
@@ -165,6 +188,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
           aspectRatio: currentAspectRatio,
           images: completed,
           createdAt: new Date(),
+          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // base64 — no expira
+          provider: 'bfl',
         }, ...prev])
       }
     } catch {
@@ -234,6 +259,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
               images: [],
               videoUrl: pollData.videoUrl,
               createdAt: new Date(),
+              expiresAt: new Date(Date.now() + 60 * 60 * 1000), // URL xAI expira en 1h
+              provider: 'xai',
             }, ...prev])
             setIsGenerating(false)
             return
@@ -603,63 +630,133 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
               </div>
             )}
 
-            {/* Historial — más reciente arriba */}
-            {history.map(item => (
-              <div key={item.id} className="space-y-2">
-                <div className="flex items-center gap-2 text-xs text-white/30">
-                  <span>
-                    {item.createdAt.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-                    {' · '}
-                    {item.createdAt.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                  <span>·</span>
-                  <span className="truncate max-w-[400px] text-white/40">{item.prompt}</span>
+            {/* Aviso de expiración */}
+            {history.length > 0 && (
+              <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-orange-500/[0.08] border border-orange-500/20">
+                <svg className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.07 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <div>
+                  <p className="text-xs text-orange-400 font-medium">
+                    Las imágenes y vídeos son temporales
+                  </p>
+                  <p className="text-xs text-orange-400/70 mt-0.5">
+                    Las imágenes están disponibles mientras tengas la sesión abierta.
+                    Los vídeos expiran en <strong>1 hora</strong> desde su generación. Descárgalos antes de que expiren.
+                  </p>
                 </div>
-
-                {item.type === 'video' && item.videoUrl ? (
-                  <div className={`max-w-sm ${ASPECT_CLASSES[item.aspectRatio] ?? 'aspect-video'} rounded-xl overflow-hidden border border-white/[0.08]`}>
-                    {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                    <video
-                      src={item.videoUrl}
-                      controls
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className={`grid gap-2 ${
-                    item.images.length === 1 ? 'grid-cols-1 max-w-xs' :
-                    item.images.length === 2 ? 'grid-cols-2 max-w-sm' :
-                    item.images.length <= 4 ? 'grid-cols-2 max-w-md' :
-                    'grid-cols-4'
-                  }`}>
-                    {item.images.map((img, i) => (
-                      <div
-                        key={i}
-                        className={`relative group overflow-hidden rounded-xl border border-white/[0.08] cursor-pointer ${ASPECT_CLASSES[item.aspectRatio] ?? 'aspect-square'}`}
-                        onClick={() => setExpandedImage(img)}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={img}
-                          alt={item.prompt}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-2">
-                          <a
-                            href={img}
-                            download={`elitelabs-${item.id}-${i}.jpg`}
-                            onClick={e => e.stopPropagation()}
-                            className="p-1.5 bg-white/20 hover:bg-white/30 rounded-lg backdrop-blur-sm transition-colors"
-                          >
-                            <Download className="w-3.5 h-3.5 text-white" />
-                          </a>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
-            ))}
+            )}
+
+            {/* Historial — más reciente arriba */}
+            {history.map(item => {
+              const expired = isExpired(item)
+              const remaining = timeRemaining(item)
+              const expiresVerySoon = item.type === 'video' && !expired && (item.expiresAt.getTime() - Date.now()) < 10 * 60 * 1000
+
+              return (
+                <div key={item.id} className="space-y-2">
+
+                  {/* Header: fecha · prompt · expiración (vídeo) */}
+                  <div className="flex items-center gap-2 text-xs text-white/30">
+                    <span>
+                      {item.createdAt.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                      {' · '}
+                      {item.createdAt.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <span>·</span>
+                    <span className="truncate max-w-[300px] text-white/40">{item.prompt}</span>
+                    {item.type === 'video' && (
+                      <span className={`ml-auto flex-shrink-0 ${
+                        expired
+                          ? 'text-red-400/60'
+                          : !remaining.includes('h')
+                            ? 'text-orange-400/60'
+                            : 'text-white/20'
+                      }`}>
+                        {expired ? '· Expirado' : `· Expira en ${remaining}`}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Vídeo */}
+                  {item.type === 'video' && (
+                    <>
+                      {expired ? (
+                        <div className="w-full max-w-sm flex flex-col items-center justify-center gap-2 py-8 rounded-xl bg-white/[0.03] border border-dashed border-orange-500/20">
+                          <svg className="w-8 h-8 text-orange-400/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                                  d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-sm text-orange-400/50 font-medium">Este vídeo ha expirado</p>
+                          <p className="text-xs text-white/20 text-center px-4">Los vídeos se eliminan automáticamente después de 1 hora</p>
+                        </div>
+                      ) : item.videoUrl ? (
+                        <>
+                          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                          <video
+                            src={item.videoUrl}
+                            controls
+                            className="w-full max-w-sm rounded-xl border border-white/[0.08]"
+                            style={{ aspectRatio: item.aspectRatio.replace(':', '/') }}
+                          />
+                          <div className="flex items-center justify-between max-w-sm">
+                            <a
+                              href={item.videoUrl}
+                              download="elitelabs-video.mp4"
+                              className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.08] hover:bg-white/[0.12] border border-white/10 rounded-lg text-xs text-white/60 hover:text-white transition-colors"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              Descargar vídeo
+                            </a>
+                            {expiresVerySoon && (
+                              <span className="text-xs text-orange-400 animate-pulse">⚠ Expira pronto</span>
+                            )}
+                          </div>
+                        </>
+                      ) : null}
+                    </>
+                  )}
+
+                  {/* Imágenes */}
+                  {item.type === 'image' && (
+                    <div className={`grid gap-2 ${
+                      item.images.length === 1 ? 'grid-cols-1 max-w-xs' :
+                      item.images.length === 2 ? 'grid-cols-2 max-w-sm' :
+                      item.images.length <= 4 ? 'grid-cols-2 max-w-md' :
+                      'grid-cols-4'
+                    }`}>
+                      {item.images.map((img, i) => (
+                        <div
+                          key={i}
+                          className={`relative group overflow-hidden rounded-xl border border-white/[0.08] cursor-pointer ${ASPECT_CLASSES[item.aspectRatio] ?? 'aspect-square'}`}
+                          onClick={() => setExpandedImage(img)}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={img}
+                            alt={item.prompt}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-2">
+                            <a
+                              href={img}
+                              download={`elitelabs-${item.id}-${i}.jpg`}
+                              onClick={e => e.stopPropagation()}
+                              className="p-1.5 bg-white/20 hover:bg-white/30 rounded-lg backdrop-blur-sm transition-colors"
+                            >
+                              <Download className="w-3.5 h-3.5 text-white" />
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                </div>
+              )
+            })}
 
           </div>
 
