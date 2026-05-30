@@ -63,6 +63,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
     setIsGenerating(true)
     setResults([])
     setError(null)
+
     try {
       const res = await fetch('/api/image/generate', {
         method: 'POST',
@@ -75,15 +76,45 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
           count,
         }),
       })
+
       const data = await res.json()
+
       if (!res.ok) {
         setError(data.error ?? 'Error al generar')
+        setIsGenerating(false)
         return
       }
-      setResults(data.images)
+
       if (data.creditsRemaining !== undefined) {
         onCreditsUpdate(data.creditsRemaining)
       }
+
+      const { jobs } = data as { jobs: { id: string; polling_url: string }[] }
+      const images: (string | null)[] = new Array(jobs.length).fill(null)
+
+      const pollJob = async (job: { id: string; polling_url: string }, index: number) => {
+        for (let i = 0; i < 120; i++) {
+          await new Promise(r => setTimeout(r, 2000))
+
+          const pollRes = await fetch('/api/image/poll', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ polling_url: job.polling_url }),
+          })
+          const pollData = await pollRes.json()
+
+          if (pollData.status === 'Ready') {
+            images[index] = pollData.image
+            setResults(images.filter((img): img is string => img !== null))
+            break
+          }
+
+          if (pollData.status === 'Failed') break
+        }
+      }
+
+      await Promise.all(jobs.map((job, i) => pollJob(job, i)))
+
     } catch {
       setError('Error de conexión')
     } finally {
@@ -332,29 +363,13 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
                 FLUX.2 · FLUX 1.1 Pro · Kontext · Fill
               </p>
             </div>
-          ) : isGenerating ? (
+          ) : (
             <div style={{
               display: 'grid', gap: '12px',
               gridTemplateColumns: count <= 1 ? '1fr' : count <= 2 ? 'repeat(2,1fr)' : 'repeat(4,1fr)',
             }}>
-              {Array.from({ length: count }).map((_, i) => (
-                <div key={i} style={{
-                  aspectRatio: '1', borderRadius: '16px',
-                  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  animation: 'pulse 2s ease-in-out infinite',
-                }}>
-                  <Sparkles size={24} style={{ color: 'rgba(255,255,255,0.1)' }} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{
-              display: 'grid', gap: '12px',
-              gridTemplateColumns: results.length <= 1 ? '1fr' : results.length <= 2 ? 'repeat(2,1fr)' : 'repeat(4,1fr)',
-            }}>
               {results.map((url, i) => (
-                <div key={i} style={{
+                <div key={`done-${i}`} style={{
                   position: 'relative', aspectRatio: '1',
                   borderRadius: '16px', overflow: 'hidden',
                   border: '1px solid rgba(255,255,255,0.08)',
@@ -375,6 +390,16 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
                       Descargar
                     </a>
                   </div>
+                </div>
+              ))}
+              {isGenerating && Array.from({ length: count - results.length }).map((_, i) => (
+                <div key={`pending-${i}`} style={{
+                  aspectRatio: '1', borderRadius: '16px',
+                  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  animation: 'pulse 2s ease-in-out infinite',
+                }}>
+                  <Sparkles size={24} style={{ color: 'rgba(255,255,255,0.1)' }} />
                 </div>
               ))}
             </div>
