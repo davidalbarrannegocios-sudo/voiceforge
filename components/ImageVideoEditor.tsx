@@ -428,11 +428,10 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                         <Video className="w-6 h-6 text-white/10" />
                       </div>
                     ) : (
-                      <div className={`grid gap-3 ${
-                        pendingCount === 1 ? 'grid-cols-1 max-w-sm' :
-                        pendingCount === 2 ? 'grid-cols-2 max-w-lg' :
-                        pendingCount <= 4 ? 'grid-cols-2' :
-                        'grid-cols-4'
+                      <div className={`grid gap-2 ${
+                        pendingCount === 1 ? 'grid-cols-1 max-w-[240px]' :
+                        pendingCount === 2 ? 'grid-cols-2 max-w-[360px]' :
+                        'grid-cols-2 max-w-[380px]'
                       }`}>
                         {Array.from({ length: pendingCount }).map((_, i) => (
                           <div
@@ -486,7 +485,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
 
                 {/* History items */}
                 {history.map(item => (
-                  <div key={item.id} className="space-y-2 pt-6">
+                  <div key={item.id} className="space-y-2 pt-6 max-w-2xl">
                     <div className="flex items-center gap-2 text-xs text-white/30">
                       <span>
                         {item.createdAt.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
@@ -525,10 +524,10 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
 
                     {item.type === 'image' && (
                       <div className={`grid gap-2 ${
-                        item.images.length === 1 ? 'grid-cols-1 max-w-[280px]' :
-                        item.images.length === 2 ? 'grid-cols-2 max-w-[400px]' :
-                        item.images.length <= 4 ? 'grid-cols-2 max-w-[400px]' :
-                        'grid-cols-4 max-w-[600px]'
+                        item.images.length === 1 ? 'grid-cols-1 max-w-[240px]' :
+                        item.images.length === 2 ? 'grid-cols-2 max-w-[360px]' :
+                        item.images.length <= 4 ? 'grid-cols-2 max-w-[380px]' :
+                        'grid-cols-4 max-w-[480px]'
                       }`}>
                         {item.images.map((img, i) => (
                           <div
