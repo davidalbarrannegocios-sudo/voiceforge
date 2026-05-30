@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Home, Mic2, Type, FileAudio, Globe, Clock,
-  CreditCard, Gift, Zap, Settings, Users, Code, MessageSquare, ChevronsUpDown,
+  CreditCard, Gift, Zap, Settings, Users, MessageSquare, ChevronsUpDown,
   Image as ImageIcon,
 } from "lucide-react";
 import { useLang } from "./LanguageContext";
@@ -231,40 +231,6 @@ export function DashboardSidebar() {
             </div>
           </div>
         ))}
-
-        {/* Desarrollador — bloqueado */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            padding: "8px 12px",
-            borderRadius: "8px",
-            fontSize: "13px",
-            fontWeight: 500,
-            marginTop: "2px",
-            opacity: 0.4,
-            cursor: "not-allowed",
-            userSelect: "none",
-            color: "#555555",
-          }}
-        >
-          <Code size={15} style={{ color: "#444444", flexShrink: 0 }} />
-          <span style={{ flex: 1 }}>Desarrollador</span>
-          <span style={{
-            fontSize: "10px",
-            padding: "2px 6px",
-            borderRadius: "999px",
-            background: "rgba(255,255,255,0.05)",
-            color: "rgba(255,255,255,0.3)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            fontWeight: 500,
-            lineHeight: 1,
-            whiteSpace: "nowrap",
-          }}>
-            En desarrollo
-          </span>
-        </div>
 
         {/* Mi cuenta */}
         <Link
