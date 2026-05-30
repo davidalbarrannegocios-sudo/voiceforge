@@ -32,8 +32,6 @@ const VIDEO_MODELS: { id: VideoModel; name: string; badge?: string; credits?: nu
   { id: 'kling',              name: 'Kling',              locked: true },
 ]
 
-const ASPECT_RATIOS: AspectRatio[] = ['1:1', '16:9', '9:16', '4:3', '3:4']
-
 const ASPECT_CLASSES: Record<string, string> = {
   '1:1':  'aspect-square',
   '16:9': 'aspect-video',
@@ -86,7 +84,6 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
   const [expandedImage, setExpandedImage] = useState<string | null>(null)
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [view, setView] = useState<'empty' | 'chat'>('empty')
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
   const [sharedIds, setSharedIds] = useState<Set<string>>(new Set())
   const [galleryImages, setGalleryImages] = useState<{ id: string; imageUrl: string; prompt: string; model: string; aspectRatio: string }[]>([])
@@ -94,16 +91,6 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
   const [rightView, setRightView] = useState<'history' | 'explore'>('history')
   const dropdownRef = useRef<HTMLDivElement>(null)
   const chatRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setModelDropdownOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   useEffect(() => { setModelDropdownOpen(false) }, [mode])
 
@@ -141,14 +128,6 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
   }, [isGenerating])
 
   const selectedImageModel = IMAGE_MODELS.find(m => m.id === imageModel)
-  const selectedVideoModel = VIDEO_MODELS.find(m => m.id === videoModel)
-
-  const currentModelLabel = mode === 'image'
-    ? selectedImageModel?.name ?? imageModel
-    : selectedVideoModel?.name ?? videoModel
-  const currentModelCr = mode === 'image'
-    ? selectedImageModel?.credits
-    : selectedVideoModel?.credits
 
   const creditsNeeded = mode === 'video'
     ? 1500 * videoDuration
@@ -286,7 +265,6 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
     const pollVideo = async () => {
       for (let i = 0; i < 60; i++) {
         await new Promise(r => setTimeout(r, 5000))
-
         try {
           const pollRes = await fetch('/api/video/poll', {
             method: 'POST',
@@ -363,277 +341,225 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
 
   function handleGenerate() {
     if (!prompt.trim() || isGenerating || !canAfford) return
-    setView('chat')
+    setRightView('history')
     if (mode === 'video') handleGenerateVideo()
     else handleGenerateImage()
   }
 
   return (
     <>
-      <div className="flex h-full overflow-hidden">
+      <div className="flex flex-col h-full overflow-hidden">
 
-        {/* Left column — controls */}
-        <div className="w-[280px] flex-shrink-0 flex flex-col border-r border-white/[0.06]">
+        {/* Top area — toggle + scrollable content */}
+        <div className="flex-1 overflow-hidden flex flex-col">
 
-          {/* Fixed top: toggle + model dropdown + credits */}
-          <div className="flex-shrink-0 p-4 space-y-4">
-
-            {/* Mode toggle */}
-            <div className="flex gap-1 p-1 bg-white/[0.05] border border-white/[0.08] rounded-xl">
-              {(['image', 'video'] as Mode[]).map(m => (
-                <button
-                  key={m}
-                  onClick={() => setMode(m)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all ${
-                    mode === m ? 'bg-white text-black' : 'text-white/40 hover:text-white/60'
-                  }`}
-                >
-                  {m === 'image' ? <><ImageIcon size={13} /> Imagen</> : <><Video size={13} /> Video</>}
-                </button>
-              ))}
-            </div>
-
-            {/* Model dropdown */}
-            <div ref={dropdownRef} className="relative">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#444] mb-1.5">Modelo</p>
-              <button
-                onClick={() => setModelDropdownOpen(p => !p)}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium bg-white/[0.05] border border-white/[0.1] text-white/80 hover:bg-white/[0.08] transition-all"
-              >
-                <span className="truncate">{currentModelLabel}</span>
-                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                  {currentModelCr && (
-                    <span className="text-[10px] text-white/30">{currentModelCr.toLocaleString()}</span>
-                  )}
-                  <ChevronDown
-                    size={13}
-                    className={`text-white/40 transition-transform duration-200 ${modelDropdownOpen ? 'rotate-180' : ''}`}
-                  />
-                </div>
-              </button>
-
-              {/* Dropdown panel */}
-              <div className={`absolute top-full left-0 right-0 z-50 mt-1 bg-[#111] border border-white/[0.1] rounded-xl overflow-hidden shadow-2xl transition-all duration-200 origin-top ${
-                modelDropdownOpen
-                  ? 'opacity-100 scale-y-100 pointer-events-auto'
-                  : 'opacity-0 scale-y-95 pointer-events-none'
-              }`}>
-                <div className="max-h-72 overflow-y-auto p-1.5">
-                  {mode === 'image' ? (
-                    Object.entries(groupedImageModels).map(([group, models]) => (
-                      <div key={group}>
-                        <p className="text-[9px] text-white/25 uppercase tracking-widest px-2 py-1.5 mt-1">{group}</p>
-                        {models.map(model => {
-                          const isActive = imageModel === model.id
-                          return (
-                            <button
-                              key={model.id}
-                              onClick={() => { setImageModel(model.id); setModelDropdownOpen(false) }}
-                              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs transition-all mb-0.5 ${
-                                isActive
-                                  ? 'bg-white/[0.1] text-white border border-white/20'
-                                  : 'text-white/55 hover:bg-white/[0.05] border border-transparent'
-                              }`}
-                            >
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="truncate">{model.name}</span>
-                                {model.badge && (
-                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.08] text-white/35 flex-shrink-0">
-                                    {model.badge}
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-[10px] text-white/30 flex-shrink-0 ml-2">{model.credits.toLocaleString()}</span>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    ))
-                  ) : (
-                    VIDEO_MODELS.map(model => (
-                      <button
-                        key={model.id}
-                        disabled={model.locked}
-                        onClick={() => { if (!model.locked) { setVideoModel(model.id); setModelDropdownOpen(false) } }}
-                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs transition-all mb-0.5 ${
-                          !model.locked && videoModel === model.id
-                            ? 'bg-white/[0.1] text-white border border-white/20'
-                            : model.locked
-                            ? 'text-white/20 border border-transparent cursor-not-allowed'
-                            : 'text-white/55 hover:bg-white/[0.05] border border-transparent'
-                        }`}
-                      >
-                        <div className="flex items-center gap-1.5">
-                          {model.locked && <Lock size={10} />}
-                          <span>{model.name}</span>
-                          {model.badge && !model.locked && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.08] text-white/35">
-                              {model.badge}
-                            </span>
-                          )}
-                        </div>
-                        {model.locked ? (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.05] text-white/20 border border-white/[0.08]">
-                            Pronto
-                          </span>
-                        ) : model.credits ? (
-                          <span className="text-[10px] text-white/30">{model.credits.toLocaleString()}</span>
-                        ) : null}
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Compact credit indicator */}
-            <div className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs border ${
-              canAfford
-                ? 'border-white/[0.08] bg-white/[0.03] text-white/40'
-                : 'border-red-400/20 bg-red-400/[0.05] text-red-400'
-            }`}>
-              <span>
-                {mode === 'video'
-                  ? `${videoDuration}s · ${creditsNeeded.toLocaleString()} cr`
-                  : `${count} img · ${creditsNeeded.toLocaleString()} cr`}
-              </span>
-              <span className={canAfford ? 'text-white/50' : 'text-red-400'}>
-                {credits.toLocaleString()} disponibles
-              </span>
-            </div>
-          </div>
-
-          {/* Scrollable secondary controls */}
-          <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
-
-            {mode === 'image' && (
-              <>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#444] mb-2">Proporción</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {ASPECT_RATIOS.map(ratio => (
-                      <button
-                        key={ratio}
-                        onClick={() => setAspectRatio(ratio)}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                          aspectRatio === ratio ? 'bg-white text-black' : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.1]'
-                        }`}
-                      >
-                        {ratio}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#444] mb-2">
-                    Cantidad — {count} imagen{count > 1 ? 'es' : ''}
-                  </p>
-                  <input
-                    type="range" min={1} max={8} value={count}
-                    onChange={e => setCount(Number(e.target.value))}
-                    className="w-full accent-white"
-                  />
-                </div>
-
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#444] mb-2">Referencia (opcional)</p>
-                  <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs border border-dashed border-white/15 text-white/30 cursor-pointer hover:border-white/25 transition-all">
-                    <Upload size={12} />
-                    Subir imagen
-                    <input type="file" accept="image/*" className="hidden"
-                      onChange={e => {
-                        const f = e.target.files?.[0]
-                        if (f) setImageRefs(prev => [...prev, f])
-                      }} />
-                  </label>
-                  {imageRefs.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {imageRefs.map((f, i) => (
-                        <div key={i} className="flex items-center gap-1 px-2 py-1 bg-white/[0.06] rounded-lg text-[11px] text-white/50">
-                          {f.name.length > 14 ? f.name.slice(0, 14) + '…' : f.name}
-                          <button
-                            onClick={() => setImageRefs(prev => prev.filter((_, j) => j !== i))}
-                            className="text-white/30 hover:text-white/60 transition-colors"
-                          >
-                            <X size={10} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-
-            {mode === 'video' && (
-              <>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#444] mb-2">Proporción</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(['16:9', '9:16', '1:1'] as AspectRatio[]).map(ratio => (
-                      <button
-                        key={ratio}
-                        onClick={() => setAspectRatio(ratio)}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                          aspectRatio === ratio ? 'bg-white text-black' : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.1]'
-                        }`}
-                      >
-                        {ratio}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {selectedVideoModel?.id === 'grok-imagine-video' && (
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#444] mb-2">Duración</p>
-                    <div className="flex gap-2">
-                      {[5, 10].map(d => (
-                        <button
-                          key={d}
-                          onClick={() => setVideoDuration(d)}
-                          className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
-                            videoDuration === d ? 'bg-white text-black' : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.1]'
-                          }`}
-                        >
-                          {d}s
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Right column — history / explore */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-
-          {/* Historial / Explorar toggle */}
-          <div className="flex-shrink-0 flex items-center gap-1 px-4 pt-3 pb-1">
-            <div className="flex gap-0.5 p-0.5 bg-white/5 rounded-lg border border-white/[0.08]">
+          {/* Toggle Historial / Explorar + aviso naranja */}
+          <div className="flex-shrink-0 flex items-center justify-between px-5 pt-4 pb-2">
+            <div className="flex gap-0.5 p-0.5 bg-white/[0.05] rounded-lg border border-white/[0.08]">
               <button
                 onClick={() => setRightView('history')}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${rightView === 'history' ? 'bg-white/10 text-white' : 'text-white/30 hover:text-white/60'}`}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                  rightView === 'history' ? 'bg-white/10 text-white' : 'text-white/30 hover:text-white/60'
+                }`}
               >
                 Historial
               </button>
               <button
-                onClick={() => { setRightView('explore'); if (galleryImages.length === 0) fetchGallery() }}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${rightView === 'explore' ? 'bg-white/10 text-white' : 'text-white/30 hover:text-white/60'}`}
+                onClick={() => { setRightView('explore'); fetchGallery() }}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                  rightView === 'explore' ? 'bg-white/10 text-white' : 'text-white/30 hover:text-white/60'
+                }`}
               >
                 Explorar
               </button>
             </div>
+
+            <div className="flex items-center gap-1.5 text-xs text-orange-400/70">
+              <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.07 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <span>Las imágenes no se guardan al cerrar la página</span>
+            </div>
           </div>
 
-          {/* Explore gallery view */}
-          {rightView === 'explore' && (
-            <div className="flex-1 overflow-y-auto p-4">
-              {galleryLoading ? (
-                <div className="columns-2 gap-2">
+          {/* Scrollable content */}
+          <div ref={chatRef} className="flex-1 overflow-y-auto px-5 pb-4">
+
+            {rightView === 'history' ? (
+              <>
+                {/* Empty state */}
+                {history.length === 0 && !isGenerating && (
+                  <div className="h-full flex flex-col items-center justify-center text-center py-20">
+                    <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/[0.08] flex items-center justify-center mb-3">
+                      <Sparkles className="w-6 h-6 text-white/20" />
+                    </div>
+                    <p className="text-sm text-white/25">Escribe un prompt para generar</p>
+                    <p className="text-xs text-white/[0.12] mt-1">
+                      FLUX.2 · FLUX 1.1 Pro · Kontext · Grok Imagine
+                    </p>
+                  </div>
+                )}
+
+                {/* Skeleton while generating */}
+                {isGenerating && (
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center gap-2 text-xs text-white/30">
+                      <span>{new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span>·</span>
+                      <span className="truncate max-w-[400px]">{pendingPrompt}</span>
+                    </div>
+
+                    {mode === 'video' ? (
+                      <div className={`${ASPECT_CLASSES[aspectRatio] ?? 'aspect-video'} max-w-sm rounded-xl bg-white/5 border border-white/[0.08] animate-pulse flex items-center justify-center`}>
+                        <Video className="w-6 h-6 text-white/10" />
+                      </div>
+                    ) : (
+                      <div className={`grid gap-3 ${
+                        pendingCount === 1 ? 'grid-cols-1 max-w-sm' :
+                        pendingCount === 2 ? 'grid-cols-2 max-w-lg' :
+                        pendingCount <= 4 ? 'grid-cols-2' :
+                        'grid-cols-4'
+                      }`}>
+                        {Array.from({ length: pendingCount }).map((_, i) => (
+                          <div
+                            key={i}
+                            className={`relative overflow-hidden rounded-2xl bg-white/[0.03] border border-white/[0.08] ${ASPECT_CLASSES[aspectRatio] ?? 'aspect-square'}`}
+                          >
+                            <div className="absolute inset-0 flex flex-col justify-end p-4 gap-2">
+                              {[85, 60, 75, 45, 90, 55].map((width, j) => (
+                                <div
+                                  key={j}
+                                  className="h-1 rounded-full bg-white/[0.08] overflow-hidden"
+                                  style={{ width: `${width}%` }}
+                                >
+                                  <div
+                                    className="h-full rounded-full"
+                                    style={{
+                                      width: `${Math.min(100, progress + j * 5)}%`,
+                                      transition: 'width 0.4s ease',
+                                      background: 'linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3))',
+                                    }}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                            <div className="absolute inset-0 overflow-hidden">
+                              <div
+                                className="absolute inset-0 -translate-x-full"
+                                style={{
+                                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent)',
+                                  animation: 'shimmer 2s infinite',
+                                  animationDelay: `${i * 0.3}s`,
+                                }}
+                              />
+                            </div>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="text-center">
+                                <p className="text-2xl font-bold text-white/60 font-mono tabular-nums">
+                                  {Math.min(99, Math.round(progress))}%
+                                </p>
+                                <p className="text-xs text-white/25 mt-1">
+                                  {i === 0 ? 'Generando...' : `Imagen ${i + 1}`}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* History items */}
+                {history.map(item => (
+                  <div key={item.id} className="space-y-2 pt-6">
+                    <div className="flex items-center gap-2 text-xs text-white/30">
+                      <span>
+                        {item.createdAt.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                        {' · '}
+                        {item.createdAt.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      <span>·</span>
+                      <span className="truncate max-w-[400px] text-white/40">{item.prompt}</span>
+                    </div>
+
+                    {item.type === 'video' && (
+                      item.videoUrl ? (
+                        <>
+                          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                          <video
+                            src={item.videoUrl}
+                            controls
+                            className="w-full max-w-sm rounded-xl border border-white/[0.08]"
+                            style={{ aspectRatio: item.aspectRatio.replace(':', '/') }}
+                          />
+                          <a
+                            href={item.videoUrl}
+                            download="elitelabs-video.mp4"
+                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/[0.08] hover:bg-white/[0.12] border border-white/10 rounded-lg text-xs text-white/60 hover:text-white transition-colors"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            Descargar vídeo
+                          </a>
+                        </>
+                      ) : (
+                        <div className="w-full max-w-sm aspect-video rounded-xl bg-white/[0.03] border border-dashed border-white/[0.08] flex items-center justify-center">
+                          <p className="text-xs text-white/20">Vídeo no disponible</p>
+                        </div>
+                      )
+                    )}
+
+                    {item.type === 'image' && (
+                      <div className={`grid gap-2 ${
+                        item.images.length === 1 ? 'grid-cols-1 max-w-xs' :
+                        item.images.length === 2 ? 'grid-cols-2 max-w-sm' :
+                        item.images.length <= 4 ? 'grid-cols-2 max-w-md' :
+                        'grid-cols-4'
+                      }`}>
+                        {item.images.map((img, i) => (
+                          <div
+                            key={i}
+                            className={`relative group overflow-hidden rounded-xl border border-white/[0.08] cursor-pointer ${ASPECT_CLASSES[item.aspectRatio] ?? 'aspect-square'}`}
+                            onClick={() => setExpandedImage(img)}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={img}
+                              alt={item.prompt}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-2 gap-1.5">
+                              <button
+                                onClick={e => { e.stopPropagation(); handleShare(item, i) }}
+                                className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur-sm transition-colors"
+                                title="Compartir en galería"
+                              >
+                                {sharedIds.has(`${item.id}-${i}`)
+                                  ? <Check className="w-3.5 h-3.5 text-green-400" />
+                                  : <Share2 className="w-3.5 h-3.5 text-white" />
+                                }
+                              </button>
+                              <a
+                                href={img}
+                                download={`elitelabs-${item.id}-${i}.jpg`}
+                                onClick={e => e.stopPropagation()}
+                                className="p-1.5 bg-white/20 hover:bg-white/30 rounded-lg backdrop-blur-sm transition-colors"
+                              >
+                                <Download className="w-3.5 h-3.5 text-white" />
+                              </a>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </>
+            ) : (
+              /* Explore gallery */
+              galleryLoading ? (
+                <div className="columns-2 gap-2 pt-2">
                   {Array.from({ length: 8 }).map((_, i) => (
                     <div key={i}
                          className="mb-2 rounded-xl bg-white/[0.05] animate-pulse break-inside-avoid"
@@ -641,13 +567,13 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                   ))}
                 </div>
               ) : galleryImages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center">
+                <div className="flex flex-col items-center justify-center h-full text-center py-20">
                   <Globe className="w-10 h-10 text-white/10 mb-3" />
                   <p className="text-sm text-white/20">La galería está vacía.</p>
                   <p className="text-xs text-white/10 mt-1">¡Sé el primero en compartir una imagen!</p>
                 </div>
               ) : (
-                <div className="columns-2 gap-2">
+                <div className="columns-2 gap-2 pt-2">
                   {galleryImages.map(img => (
                     <div key={img.id}
                          className="mb-2 break-inside-avoid group relative rounded-xl overflow-hidden border border-white/[0.08] cursor-pointer"
@@ -666,265 +592,248 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                     </div>
                   ))}
                 </div>
+              )
+            )}
+          </div>
+        </div>
+
+        {/* Prompt bar — always fixed at bottom */}
+        <div className="flex-shrink-0 border-t border-white/[0.08] px-4 py-3 space-y-2">
+
+          {/* Image settings row */}
+          {mode === 'image' && (
+            <div className="flex items-center gap-2 flex-wrap">
+
+              {/* Model dropdown */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setModelDropdownOpen(o => !o)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.08] border border-white/10 text-xs text-white/70 transition-all"
+                >
+                  <span className="max-w-[110px] truncate">{selectedImageModel?.name}</span>
+                  <span className="text-white/30">{selectedImageModel?.credits?.toLocaleString()} cr</span>
+                  <ChevronDown className={`w-3 h-3 text-white/30 transition-transform ${modelDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {modelDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setModelDropdownOpen(false)} />
+                    <div className="absolute bottom-full left-0 mb-1 z-50 w-64 bg-[#0f0f0f] border border-white/10 rounded-xl shadow-2xl p-1.5 max-h-[320px] overflow-y-auto">
+                      {Object.entries(groupedImageModels).map(([group, models]) => (
+                        <div key={group}>
+                          <p className="text-[9px] text-white/25 uppercase tracking-widest px-2 py-1.5 mt-1">{group}</p>
+                          {models.map(model => (
+                            <button
+                              key={model.id}
+                              onClick={() => { setImageModel(model.id); setModelDropdownOpen(false) }}
+                              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs transition-all mb-0.5 ${
+                                imageModel === model.id
+                                  ? 'bg-white/[0.1] text-white border border-white/20'
+                                  : 'text-white/55 hover:bg-white/[0.05] border border-transparent'
+                              }`}
+                            >
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="truncate">{model.name}</span>
+                                {model.badge && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.08] text-white/35 flex-shrink-0">
+                                    {model.badge}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-white/30 flex-shrink-0 ml-2">{model.credits.toLocaleString()}</span>
+                            </button>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="h-4 w-px bg-white/10" />
+
+              {/* Aspect ratio */}
+              <div className="flex gap-1">
+                {(['1:1', '16:9', '9:16', '4:3', '3:4'] as const).map(ratio => (
+                  <button
+                    key={ratio}
+                    onClick={() => setAspectRatio(ratio)}
+                    className={`px-2 py-1 rounded-md text-[11px] font-medium transition-all ${
+                      aspectRatio === ratio
+                        ? 'bg-white text-black'
+                        : 'bg-white/[0.05] text-white/40 hover:bg-white/10 hover:text-white/70'
+                    }`}
+                  >
+                    {ratio}
+                  </button>
+                ))}
+              </div>
+
+              <div className="h-4 w-px bg-white/10" />
+
+              {/* Count */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-white/30">Cantidad</span>
+                <div className="flex gap-0.5">
+                  {[1, 2, 4, 8].map(n => (
+                    <button
+                      key={n}
+                      onClick={() => setCount(n)}
+                      className={`w-7 h-6 rounded-md text-[11px] font-medium transition-all ${
+                        count === n
+                          ? 'bg-white text-black'
+                          : 'bg-white/[0.05] text-white/40 hover:bg-white/10'
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="h-4 w-px bg-white/10" />
+
+              {/* Image reference */}
+              <label className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.08] border border-white/10 text-[11px] text-white/40 cursor-pointer transition-all">
+                <Upload className="w-3 h-3" />
+                {imageRefs.length > 0 ? `${imageRefs.length} ref` : 'Referencia'}
+                <input type="file" accept="image/*" className="hidden"
+                       onChange={e => { const f = e.target.files?.[0]; if (f) setImageRefs(prev => [...prev, f]) }} />
+              </label>
+
+              {imageRefs.length > 0 && (
+                <div className="flex gap-1 flex-wrap">
+                  {imageRefs.map((f, i) => (
+                    <div key={i} className="flex items-center gap-1 px-2 py-1 bg-white/[0.06] rounded-lg text-[11px] text-white/50">
+                      {f.name.length > 12 ? f.name.slice(0, 12) + '…' : f.name}
+                      <button onClick={() => setImageRefs(prev => prev.filter((_, j) => j !== i))} className="text-white/30 hover:text-white/60">
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
+
+              {/* Credits indicator */}
+              <div className={`ml-auto text-[11px] ${canAfford ? 'text-white/25' : 'text-red-400'}`}>
+                {creditsNeeded.toLocaleString()} cr · {credits.toLocaleString()} disponibles
+              </div>
             </div>
           )}
 
-          {/* Fixed warning banner — only in history view */}
-          {rightView === 'history' && (
-          <div className="flex-shrink-0 mx-4 mt-3 mb-1">
-            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-orange-500/[0.08] border border-orange-500/20">
-              <svg className="w-4 h-4 text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.07 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-              <p className="text-xs text-orange-400/90 leading-relaxed">
-                Las imágenes y vídeos se mantienen mientras no recargues o cierres la página.
-                <strong className="text-orange-400 font-semibold"> Descárgalos antes de salir.</strong>
-              </p>
+          {/* Video settings row */}
+          {mode === 'video' && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-white/40">Grok Imagine Video</span>
+
+              <div className="h-4 w-px bg-white/10" />
+
+              <span className="text-[11px] text-white/30">Duración</span>
+              {[5, 10].map(d => (
+                <button
+                  key={d}
+                  onClick={() => setVideoDuration(d)}
+                  className={`px-2 py-1 rounded-md text-[11px] font-medium transition-all ${
+                    videoDuration === d ? 'bg-white text-black' : 'bg-white/[0.05] text-white/40 hover:bg-white/10'
+                  }`}
+                >
+                  {d}s
+                </button>
+              ))}
+
+              <div className="h-4 w-px bg-white/10" />
+
+              {(['16:9', '9:16', '1:1'] as const).map(ratio => (
+                <button
+                  key={ratio}
+                  onClick={() => setAspectRatio(ratio)}
+                  className={`px-2 py-1 rounded-md text-[11px] font-medium transition-all ${
+                    aspectRatio === ratio ? 'bg-white text-black' : 'bg-white/[0.05] text-white/40 hover:bg-white/10'
+                  }`}
+                >
+                  {ratio}
+                </button>
+              ))}
+
+              <div className={`ml-auto text-[11px] ${canAfford ? 'text-white/25' : 'text-red-400'}`}>
+                {creditsNeeded.toLocaleString()} cr · {credits.toLocaleString()} disponibles
+              </div>
             </div>
-          </div>
-          )} {/* end warning banner */}
+          )}
 
-          {/* Scrollable history — only in history view */}
-          {rightView === 'history' && (
-          <div ref={chatRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
+          {/* Negative prompt */}
+          {showNegative && mode === 'image' && (
+            <textarea
+              value={negativePrompt}
+              onChange={e => setNegativePrompt(e.target.value)}
+              placeholder="Qué quieres evitar en la imagen..."
+              rows={2}
+              className="w-full bg-white/[0.05] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/70 placeholder:text-white/20 outline-none focus:border-white/20 resize-none transition-colors"
+            />
+          )}
 
-            {view === 'empty' && !isGenerating ? (
-              <div className="h-full flex flex-col items-center justify-center text-center">
-                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/[0.08] flex items-center justify-center mb-4">
-                  <Sparkles className="w-7 h-7 text-white/20" />
-                </div>
-                <p className="text-sm text-white/30">
-                  {mode === 'video'
-                    ? 'Describe el vídeo que quieres generar'
-                    : 'Escribe un prompt y genera tu primera imagen'}
-                </p>
-                <p className="text-xs text-white/15 mt-1">
-                  {mode === 'video'
-                    ? 'Grok Imagine Video · 720p · 5s o 10s'
-                    : 'FLUX.2 · FLUX 1.1 Pro · Kontext · Grok Imagine'}
-                </p>
-              </div>
-            ) : (
-              <>
+          {/* Mode toggle + Textarea + Generate button */}
+          <div className="flex items-end gap-2">
 
-            {isGenerating && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-xs text-white/30">
-                  <span>{new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
-                  <span>·</span>
-                  <span className="truncate max-w-[300px]">{pendingPrompt}</span>
-                </div>
-
-                {mode === 'video' ? (
-                  <div className={`${ASPECT_CLASSES[aspectRatio] ?? 'aspect-video'} max-w-sm rounded-xl bg-white/5 border border-white/[0.08] animate-pulse flex items-center justify-center`}>
-                    <Video className="w-6 h-6 text-white/10" />
-                  </div>
-                ) : (
-                  <div className={`grid gap-3 ${
-                    pendingCount === 1 ? 'grid-cols-1 max-w-sm' :
-                    pendingCount === 2 ? 'grid-cols-2 max-w-lg' :
-                    pendingCount <= 4 ? 'grid-cols-2' :
-                    'grid-cols-4'
-                  }`}>
-                    {Array.from({ length: pendingCount }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={`relative overflow-hidden rounded-2xl bg-white/[0.03] border border-white/[0.08] ${ASPECT_CLASSES[aspectRatio] ?? 'aspect-square'}`}
-                      >
-                        {/* Animated progress bars */}
-                        <div className="absolute inset-0 flex flex-col justify-end p-4 gap-2">
-                          {[85, 60, 75, 45, 90, 55].map((width, j) => (
-                            <div
-                              key={j}
-                              className="h-1 rounded-full bg-white/[0.08] overflow-hidden"
-                              style={{ width: `${width}%` }}
-                            >
-                              <div
-                                className="h-full rounded-full"
-                                style={{
-                                  width: `${Math.min(100, progress + j * 5)}%`,
-                                  transition: 'width 0.4s ease',
-                                  background: 'linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3))',
-                                }}
-                              />
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Shimmer overlay */}
-                        <div className="absolute inset-0 overflow-hidden">
-                          <div
-                            className="absolute inset-0 -translate-x-full"
-                            style={{
-                              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent)',
-                              animation: 'shimmer 2s infinite',
-                              animationDelay: `${i * 0.3}s`,
-                            }}
-                          />
-                        </div>
-
-                        {/* Percentage */}
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-center">
-                            <p className="text-2xl font-bold text-white/60 font-mono tabular-nums">
-                              {Math.min(99, Math.round(progress))}%
-                            </p>
-                            <p className="text-xs text-white/25 mt-1">
-                              {i === 0 ? 'Generando...' : `Imagen ${i + 1}`}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {history.map(item => (
-              <div key={item.id} className="space-y-2">
-                <div className="flex items-center gap-2 text-xs text-white/30">
-                  <span>
-                    {item.createdAt.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-                    {' · '}
-                    {item.createdAt.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                  <span>·</span>
-                  <span className="truncate max-w-[400px] text-white/40">{item.prompt}</span>
-                </div>
-
-                {item.type === 'video' && (
-                  item.videoUrl ? (
-                    <>
-                      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                      <video
-                        src={item.videoUrl}
-                        controls
-                        className="w-full max-w-sm rounded-xl border border-white/[0.08]"
-                        style={{ aspectRatio: item.aspectRatio.replace(':', '/') }}
-                      />
-                      <a
-                        href={item.videoUrl}
-                        download="elitelabs-video.mp4"
-                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/[0.08] hover:bg-white/[0.12] border border-white/10 rounded-lg text-xs text-white/60 hover:text-white transition-colors"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        Descargar vídeo
-                      </a>
-                    </>
-                  ) : (
-                    <div className="w-full max-w-sm aspect-video rounded-xl bg-white/[0.03] border border-dashed border-white/[0.08] flex items-center justify-center">
-                      <p className="text-xs text-white/20">Vídeo no disponible</p>
-                    </div>
-                  )
-                )}
-
-                {item.type === 'image' && (
-                  <div className={`grid gap-2 ${
-                    item.images.length === 1 ? 'grid-cols-1 max-w-xs' :
-                    item.images.length === 2 ? 'grid-cols-2 max-w-sm' :
-                    item.images.length <= 4 ? 'grid-cols-2 max-w-md' :
-                    'grid-cols-4'
-                  }`}>
-                    {item.images.map((img, i) => (
-                      <div
-                        key={i}
-                        className={`relative group overflow-hidden rounded-xl border border-white/[0.08] cursor-pointer ${ASPECT_CLASSES[item.aspectRatio] ?? 'aspect-square'}`}
-                        onClick={() => setExpandedImage(img)}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={img}
-                          alt={item.prompt}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-2 gap-1.5">
-                          <button
-                            onClick={e => { e.stopPropagation(); handleShare(item, i) }}
-                            className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur-sm transition-colors"
-                            title="Compartir en galería"
-                          >
-                            {sharedIds.has(`${item.id}-${i}`)
-                              ? <Check className="w-3.5 h-3.5 text-green-400" />
-                              : <Share2 className="w-3.5 h-3.5 text-white" />
-                            }
-                          </button>
-                          <a
-                            href={img}
-                            download={`elitelabs-${item.id}-${i}.jpg`}
-                            onClick={e => e.stopPropagation()}
-                            className="p-1.5 bg-white/20 hover:bg-white/30 rounded-lg backdrop-blur-sm transition-colors"
-                          >
-                            <Download className="w-3.5 h-3.5 text-white" />
-                          </a>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-
-              </>
-            )}
-          </div>
-          )} {/* end scrollable history */}
-
-          {/* Fixed prompt bar — only in history view */}
-          {rightView === 'history' && (
-          <div className="flex-shrink-0 border-t border-white/[0.06] p-4 flex flex-col gap-2">
-            {showNegative && mode === 'image' && (
-              <textarea
-                value={negativePrompt}
-                onChange={e => setNegativePrompt(e.target.value)}
-                placeholder="Prompt negativo — qué quieres evitar..."
-                rows={2}
-                className="w-full bg-white/[0.05] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white/70 outline-none resize-none placeholder:text-white/25"
-              />
-            )}
-            <div className="flex gap-2">
-              <div className="flex-1 flex items-center gap-2 bg-white/[0.05] border border-white/10 rounded-xl px-3">
-                <textarea
-                  value={prompt}
-                  onChange={e => setPrompt(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleGenerate() }
-                  }}
-                  placeholder={mode === 'video'
-                    ? 'Describe el vídeo que quieres generar...'
-                    : 'Describe la imagen que quieres generar...'}
-                  rows={1}
-                  className="flex-1 bg-transparent border-none outline-none py-3 text-sm text-white/90 resize-none font-[inherit] placeholder:text-white/25"
-                />
-                {mode === 'image' && (
-                  <button
-                    onClick={() => setShowNegative(p => !p)}
-                    title="Prompt negativo"
-                    className="flex-shrink-0 p-1 text-white/20 hover:text-white/50 transition-colors"
-                  >
-                    <ChevronDown
-                      size={15}
-                      className={`transition-transform duration-200 ${showNegative ? 'rotate-180' : ''}`}
-                    />
-                  </button>
-                )}
-              </div>
+            {/* Image / Video toggle */}
+            <div className="flex flex-col gap-1 flex-shrink-0">
               <button
-                onClick={handleGenerate}
-                disabled={!prompt.trim() || isGenerating || !canAfford}
-                className="flex-shrink-0 flex items-center gap-1.5 px-5 bg-white text-black text-sm font-semibold rounded-xl disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/90 transition-all"
+                onClick={() => setMode('image')}
+                className={`p-2 rounded-lg transition-all ${
+                  mode === 'image' ? 'bg-white text-black' : 'bg-white/[0.05] text-white/40 hover:bg-white/10'
+                }`}
+                title="Imagen"
               >
-                {mode === 'video' ? <Video size={13} /> : <Sparkles size={13} />}
-                {isGenerating ? 'Generando…' : 'Generar'}
+                <ImageIcon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setMode('video')}
+                className={`p-2 rounded-lg transition-all ${
+                  mode === 'video' ? 'bg-white text-black' : 'bg-white/[0.05] text-white/40 hover:bg-white/10'
+                }`}
+                title="Video"
+              >
+                <Video className="w-4 h-4" />
               </button>
             </div>
-            {error && (
-              <p className="text-[11px] text-red-400 text-center">{error}</p>
-            )}
+
+            {/* Textarea */}
+            <div className="flex-1 flex items-end gap-2 bg-white/[0.05] border border-white/10 rounded-2xl px-4 py-3 focus-within:border-white/20 transition-colors">
+              <textarea
+                value={prompt}
+                onChange={e => setPrompt(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleGenerate() }
+                }}
+                placeholder={mode === 'image'
+                  ? 'Describe la imagen que quieres generar...'
+                  : 'Describe el vídeo que quieres generar...'}
+                rows={2}
+                className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/25 outline-none resize-none"
+              />
+              <button
+                onClick={() => setShowNegative(p => !p)}
+                className="text-white/20 hover:text-white/50 transition-colors self-end pb-0.5"
+                title="Prompt negativo"
+              >
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showNegative ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+
+            {/* Generate button */}
+            <button
+              onClick={handleGenerate}
+              disabled={!prompt.trim() || isGenerating || !canAfford}
+              className="px-5 py-3 bg-white text-black text-sm font-semibold rounded-2xl hover:bg-white/90 transition-all self-end disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2 flex-shrink-0"
+            >
+              <Sparkles className="w-4 h-4" />
+              {isGenerating ? 'Generando...' : 'Generar'}
+            </button>
           </div>
-          )} {/* end prompt bar */}
+
+          {error && (
+            <p className="text-[11px] text-red-400 text-center">{error}</p>
+          )}
         </div>
       </div>
 
