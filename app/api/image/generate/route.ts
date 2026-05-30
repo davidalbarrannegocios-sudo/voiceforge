@@ -31,12 +31,16 @@ const MODEL_CREDITS: Record<string, number> = {
   'flux-pro-1.0-fill': 2571,
 }
 
+function roundTo32(n: number): number {
+  return Math.round(n / 32) * 32
+}
+
 const DIMENSIONS: Record<string, { width: number; height: number }> = {
-  '1:1':  { width: 1024, height: 1024 },
-  '16:9': { width: 1440, height: 810 },
-  '9:16': { width: 810,  height: 1440 },
-  '4:3':  { width: 1024, height: 768 },
-  '3:4':  { width: 768,  height: 1024 },
+  '1:1':  { width: 1024, height: 1024 },  // 32×32 ✓
+  '16:9': { width: 1280, height: 768 },   // 40×24 ✓
+  '9:16': { width: 768,  height: 1280 },  // 24×40 ✓
+  '4:3':  { width: 1024, height: 768 },   // 32×24 ✓
+  '3:4':  { width: 768,  height: 1024 },  // 24×32 ✓
 }
 
 export async function POST(req: NextRequest) {
@@ -57,8 +61,10 @@ export async function POST(req: NextRequest) {
   }
 
   const endpoint = MODEL_ENDPOINTS[model] ?? 'flux-pro-1.1'
-  const dims = DIMENSIONS[aspectRatio] ?? { width: 1024, height: 1024 }
+  const rawDims = DIMENSIONS[aspectRatio] ?? { width: 1024, height: 1024 }
+  const dims = { width: roundTo32(rawDims.width), height: roundTo32(rawDims.height) }
   const BFL_KEY = process.env.BFL_API_KEY!
+  console.log('[BFL] aspectRatio:', aspectRatio, 'dims:', dims)
 
   const promises = Array.from({ length: count }).map(async () => {
     const submitRes = await fetch(`https://api.bfl.ai/v1/${endpoint}`, {
