@@ -77,13 +77,14 @@ const FAQ_ITEMS = [
 
 /* ─── Mega menu products ─────────────────────────────────────── */
 const NAV_PRODUCTS_LEFT = [
-  { title: "Texto a Voz",      desc: "Genera voz limpia a partir de guiones",     href: "/dashboard" },
-  { title: "Voz a Texto",      desc: "Transcribe audio a texto con precisión",    href: "/dashboard" },
-  { title: "Clonación de voz", desc: "Crea una réplica de tu voz",                href: "/dashboard" },
-  { title: "Texto a Diálogo",  desc: "Convierte guiones en diálogos con voces",   href: "/dashboard" },
-  { title: "Imagen y Video",   desc: "Genera imágenes y vídeos con IA",           href: "/dashboard" },
+  { title: "Texto a Voz",      desc: "Genera voz limpia a partir de guiones",   href: "/dashboard" },
+  { title: "Voz a Texto",      desc: "Transcribe audio a texto con precisión",  href: "/dashboard" },
+  { title: "Clonación de voz", desc: "Crea una réplica de tu voz",              href: "/dashboard" },
 ];
-const NAV_PRODUCTS_RIGHT: typeof NAV_PRODUCTS_LEFT = [];
+const NAV_PRODUCTS_RIGHT = [
+  { title: "Texto a Diálogo", desc: "Convierte guiones en diálogos con voces", href: "/dashboard" },
+  { title: "Imagen y Video",  desc: "Genera imágenes y vídeos con IA",         href: "/dashboard" },
+];
 
 const NAV_EMPRESA = [
   { title: "Sobre nosotros", desc: "Conoce nuestro equipo y misión",      href: "/about" },
