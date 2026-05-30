@@ -85,6 +85,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
   const [error, setError] = useState<string | null>(null)
   const [expandedImage, setExpandedImage] = useState<string | null>(null)
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false)
+  const [progress, setProgress] = useState(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -98,6 +99,22 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
   }, [])
 
   useEffect(() => { setModelDropdownOpen(false) }, [mode])
+
+  useEffect(() => {
+    if (!isGenerating) {
+      setProgress(0)
+      return
+    }
+    setProgress(0)
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        if (prev < 80) return prev + Math.random() * 8
+        if (prev < 95) return prev + Math.random() * 0.5
+        return prev
+      })
+    }, 400)
+    return () => clearInterval(interval)
+  }, [isGenerating])
 
   const selectedImageModel = IMAGE_MODELS.find(m => m.id === imageModel)
   const selectedVideoModel = VIDEO_MODELS.find(m => m.id === videoModel)
@@ -149,6 +166,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
 
       // xAI: synchronous result
       if (data.images) {
+        setProgress(100)
+        await new Promise(r => setTimeout(r, 300))
         onHistoryUpdate({
           id: Date.now().toString(),
           type: 'image',
@@ -183,6 +202,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
 
       const completed = images.filter((img): img is string => img !== null)
       if (completed.length > 0) {
+        setProgress(100)
+        await new Promise(r => setTimeout(r, 300))
         onHistoryUpdate({
           id: Date.now().toString(),
           type: 'image',
@@ -575,23 +596,70 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                   <span>·</span>
                   <span className="truncate max-w-[300px]">{pendingPrompt}</span>
                 </div>
-                <div className={`grid gap-2 ${
-                  pendingCount === 1 ? 'grid-cols-1 max-w-sm' :
-                  pendingCount === 2 ? 'grid-cols-2 max-w-lg' :
-                  pendingCount <= 4 ? 'grid-cols-2' :
-                  'grid-cols-4'
-                }`}>
-                  {Array.from({ length: pendingCount }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`${ASPECT_CLASSES[aspectRatio] ?? 'aspect-square'} rounded-xl bg-white/5 border border-white/[0.08] animate-pulse flex items-center justify-center`}
-                    >
-                      {mode === 'video'
-                        ? <Video className="w-6 h-6 text-white/10" />
-                        : <Sparkles className="w-5 h-5 text-white/10" />}
-                    </div>
-                  ))}
-                </div>
+
+                {mode === 'video' ? (
+                  <div className={`${ASPECT_CLASSES[aspectRatio] ?? 'aspect-video'} max-w-sm rounded-xl bg-white/5 border border-white/[0.08] animate-pulse flex items-center justify-center`}>
+                    <Video className="w-6 h-6 text-white/10" />
+                  </div>
+                ) : (
+                  <div className={`grid gap-3 ${
+                    pendingCount === 1 ? 'grid-cols-1 max-w-sm' :
+                    pendingCount === 2 ? 'grid-cols-2 max-w-lg' :
+                    pendingCount <= 4 ? 'grid-cols-2' :
+                    'grid-cols-4'
+                  }`}>
+                    {Array.from({ length: pendingCount }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={`relative overflow-hidden rounded-2xl bg-white/[0.03] border border-white/[0.08] ${ASPECT_CLASSES[aspectRatio] ?? 'aspect-square'}`}
+                      >
+                        {/* Animated progress bars */}
+                        <div className="absolute inset-0 flex flex-col justify-end p-4 gap-2">
+                          {[85, 60, 75, 45, 90, 55].map((width, j) => (
+                            <div
+                              key={j}
+                              className="h-1 rounded-full bg-white/[0.08] overflow-hidden"
+                              style={{ width: `${width}%` }}
+                            >
+                              <div
+                                className="h-full rounded-full"
+                                style={{
+                                  width: `${Math.min(100, progress + j * 5)}%`,
+                                  transition: 'width 0.4s ease',
+                                  background: 'linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3))',
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Shimmer overlay */}
+                        <div className="absolute inset-0 overflow-hidden">
+                          <div
+                            className="absolute inset-0 -translate-x-full"
+                            style={{
+                              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent)',
+                              animation: 'shimmer 2s infinite',
+                              animationDelay: `${i * 0.3}s`,
+                            }}
+                          />
+                        </div>
+
+                        {/* Percentage */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-center">
+                            <p className="text-2xl font-bold text-white/60 font-mono tabular-nums">
+                              {Math.min(99, Math.round(progress))}%
+                            </p>
+                            <p className="text-xs text-white/25 mt-1">
+                              {i === 0 ? 'Generando...' : `Imagen ${i + 1}`}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
