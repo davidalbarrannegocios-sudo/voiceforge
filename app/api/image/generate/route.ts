@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
-const MODEL_ENDPOINTS: Record<string, string> = {
+const BFL_ENDPOINTS: Record<string, string> = {
   'flux-2-klein-4b':    'flux-2-klein-4b',
   'flux-2-klein-9b':    'flux-2-klein-9b',
   'flux-2-pro':         'flux-2-pro',
@@ -19,16 +19,18 @@ const MODEL_ENDPOINTS: Record<string, string> = {
 }
 
 const MODEL_CREDITS: Record<string, number> = {
-  'flux-2-klein-4b':    571,
-  'flux-2-pro':        2285,
-  'flux-2-flex':       3142,
-  'flux-2-max':        3428,
-  'flux-2-klein-9b':   6000,
-  'flux-pro-1.1':      2000,
-  'flux-pro-1.1-ultra': 2857,
-  'flux-kontext-pro':  2000,
-  'flux-kontext-max':  3428,
-  'flux-pro-1.0-fill': 2571,
+  'flux-2-klein-4b':          571,
+  'flux-2-pro':               2285,
+  'flux-2-flex':              3142,
+  'flux-2-max':               3428,
+  'flux-2-klein-9b':          6000,
+  'flux-pro-1.1':             2000,
+  'flux-pro-1.1-ultra':       2857,
+  'flux-kontext-pro':         2000,
+  'flux-kontext-max':         3428,
+  'flux-pro-1.0-fill':        2571,
+  'grok-imagine-image':        650,
+  'grok-imagine-image-quality': 650,
 }
 
 const DIMENSIONS: Record<string, { width: number; height: number }> = {
@@ -61,7 +63,53 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Créditos insuficientes' }, { status: 402 })
   }
 
-  const endpoint = MODEL_ENDPOINTS[model] ?? 'flux-pro-1.1'
+  const isXAI = model.startsWith('grok-imagine-image')
+
+  if (isXAI) {
+    const XAI_KEY = process.env.XAI_API_KEY!
+
+    const images = await Promise.all(
+      Array.from({ length: count }).map(async () => {
+        const res = await fetch('https://api.x.ai/v1/images/generations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${XAI_KEY}`,
+          },
+          body: JSON.stringify({
+            model,
+            prompt,
+            n: 1,
+            response_format: 'b64_json',
+          }),
+        })
+
+        const data = await res.json()
+        console.log('[xAI image] status:', res.status, 'data:', JSON.stringify(data).slice(0, 200))
+
+        if (!res.ok) throw new Error(`xAI error ${res.status}: ${JSON.stringify(data)}`)
+
+        const b64 = data.data?.[0]?.b64_json
+        if (!b64) throw new Error('xAI: no b64_json in response')
+
+        return `data:image/png;base64,${b64}`
+      })
+    )
+
+    await prisma.user.update({
+      where: { id: dbUser.id },
+      data: { credits: { decrement: totalCredits } },
+    })
+
+    return NextResponse.json({
+      images,
+      creditsUsed: totalCredits,
+      creditsRemaining: dbUser.credits - totalCredits,
+    })
+  }
+
+  // BFL path
+  const endpoint = BFL_ENDPOINTS[model] ?? 'flux-pro-1.1'
   const dims = DIMENSIONS[aspectRatio] ?? { width: 1024, height: 1024 }
   const BFL_KEY = process.env.BFL_API_KEY!
 
