@@ -84,6 +84,7 @@ const NAV_PRODUCTS_LEFT = [
 const NAV_PRODUCTS_RIGHT = [
   { title: "Texto a Diálogo", desc: "Convierte guiones en diálogos con voces", href: "/dashboard" },
   { title: "Imagen y Video",  desc: "Genera imágenes y vídeos con IA",         href: "/dashboard" },
+  { title: "Galería",         desc: "Imágenes creadas por la comunidad",        href: "/gallery" },
 ];
 
 const NAV_EMPRESA = [
@@ -1106,6 +1107,7 @@ export default function LandingPage() {
                   { label: "Clonación de voz", href: "/dashboard" },
                   { label: "Texto a Diálogo", href: "/dashboard" },
                   { label: "Imagen y Video", href: "/dashboard" },
+                  { label: "Galería", href: "/gallery" },
                   { label: "Precios", href: "/pricing" },
                 ].map(({ label, href }) => (
                   <li key={label}>

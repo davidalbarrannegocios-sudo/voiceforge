@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Image as ImageIcon, Video, Sparkles, Upload, X, ChevronDown, Lock, Download } from 'lucide-react'
+import { Image as ImageIcon, Video, Sparkles, Upload, X, ChevronDown, Lock, Download, Share2, Check } from 'lucide-react'
 
 type Mode = 'image' | 'video'
 type AspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4'
@@ -87,6 +87,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false)
   const [progress, setProgress] = useState(0)
   const [view, setView] = useState<'empty' | 'chat'>('empty')
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
+  const [sharedIds, setSharedIds] = useState<Set<string>>(new Set())
   const dropdownRef = useRef<HTMLDivElement>(null)
   const chatRef = useRef<HTMLDivElement>(null)
 
@@ -311,6 +313,38 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
     }
 
     pollVideo()
+  }
+
+  function showToast(msg: string, type: 'success' | 'error') {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  async function handleShare(item: ImageHistoryItem, imgIndex: number) {
+    const img = item.images[imgIndex]
+    if (!img || !img.startsWith('data:')) return
+
+    const shareKey = `${item.id}-${imgIndex}`
+    try {
+      const res = await fetch('/api/gallery/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: img,
+          prompt: item.prompt,
+          model: item.model,
+          aspectRatio: item.aspectRatio,
+        }),
+      })
+      if (res.ok) {
+        setSharedIds(prev => new Set(prev).add(shareKey))
+        showToast('¡Imagen compartida en la galería!', 'success')
+      } else {
+        showToast('Error al compartir', 'error')
+      }
+    } catch {
+      showToast('Error al compartir', 'error')
+    }
   }
 
   function handleGenerate() {
@@ -730,7 +764,17 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                           alt={item.prompt}
                           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-2">
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-2 gap-1.5">
+                          <button
+                            onClick={e => { e.stopPropagation(); handleShare(item, i) }}
+                            className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur-sm transition-colors"
+                            title="Compartir en galería"
+                          >
+                            {sharedIds.has(`${item.id}-${i}`)
+                              ? <Check className="w-3.5 h-3.5 text-green-400" />
+                              : <Share2 className="w-3.5 h-3.5 text-white" />
+                            }
+                          </button>
                           <a
                             href={img}
                             download={`elitelabs-${item.id}-${i}.jpg`}
@@ -804,6 +848,20 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
           </div>
         </div>
       </div>
+
+      {/* Toast notification */}
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-[9998] flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-2xl text-sm font-medium transition-all ${
+          toast.type === 'success'
+            ? 'bg-green-500/20 border border-green-500/30 text-green-400'
+            : 'bg-red-500/20 border border-red-500/30 text-red-400'
+        }`}>
+          {toast.type === 'success'
+            ? <Check className="w-4 h-4 flex-shrink-0" />
+            : <X className="w-4 h-4 flex-shrink-0" />}
+          {toast.msg}
+        </div>
+      )}
 
       {/* Expanded image modal */}
       {expandedImage && (

@@ -51,6 +51,7 @@ model User {
   apiKeys              ApiKey[]
   apiUsageLogs         ApiUsageLog[]
   apiWallet            ApiWallet?
+  sharedImages         SharedImage[]
 }
 
 model Job {
@@ -344,4 +345,18 @@ model ApiWallet {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SharedImage {
+  id          String   @id @default(cuid())
+  userId      String
+  prompt      String
+  model       String
+  aspectRatio String
+  r2Key       String
+  imageUrl    String
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
 }
