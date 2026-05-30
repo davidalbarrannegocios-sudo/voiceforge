@@ -21,12 +21,12 @@ const IMAGE_MODELS = [
   { id: 'flux-kontext-max',   name: 'FLUX Kontext Max',   badge: null,          credits: 3428, priceUsd: 0.12, group: 'FLUX.1' },
   { id: 'flux-pro-1.0-fill',  name: 'FLUX.1 Fill Pro',    badge: 'Inpainting',  credits: 2571, priceUsd: 0.09, group: 'FLUX.1' },
   // xAI Grok
-  { id: 'grok-imagine-image',         name: 'Grok Imagine',     badge: 'Rápido',       credits: 650,  priceUsd: 0.02, group: 'xAI Grok' },
-  { id: 'grok-imagine-image-quality', name: 'Grok Imagine Pro', badge: 'Alta calidad', credits: 650,  priceUsd: 0.02, group: 'xAI Grok' },
+  { id: 'grok-imagine-image',         name: 'Grok Imagine',     badge: 'Rápido',       credits: 800,  priceUsd: 0.02, group: 'xAI Grok' },
+  { id: 'grok-imagine-image-quality', name: 'Grok Imagine Pro', badge: 'Alta calidad', credits: 900,  priceUsd: 0.02, group: 'xAI Grok' },
 ]
 
 const VIDEO_MODELS: { id: VideoModel; name: string; badge?: string; credits?: number; locked: boolean }[] = [
-  { id: 'grok-imagine-video', name: 'Grok Imagine Video', badge: 'Con audio', credits: 2000, locked: false },
+  { id: 'grok-imagine-video', name: 'Grok Imagine Video', badge: 'Con audio', credits: 1500, locked: false },
   { id: 'sora',               name: 'Sora',               locked: true },
   { id: 'runway',             name: 'Runway',             locked: true },
   { id: 'kling',              name: 'Kling',              locked: true },
@@ -86,8 +86,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
   const selectedVideoModel = VIDEO_MODELS.find(m => m.id === videoModel)
 
   const creditsNeeded = mode === 'video'
-    ? (selectedVideoModel?.credits ?? 2000)
-    : (selectedImageModel?.credits ?? 2000) * count
+    ? 1500 * videoDuration
+    : (selectedImageModel?.credits ?? 0) * count
   const canAfford = credits >= creditsNeeded
 
   async function handleGenerateImage() {

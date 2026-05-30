@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
-const VIDEO_CREDITS = 2000
+const VIDEO_CREDITS_PER_SECOND = 1500
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth()
@@ -14,12 +14,14 @@ export async function POST(req: NextRequest) {
   const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } })
   if (!dbUser) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-  if (dbUser.credits < VIDEO_CREDITS) {
-    return NextResponse.json({ error: 'Créditos insuficientes' }, { status: 402 })
-  }
-
   const { prompt, aspectRatio = '16:9', duration = 5 } = await req.json()
   if (!prompt?.trim()) return NextResponse.json({ error: 'Prompt requerido' }, { status: 400 })
+
+  const totalVideoCredits = VIDEO_CREDITS_PER_SECOND * duration
+
+  if (dbUser.credits < totalVideoCredits) {
+    return NextResponse.json({ error: 'Créditos insuficientes' }, { status: 402 })
+  }
 
   const XAI_KEY = process.env.XAI_API_KEY!
 
@@ -47,12 +49,12 @@ export async function POST(req: NextRequest) {
 
   await prisma.user.update({
     where: { id: dbUser.id },
-    data: { credits: { decrement: VIDEO_CREDITS } },
+    data: { credits: { decrement: totalVideoCredits } },
   })
 
   return NextResponse.json({
     taskId: data.request_id,
-    creditsUsed: VIDEO_CREDITS,
-    creditsRemaining: dbUser.credits - VIDEO_CREDITS,
+    creditsUsed: totalVideoCredits,
+    creditsRemaining: dbUser.credits - totalVideoCredits,
   })
 }
