@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Image as ImageIcon, Video, Sparkles, Upload, X, ChevronDown, Lock, Download, Share2, Check, Globe } from 'lucide-react'
 
-type Mode = 'image' | 'video' | 'explore'
+type Mode = 'image' | 'video'
 type AspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4'
 type VideoModel = 'grok-imagine-video' | 'sora' | 'runway' | 'kling'
 
@@ -91,6 +91,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
   const [sharedIds, setSharedIds] = useState<Set<string>>(new Set())
   const [galleryImages, setGalleryImages] = useState<{ id: string; imageUrl: string; prompt: string; model: string; aspectRatio: string }[]>([])
   const [galleryLoading, setGalleryLoading] = useState(false)
+  const [rightView, setRightView] = useState<'history' | 'explore'>('history')
   const dropdownRef = useRef<HTMLDivElement>(null)
   const chatRef = useRef<HTMLDivElement>(null)
 
@@ -106,17 +107,16 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
 
   useEffect(() => { setModelDropdownOpen(false) }, [mode])
 
-  useEffect(() => {
-    if (mode !== 'explore') return
+  async function fetchGallery() {
     setGalleryLoading(true)
-    fetch('/api/gallery?limit=50')
-      .then(r => r.json())
-      .then(data => {
-        setGalleryImages(data.images ?? [])
-        setGalleryLoading(false)
-      })
-      .catch(() => setGalleryLoading(false))
-  }, [mode])
+    try {
+      const res = await fetch('/api/gallery?limit=50')
+      const data = await res.json()
+      setGalleryImages(data.images ?? [])
+    } finally {
+      setGalleryLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (history.length > 0 && chatRef.current) {
@@ -372,8 +372,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
     <>
       <div className="flex h-full overflow-hidden">
 
-        {/* Left column — controls (hidden in explore mode) */}
-        {mode !== 'explore' && (
+        {/* Left column — controls */}
         <div className="w-[280px] flex-shrink-0 flex flex-col border-r border-white/[0.06]">
 
           {/* Fixed top: toggle + model dropdown + credits */}
@@ -381,7 +380,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
 
             {/* Mode toggle */}
             <div className="flex gap-1 p-1 bg-white/[0.05] border border-white/[0.08] rounded-xl">
-              {(['image', 'video', 'explore'] as Mode[]).map(m => (
+              {(['image', 'video'] as Mode[]).map(m => (
                 <button
                   key={m}
                   onClick={() => setMode(m)}
@@ -389,9 +388,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                     mode === m ? 'bg-white text-black' : 'text-white/40 hover:text-white/60'
                   }`}
                 >
-                  {m === 'image' ? <><ImageIcon size={13} /> Imagen</>
-                  : m === 'video' ? <><Video size={13} /> Video</>
-                  : <><Globe size={13} /> Explorar</>}
+                  {m === 'image' ? <><ImageIcon size={13} /> Imagen</> : <><Video size={13} /> Video</>}
                 </button>
               ))}
             </div>
@@ -610,40 +607,36 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
             )}
           </div>
         </div>
-        )} {/* end left column */}
 
-        {/* Right column — history + prompt (or explore gallery) */}
+        {/* Right column — history / explore */}
         <div className="flex-1 flex flex-col overflow-hidden">
 
-          {/* Explore tab toggle (shown when in explore mode, inside right column header) */}
-          {mode === 'explore' && (
-            <div className="flex-shrink-0 p-4 pb-0">
-              <div className="flex gap-1 p-1 bg-white/[0.05] border border-white/[0.08] rounded-xl w-fit">
-                {(['image', 'video', 'explore'] as Mode[]).map(m => (
-                  <button
-                    key={m}
-                    onClick={() => setMode(m)}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                      mode === m ? 'bg-white text-black' : 'text-white/40 hover:text-white/60'
-                    }`}
-                  >
-                    {m === 'image' ? <><ImageIcon size={13} /> Imagen</>
-                    : m === 'video' ? <><Video size={13} /> Video</>
-                    : <><Globe size={13} /> Explorar</>}
-                  </button>
-                ))}
-              </div>
+          {/* Historial / Explorar toggle */}
+          <div className="flex-shrink-0 flex items-center gap-1 px-4 pt-3 pb-1">
+            <div className="flex gap-0.5 p-0.5 bg-white/5 rounded-lg border border-white/[0.08]">
+              <button
+                onClick={() => setRightView('history')}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${rightView === 'history' ? 'bg-white/10 text-white' : 'text-white/30 hover:text-white/60'}`}
+              >
+                Historial
+              </button>
+              <button
+                onClick={() => { setRightView('explore'); if (galleryImages.length === 0) fetchGallery() }}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${rightView === 'explore' ? 'bg-white/10 text-white' : 'text-white/30 hover:text-white/60'}`}
+              >
+                Explorar
+              </button>
             </div>
-          )}
+          </div>
 
           {/* Explore gallery view */}
-          {mode === 'explore' && (
+          {rightView === 'explore' && (
             <div className="flex-1 overflow-y-auto p-4">
               {galleryLoading ? (
-                <div className="columns-2 lg:columns-3 xl:columns-4 gap-3">
-                  {Array.from({ length: 12 }).map((_, i) => (
+                <div className="columns-2 gap-2">
+                  {Array.from({ length: 8 }).map((_, i) => (
                     <div key={i}
-                         className="mb-3 rounded-xl bg-white/[0.05] animate-pulse break-inside-avoid"
+                         className="mb-2 rounded-xl bg-white/[0.05] animate-pulse break-inside-avoid"
                          style={{ height: `${180 + (i % 3) * 80}px` }} />
                   ))}
                 </div>
@@ -654,10 +647,10 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                   <p className="text-xs text-white/10 mt-1">¡Sé el primero en compartir una imagen!</p>
                 </div>
               ) : (
-                <div className="columns-2 lg:columns-3 xl:columns-4 gap-3">
+                <div className="columns-2 gap-2">
                   {galleryImages.map(img => (
                     <div key={img.id}
-                         className="mb-3 break-inside-avoid group relative rounded-xl overflow-hidden border border-white/[0.08] cursor-pointer"
+                         className="mb-2 break-inside-avoid group relative rounded-xl overflow-hidden border border-white/[0.08] cursor-pointer"
                          onClick={() => setExpandedImage(img.imageUrl)}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -677,8 +670,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
             </div>
           )}
 
-          {/* Fixed warning banner — only in image/video mode */}
-          {mode !== 'explore' && (
+          {/* Fixed warning banner — only in history view */}
+          {rightView === 'history' && (
           <div className="flex-shrink-0 mx-4 mt-3 mb-1">
             <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-orange-500/[0.08] border border-orange-500/20">
               <svg className="w-4 h-4 text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -693,8 +686,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
           </div>
           )} {/* end warning banner */}
 
-          {/* Scrollable history — only in image/video mode */}
-          {mode !== 'explore' && (
+          {/* Scrollable history — only in history view */}
+          {rightView === 'history' && (
           <div ref={chatRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
 
             {view === 'empty' && !isGenerating ? (
@@ -879,8 +872,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
           </div>
           )} {/* end scrollable history */}
 
-          {/* Fixed prompt bar — only in image/video mode */}
-          {mode !== 'explore' && (
+          {/* Fixed prompt bar — only in history view */}
+          {rightView === 'history' && (
           <div className="flex-shrink-0 border-t border-white/[0.06] p-4 flex flex-col gap-2">
             {showNegative && mode === 'image' && (
               <textarea
