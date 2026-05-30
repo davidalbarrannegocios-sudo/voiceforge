@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { LanguageProvider } from "./LanguageContext";
 import { DashboardSidebar } from "./DashboardSidebar";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  robots: { index: false, follow: false },
+};
 
 export default async function DashboardLayout({
   children,
