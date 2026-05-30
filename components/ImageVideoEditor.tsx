@@ -86,7 +86,9 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
   const [expandedImage, setExpandedImage] = useState<string | null>(null)
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [view, setView] = useState<'empty' | 'chat'>('empty')
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const chatRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -99,6 +101,12 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
   }, [])
 
   useEffect(() => { setModelDropdownOpen(false) }, [mode])
+
+  useEffect(() => {
+    if (history.length > 0 && chatRef.current) {
+      chatRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [history.length])
 
   useEffect(() => {
     if (!isGenerating) {
@@ -307,6 +315,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
 
   function handleGenerate() {
     if (!prompt.trim() || isGenerating || !canAfford) return
+    setView('chat')
     if (mode === 'video') handleGenerateVideo()
     else handleGenerateImage()
   }
@@ -569,9 +578,9 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
           </div>
 
           {/* Scrollable history */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-8">
+          <div ref={chatRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
 
-            {history.length === 0 && !isGenerating && (
+            {view === 'empty' && !isGenerating ? (
               <div className="h-full flex flex-col items-center justify-center text-center">
                 <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/[0.08] flex items-center justify-center mb-4">
                   <Sparkles className="w-7 h-7 text-white/20" />
@@ -587,7 +596,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                     : 'FLUX.2 · FLUX 1.1 Pro · Kontext · Grok Imagine'}
                 </p>
               </div>
-            )}
+            ) : (
+              <>
 
             {isGenerating && (
               <div className="space-y-3">
@@ -736,6 +746,9 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                 )}
               </div>
             ))}
+
+              </>
+            )}
           </div>
 
           {/* Fixed prompt bar */}
