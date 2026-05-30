@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Image as ImageIcon, Video, Sparkles, Upload, X, ChevronDown, Lock, Download } from 'lucide-react'
 
 type Mode = 'image' | 'video'
@@ -43,9 +43,9 @@ const ASPECT_CLASSES: Record<string, string> = {
 }
 
 const groupedImageModels: Record<string, typeof IMAGE_MODELS> = {
-  'FLUX.2':    IMAGE_MODELS.filter(m => m.group === 'FLUX.2'),
-  'FLUX.1':    IMAGE_MODELS.filter(m => m.group === 'FLUX.1'),
-  'xAI Grok':  IMAGE_MODELS.filter(m => m.group === 'xAI Grok'),
+  'FLUX.2':   IMAGE_MODELS.filter(m => m.group === 'FLUX.2'),
+  'FLUX.1':   IMAGE_MODELS.filter(m => m.group === 'FLUX.1'),
+  'xAI Grok': IMAGE_MODELS.filter(m => m.group === 'xAI Grok'),
 }
 
 export interface ImageHistoryItem {
@@ -84,9 +84,30 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
   const [pendingPrompt, setPendingPrompt] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [expandedImage, setExpandedImage] = useState<string | null>(null)
+  const [modelDropdownOpen, setModelDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setModelDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  useEffect(() => { setModelDropdownOpen(false) }, [mode])
 
   const selectedImageModel = IMAGE_MODELS.find(m => m.id === imageModel)
   const selectedVideoModel = VIDEO_MODELS.find(m => m.id === videoModel)
+
+  const currentModelLabel = mode === 'image'
+    ? selectedImageModel?.name ?? imageModel
+    : selectedVideoModel?.name ?? videoModel
+  const currentModelCr = mode === 'image'
+    ? selectedImageModel?.credits
+    : selectedVideoModel?.credits
 
   const creditsNeeded = mode === 'video'
     ? 1500 * videoDuration
@@ -217,9 +238,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
       return
     }
 
-    // Polling desde cliente — no bloqueante, Railway no puede cortar esto
     const pollVideo = async () => {
-      for (let i = 0; i < 60; i++) { // máx 5 minutos
+      for (let i = 0; i < 60; i++) {
         await new Promise(r => setTimeout(r, 5000))
 
         try {
@@ -254,14 +274,14 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
             return
           }
         } catch {
-          // error de red en el poll, seguir intentando
+          // network error during poll, keep retrying
         }
       }
       setError('Timeout — el vídeo tardó demasiado')
       setIsGenerating(false)
     }
 
-    pollVideo() // fire without await — se gestiona solo
+    pollVideo()
   }
 
   function handleGenerate() {
@@ -272,159 +292,154 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
 
   return (
     <>
-      <div style={{ display: 'flex', height: '100%', gap: 0 }}>
+      <div className="flex h-full overflow-hidden">
 
-        {/* Columna izquierda — controles */}
-        <div style={{
-          width: '300px', flexShrink: 0,
-          borderRight: '1px solid rgba(255,255,255,0.06)',
-          display: 'flex', flexDirection: 'column', overflowY: 'auto',
-        }}>
-          <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* Left column — controls */}
+        <div className="w-[280px] flex-shrink-0 flex flex-col border-r border-white/[0.06]">
 
-            {/* Toggle Imagen / Video */}
-            <div style={{
-              display: 'flex', gap: '4px', padding: '4px',
-              background: 'rgba(255,255,255,0.05)', borderRadius: '12px',
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}>
+          {/* Fixed top: toggle + model dropdown + credits */}
+          <div className="flex-shrink-0 p-4 space-y-4">
+
+            {/* Mode toggle */}
+            <div className="flex gap-1 p-1 bg-white/[0.05] border border-white/[0.08] rounded-xl">
               {(['image', 'video'] as Mode[]).map(m => (
                 <button
                   key={m}
                   onClick={() => setMode(m)}
-                  style={{
-                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    gap: '6px', padding: '8px', borderRadius: '8px', fontSize: '13px',
-                    fontWeight: 500, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-                    background: mode === m ? '#ffffff' : 'transparent',
-                    color: mode === m ? '#000000' : 'rgba(255,255,255,0.4)',
-                  }}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all ${
+                    mode === m ? 'bg-white text-black' : 'text-white/40 hover:text-white/60'
+                  }`}
                 >
-                  {m === 'image' ? <><ImageIcon size={14} /> Imagen</> : <><Video size={14} /> Video</>}
+                  {m === 'image' ? <><ImageIcon size={13} /> Imagen</> : <><Video size={13} /> Video</>}
                 </button>
               ))}
             </div>
 
-            {/* Selector de modelo */}
-            <div>
-              <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#444', marginBottom: '4px' }}>
-                Modelo
-              </p>
-
-              {mode === 'image' ? (
-                <>
-                  {Object.entries(groupedImageModels).map(([group, models], gi) => (
-                    <div key={group}>
-                      <p style={{
-                        fontSize: '10px', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase',
-                        letterSpacing: '0.08em', padding: '0 4px', marginBottom: '6px',
-                        marginTop: gi === 0 ? '8px' : '12px',
-                      }}>
-                        {group}
-                      </p>
-                      {models.map(model => {
-                        const isActive = imageModel === model.id
-                        return (
-                          <button
-                            key={model.id}
-                            onClick={() => setImageModel(model.id)}
-                            style={{
-                              width: '100%', display: 'flex', alignItems: 'center',
-                              justifyContent: 'space-between', padding: '9px 12px',
-                              borderRadius: '10px', fontSize: '12px', fontWeight: 500,
-                              border: `1px solid ${isActive ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.07)'}`,
-                              background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
-                              color: isActive ? '#fff' : 'rgba(255,255,255,0.55)',
-                              cursor: 'pointer', transition: 'all 0.15s', textAlign: 'left',
-                              marginBottom: '4px',
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {model.name}
-                              </span>
-                              {model.badge && (
-                                <span style={{
-                                  fontSize: '9px', padding: '1px 5px', borderRadius: '999px',
-                                  background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)',
-                                  flexShrink: 0,
-                                }}>
-                                  {model.badge}
-                                </span>
-                              )}
-                            </div>
-                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.28)', flexShrink: 0, marginLeft: '8px' }}>
-                              {model.credits.toLocaleString()}
-                            </span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ))}
-                </>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
-                  {VIDEO_MODELS.map(model => (
-                    <button
-                      key={model.id}
-                      disabled={model.locked}
-                      onClick={() => !model.locked && setVideoModel(model.id)}
-                      style={{
-                        width: '100%', display: 'flex', alignItems: 'center',
-                        justifyContent: 'space-between', padding: '10px 12px',
-                        borderRadius: '10px', fontSize: '13px', fontWeight: 500,
-                        border: `1px solid ${!model.locked && videoModel === model.id ? 'rgba(255,255,255,0.3)' : model.locked ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)'}`,
-                        background: !model.locked && videoModel === model.id ? 'rgba(255,255,255,0.08)' : 'transparent',
-                        color: model.locked ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.75)',
-                        cursor: model.locked ? 'not-allowed' : 'pointer', textAlign: 'left',
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        {model.locked && <Lock size={11} />}
-                        <span>{model.name}</span>
-                        {model.badge && !model.locked && (
-                          <span style={{
-                            fontSize: '9px', padding: '1px 5px', borderRadius: '999px',
-                            background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)',
-                          }}>
-                            {model.badge}
-                          </span>
-                        )}
-                      </div>
-                      {model.locked ? (
-                        <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '999px', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                          Pronto
-                        </span>
-                      ) : model.credits ? (
-                        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.28)' }}>
-                          {model.credits.toLocaleString()}
-                        </span>
-                      ) : null}
-                    </button>
-                  ))}
+            {/* Model dropdown */}
+            <div ref={dropdownRef} className="relative">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#444] mb-1.5">Modelo</p>
+              <button
+                onClick={() => setModelDropdownOpen(p => !p)}
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium bg-white/[0.05] border border-white/[0.1] text-white/80 hover:bg-white/[0.08] transition-all"
+              >
+                <span className="truncate">{currentModelLabel}</span>
+                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                  {currentModelCr && (
+                    <span className="text-[10px] text-white/30">{currentModelCr.toLocaleString()}</span>
+                  )}
+                  <ChevronDown
+                    size={13}
+                    className={`text-white/40 transition-transform duration-200 ${modelDropdownOpen ? 'rotate-180' : ''}`}
+                  />
                 </div>
-              )}
+              </button>
+
+              {/* Dropdown panel */}
+              <div className={`absolute top-full left-0 right-0 z-50 mt-1 bg-[#111] border border-white/[0.1] rounded-xl overflow-hidden shadow-2xl transition-all duration-200 origin-top ${
+                modelDropdownOpen
+                  ? 'opacity-100 scale-y-100 pointer-events-auto'
+                  : 'opacity-0 scale-y-95 pointer-events-none'
+              }`}>
+                <div className="max-h-72 overflow-y-auto p-1.5">
+                  {mode === 'image' ? (
+                    Object.entries(groupedImageModels).map(([group, models]) => (
+                      <div key={group}>
+                        <p className="text-[9px] text-white/25 uppercase tracking-widest px-2 py-1.5 mt-1">{group}</p>
+                        {models.map(model => {
+                          const isActive = imageModel === model.id
+                          return (
+                            <button
+                              key={model.id}
+                              onClick={() => { setImageModel(model.id); setModelDropdownOpen(false) }}
+                              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs transition-all mb-0.5 ${
+                                isActive
+                                  ? 'bg-white/[0.1] text-white border border-white/20'
+                                  : 'text-white/55 hover:bg-white/[0.05] border border-transparent'
+                              }`}
+                            >
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="truncate">{model.name}</span>
+                                {model.badge && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.08] text-white/35 flex-shrink-0">
+                                    {model.badge}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-white/30 flex-shrink-0 ml-2">{model.credits.toLocaleString()}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ))
+                  ) : (
+                    VIDEO_MODELS.map(model => (
+                      <button
+                        key={model.id}
+                        disabled={model.locked}
+                        onClick={() => { if (!model.locked) { setVideoModel(model.id); setModelDropdownOpen(false) } }}
+                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs transition-all mb-0.5 ${
+                          !model.locked && videoModel === model.id
+                            ? 'bg-white/[0.1] text-white border border-white/20'
+                            : model.locked
+                            ? 'text-white/20 border border-transparent cursor-not-allowed'
+                            : 'text-white/55 hover:bg-white/[0.05] border border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          {model.locked && <Lock size={10} />}
+                          <span>{model.name}</span>
+                          {model.badge && !model.locked && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.08] text-white/35">
+                              {model.badge}
+                            </span>
+                          )}
+                        </div>
+                        {model.locked ? (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.05] text-white/20 border border-white/[0.08]">
+                            Pronto
+                          </span>
+                        ) : model.credits ? (
+                          <span className="text-[10px] text-white/30">{model.credits.toLocaleString()}</span>
+                        ) : null}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Solo imagen: ratio y cantidad */}
+            {/* Compact credit indicator */}
+            <div className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs border ${
+              canAfford
+                ? 'border-white/[0.08] bg-white/[0.03] text-white/40'
+                : 'border-red-400/20 bg-red-400/[0.05] text-red-400'
+            }`}>
+              <span>
+                {mode === 'video'
+                  ? `${videoDuration}s · ${creditsNeeded.toLocaleString()} cr`
+                  : `${count} img · ${creditsNeeded.toLocaleString()} cr`}
+              </span>
+              <span className={canAfford ? 'text-white/50' : 'text-red-400'}>
+                {credits.toLocaleString()} disponibles
+              </span>
+            </div>
+          </div>
+
+          {/* Scrollable secondary controls */}
+          <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+
             {mode === 'image' && (
               <>
                 <div>
-                  <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#444', marginBottom: '8px' }}>
-                    Proporción
-                  </p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#444] mb-2">Proporción</p>
+                  <div className="flex flex-wrap gap-1.5">
                     {ASPECT_RATIOS.map(ratio => (
                       <button
                         key={ratio}
                         onClick={() => setAspectRatio(ratio)}
-                        style={{
-                          padding: '5px 10px', borderRadius: '8px', fontSize: '12px',
-                          fontWeight: 500, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-                          background: aspectRatio === ratio ? '#ffffff' : 'rgba(255,255,255,0.06)',
-                          color: aspectRatio === ratio ? '#000000' : 'rgba(255,255,255,0.5)',
-                        }}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                          aspectRatio === ratio ? 'bg-white text-black' : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.1]'
+                        }`}
                       >
                         {ratio}
                       </button>
@@ -433,36 +448,58 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                 </div>
 
                 <div>
-                  <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#444', marginBottom: '8px' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#444] mb-2">
                     Cantidad — {count} imagen{count > 1 ? 'es' : ''}
                   </p>
                   <input
                     type="range" min={1} max={8} value={count}
                     onChange={e => setCount(Number(e.target.value))}
-                    style={{ width: '100%', accentColor: '#ffffff' }}
+                    className="w-full accent-white"
                   />
+                </div>
+
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#444] mb-2">Referencia (opcional)</p>
+                  <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs border border-dashed border-white/15 text-white/30 cursor-pointer hover:border-white/25 transition-all">
+                    <Upload size={12} />
+                    Subir imagen
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={e => {
+                        const f = e.target.files?.[0]
+                        if (f) setImageRefs(prev => [...prev, f])
+                      }} />
+                  </label>
+                  {imageRefs.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {imageRefs.map((f, i) => (
+                        <div key={i} className="flex items-center gap-1 px-2 py-1 bg-white/[0.06] rounded-lg text-[11px] text-white/50">
+                          {f.name.length > 14 ? f.name.slice(0, 14) + '…' : f.name}
+                          <button
+                            onClick={() => setImageRefs(prev => prev.filter((_, j) => j !== i))}
+                            className="text-white/30 hover:text-white/60 transition-colors"
+                          >
+                            <X size={10} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </>
             )}
 
-            {/* Vídeo: proporción + duración */}
             {mode === 'video' && (
               <>
                 <div>
-                  <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#444', marginBottom: '8px' }}>
-                    Proporción
-                  </p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#444] mb-2">Proporción</p>
+                  <div className="flex flex-wrap gap-1.5">
                     {(['16:9', '9:16', '1:1'] as AspectRatio[]).map(ratio => (
                       <button
                         key={ratio}
                         onClick={() => setAspectRatio(ratio)}
-                        style={{
-                          padding: '5px 10px', borderRadius: '8px', fontSize: '12px',
-                          fontWeight: 500, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-                          background: aspectRatio === ratio ? '#ffffff' : 'rgba(255,255,255,0.06)',
-                          color: aspectRatio === ratio ? '#000000' : 'rgba(255,255,255,0.5)',
-                        }}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                          aspectRatio === ratio ? 'bg-white text-black' : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.1]'
+                        }`}
                       >
                         {ratio}
                       </button>
@@ -472,20 +509,15 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
 
                 {selectedVideoModel?.id === 'grok-imagine-video' && (
                   <div>
-                    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#444', marginBottom: '8px' }}>
-                      Duración
-                    </p>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#444] mb-2">Duración</p>
+                    <div className="flex gap-2">
                       {[5, 10].map(d => (
                         <button
                           key={d}
                           onClick={() => setVideoDuration(d)}
-                          style={{
-                            flex: 1, padding: '8px', borderRadius: '8px', fontSize: '13px',
-                            fontWeight: 500, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-                            background: videoDuration === d ? '#ffffff' : 'rgba(255,255,255,0.06)',
-                            color: videoDuration === d ? '#000000' : 'rgba(255,255,255,0.5)',
-                          }}
+                          className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
+                            videoDuration === d ? 'bg-white text-black' : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.1]'
+                          }`}
                         >
                           {d}s
                         </button>
@@ -495,77 +527,27 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                 )}
               </>
             )}
-
-            {/* Indicador de créditos */}
-            <div style={{
-              padding: '10px 12px', borderRadius: '10px', fontSize: '12px',
-              border: canAfford ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(248,113,113,0.2)',
-              background: canAfford ? 'rgba(255,255,255,0.03)' : 'rgba(248,113,113,0.05)',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: canAfford ? 'rgba(255,255,255,0.4)' : '#f87171' }}>
-                <span>
-                  {mode === 'video' ? '1 vídeo' : `${count} imagen${count > 1 ? 'es' : ''}`}
-                </span>
-                <span>{creditsNeeded.toLocaleString()} cr</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3px', color: 'rgba(255,255,255,0.25)', fontSize: '11px' }}>
-                <span>Disponibles</span>
-                <span style={{ color: canAfford ? 'rgba(255,255,255,0.5)' : '#f87171' }}>
-                  {credits.toLocaleString()} cr
-                </span>
-              </div>
-            </div>
-
-            {/* Imagen de referencia (solo en modo imagen) */}
-            {mode === 'image' && (
-              <div>
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#444', marginBottom: '8px' }}>
-                  Imagen de referencia (opcional)
-                </p>
-                <label style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '10px 12px', borderRadius: '10px', fontSize: '13px',
-                  border: '1px dashed rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.3)',
-                  cursor: 'pointer', transition: 'all 0.15s',
-                }}>
-                  <Upload size={14} />
-                  Subir referencia
-                  <input type="file" accept="image/*" style={{ display: 'none' }}
-                    onChange={e => {
-                      const f = e.target.files?.[0]
-                      if (f) setImageRefs(prev => [...prev, f])
-                    }} />
-                </label>
-                {imageRefs.length > 0 && (
-                  <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {imageRefs.map((f, i) => (
-                      <div key={i} style={{
-                        display: 'flex', alignItems: 'center', gap: '4px',
-                        padding: '4px 8px', background: 'rgba(255,255,255,0.06)',
-                        borderRadius: '8px', fontSize: '11px', color: 'rgba(255,255,255,0.5)',
-                      }}>
-                        {f.name.length > 15 ? f.name.slice(0, 15) + '…' : f.name}
-                        <button onClick={() => setImageRefs(prev => prev.filter((_, j) => j !== i))}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'flex' }}>
-                          <X size={11} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
           </div>
         </div>
 
-        {/* Columna derecha — chat + prompt */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Right column — history + prompt */}
+        <div className="flex-1 flex flex-col overflow-hidden">
 
-          {/* Área de chat/historial */}
+          {/* Fixed warning banner */}
+          <div className="flex-shrink-0 flex items-start gap-2 px-4 py-2.5 bg-orange-500/[0.08] border-b border-orange-500/15">
+            <svg className="w-3.5 h-3.5 text-orange-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.07 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <p className="text-[11px] text-orange-400/80 leading-relaxed">
+              Las imágenes y vídeos se mantienen mientras no recargues la página.{' '}
+              <strong className="text-orange-400">Descárgalos antes de salir.</strong>
+            </p>
+          </div>
+
+          {/* Scrollable history */}
           <div className="flex-1 overflow-y-auto p-6 space-y-8">
 
-            {/* Estado vacío */}
             {history.length === 0 && !isGenerating && (
               <div className="h-full flex flex-col items-center justify-center text-center">
                 <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/[0.08] flex items-center justify-center mb-4">
@@ -584,7 +566,6 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
               </div>
             )}
 
-            {/* Generación en curso */}
             {isGenerating && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-xs text-white/30">
@@ -612,23 +593,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
               </div>
             )}
 
-            {/* Aviso permanente */}
-            <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-orange-500/[0.08] border border-orange-500/20 mb-4 flex-shrink-0">
-              <svg className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.07 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-              <p className="text-xs text-orange-400/80 leading-relaxed">
-                Las imágenes y vídeos generados se mantienen en el chat mientras no recargues o cierres la página.{' '}
-                <strong className="text-orange-400">Descárgalos antes de salir.</strong>
-              </p>
-            </div>
-
-            {/* Historial — más reciente arriba */}
             {history.map(item => (
               <div key={item.id} className="space-y-2">
-
-                {/* Header: fecha · prompt */}
                 <div className="flex items-center gap-2 text-xs text-white/30">
                   <span>
                     {item.createdAt.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
@@ -639,7 +605,6 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                   <span className="truncate max-w-[400px] text-white/40">{item.prompt}</span>
                 </div>
 
-                {/* Vídeo */}
                 {item.type === 'video' && (
                   item.videoUrl ? (
                     <>
@@ -660,13 +625,12 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                       </a>
                     </>
                   ) : (
-                    <div className="w-full max-w-sm aspect-video rounded-xl bg-white/[0.03] border border-dashed border-white/8 flex items-center justify-center">
+                    <div className="w-full max-w-sm aspect-video rounded-xl bg-white/[0.03] border border-dashed border-white/[0.08] flex items-center justify-center">
                       <p className="text-xs text-white/20">Vídeo no disponible</p>
                     </div>
                   )
                 )}
 
-                {/* Imágenes */}
                 {item.type === 'image' && (
                   <div className={`grid gap-2 ${
                     item.images.length === 1 ? 'grid-cols-1 max-w-xs' :
@@ -700,38 +664,23 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                     ))}
                   </div>
                 )}
-
               </div>
             ))}
-
           </div>
 
-          {/* Prompt bar */}
-          <div style={{
-            borderTop: '1px solid rgba(255,255,255,0.06)',
-            padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px',
-          }}>
+          {/* Fixed prompt bar */}
+          <div className="flex-shrink-0 border-t border-white/[0.06] p-4 flex flex-col gap-2">
             {showNegative && mode === 'image' && (
               <textarea
                 value={negativePrompt}
                 onChange={e => setNegativePrompt(e.target.value)}
                 placeholder="Prompt negativo — qué quieres evitar..."
                 rows={2}
-                style={{
-                  width: '100%', background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px',
-                  padding: '10px 14px', fontSize: '13px', color: 'rgba(255,255,255,0.7)',
-                  outline: 'none', resize: 'none', boxSizing: 'border-box',
-                }}
+                className="w-full bg-white/[0.05] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white/70 outline-none resize-none placeholder:text-white/25"
               />
             )}
-
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <div style={{
-                flex: 1, display: 'flex', alignItems: 'center', gap: '8px',
-                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '12px', padding: '0 12px',
-              }}>
+            <div className="flex gap-2">
+              <div className="flex-1 flex items-center gap-2 bg-white/[0.05] border border-white/10 rounded-xl px-3">
                 <textarea
                   value={prompt}
                   onChange={e => setPrompt(e.target.value)}
@@ -742,55 +691,38 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                     ? 'Describe el vídeo que quieres generar...'
                     : 'Describe la imagen que quieres generar...'}
                   rows={1}
-                  style={{
-                    flex: 1, background: 'transparent', border: 'none', outline: 'none',
-                    padding: '12px 0', fontSize: '13px', color: 'rgba(255,255,255,0.9)',
-                    resize: 'none', fontFamily: 'inherit',
-                  }}
+                  className="flex-1 bg-transparent border-none outline-none py-3 text-sm text-white/90 resize-none font-[inherit] placeholder:text-white/25"
                 />
                 {mode === 'image' && (
                   <button
                     onClick={() => setShowNegative(p => !p)}
                     title="Prompt negativo"
-                    style={{
-                      background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0,
-                      color: 'rgba(255,255,255,0.2)', display: 'flex', padding: '4px',
-                      transition: 'color 0.15s',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
-                    onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.2)')}
+                    className="flex-shrink-0 p-1 text-white/20 hover:text-white/50 transition-colors"
                   >
-                    <ChevronDown size={16} style={{ transform: showNegative ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                    <ChevronDown
+                      size={15}
+                      className={`transition-transform duration-200 ${showNegative ? 'rotate-180' : ''}`}
+                    />
                   </button>
                 )}
               </div>
-
               <button
                 onClick={handleGenerate}
                 disabled={!prompt.trim() || isGenerating || !canAfford}
-                style={{
-                  padding: '0 20px', background: '#ffffff', color: '#000000',
-                  fontSize: '13px', fontWeight: 600, borderRadius: '12px', border: 'none',
-                  cursor: !prompt.trim() || isGenerating || !canAfford ? 'not-allowed' : 'pointer',
-                  opacity: !prompt.trim() || isGenerating || !canAfford ? 0.3 : 1,
-                  display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
-                  transition: 'opacity 0.15s',
-                }}
+                className="flex-shrink-0 flex items-center gap-1.5 px-5 bg-white text-black text-sm font-semibold rounded-xl disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/90 transition-all"
               >
-                {mode === 'video' ? <Video size={14} /> : <Sparkles size={14} />}
+                {mode === 'video' ? <Video size={13} /> : <Sparkles size={13} />}
                 {isGenerating ? 'Generando…' : 'Generar'}
               </button>
             </div>
-
             {error && (
-              <p style={{ fontSize: '11px', color: '#f87171', textAlign: 'center' }}>{error}</p>
+              <p className="text-[11px] text-red-400 text-center">{error}</p>
             )}
           </div>
         </div>
-
       </div>
 
-      {/* Modal imagen expandida */}
+      {/* Expanded image modal */}
       {expandedImage && (
         <div
           className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
