@@ -559,7 +559,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
             ) : (
               /* Explore gallery */
               galleryLoading ? (
-                <div className="columns-2 gap-2 pt-2">
+                <div className="columns-2 md:columns-3 lg:columns-4 gap-3 pt-2">
                   {Array.from({ length: 8 }).map((_, i) => (
                     <div key={i}
                          className="mb-2 rounded-xl bg-white/[0.05] animate-pulse break-inside-avoid"
@@ -573,7 +573,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                   <p className="text-xs text-white/10 mt-1">¡Sé el primero en compartir una imagen!</p>
                 </div>
               ) : (
-                <div className="columns-2 gap-2 pt-2">
+                <div className="columns-2 md:columns-3 lg:columns-4 gap-3 pt-2">
                   {galleryImages.map(img => (
                     <div key={img.id}
                          className="mb-2 break-inside-avoid group relative rounded-xl overflow-hidden border border-white/[0.08] cursor-pointer"
