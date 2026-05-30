@@ -1527,6 +1527,17 @@ function GenerateTab({
         onClose={() => setShowNoCredits(false)}
         currentPlan={plan.toLowerCase()}
       />
+
+      {isImporting && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="relative bg-[#111] border border-white/10 rounded-2xl px-8 py-6 flex flex-col items-center gap-3 shadow-2xl">
+            <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            <p className="text-sm text-white/70 font-medium">Importando archivo...</p>
+            <p className="text-xs text-white/30">Extrayendo texto</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -5154,17 +5165,6 @@ export default function DashboardPage() {
           </div>
         )}{/* end page content */}
       </main>
-
-      {isImporting && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <div className="relative bg-[#111] border border-white/10 rounded-2xl px-8 py-6 flex flex-col items-center gap-3 shadow-2xl">
-            <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-            <p className="text-sm text-white/70 font-medium">Importando archivo...</p>
-            <p className="text-xs text-white/30">Extrayendo texto</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
