@@ -81,7 +81,14 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
   const [pendingCount, setPendingCount] = useState(0)
   const [pendingPrompt, setPendingPrompt] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [expandedImage, setExpandedImage] = useState<string | null>(null)
+  const [modalImage, setModalImage] = useState<{
+    url: string
+    prompt: string
+    model: string
+    aspectRatio: string
+    allImages: string[]
+    currentIndex: number
+  } | null>(null)
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false)
   const [progress, setProgress] = useState(0)
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
@@ -93,6 +100,12 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
   const chatRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { setModelDropdownOpen(false) }, [mode])
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setModalImage(null) }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   async function fetchGallery() {
     setGalleryLoading(true)
@@ -512,16 +525,23 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
 
                     {item.type === 'image' && (
                       <div className={`grid gap-2 ${
-                        item.images.length === 1 ? 'grid-cols-1 max-w-xs' :
-                        item.images.length === 2 ? 'grid-cols-2 max-w-sm' :
-                        item.images.length <= 4 ? 'grid-cols-2 max-w-md' :
-                        'grid-cols-4'
+                        item.images.length === 1 ? 'grid-cols-1 max-w-[280px]' :
+                        item.images.length === 2 ? 'grid-cols-2 max-w-[400px]' :
+                        item.images.length <= 4 ? 'grid-cols-2 max-w-[400px]' :
+                        'grid-cols-4 max-w-[600px]'
                       }`}>
                         {item.images.map((img, i) => (
                           <div
                             key={i}
                             className={`relative group overflow-hidden rounded-xl border border-white/[0.08] cursor-pointer ${ASPECT_CLASSES[item.aspectRatio] ?? 'aspect-square'}`}
-                            onClick={() => setExpandedImage(img)}
+                            onClick={() => setModalImage({
+                              url: img,
+                              prompt: item.prompt,
+                              model: item.model,
+                              aspectRatio: item.aspectRatio,
+                              allImages: item.images,
+                              currentIndex: i,
+                            })}
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
@@ -529,26 +549,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                               alt={item.prompt}
                               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                             />
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-2 gap-1.5">
-                              <button
-                                onClick={e => { e.stopPropagation(); handleShare(item, i) }}
-                                className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur-sm transition-colors"
-                                title="Compartir en galería"
-                              >
-                                {sharedIds.has(`${item.id}-${i}`)
-                                  ? <Check className="w-3.5 h-3.5 text-green-400" />
-                                  : <Share2 className="w-3.5 h-3.5 text-white" />
-                                }
-                              </button>
-                              <a
-                                href={img}
-                                download={`elitelabs-${item.id}-${i}.jpg`}
-                                onClick={e => e.stopPropagation()}
-                                className="p-1.5 bg-white/20 hover:bg-white/30 rounded-lg backdrop-blur-sm transition-colors"
-                              >
-                                <Download className="w-3.5 h-3.5 text-white" />
-                              </a>
-                            </div>
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity" />
                           </div>
                         ))}
                       </div>
@@ -577,7 +578,14 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                   {galleryImages.map(img => (
                     <div key={img.id}
                          className="mb-2 break-inside-avoid group relative rounded-xl overflow-hidden border border-white/[0.08] cursor-pointer"
-                         onClick={() => setExpandedImage(img.imageUrl)}>
+                         onClick={() => setModalImage({
+                           url: img.imageUrl,
+                           prompt: img.prompt,
+                           model: img.model,
+                           aspectRatio: img.aspectRatio,
+                           allImages: [img.imageUrl],
+                           currentIndex: 0,
+                         })}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={img.imageUrl}
@@ -851,33 +859,140 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
         </div>
       )}
 
-      {/* Expanded image modal */}
-      {expandedImage && (
-        <div
-          className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setExpandedImage(null)}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={expandedImage}
-            alt="Imagen expandida"
-            className="max-w-full max-h-full object-contain rounded-2xl"
-            onClick={e => e.stopPropagation()}
-          />
-          <button
-            onClick={() => setExpandedImage(null)}
-            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
-          >
-            <X className="w-5 h-5 text-white" />
-          </button>
-          <a
-            href={expandedImage}
-            download="elitelabs-image.jpg"
-            className="absolute bottom-4 right-4 px-4 py-2 bg-white text-black text-sm font-medium rounded-xl hover:bg-white/90 transition-colors"
-            onClick={e => e.stopPropagation()}
-          >
-            Descargar
-          </a>
+      {/* Image modal — side panel + large image */}
+      {modalImage && (
+        <div className="fixed inset-0 z-[9999] flex bg-black/95">
+
+          {/* Left panel */}
+          <div className="w-[260px] flex-shrink-0 border-r border-white/[0.08] flex flex-col overflow-y-auto p-5 gap-4">
+
+            <button
+              onClick={() => setModalImage(null)}
+              className="self-start p-1.5 rounded-lg hover:bg-white/[0.08] text-white/40 hover:text-white transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div>
+              <p className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Prompt</p>
+              <p className="text-xs text-white/70 leading-relaxed">{modalImage.prompt}</p>
+            </div>
+
+            <div className="flex gap-2 text-[11px] text-white/30">
+              <span>{modalImage.model}</span>
+              <span>·</span>
+              <span>{modalImage.aspectRatio}</span>
+            </div>
+
+            <div className="h-px bg-white/[0.08]" />
+
+            <div className="space-y-2">
+
+              <button
+                onClick={() => { setPrompt(modalImage.prompt); setModalImage(null); setRightView('history') }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] text-sm text-white/70 hover:text-white transition-all text-left"
+              >
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Recrear
+              </button>
+
+              <button
+                onClick={() => { setMode('video'); setPrompt(modalImage.prompt); setModalImage(null) }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] text-sm text-white/70 hover:text-white transition-all text-left"
+              >
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                        d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Crear vídeo
+              </button>
+
+              <button
+                onClick={() => {
+                  handleShare({ id: '', type: 'image', prompt: modalImage.prompt, model: modalImage.model, aspectRatio: modalImage.aspectRatio, images: [modalImage.url], createdAt: new Date(), expiresAt: new Date(), provider: 'bfl' }, 0)
+                  setModalImage(null)
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] text-sm text-white/70 hover:text-white transition-all text-left"
+              >
+                <Share2 className="w-4 h-4 flex-shrink-0" />
+                Compartir en galería
+              </button>
+
+              <a
+                href={modalImage.url}
+                download="elitelabs-image.jpg"
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white text-black text-sm font-medium hover:bg-white/90 transition-all"
+              >
+                <Download className="w-4 h-4 flex-shrink-0" />
+                Descargar
+              </a>
+            </div>
+
+            {/* Batch thumbnails */}
+            {modalImage.allImages.length > 1 && (
+              <div>
+                <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2">En este batch</p>
+                <div className="grid grid-cols-4 gap-1">
+                  {modalImage.allImages.map((img, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setModalImage(prev => prev ? { ...prev, url: img, currentIndex: i } : null)}
+                      className={`aspect-square rounded-lg overflow-hidden border transition-all ${
+                        i === modalImage.currentIndex ? 'border-white/50' : 'border-white/10 hover:border-white/30'
+                      }`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Main image */}
+          <div className="flex-1 relative flex items-center justify-center p-8">
+
+            {modalImage.currentIndex > 0 && (
+              <button
+                onClick={() => setModalImage(prev => prev ? {
+                  ...prev,
+                  url: prev.allImages[prev.currentIndex - 1],
+                  currentIndex: prev.currentIndex - 1,
+                } : null)}
+                className="absolute left-4 p-2 bg-black/50 hover:bg-black/70 rounded-full border border-white/10 text-white transition-all"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            )}
+
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={modalImage.url}
+              alt={modalImage.prompt}
+              className="max-w-full max-h-full object-contain rounded-2xl"
+            />
+
+            {modalImage.currentIndex < modalImage.allImages.length - 1 && (
+              <button
+                onClick={() => setModalImage(prev => prev ? {
+                  ...prev,
+                  url: prev.allImages[prev.currentIndex + 1],
+                  currentIndex: prev.currentIndex + 1,
+                } : null)}
+                className="absolute right-4 p-2 bg-black/50 hover:bg-black/70 rounded-full border border-white/10 text-white transition-all"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
       )}
     </>
