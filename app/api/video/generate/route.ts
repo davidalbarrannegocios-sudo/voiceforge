@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   })
 
   return NextResponse.json({
-    taskId: data.id,
+    taskId: data.request_id,
     creditsUsed: VIDEO_CREDITS,
     creditsRemaining: dbUser.credits - VIDEO_CREDITS,
   })

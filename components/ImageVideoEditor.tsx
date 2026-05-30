@@ -184,6 +184,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
     setPendingPrompt(currentPrompt)
     setError(null)
 
+    let taskId: string
+
     try {
       const res = await fetch('/api/video/generate', {
         method: 'POST',
@@ -195,46 +197,62 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
 
       if (!res.ok) {
         setError(data.error ?? 'Error al generar vídeo')
+        setIsGenerating(false)
         return
       }
 
       if (data.creditsRemaining !== undefined) onCreditsUpdate(data.creditsRemaining)
 
-      const { taskId } = data as { taskId: string }
-
-      for (let i = 0; i < 120; i++) {
-        await new Promise(r => setTimeout(r, 3000))
-        const pollRes = await fetch('/api/video/poll', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ taskId }),
-        })
-        const pollData = await pollRes.json()
-
-        if (pollData.status === 'Ready') {
-          setHistory(prev => [{
-            id: Date.now().toString(),
-            type: 'video',
-            prompt: currentPrompt,
-            model: currentModel,
-            aspectRatio: currentAspectRatio,
-            images: [],
-            videoUrl: pollData.videoUrl,
-            createdAt: new Date(),
-          }, ...prev])
-          break
-        }
-
-        if (pollData.status === 'Failed') {
-          setError('Error generando vídeo')
-          break
-        }
-      }
+      taskId = data.taskId as string
     } catch {
       setError('Error de conexión')
-    } finally {
+      setIsGenerating(false)
+      return
+    }
+
+    // Polling desde cliente — no bloqueante, Railway no puede cortar esto
+    const pollVideo = async () => {
+      for (let i = 0; i < 60; i++) { // máx 5 minutos
+        await new Promise(r => setTimeout(r, 5000))
+
+        try {
+          const pollRes = await fetch('/api/video/poll', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ taskId }),
+          })
+          const pollData = await pollRes.json()
+          console.log('[video poll]', i, pollData.status)
+
+          if (pollData.status === 'Ready' && pollData.videoUrl) {
+            setHistory(prev => [{
+              id: Date.now().toString(),
+              type: 'video',
+              prompt: currentPrompt,
+              model: currentModel,
+              aspectRatio: currentAspectRatio,
+              images: [],
+              videoUrl: pollData.videoUrl,
+              createdAt: new Date(),
+            }, ...prev])
+            setIsGenerating(false)
+            return
+          }
+
+          if (pollData.status === 'Failed') {
+            setError('El vídeo falló al generarse')
+            setIsGenerating(false)
+            return
+          }
+        } catch {
+          // error de red en el poll, seguir intentando
+        }
+      }
+      setError('Timeout — el vídeo tardó demasiado')
       setIsGenerating(false)
     }
+
+    pollVideo() // fire without await — se gestiona solo
   }
 
   function handleGenerate() {

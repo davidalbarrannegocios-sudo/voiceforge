@@ -12,18 +12,16 @@ export async function POST(req: NextRequest) {
 
   const XAI_KEY = process.env.XAI_API_KEY!
 
-  const res = await fetch(`https://api.x.ai/v1/videos/generations/${taskId}`, {
+  const res = await fetch(`https://api.x.ai/v1/video/generations/${taskId}`, {
     headers: { 'Authorization': `Bearer ${XAI_KEY}` },
   })
 
   const data = await res.json()
-  console.log('[xAI video poll] status:', data.status)
+  console.log('[xAI video poll] full response:', JSON.stringify(data))
 
-  if (data.status === 'succeeded' || data.status === 'completed') {
-    return NextResponse.json({
-      status: 'Ready',
-      videoUrl: data.video?.url ?? data.url,
-    })
+  if (data.status === 'succeeded' || data.status === 'completed' || data.status === 'ready') {
+    const videoUrl = data.video?.url ?? data.url ?? data.result?.url
+    return NextResponse.json({ status: 'Ready', videoUrl })
   }
 
   if (data.status === 'failed' || data.status === 'error') {
