@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   })
 
   const data = await res.json()
-  console.log('[xAI video] status:', res.status, data)
+  console.log('[xAI video] full response:', JSON.stringify(data))
 
   if (!res.ok) {
     return NextResponse.json({ error: `xAI error: ${JSON.stringify(data)}` }, { status: 500 })

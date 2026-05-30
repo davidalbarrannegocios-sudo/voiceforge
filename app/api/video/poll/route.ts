@@ -16,8 +16,9 @@ export async function POST(req: NextRequest) {
     headers: { 'Authorization': `Bearer ${XAI_KEY}` },
   })
 
+  console.log('[xAI poll] HTTP status:', res.status)
   const data = await res.json()
-  console.log('[xAI video poll] full response:', JSON.stringify(data))
+  console.log('[xAI poll] full response:', JSON.stringify(data))
 
   if (data.status === 'succeeded' || data.status === 'completed' || data.status === 'ready') {
     const videoUrl = data.video?.url ?? data.url ?? data.result?.url
