@@ -1126,6 +1126,45 @@ function GenerateTab({
                     <><svg style={{ width: "11px", height: "11px", animation: "spin 1s linear infinite" }} viewBox="0 0 24 24" fill="none"><circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Etiquetando...</>
                   ) : <>✦ Etiquetado automático</>}
                 </button>
+
+                {/* Import file */}
+                <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/[0.08] border border-white/10 text-xs text-white/50 cursor-pointer transition-all">
+                  <Upload className="w-3.5 h-3.5" />
+                  Importar
+                  <input
+                    type="file"
+                    accept=".txt,.pdf,.doc,.docx"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      e.target.value = ''
+
+                      if (file.name.endsWith('.txt')) {
+                        const reader = new FileReader()
+                        reader.onload = ev => setText(ev.target?.result as string ?? '')
+                        reader.readAsText(file)
+                        return
+                      }
+
+                      const formData = new FormData()
+                      formData.append('file', file)
+                      const res = await fetch('/api/extract-text', { method: 'POST', body: formData })
+                      const data = await res.json()
+                      if (data.text) setText(data.text)
+                    }}
+                  />
+                </label>
+
+                {/* Clear text */}
+                <button
+                  onClick={() => setText('')}
+                  disabled={!text}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/20 text-xs text-white/30 hover:text-red-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/5 disabled:hover:border-white/10 disabled:hover:text-white/30"
+                  title="Borrar todo el texto"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
 
               {tagsOpen && (
