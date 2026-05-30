@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 60
 
 const MODEL_ENDPOINTS: Record<string, string> = {
   'flux-2-klein-4b':    'flux-2-klein-4b',

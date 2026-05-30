@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth()
@@ -12,6 +13,8 @@ export async function POST(req: NextRequest) {
 
   const BFL_KEY = process.env.BFL_API_KEY!
 
+  console.log('[poll] calling polling_url:', polling_url?.slice(0, 60))
+
   const res = await fetch(polling_url, {
     headers: {
       'accept': 'application/json',
@@ -20,7 +23,7 @@ export async function POST(req: NextRequest) {
   })
 
   const data = await res.json()
-  console.log('[BFL poll] status:', data.status)
+  console.log('[poll] BFL status:', data.status, 'res status:', res.status)
 
   if (data.status === 'Ready') {
     const imgRes = await fetch(data.result.sample)
