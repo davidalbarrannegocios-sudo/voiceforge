@@ -49,6 +49,8 @@ const PLANS: Plan[] = [
     cta: "Suscribirse",
     features: [
       "200.000 caracteres/mes (x2 con EliteLabs 2)",
+      "Hasta 350 imágenes con IA/mes",
+      "Hasta 25 vídeos con IA/mes",
       "Selección de voz completa",
       "Transcripciones y traducciones ilimitadas",
       "3 voces clonadas",
@@ -66,6 +68,8 @@ const PLANS: Plan[] = [
     cta: "Suscribirse",
     features: [
       "500.000 caracteres/mes (x2 con EliteLabs 2)",
+      "Hasta 875 imágenes con IA/mes",
+      "Hasta 62 vídeos con IA/mes",
       "Selección de voz completa",
       "Transcripciones y traducciones ilimitadas",
       "10 voces clonadas",
@@ -84,6 +88,8 @@ const PLANS: Plan[] = [
     cta: "Suscribirse",
     features: [
       "1.000.000 caracteres/mes (x2 con EliteLabs 2)",
+      "Hasta 1.750 imágenes con IA/mes",
+      "Hasta 124 vídeos con IA/mes",
       "Selección de voz completa",
       "Transcripciones y traducciones ilimitadas",
       "20 voces clonadas",
@@ -103,6 +109,8 @@ const PLANS: Plan[] = [
     cta: "Suscribirse",
     features: [
       "5.000.000 caracteres/mes (x2 con EliteLabs 2)",
+      "Hasta 8.750 imágenes con IA/mes",
+      "Hasta 630 vídeos con IA/mes",
       "Voces clonadas ilimitadas",
       "Transcripciones y traducciones ilimitadas",
       "Traducción de audio +10%",

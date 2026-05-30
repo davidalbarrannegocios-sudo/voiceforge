@@ -77,17 +77,13 @@ const FAQ_ITEMS = [
 
 /* ─── Mega menu products ─────────────────────────────────────── */
 const NAV_PRODUCTS_LEFT = [
-  { title: "Texto a voz",               desc: "Genera voz limpia a partir de guiones",          href: "/dashboard" },
-  { title: "Conversión de voz a texto", desc: "Transcribe audio a texto con precisión",          href: "/dashboard" },
-  { title: "Clonación de voz",          desc: "Crea una réplica de tu voz",                      href: "/dashboard" },
-  { title: "Traducción de audio",       desc: "Convierte audio a diferentes idiomas",             href: "/dashboard" },
+  { title: "Texto a Voz",      desc: "Genera voz limpia a partir de guiones",     href: "/dashboard" },
+  { title: "Voz a Texto",      desc: "Transcribe audio a texto con precisión",    href: "/dashboard" },
+  { title: "Clonación de voz", desc: "Crea una réplica de tu voz",                href: "/dashboard" },
+  { title: "Texto a Diálogo",  desc: "Convierte guiones en diálogos con voces",   href: "/dashboard" },
+  { title: "Imagen y Video",   desc: "Genera imágenes y vídeos con IA",           href: "/dashboard" },
 ];
-const NAV_PRODUCTS_RIGHT = [
-  { title: "Cambiador de voz",   desc: "Transforma tu voz en tiempo real",                href: "/dashboard" },
-  { title: "Separación de audio",desc: "Extrae voces de audio con ruido o mezclado",      href: "/dashboard" },
-  { title: "Efectos de sonido",  desc: "Genera efectos de sonido cinematográficos",        href: "/dashboard" },
-  { title: "Estudio de voz",     desc: "Produce audio y ajusta cada detalle",              href: "/dashboard" },
-];
+const NAV_PRODUCTS_RIGHT: typeof NAV_PRODUCTS_LEFT = [];
 
 const NAV_EMPRESA = [
   { title: "Sobre nosotros", desc: "Conoce nuestro equipo y misión",      href: "/about" },
@@ -1104,10 +1100,11 @@ export default function LandingPage() {
               <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#666666" }}>Producto</p>
               <ul className="space-y-3">
                 {[
-                  { label: "Texto a voz", href: "/dashboard" },
+                  { label: "Texto a Voz", href: "/dashboard" },
+                  { label: "Voz a Texto", href: "/dashboard" },
                   { label: "Clonación de voz", href: "/dashboard" },
-                  { label: "Traducción de audio", href: "/dashboard" },
-                  { label: "Audio a Texto", href: "/dashboard" },
+                  { label: "Texto a Diálogo", href: "/dashboard" },
+                  { label: "Imagen y Video", href: "/dashboard" },
                   { label: "Precios", href: "/pricing" },
                 ].map(({ label, href }) => (
                   <li key={label}>
