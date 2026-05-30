@@ -22,5 +22,8 @@ export async function GET(req: NextRequest) {
     },
   })
 
+  console.log('[gallery] page:', page, 'total images found:', images.length)
+  if (images[0]) console.log('[gallery] first image id:', images[0].id, 'url:', images[0].imageUrl.slice(0, 60))
+
   return NextResponse.json({ images })
 }
