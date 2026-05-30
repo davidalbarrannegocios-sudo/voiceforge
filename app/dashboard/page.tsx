@@ -4926,7 +4926,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background: "#000000" }}>
+    <div className="flex h-screen overflow-hidden" style={{ background: "#000000" }}>
       {supportOpen && <SupportModal onClose={() => setSupportOpen(false)} />}
 
       {/* Mobile drawer overlay */}
@@ -4946,7 +4946,7 @@ export default function DashboardPage() {
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onClose={() => setSidebarOpen(false)} plan={plan} memberInfo={memberInfo} />
       </div>
 
-      <main className="flex-1 overflow-auto relative min-w-0" style={{ padding: "0" }}>
+      <main className="flex-1 flex flex-col overflow-hidden relative min-w-0" style={{ padding: "0" }}>
         {/* Topbar */}
         {(() => {
           const TAB_META: Record<Tab, { title: string; Icon: React.ElementType }> = {
@@ -5001,98 +5001,8 @@ export default function DashboardPage() {
           );
         })()}
         {/* Page content */}
-        <div className="p-4">
-        {successPlan && !planChanged && (
-          <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
-            <Check size={18} className="text-green-400 flex-shrink-0" />
-            <p className="text-green-400 font-medium text-sm">
-              ¡Suscripción activada! Tu plan <strong className="capitalize">{successPlan}</strong> ya está activo.
-            </p>
-          </div>
-        )}
-        {planChanged && successPlan && (
-          <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
-            <Check size={18} className="text-green-400 flex-shrink-0" />
-            <p className="text-green-400 font-medium text-sm">
-              ¡Plan actualizado correctamente! Ahora estás en el plan <strong className="capitalize">{successPlan}</strong>.
-            </p>
-          </div>
-        )}
-        {creditsBought && (
-          <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
-            <Check size={18} className="text-green-400 flex-shrink-0" />
-            <p className="text-green-400 font-medium text-sm">
-              ¡Recarga exitosa! Se han añadido <strong>{parseInt(creditsBought).toLocaleString("es-ES")}</strong> créditos extra a tu cuenta.
-            </p>
-          </div>
-        )}
-
-        {activeTab === "home" && (
-          <HomeTab user={user} credits={credits} setActiveTab={setActiveTab} />
-        )}
-        {activeTab === "generate" && (
-          <GenerateTab
-            voices={voices}
-            onGenerated={fetchCredits}
-            selectedVoice={selectedVoice}
-            onVoiceChange={setSelectedVoice}
-            plan={effectivePlan}
-          />
-        )}
-        {activeTab === "voices" && (
-          <VoicesTab
-            voices={voices}
-            onRefresh={fetchVoices}
-            onUseVoice={handleUseVoice}
-            plan={effectivePlan}
-          />
-        )}
-        {activeTab === "history" && <HistoryTab plan={effectivePlan} />}
-        {activeTab === "billing" && (
-          <BillingTab
-            credits={credits}
-            extraCredits={extraCredits}
-            plan={plan}
-            nextRenewalDate={nextRenewalDate}
-            daysUntilRenewal={daysUntilRenewal}
-            onRefresh={fetchCredits}
-          />
-        )}
-        {activeTab === "referral" && (
-          <ReferralTab onClaimed={fetchCredits} />
-        )}
-        {activeTab === "translate" && (
-          <TranslateTab
-            onGenerated={fetchCredits}
-            voices={voices}
-            plan={effectivePlan}
-            transcriptionUsed={transcriptionUsed}
-            onBilling={() => setActiveTab("billing")}
-            selectedVoice={translateVoice}
-            onVoiceChange={setTranslateVoice}
-          />
-        )}
-        {activeTab === "transcribe" && (
-          <TranscribeTab
-            onTranscribed={fetchCredits}
-            plan={effectivePlan}
-            transcriptionUsed={transcriptionUsed}
-            onBilling={() => setActiveTab("billing")}
-          />
-        )}
-        {activeTab === "team" && <TeamTab />}
-        {activeTab === "dialogue" && (
-          <div style={{ padding: "24px", maxWidth: "1100px" }}>
-            <DialogueEditor
-              userVoices={voices}
-              plan={effectivePlan}
-              credits={credits ?? 0}
-              onCreditsUpdate={(newCredits) => setCredits(newCredits)}
-            />
-          </div>
-        )}
-        {activeTab === "imagevideo" && (
-          <div style={{ height: "calc(100vh - 56px)" }}>
+        {activeTab === "imagevideo" ? (
+          <div className="flex-1 overflow-hidden">
             <ImageVideoEditor
               credits={credits ?? 0}
               onCreditsUpdate={(newCredits) => setCredits(newCredits)}
@@ -5100,8 +5010,99 @@ export default function DashboardPage() {
               onHistoryUpdate={(item) => setImageHistory(prev => [item, ...prev])}
             />
           </div>
-        )}
-        </div>{/* end page content */}
+        ) : (
+          <div className="flex-1 overflow-auto p-4">
+            {successPlan && !planChanged && (
+              <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
+                <Check size={18} className="text-green-400 flex-shrink-0" />
+                <p className="text-green-400 font-medium text-sm">
+                  ¡Suscripción activada! Tu plan <strong className="capitalize">{successPlan}</strong> ya está activo.
+                </p>
+              </div>
+            )}
+            {planChanged && successPlan && (
+              <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
+                <Check size={18} className="text-green-400 flex-shrink-0" />
+                <p className="text-green-400 font-medium text-sm">
+                  ¡Plan actualizado correctamente! Ahora estás en el plan <strong className="capitalize">{successPlan}</strong>.
+                </p>
+              </div>
+            )}
+            {creditsBought && (
+              <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
+                <Check size={18} className="text-green-400 flex-shrink-0" />
+                <p className="text-green-400 font-medium text-sm">
+                  ¡Recarga exitosa! Se han añadido <strong>{parseInt(creditsBought).toLocaleString("es-ES")}</strong> créditos extra a tu cuenta.
+                </p>
+              </div>
+            )}
+
+            {activeTab === "home" && (
+              <HomeTab user={user} credits={credits} setActiveTab={setActiveTab} />
+            )}
+            {activeTab === "generate" && (
+              <GenerateTab
+                voices={voices}
+                onGenerated={fetchCredits}
+                selectedVoice={selectedVoice}
+                onVoiceChange={setSelectedVoice}
+                plan={effectivePlan}
+              />
+            )}
+            {activeTab === "voices" && (
+              <VoicesTab
+                voices={voices}
+                onRefresh={fetchVoices}
+                onUseVoice={handleUseVoice}
+                plan={effectivePlan}
+              />
+            )}
+            {activeTab === "history" && <HistoryTab plan={effectivePlan} />}
+            {activeTab === "billing" && (
+              <BillingTab
+                credits={credits}
+                extraCredits={extraCredits}
+                plan={plan}
+                nextRenewalDate={nextRenewalDate}
+                daysUntilRenewal={daysUntilRenewal}
+                onRefresh={fetchCredits}
+              />
+            )}
+            {activeTab === "referral" && (
+              <ReferralTab onClaimed={fetchCredits} />
+            )}
+            {activeTab === "translate" && (
+              <TranslateTab
+                onGenerated={fetchCredits}
+                voices={voices}
+                plan={effectivePlan}
+                transcriptionUsed={transcriptionUsed}
+                onBilling={() => setActiveTab("billing")}
+                selectedVoice={translateVoice}
+                onVoiceChange={setTranslateVoice}
+              />
+            )}
+            {activeTab === "transcribe" && (
+              <TranscribeTab
+                onTranscribed={fetchCredits}
+                plan={effectivePlan}
+                transcriptionUsed={transcriptionUsed}
+                onBilling={() => setActiveTab("billing")}
+              />
+            )}
+            {activeTab === "team" && <TeamTab />}
+            {activeTab === "dialogue" && (
+              <div style={{ padding: "24px", maxWidth: "1100px" }}>
+                <DialogueEditor
+                  userVoices={voices}
+                  plan={effectivePlan}
+                  credits={credits ?? 0}
+                  onCreditsUpdate={(newCredits) => setCredits(newCredits)}
+                />
+              </div>
+            )}
+          </div>
+        )}{/* end page content */}
       </main>
     </div>
   );
