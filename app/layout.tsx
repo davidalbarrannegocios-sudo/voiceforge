@@ -73,6 +73,9 @@ export const metadata: Metadata = {
       'x-default': 'https://www.elitelabs.es',
     },
   },
+  verification: {
+    google: 'VWJ5i5JnL5efRpU_OdRsXl7rU9svX2sbymC3cJkf3XA',
+  },
   icons: {
     icon: '/elitelabs.png',
     apple: '/elitelabs.png',
