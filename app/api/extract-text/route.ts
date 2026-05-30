@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 
+export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
@@ -16,22 +17,8 @@ export async function POST(req: NextRequest) {
 
   try {
     if (filename.endsWith('.pdf')) {
-      const PDFParser = (await import('pdf2json')).default
-      const text = await new Promise<string>((resolve, reject) => {
-        const parser = new PDFParser()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        parser.on('pdfParser_dataReady', (data: any) => {
-          const extracted = data.Pages
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .flatMap((page: any) => page.Texts)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .map((t: any) => decodeURIComponent(t.R.map((r: any) => r.T).join('')))
-            .join(' ')
-          resolve(extracted)
-        })
-        parser.on('pdfParser_dataError', reject)
-        parser.parseBuffer(buffer)
-      })
+      const { extractText } = await import('unpdf')
+      const { text } = await extractText(new Uint8Array(buffer), { mergePages: true })
       return NextResponse.json({ text })
     }
 
