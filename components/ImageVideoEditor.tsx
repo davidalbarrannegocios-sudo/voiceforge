@@ -48,7 +48,7 @@ const groupedImageModels: Record<string, typeof IMAGE_MODELS> = {
   'xAI Grok':  IMAGE_MODELS.filter(m => m.group === 'xAI Grok'),
 }
 
-interface HistoryItem {
+export interface ImageHistoryItem {
   id: string
   type: 'image' | 'video'
   prompt: string
@@ -64,9 +64,11 @@ interface HistoryItem {
 interface Props {
   credits: number
   onCreditsUpdate: (newCredits: number) => void
+  history: ImageHistoryItem[]
+  onHistoryUpdate: (item: ImageHistoryItem) => void
 }
 
-export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
+export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryUpdate }: Props) {
   const [mode, setMode] = useState<Mode>('image')
   const [prompt, setPrompt] = useState('')
   const [negativePrompt, setNegativePrompt] = useState('')
@@ -81,20 +83,22 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
   const [pendingCount, setPendingCount] = useState(0)
   const [pendingPrompt, setPendingPrompt] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [history, setHistory] = useState<HistoryItem[]>([])
   const [expandedImage, setExpandedImage] = useState<string | null>(null)
+  const [tick, setTick] = useState(0)
 
   // Re-render each minute so expiry countdowns stay fresh
   useEffect(() => {
-    const interval = setInterval(() => setHistory(prev => [...prev]), 60_000)
+    const interval = setInterval(() => setTick(t => t + 1), 60_000)
     return () => clearInterval(interval)
   }, [])
 
-  function isExpired(item: HistoryItem): boolean {
+  void tick // consumed only to trigger re-renders
+
+  function isExpired(item: ImageHistoryItem): boolean {
     return new Date() > item.expiresAt
   }
 
-  function timeRemaining(item: HistoryItem): string {
+  function timeRemaining(item: ImageHistoryItem): string {
     const diff = item.expiresAt.getTime() - Date.now()
     if (diff <= 0) return 'Expirado'
     const mins = Math.floor(diff / 60000)
@@ -146,7 +150,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
 
       // xAI: synchronous result
       if (data.images) {
-        setHistory(prev => [{
+        onHistoryUpdate({
           id: Date.now().toString(),
           type: 'image',
           prompt: currentPrompt,
@@ -154,9 +158,9 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
           aspectRatio: currentAspectRatio,
           images: data.images as string[],
           createdAt: new Date(),
-          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // base64 — no expira
+          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
           provider: 'xai',
-        }, ...prev])
+        })
         return
       }
 
@@ -180,7 +184,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
 
       const completed = images.filter((img): img is string => img !== null)
       if (completed.length > 0) {
-        setHistory(prev => [{
+        onHistoryUpdate({
           id: Date.now().toString(),
           type: 'image',
           prompt: currentPrompt,
@@ -188,9 +192,9 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
           aspectRatio: currentAspectRatio,
           images: completed,
           createdAt: new Date(),
-          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // base64 — no expira
+          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
           provider: 'bfl',
-        }, ...prev])
+        })
       }
     } catch {
       setError('Error de conexión')
@@ -250,7 +254,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
           console.log('[video poll]', i, pollData.status)
 
           if (pollData.status === 'Ready' && pollData.videoUrl) {
-            setHistory(prev => [{
+            onHistoryUpdate({
               id: Date.now().toString(),
               type: 'video',
               prompt: currentPrompt,
@@ -259,9 +263,9 @@ export function ImageVideoEditor({ credits, onCreditsUpdate }: Props) {
               images: [],
               videoUrl: pollData.videoUrl,
               createdAt: new Date(),
-              expiresAt: new Date(Date.now() + 60 * 60 * 1000), // URL xAI expira en 1h
+              expiresAt: new Date(Date.now() + 60 * 60 * 1000),
               provider: 'xai',
-            }, ...prev])
+            })
             setIsGenerating(false)
             return
           }

@@ -8,7 +8,7 @@ import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare } from "lucide-react";
 import { DialogueEditor } from "@/components/DialogueEditor";
-import { ImageVideoEditor } from "@/components/ImageVideoEditor";
+import { ImageVideoEditor, type ImageHistoryItem } from "@/components/ImageVideoEditor";
 import { Image as ImageIcon } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
 import { UserMenu } from "@/components/UserMenu";
@@ -4845,6 +4845,7 @@ export default function DashboardPage() {
   const activeTab = (searchParams.get("tab") as Tab | null) ?? "home";
   function setActiveTab(tab: Tab) { router.push(`/dashboard?tab=${tab}`); }
   const [credits, setCredits] = useState<number | null>(null);
+  const [imageHistory, setImageHistory] = useState<ImageHistoryItem[]>([]);
   const [extraCredits, setExtraCredits] = useState<number>(0);
   const [plan, setPlan] = useState<string>("free");
   const [effectivePlan, setEffectivePlan] = useState<string>("free");
@@ -5095,6 +5096,8 @@ export default function DashboardPage() {
             <ImageVideoEditor
               credits={credits ?? 0}
               onCreditsUpdate={(newCredits) => setCredits(newCredits)}
+              history={imageHistory}
+              onHistoryUpdate={(item) => setImageHistory(prev => [item, ...prev])}
             />
           </div>
         )}
