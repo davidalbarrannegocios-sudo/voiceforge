@@ -526,101 +526,60 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                 )
               })()
             ) : (
-              /* Explore gallery */
+              /* Explore gallery — unified 4-column grid by date */
               galleryLoading ? (
-                <div className="columns-2 md:columns-3 lg:columns-4 gap-3 pt-2">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i}
-                         className="mb-2 rounded-xl bg-white/[0.05] animate-pulse break-inside-avoid"
-                         style={{ height: `${180 + (i % 3) * 80}px` }} />
+                <div className="grid grid-cols-4 gap-2 pt-2">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <div key={i} className="aspect-square rounded-xl bg-white/[0.05] animate-pulse" />
                   ))}
                 </div>
               ) : galleryImages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center py-20">
-                  <Globe className="w-10 h-10 text-white/10 mb-3" />
-                  <p className="text-sm text-white/20">La galería está vacía.</p>
-                  <p className="text-xs text-white/10 mt-1">¡Sé el primero en compartir una imagen!</p>
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <p className="text-white/20 text-sm">La galería está vacía</p>
+                  <p className="text-white/10 text-xs mt-1">Genera y comparte para aparecer aquí</p>
                 </div>
-              ) : (() => {
-                const galleryVideos = galleryImages.filter(img => img.imageUrl?.endsWith('.mp4') || img.type === 'video')
-                const galleryPhotos = galleryImages.filter(img => !img.imageUrl?.endsWith('.mp4') && img.type !== 'video')
-                return (
-                  <div className="pt-2">
-                    {/* Videos — horizontal scroll */}
-                    {galleryVideos.length > 0 && (
-                      <div className="mb-4">
-                        <p className="text-xs text-white/30 uppercase tracking-wider mb-2">Vídeos</p>
-                        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                          {galleryVideos.map(vid => (
-                            <div
-                              key={vid.id}
-                              className="flex-shrink-0 w-48 aspect-video rounded-xl overflow-hidden border border-white/[0.08] cursor-pointer group relative"
-                              onClick={() => setModalImage({
-                                url: vid.imageUrl,
-                                type: 'video',
-                                prompt: vid.prompt,
-                                model: vid.model,
-                                aspectRatio: vid.aspectRatio,
-                                allImages: [vid.imageUrl],
-                                currentIndex: 0,
-                              })}
-                            >
-                              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                              <video src={vid.imageUrl} className="w-full h-full object-cover" autoPlay muted loop playsInline />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M8 5v14l11-7z" />
-                                  </svg>
-                                </div>
-                              </div>
-                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <p className="text-[10px] text-white/80 line-clamp-1">{vid.prompt}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+              ) : (
+                <div className="grid grid-cols-4 gap-2 pt-2">
+                  {galleryImages.map(img => (
+                    <div
+                      key={img.id}
+                      className="relative group overflow-hidden rounded-xl border border-white/[0.08] cursor-pointer aspect-square bg-white/[0.02]"
+                      onClick={() => setModalImage({
+                        url: img.imageUrl,
+                        type: img.imageUrl?.endsWith('.mp4') ? 'video' : 'image',
+                        prompt: img.prompt,
+                        model: img.model,
+                        aspectRatio: img.aspectRatio,
+                        allImages: [img.imageUrl],
+                        currentIndex: 0,
+                      })}
+                    >
+                      {img.imageUrl?.endsWith('.mp4') ? (
+                        <>
+                          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                          <video src={img.imageUrl} className="w-full h-full object-cover" autoPlay muted loop playsInline />
+                          <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/50 flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          </div>
+                        </>
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={img.imageUrl}
+                          alt={img.prompt}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
+                        <p className="text-[10px] text-white/80 line-clamp-2">{img.prompt}</p>
                       </div>
-                    )}
-
-                    {/* Photos — masonry grid */}
-                    {galleryPhotos.length > 0 && (
-                      <>
-                        {galleryVideos.length > 0 && (
-                          <p className="text-xs text-white/30 uppercase tracking-wider mb-2">Imágenes</p>
-                        )}
-                        <div className="columns-2 md:columns-3 lg:columns-4 gap-3">
-                          {galleryPhotos.map(img => (
-                            <div key={img.id}
-                                 className="mb-2 break-inside-avoid group relative rounded-xl overflow-hidden border border-white/[0.08] cursor-pointer"
-                                 onClick={() => setModalImage({
-                                   url: img.imageUrl,
-                                   type: 'image',
-                                   prompt: img.prompt,
-                                   model: img.model,
-                                   aspectRatio: img.aspectRatio,
-                                   allImages: [img.imageUrl],
-                                   currentIndex: 0,
-                                 })}>
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={img.imageUrl}
-                                alt={img.prompt}
-                                className="w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                loading="lazy"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
-                                <p className="text-xs text-white/90 line-clamp-2">{img.prompt}</p>
-                                <p className="text-[10px] text-white/40 mt-0.5">{img.model}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )
-              })()
+                    </div>
+                  ))}
+                </div>
+              )
             )}
           </div>
         </div>
