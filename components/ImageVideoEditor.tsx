@@ -408,192 +408,123 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
           <div ref={chatRef} className="flex-1 overflow-y-auto px-5 pb-4">
 
             {rightView === 'history' ? (
-              <>
-                {/* Empty state */}
-                {history.length === 0 && !isGenerating && (
-                  <div className="h-full flex flex-col items-center justify-center text-center py-20">
-                    <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/[0.08] flex items-center justify-center mb-3">
-                      <Sparkles className="w-6 h-6 text-white/20" />
-                    </div>
-                    <p className="text-sm text-white/25">Escribe un prompt para generar</p>
-                    <p className="text-xs text-white/[0.12] mt-1">
-                      FLUX.2 · FLUX 1.1 Pro · Kontext · Grok Imagine
-                    </p>
-                  </div>
-                )}
+              (() => {
+                // Flatten all history into individual cells, newest first
+                const allItems: Array<{
+                  type: 'image' | 'video'
+                  url: string
+                  prompt: string
+                  model: string
+                  aspectRatio: string
+                  parentItem: ImageHistoryItem
+                  index: number
+                }> = []
 
-                {/* Skeleton while generating */}
-                {isGenerating && (
-                  <div className="space-y-3 pt-2">
-                    <div className="flex items-center gap-2 text-xs text-white/30">
-                      <span>{new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
-                      <span>·</span>
-                      <span className="truncate max-w-[400px]">{pendingPrompt}</span>
-                    </div>
+                history.forEach(item => {
+                  if (item.type === 'video' && item.videoUrl) {
+                    allItems.push({ type: 'video', url: item.videoUrl, prompt: item.prompt, model: item.model, aspectRatio: item.aspectRatio, parentItem: item, index: 0 })
+                  } else {
+                    item.images.forEach((img, i) => {
+                      allItems.push({ type: 'image', url: img, prompt: item.prompt, model: item.model, aspectRatio: item.aspectRatio, parentItem: item, index: i })
+                    })
+                  }
+                })
 
-                    {mode === 'video' ? (
-                      <div className={`relative overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.03] max-w-[480px] ${ASPECT_CLASSES[aspectRatio] ?? 'aspect-video'}`}>
+                if (allItems.length === 0 && !isGenerating) {
+                  return (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                      <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/[0.08] flex items-center justify-center mb-3">
+                        <Sparkles className="w-6 h-6 text-white/20" />
+                      </div>
+                      <p className="text-sm text-white/25">Escribe un prompt para generar</p>
+                      <p className="text-xs text-white/[0.12] mt-1">FLUX.2 · FLUX 1.1 Pro · Kontext · Grok Imagine</p>
+                    </div>
+                  )
+                }
+
+                return (
+                  <div className="grid grid-cols-4 gap-2 pt-2">
+
+                    {/* Skeletons for in-progress generation — prepended at the start */}
+                    {isGenerating && Array.from({ length: mode === 'video' ? 1 : pendingCount }).map((_, i) => (
+                      <div key={`skeleton-${i}`} className="relative overflow-hidden rounded-xl bg-white/[0.03] border border-white/[0.08] aspect-square">
                         <div className="absolute inset-0 overflow-hidden">
                           <div
                             className="absolute inset-0 -translate-x-full"
                             style={{
                               background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent)',
                               animation: 'shimmer 2s infinite',
+                              animationDelay: `${i * 0.2}s`,
                             }}
                           />
                         </div>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6">
-                          <p className="text-3xl font-bold text-white/50 font-mono tabular-nums">
-                            {videoProgress}%
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <p className="text-lg font-bold text-white/40 font-mono tabular-nums">
+                            {mode === 'video' ? `${videoProgress}%` : `${Math.min(99, Math.round(progress))}%`}
                           </p>
-                          <div className="w-full max-w-[200px] h-1 bg-white/10 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-white/40 rounded-full transition-all duration-500"
-                              style={{ width: `${videoProgress}%` }}
-                            />
-                          </div>
-                          <p className="text-xs text-white/25">Generando vídeo con xAI Grok...</p>
                         </div>
                       </div>
-                    ) : (
-                      <div className={`grid gap-2 ${
-                        pendingCount === 1 ? 'grid-cols-1 max-w-[240px]' :
-                        pendingCount === 2 ? 'grid-cols-2 max-w-[360px]' :
-                        'grid-cols-2 max-w-[380px]'
-                      }`}>
-                        {Array.from({ length: pendingCount }).map((_, i) => (
-                          <div
-                            key={i}
-                            className={`relative overflow-hidden rounded-2xl bg-white/[0.03] border border-white/[0.08] ${ASPECT_CLASSES[aspectRatio] ?? 'aspect-square'}`}
-                          >
-                            <div className="absolute inset-0 flex flex-col justify-end p-4 gap-2">
-                              {[85, 60, 75, 45, 90, 55].map((width, j) => (
-                                <div
-                                  key={j}
-                                  className="h-1 rounded-full bg-white/[0.08] overflow-hidden"
-                                  style={{ width: `${width}%` }}
-                                >
-                                  <div
-                                    className="h-full rounded-full"
-                                    style={{
-                                      width: `${Math.min(100, progress + j * 5)}%`,
-                                      transition: 'width 0.4s ease',
-                                      background: 'linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3))',
-                                    }}
-                                  />
-                                </div>
-                              ))}
-                            </div>
-                            <div className="absolute inset-0 overflow-hidden">
-                              <div
-                                className="absolute inset-0 -translate-x-full"
-                                style={{
-                                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent)',
-                                  animation: 'shimmer 2s infinite',
-                                  animationDelay: `${i * 0.3}s`,
-                                }}
-                              />
-                            </div>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="text-center">
-                                <p className="text-2xl font-bold text-white/60 font-mono tabular-nums">
-                                  {Math.min(99, Math.round(progress))}%
-                                </p>
-                                <p className="text-xs text-white/25 mt-1">
-                                  {i === 0 ? 'Generando...' : `Imagen ${i + 1}`}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                    ))}
 
-                {/* History items */}
-                {history.map(item => (
-                  <div key={item.id} className="space-y-2 pt-6 max-w-2xl">
-                    <div className="flex items-center gap-2 text-xs text-white/30">
-                      <span>
-                        {item.createdAt.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-                        {' · '}
-                        {item.createdAt.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                      <span>·</span>
-                      <span className="truncate max-w-[400px] text-white/40">{item.prompt}</span>
-                    </div>
+                    {/* History cells */}
+                    {allItems.map((item, idx) => (
+                      <div
+                        key={`${item.parentItem.id}-${item.index}-${idx}`}
+                        className="relative group overflow-hidden rounded-xl border border-white/[0.08] cursor-pointer aspect-square bg-white/[0.02]"
+                        onClick={() => setModalImage({
+                          url: item.url,
+                          type: item.type,
+                          prompt: item.prompt,
+                          model: item.model,
+                          aspectRatio: item.aspectRatio,
+                          allImages: item.type === 'image' ? item.parentItem.images : [item.url],
+                          currentIndex: item.index,
+                        })}
+                      >
+                        {item.type === 'video' ? (
+                          // eslint-disable-next-line jsx-a11y/media-has-caption
+                          <video src={item.url} className="w-full h-full object-cover" autoPlay muted loop playsInline />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={item.url} alt={item.prompt} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                        )}
 
-                    {item.type === 'video' && (
-                      item.videoUrl ? (
-                        <>
-                          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                          <video
-                            src={item.videoUrl}
-                            controls
-                            className="w-full max-w-sm rounded-xl border border-white/[0.08]"
-                            style={{ aspectRatio: item.aspectRatio.replace(':', '/') }}
-                          />
-                          <div className="flex items-center gap-2 mt-1">
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
+                          <p className="text-[10px] text-white/80 line-clamp-2 leading-relaxed">{item.prompt}</p>
+                          <div className="flex gap-1 mt-1.5">
                             <a
-                              href={item.videoUrl}
-                              download="elitelabs-video.mp4"
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.05] hover:bg-white/10 border border-white/[0.08] rounded-lg text-xs text-white/50 hover:text-white transition-colors"
+                              href={item.url}
+                              download
+                              onClick={e => e.stopPropagation()}
+                              className="p-1 bg-black/40 hover:bg-black/60 rounded-md transition-colors"
                             >
-                              <Download className="w-3.5 h-3.5" />
-                              Descargar
+                              <Download className="w-3 h-3 text-white/70" />
                             </a>
                             <button
-                              onClick={() => handleShare(item, 0)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.05] hover:bg-white/10 border border-white/[0.08] rounded-lg text-xs text-white/50 hover:text-white transition-colors"
+                              onClick={e => { e.stopPropagation(); handleShare(item.parentItem, item.index) }}
+                              className="p-1 bg-black/40 hover:bg-black/60 rounded-md transition-colors"
                             >
-                              <Share2 className="w-3.5 h-3.5" />
-                              Compartir
+                              <Share2 className="w-3 h-3 text-white/70" />
                             </button>
                           </div>
-                        </>
-                      ) : (
-                        <div className="w-full max-w-sm aspect-video rounded-xl bg-white/[0.03] border border-dashed border-white/[0.08] flex items-center justify-center">
-                          <p className="text-xs text-white/20">Vídeo no disponible</p>
                         </div>
-                      )
-                    )}
 
-                    {item.type === 'image' && (
-                      <div className={`grid gap-2 ${
-                        item.images.length === 1 ? 'grid-cols-1 max-w-[240px]' :
-                        item.images.length === 2 ? 'grid-cols-2 max-w-[360px]' :
-                        item.images.length <= 4 ? 'grid-cols-2 max-w-[380px]' :
-                        'grid-cols-4 max-w-[480px]'
-                      }`}>
-                        {item.images.map((img, i) => (
-                          <div
-                            key={i}
-                            className={`relative group overflow-hidden rounded-xl border border-white/[0.08] cursor-pointer ${ASPECT_CLASSES[item.aspectRatio] ?? 'aspect-square'}`}
-                            onClick={() => setModalImage({
-                              url: img,
-                              type: 'image',
-                              prompt: item.prompt,
-                              model: item.model,
-                              aspectRatio: item.aspectRatio,
-                              allImages: item.images,
-                              currentIndex: i,
-                            })}
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={img}
-                              alt={item.prompt}
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        {/* Video badge */}
+                        {item.type === 'video' && (
+                          <div className="absolute top-1.5 right-1.5">
+                            <div className="w-5 h-5 rounded-full bg-black/50 flex items-center justify-center">
+                              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            </div>
                           </div>
-                        ))}
+                        )}
                       </div>
-                    )}
+                    ))}
                   </div>
-                ))}
-              </>
+                )
+              })()
             ) : (
               /* Explore gallery */
               galleryLoading ? (
