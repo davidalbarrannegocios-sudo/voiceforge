@@ -12,52 +12,46 @@ export async function POST(req: NextRequest) {
 
   const XAI_KEY = process.env.XAI_API_KEY!
 
-  console.log('[xAI poll] taskId received:', taskId)
-  console.log('[xAI poll] taskId type:', typeof taskId)
-  console.log('[xAI poll] url:', `https://api.x.ai/v1/videos/generations/${taskId}`)
+  const url = `https://api.x.ai/v1/videos/${taskId}`
+  console.log('[xAI poll] url:', url)
 
-  const urls = [
-    `https://api.x.ai/v1/videos/generations/${taskId}`,
-    `https://api.x.ai/v1/video/generations/${taskId}`,
-  ]
+  const res = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${XAI_KEY}`,
+      'Content-Type': 'application/json',
+    },
+  })
 
-  for (const url of urls) {
-    const res = await fetch(url, {
-      headers: { 'Authorization': `Bearer ${XAI_KEY}` },
-    })
+  console.log('[xAI poll] status:', res.status)
+  const text = await res.text()
+  console.log('[xAI poll] response:', text.slice(0, 500))
 
-    console.log('[xAI poll] trying:', url, 'status:', res.status)
-
-    if (res.status === 404) continue
-
-    const text = await res.text()
-    console.log('[xAI poll] response text:', text.slice(0, 300))
-
-    let data: Record<string, unknown>
-    try {
-      data = JSON.parse(text)
-    } catch {
-      console.error('[xAI poll] not JSON:', text.slice(0, 100))
-      return NextResponse.json({ status: 'Processing' })
-    }
-
-    console.log('[xAI poll] status field:', data.status)
-
-    if (data.status === 'succeeded' || data.status === 'completed' || data.status === 'ready') {
-      const video = data.video as { url?: string } | undefined
-      const result = data.result as { url?: string } | undefined
-      const videoUrl = video?.url ?? (data.url as string | undefined) ?? result?.url
-      console.log('[xAI poll] videoUrl:', videoUrl)
-      return NextResponse.json({ status: 'Ready', videoUrl })
-    }
-
-    if (data.status === 'failed' || data.status === 'error') {
-      return NextResponse.json({ status: 'Failed' })
-    }
-
-    return NextResponse.json({ status: data.status ?? 'Processing' })
+  if (!res.ok) {
+    return NextResponse.json({ status: 'Processing' })
   }
 
-  console.error('[xAI poll] both URLs returned 404 for taskId:', taskId)
-  return NextResponse.json({ status: 'Processing' })
+  let data: Record<string, unknown>
+  try {
+    data = JSON.parse(text)
+  } catch {
+    return NextResponse.json({ status: 'Processing' })
+  }
+
+  if (data.status === 'done') {
+    const video = data.video as { url?: string } | undefined
+    const videoUrl = video?.url
+    console.log('[xAI poll] done! videoUrl:', videoUrl)
+    return NextResponse.json({ status: 'Ready', videoUrl })
+  }
+
+  if (data.status === 'failed' || data.status === 'expired') {
+    console.log('[xAI poll] failed/expired:', data)
+    return NextResponse.json({ status: 'Failed' })
+  }
+
+  console.log('[xAI poll] still processing, status:', data.status, 'progress:', data.progress)
+  return NextResponse.json({
+    status: 'Processing',
+    progress: data.progress ?? null,
+  })
 }
