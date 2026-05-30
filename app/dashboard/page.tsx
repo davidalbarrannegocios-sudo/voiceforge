@@ -2921,6 +2921,12 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
 
+  // Result audio player
+  const translationAudioRef = useRef<HTMLAudioElement>(null);
+  const [isTranslationPlaying, setIsTranslationPlaying] = useState(false);
+  const [translationCurrentTime, setTranslationCurrentTime] = useState(0);
+  const [translationDuration, setTranslationDuration] = useState(0);
+
   const clonedVoices = voices.filter((v) => !v.isSystem);
   const FREE_LIMIT = 2;
   const isFreeExhausted = plan === "free" && transcriptionUsed >= FREE_LIMIT;
@@ -3317,7 +3323,69 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                   {result.charCost.toLocaleString("es-ES")} créditos · {result.durationSeconds.toFixed(1)}s
                 </span>
               </div>
-              <AudioPlayer src={result.audioUrl} filename={`traduccion-${result.targetLanguageName.toLowerCase()}.mp3`} />
+              {/* Hidden audio element */}
+              <audio
+                ref={translationAudioRef}
+                src={result.audioUrl}
+                onPlay={() => setIsTranslationPlaying(true)}
+                onPause={() => setIsTranslationPlaying(false)}
+                onEnded={() => { setIsTranslationPlaying(false); setTranslationCurrentTime(0); }}
+                onTimeUpdate={() => setTranslationCurrentTime(translationAudioRef.current?.currentTime ?? 0)}
+                onLoadedMetadata={() => setTranslationDuration(translationAudioRef.current?.duration ?? 0)}
+                className="hidden"
+              />
+
+              {/* Reproductor minimalista */}
+              <div className="flex items-center gap-3 px-4 py-3 bg-white/[0.03] rounded-xl border border-white/[0.08]">
+                {/* Play/pause */}
+                <button
+                  onClick={() => {
+                    if (translationAudioRef.current?.paused) {
+                      translationAudioRef.current.play()
+                    } else {
+                      translationAudioRef.current?.pause()
+                    }
+                  }}
+                  className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-white/90 transition-colors flex-shrink-0"
+                >
+                  {isTranslationPlaying ? (
+                    <Pause className="w-3.5 h-3.5 text-black" />
+                  ) : (
+                    <Play className="w-3.5 h-3.5 text-black ml-0.5" />
+                  )}
+                </button>
+
+                {/* Progress bar */}
+                <div
+                  className="flex-1 h-1 bg-white/10 rounded-full cursor-pointer group relative"
+                  onClick={e => {
+                    if (!translationAudioRef.current) return
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    const pct = (e.clientX - rect.left) / rect.width
+                    translationAudioRef.current.currentTime = pct * (translationAudioRef.current.duration || 0)
+                  }}
+                >
+                  <div
+                    className="h-full bg-white/70 rounded-full transition-all group-hover:bg-white"
+                    style={{ width: `${translationDuration ? (translationCurrentTime / translationDuration) * 100 : 0}%` }}
+                  />
+                </div>
+
+                {/* Time */}
+                <span className="text-[11px] text-white/30 font-mono flex-shrink-0 tabular-nums">
+                  {fmtSec(Math.floor(translationCurrentTime))} / {fmtSec(Math.floor(translationDuration))}
+                </span>
+
+                {/* Download */}
+                <a
+                  href={result.audioUrl}
+                  download={`traduccion-${result.targetLanguageName.toLowerCase()}.mp3`}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/30 hover:text-white transition-colors flex-shrink-0"
+                  title="Descargar"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                </a>
+              </div>
               <div className="grid gap-3">
                 <div className="rounded-xl p-4" style={{ background: "#111111", border: "1px solid #222222" }}>
                   <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#666666" }}>Transcripción (español)</p>
