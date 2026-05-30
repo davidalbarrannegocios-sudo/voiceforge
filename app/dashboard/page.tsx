@@ -2927,6 +2927,11 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
   const [translationCurrentTime, setTranslationCurrentTime] = useState(0);
   const [translationDuration, setTranslationDuration] = useState(0);
 
+  // History audio player
+  const historyAudioRef = useRef<HTMLAudioElement>(null);
+  const [activeTranslationId, setActiveTranslationId] = useState<string | null>(null);
+  const [isHistoryPlaying, setIsHistoryPlaying] = useState(false);
+
   const clonedVoices = voices.filter((v) => !v.isSystem);
   const FREE_LIMIT = 2;
   const isFreeExhausted = plan === "free" && transcriptionUsed >= FREE_LIMIT;
@@ -3401,6 +3406,15 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
         </div>
       )}
 
+      {/* Hidden audio for history playback */}
+      <audio
+        ref={historyAudioRef}
+        onPlay={() => setIsHistoryPlaying(true)}
+        onPause={() => setIsHistoryPlaying(false)}
+        onEnded={() => { setIsHistoryPlaying(false); setActiveTranslationId(null); }}
+        className="hidden"
+      />
+
       {/* ── Historial tab ── */}
       {innerTab === "history" && (
         <div>
@@ -3445,7 +3459,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                     <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>Estado</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>Fecha</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>Retención</th>
-                    <th className="px-4 py-3" />
+                    <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -3454,7 +3468,8 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                     return (
                       <tr
                         key={task.id}
-                        style={{ background: i % 2 === 0 ? "#000000" : "#111111", borderBottom: i < filteredHistory.length - 1 ? "1px solid #1a1a1a" : "none" }}
+                        className={`transition-colors ${activeTranslationId === task.id ? "bg-white/[0.04]" : ""}`}
+                        style={{ background: activeTranslationId === task.id ? undefined : i % 2 === 0 ? "#000000" : "#111111", borderBottom: i < filteredHistory.length - 1 ? "1px solid #1a1a1a" : "none" }}
                       >
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
@@ -3496,17 +3511,41 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                               : <span style={{ fontSize: "11px", color: daysLeft <= 3 ? "#f59e0b" : "#6b7280" }}>Expira en {daysLeft}d</span>;
                           })()}
                         </td>
-                        <td className="px-4 py-3 text-right">
-                          {task.audioUrl && task.status !== "expired" && (
-                            <a
-                              href={task.audioUrl}
-                              download={`traduccion-${task.targetLanguage}-${task.id}.mp3`}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-white/10"
-                              style={{ background: "rgba(255,255,255,0.06)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.1)" }}
-                            >
-                              <Download size={11} /> Descargar
-                            </a>
-                          )}
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1">
+                            {task.audioUrl && task.status !== "expired" && (
+                              <button
+                                onClick={() => {
+                                  if (!historyAudioRef.current) return
+                                  if (activeTranslationId === task.id && isHistoryPlaying) {
+                                    historyAudioRef.current.pause()
+                                  } else {
+                                    historyAudioRef.current.src = task.audioUrl!
+                                    historyAudioRef.current.play()
+                                    setActiveTranslationId(task.id)
+                                  }
+                                }}
+                                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors text-white/40 hover:text-white"
+                                title={activeTranslationId === task.id && isHistoryPlaying ? "Pausar" : "Reproducir"}
+                              >
+                                {activeTranslationId === task.id && isHistoryPlaying ? (
+                                  <Pause className="w-3.5 h-3.5" />
+                                ) : (
+                                  <Play className="w-3.5 h-3.5 ml-0.5" />
+                                )}
+                              </button>
+                            )}
+                            {task.audioUrl && task.status !== "expired" && (
+                              <a
+                                href={task.audioUrl}
+                                download={`traduccion-${task.targetLanguage}-${task.id}.mp3`}
+                                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors text-white/40 hover:text-white"
+                                title="Descargar"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
