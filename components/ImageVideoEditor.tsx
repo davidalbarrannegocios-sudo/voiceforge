@@ -96,6 +96,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
   const [galleryImages, setGalleryImages] = useState<{ id: string; imageUrl: string; prompt: string; model: string; aspectRatio: string }[]>([])
   const [galleryLoading, setGalleryLoading] = useState(false)
   const [rightView, setRightView] = useState<'history' | 'explore'>('history')
+  const [videoProgress, setVideoProgress] = useState(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const chatRef = useRef<HTMLDivElement>(null)
 
@@ -275,8 +276,10 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
       return
     }
 
+    setVideoProgress(0)
+
     const pollVideo = async () => {
-      for (let i = 0; i < 60; i++) {
+      for (let i = 0; i < 120; i++) {
         await new Promise(r => setTimeout(r, 5000))
         try {
           const pollRes = await fetch('/api/video/poll', {
@@ -286,6 +289,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
           })
           const pollData = await pollRes.json()
           console.log('[video poll]', i, pollData.status)
+
+          if (pollData.progress != null) setVideoProgress(pollData.progress)
 
           if (pollData.status === 'Ready' && pollData.videoUrl) {
             onHistoryUpdate({
@@ -424,8 +429,28 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                     </div>
 
                     {mode === 'video' ? (
-                      <div className={`${ASPECT_CLASSES[aspectRatio] ?? 'aspect-video'} max-w-sm rounded-xl bg-white/5 border border-white/[0.08] animate-pulse flex items-center justify-center`}>
-                        <Video className="w-6 h-6 text-white/10" />
+                      <div className={`relative overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.03] max-w-[480px] ${ASPECT_CLASSES[aspectRatio] ?? 'aspect-video'}`}>
+                        <div className="absolute inset-0 overflow-hidden">
+                          <div
+                            className="absolute inset-0 -translate-x-full"
+                            style={{
+                              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent)',
+                              animation: 'shimmer 2s infinite',
+                            }}
+                          />
+                        </div>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6">
+                          <p className="text-3xl font-bold text-white/50 font-mono tabular-nums">
+                            {videoProgress}%
+                          </p>
+                          <div className="w-full max-w-[200px] h-1 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-white/40 rounded-full transition-all duration-500"
+                              style={{ width: `${videoProgress}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-white/25">Generando vídeo con xAI Grok...</p>
+                        </div>
                       </div>
                     ) : (
                       <div className={`grid gap-2 ${
