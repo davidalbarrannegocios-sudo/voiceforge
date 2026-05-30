@@ -777,6 +777,7 @@ function GenerateTab({
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [isAutoTagging, setIsAutoTagging] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const tagsAreaRef = useRef<HTMLDivElement>(null);
   const [rightTab, setRightTab] = useState<"ajustes" | "historial">("ajustes");
   const { t } = useLang();
@@ -1138,20 +1139,30 @@ function GenerateTab({
                     onChange={async (e) => {
                       const file = e.target.files?.[0]
                       if (!file) return
-                      e.target.value = ''
 
-                      if (file.name.endsWith('.txt')) {
-                        const reader = new FileReader()
-                        reader.onload = ev => setText(ev.target?.result as string ?? '')
-                        reader.readAsText(file)
-                        return
+                      setIsImporting(true)
+                      try {
+                        if (file.name.endsWith('.txt')) {
+                          await new Promise<void>(resolve => {
+                            const reader = new FileReader()
+                            reader.onload = ev => { setText(ev.target?.result as string ?? ''); resolve() }
+                            reader.readAsText(file)
+                          })
+                          return
+                        }
+
+                        const formData = new FormData()
+                        formData.append('file', file)
+                        const res = await fetch('/api/extract-text', { method: 'POST', body: formData })
+                        const data = await res.json()
+                        if (data.text) setText(data.text)
+                        if (data.error) console.error('Import error:', data.error)
+                      } catch (err) {
+                        console.error('Import failed:', err)
+                      } finally {
+                        setIsImporting(false)
+                        e.target.value = ''
                       }
-
-                      const formData = new FormData()
-                      formData.append('file', file)
-                      const res = await fetch('/api/extract-text', { method: 'POST', body: formData })
-                      const data = await res.json()
-                      if (data.text) setText(data.text)
                     }}
                   />
                 </label>
@@ -5143,6 +5154,17 @@ export default function DashboardPage() {
           </div>
         )}{/* end page content */}
       </main>
+
+      {isImporting && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="relative bg-[#111] border border-white/10 rounded-2xl px-8 py-6 flex flex-col items-center gap-3 shadow-2xl">
+            <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            <p className="text-sm text-white/70 font-medium">Importando archivo...</p>
+            <p className="text-xs text-white/30">Extrayendo texto</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
