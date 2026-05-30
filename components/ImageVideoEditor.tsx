@@ -534,15 +534,17 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
         <div className="flex-1 flex flex-col overflow-hidden">
 
           {/* Fixed warning banner */}
-          <div className="flex-shrink-0 flex items-start gap-2 px-4 py-2.5 bg-orange-500/[0.08] border-b border-orange-500/15">
-            <svg className="w-3.5 h-3.5 text-orange-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.07 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-            <p className="text-[11px] text-orange-400/80 leading-relaxed">
-              Las imágenes y vídeos se mantienen mientras no recargues la página.{' '}
-              <strong className="text-orange-400">Descárgalos antes de salir.</strong>
-            </p>
+          <div className="flex-shrink-0 mx-4 mt-3 mb-1">
+            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-orange-500/[0.08] border border-orange-500/20">
+              <svg className="w-4 h-4 text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.07 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <p className="text-xs text-orange-400/90 leading-relaxed">
+                Las imágenes y vídeos se mantienen mientras no recargues o cierres la página.
+                <strong className="text-orange-400 font-semibold"> Descárgalos antes de salir.</strong>
+              </p>
+            </div>
           </div>
 
           {/* Scrollable history */}
