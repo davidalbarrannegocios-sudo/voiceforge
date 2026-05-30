@@ -40,8 +40,20 @@ export async function POST(req: NextRequest) {
     }),
   })
 
-  const data = await res.json()
-  console.log('[xAI video] full response:', JSON.stringify(data))
+  const text = await res.text()
+  console.log('[xAI video generate] full response text:', text)
+
+  let data: Record<string, unknown>
+  try {
+    data = JSON.parse(text)
+  } catch {
+    console.error('[xAI video generate] not JSON:', text)
+    return NextResponse.json({ error: 'xAI response not JSON' }, { status: 500 })
+  }
+
+  console.log('[xAI video generate] parsed:', JSON.stringify(data))
+  console.log('[xAI video generate] request_id:', data.request_id)
+  console.log('[xAI video generate] id:', data.id)
 
   if (!res.ok) {
     return NextResponse.json({ error: `xAI error: ${JSON.stringify(data)}` }, { status: 500 })

@@ -12,6 +12,10 @@ export async function POST(req: NextRequest) {
 
   const XAI_KEY = process.env.XAI_API_KEY!
 
+  console.log('[xAI poll] taskId received:', taskId)
+  console.log('[xAI poll] taskId type:', typeof taskId)
+  console.log('[xAI poll] url:', `https://api.x.ai/v1/videos/generations/${taskId}`)
+
   const urls = [
     `https://api.x.ai/v1/videos/generations/${taskId}`,
     `https://api.x.ai/v1/video/generations/${taskId}`,
