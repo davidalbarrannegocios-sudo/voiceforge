@@ -1220,7 +1220,6 @@ export function VoiceBrowser({
       new Promise<boolean>((resolve) => {
         const audio = new Audio(url);
         let done = false;
-        let tid: ReturnType<typeof setTimeout>;
         const finish = (ok: boolean) => {
           if (!done) { done = true; clearTimeout(tid); resolve(ok); }
         };
@@ -1233,7 +1232,7 @@ export function VoiceBrowser({
         };
         audio.play().catch(() => finish(false));
         // Only abort the URL attempt if playback hasn't started within 3 s
-        tid = setTimeout(() => { audio.src = ""; finish(false); }, 3000);
+        const tid = setTimeout(() => { audio.src = ""; finish(false); }, 3000);
       });
 
     const fastUrls = [
