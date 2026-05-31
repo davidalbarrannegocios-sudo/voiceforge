@@ -4663,7 +4663,21 @@ interface TeamData {
 
 const ENTERPRISE_CREDITS = 5_000_000;
 
-function TeamTab() {
+type TeamSubTab = "Miembros" | "Uso" | "Planes" | "Facturación";
+
+function TeamTab({
+  plan = "free",
+  credits = 0,
+  extraCredits = 0,
+  nextRenewalDate,
+  onNavigateToBilling,
+}: {
+  plan?: string;
+  credits?: number | null;
+  extraCredits?: number;
+  nextRenewalDate?: string | null;
+  onNavigateToBilling?: () => void;
+}) {
   const [team, setTeam] = useState<TeamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [teamName, setTeamName] = useState("");
@@ -4676,6 +4690,9 @@ function TeamTab() {
   const [success, setSuccess] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingTeam, setDeletingTeam] = useState(false);
+  const [activeSubTab, setActiveSubTab] = useState<TeamSubTab>("Miembros");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showInviteForm, setShowInviteForm] = useState(false);
 
   useEffect(() => {
     fetch("/api/team")
@@ -4730,6 +4747,7 @@ function TeamTab() {
       setTeam((t) => t ? { ...t, members: [...t.members, data.member] } : t);
       setPercentages((p) => ({ ...p, [data.member.id]: 0 }));
       setInviteEmail("");
+      setShowInviteForm(false);
       flash("success", "Miembro añadido al equipo");
     } finally {
       setInviting(false);
@@ -4781,13 +4799,29 @@ function TeamTab() {
 
   const totalAssigned = Object.values(percentages).reduce((sum, p) => sum + (p || 0), 0);
   const ownerPercent = 100 - totalAssigned;
-  const ownerCredits = Math.floor(ENTERPRISE_CREDITS * ownerPercent / 100);
 
-  const cardStyle = { background: "#111111", borderColor: "#222222" };
+  const PLAN_LABELS: Record<string, string> = { free: "Free", starter: "Starter", pro: "Pro", enterprise: "Enterprise" };
+  const PLAN_MEMBER_LIMITS: Record<string, number> = { free: 2, starter: 5, pro: 10, enterprise: 50 };
+  const PLAN_CREDIT_LIMITS: Record<string, number> = { free: 10_000, starter: 100_000, pro: 500_000, enterprise: ENTERPRISE_CREDITS };
+
+  const memberLimit = PLAN_MEMBER_LIMITS[plan] ?? 5;
+  const creditLimit = PLAN_CREDIT_LIMITS[plan] ?? 10_000;
+  const totalCredits = (credits ?? 0) + extraCredits;
+  const creditPct = Math.min(100, Math.round((totalCredits / creditLimit) * 100));
+  const renewalLabel = nextRenewalDate
+    ? `Próxima recarga: ${new Date(nextRenewalDate).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}`
+    : null;
+
+  const filteredMembers = team
+    ? team.members.filter((m) => {
+        const q = searchQuery.toLowerCase();
+        return !q || (m.name ?? "").toLowerCase().includes(q) || m.email.toLowerCase().includes(q);
+      })
+    : [];
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto py-10 flex justify-center">
+      <div className="py-16 flex justify-center">
         <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
       </div>
     );
@@ -4795,18 +4829,18 @@ function TeamTab() {
 
   if (!team) {
     return (
-      <div className="max-w-lg mx-auto py-10 space-y-6">
-        <div className="rounded-2xl border p-8 text-center space-y-3" style={cardStyle}>
+      <div className="max-w-md mx-auto py-10 space-y-4">
+        <div className="rounded-2xl p-8 text-center space-y-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto" style={{ background: "rgba(255,255,255,0.06)" }}>
-            <Users size={26} style={{ color: "#ffffff" }} />
+            <Users size={26} className="text-white" />
           </div>
           <h2 className="text-lg font-bold text-white">Crear tu equipo</h2>
-          <p className="text-sm" style={{ color: "#888888" }}>
-            Crea un equipo para distribuir caracteres mensuales entre tus miembros automáticamente cada mes.
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
+            Crea un equipo para distribuir créditos mensuales entre tus miembros automáticamente.
           </p>
         </div>
-        <div className="rounded-2xl border p-6 space-y-4" style={cardStyle}>
-          <label className="block text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>
+        <div className="rounded-2xl p-6 space-y-4" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <label className="block text-xs uppercase tracking-wider font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>
             Nombre del equipo
           </label>
           <input
@@ -4814,16 +4848,15 @@ function TeamTab() {
             value={teamName}
             onChange={(e) => setTeamName(e.target.value)}
             placeholder="Ej. Equipo de Marketing"
-            className="w-full px-4 py-2.5 rounded-xl text-sm text-gray-200 focus:outline-none"
-            style={{ background: "#111111", border: "1px solid #222222" }}
+            className="w-full px-4 py-2.5 rounded-lg text-sm text-white focus:outline-none"
+            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
           />
-          {error && <p className="text-sm" style={{ color: "#f87171" }}>{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
           <button
             onClick={handleCreate}
             disabled={creating || !teamName.trim()}
-            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
-            style={{ background: "#ffffff" }}
+            className="w-full py-2.5 rounded-lg text-sm font-medium bg-white text-black disabled:opacity-50"
           >
             {creating ? "Creando..." : "Crear equipo"}
           </button>
@@ -4833,208 +4866,336 @@ function TeamTab() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-6 space-y-5">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.06)" }}>
-          <Users size={18} style={{ color: "#ffffff" }} />
+    <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
+
+      {/* ── Stats header ── */}
+      <div className="px-6 py-5 grid grid-cols-3 gap-6" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+        {/* Block 1 — Plan */}
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.4)" }}>Plan actual</p>
+          <p className="text-2xl font-bold text-white">{PLAN_LABELS[plan] ?? plan}</p>
+          {renewalLabel && <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>{renewalLabel}</p>}
         </div>
-        <div>
-          <h2 className="text-base font-bold text-white">{team.name}</h2>
-          <p className="text-xs" style={{ color: "#666666" }}>{team.members.length} miembro{team.members.length !== 1 ? "s" : ""}</p>
+        {/* Block 2 — Members */}
+        <div className="space-y-1 pl-6" style={{ borderLeft: "1px solid rgba(255,255,255,0.1)" }}>
+          <p className="text-xs uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.4)" }}>Miembros</p>
+          <p className="text-2xl font-bold text-white">
+            {team.members.length}{" "}
+            <span className="text-base font-normal" style={{ color: "rgba(255,255,255,0.4)" }}>/ {memberLimit} incluidos</span>
+          </p>
+          <button
+            onClick={onNavigateToBilling}
+            className="text-sm underline underline-offset-2 transition-colors"
+            style={{ color: "rgba(255,255,255,0.6)" }}
+          >
+            Actualizar plan
+          </button>
+        </div>
+        {/* Block 3 — Credits */}
+        <div className="space-y-1.5 pl-6" style={{ borderLeft: "1px solid rgba(255,255,255,0.1)" }}>
+          <p className="text-xs uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.4)" }}>Créditos restantes</p>
+          <p className="text-2xl font-bold text-white">
+            {totalCredits.toLocaleString("es-ES")}{" "}
+            <span className="text-base font-normal" style={{ color: "rgba(255,255,255,0.4)" }}>/ {creditLimit.toLocaleString("es-ES")}</span>
+          </p>
+          <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
+            <div className="h-full rounded-full bg-white transition-all" style={{ width: `${creditPct}%` }} />
+          </div>
+          {renewalLabel && <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>{renewalLabel}</p>}
         </div>
       </div>
 
-      {/* Credits summary */}
-      <div className="rounded-2xl border p-5 space-y-3" style={cardStyle}>
-        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>
-          Resumen de créditos este mes
-        </p>
-        <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-xl p-3 text-center" style={{ background: "#111111", border: "1px solid #1a1a1a" }}>
-            <p className="text-xs mb-1" style={{ color: "#666666" }}>Total equipo</p>
-            <p className="text-sm font-bold text-white">{ENTERPRISE_CREDITS.toLocaleString("es-ES")}</p>
-          </div>
-          <div className="rounded-xl p-3 text-center" style={{ background: "#111111", border: "1px solid #1a1a1a" }}>
-            <p className="text-xs mb-1" style={{ color: "#666666" }}>Tu parte ({ownerPercent}%)</p>
-            <p className="text-sm font-bold" style={{ color: "#aaaaaa" }}>{ownerCredits.toLocaleString("es-ES")}</p>
-          </div>
-          <div className="rounded-xl p-3 text-center" style={{ background: "#111111", border: "1px solid #1a1a1a" }}>
-            <p className="text-xs mb-1" style={{ color: "#666666" }}>Distribuidos</p>
-            <p className="text-sm font-bold" style={{ color: totalAssigned > 100 ? "#f87171" : "#4ade80" }}>{totalAssigned}%</p>
-          </div>
-        </div>
-        {totalAssigned > 100 && (
-          <p className="text-xs font-medium text-center" style={{ color: "#f87171" }}>
-            Los porcentajes superan el 100%. Ajústalos antes de guardar.
-          </p>
-        )}
+      {/* ── Sub-tab nav ── */}
+      <div className="flex px-6" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+        {(["Miembros", "Uso", "Planes", "Facturación"] as TeamSubTab[]).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveSubTab(tab)}
+            className="px-1 py-3 text-sm mr-6 transition-colors"
+            style={activeSubTab === tab
+              ? { color: "#ffffff", borderBottom: "2px solid #ffffff", marginBottom: "-1px" }
+              : { color: "rgba(255,255,255,0.4)" }}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
 
-      {/* Members */}
-      <div className="rounded-2xl border p-5 space-y-4" style={cardStyle}>
-        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>
-          Miembros y distribución
-        </p>
+      {/* ── Tab content ── */}
+      <div className="p-6 space-y-4">
+        {error && <p className="text-sm text-red-400">{error}</p>}
+        {success && <p className="text-sm text-green-400">{success}</p>}
 
-        {team.members.length === 0 ? (
-          <p className="text-sm text-center py-6" style={{ color: "#666666" }}>
-            Aún no hay miembros. Invita a alguien abajo.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {team.members.map((member) => {
-              const pct = percentages[member.id] ?? 0;
-              const chars = Math.floor(ENTERPRISE_CREDITS * pct / 100);
-              return (
-                <div key={member.id} className="rounded-xl p-4 space-y-3" style={{ background: "#111111", border: "1px solid #1a1a1a" }}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                        style={{ background: "#ffffff" }}>
-                        {(member.name ?? member.email)[0].toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{member.name ?? member.email}</p>
-                        <p className="text-xs truncate" style={{ color: "#666666" }}>{member.email}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleRemove(member.id)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ml-2"
-                      style={{ color: "#666666", background: "transparent" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = "#666666")}
-                      title="Eliminar miembro"
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={pct}
-                      onChange={(e) => setPercentages((p) => ({ ...p, [member.id]: Number(e.target.value) }))}
-                      className="flex-1"
-                    />
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={pct}
-                        onChange={(e) => setPercentages((p) => ({ ...p, [member.id]: Math.min(100, Math.max(0, Number(e.target.value))) }))}
-                        className="w-14 px-2 py-1 rounded-lg text-sm text-center text-white focus:outline-none"
-                        style={{ background: "#0a0a0a", border: "1px solid #222222" }}
-                      />
-                      <span className="text-xs" style={{ color: "#666666" }}>%</span>
-                    </div>
-                  </div>
-                  <p className="text-xs" style={{ color: "#666666" }}>
-                    {chars.toLocaleString("es-ES")} caracteres / mes
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {error && <p className="text-sm px-1" style={{ color: "#f87171" }}>{error}</p>}
-        {success && <p className="text-sm px-1" style={{ color: "#4ade80" }}>{success}</p>}
-
-        {team.members.length > 0 && (
+        {/* ── Miembros tab ── */}
+        {activeSubTab === "Miembros" && (
           <>
-            <button
-              onClick={handleSaveDistribution}
-              disabled={saving || totalAssigned > 100}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50 transition-all"
-              style={{ background: "#ffffff" }}
-            >
-              {saving ? "Guardando..." : "Guardar distribución"}
-            </button>
-            <p className="text-xs text-center leading-relaxed" style={{ color: "#666666" }}>
-              Los cambios se aplican inmediatamente. En cada renovación mensual los créditos se redistribuyen automáticamente.
-            </p>
+            {/* Search + invite row */}
+            <div className="flex gap-3 items-center">
+              <div className="flex-1 relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" stroke="rgba(255,255,255,0.3)">
+                  <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar por email o nombre..."
+                  className="w-full pl-9 pr-3 py-2 rounded-lg text-sm text-white focus:outline-none"
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+                />
+              </div>
+              <button
+                onClick={() => setShowInviteForm((v) => !v)}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-white text-black flex-shrink-0 transition-opacity hover:opacity-90"
+              >
+                Invitar miembro
+              </button>
+            </div>
+
+            {/* Invite form */}
+            {showInviteForm && (
+              <div className="rounded-xl p-4 space-y-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>El usuario debe tener cuenta activa en Elite Labs.</p>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="email@ejemplo.com"
+                    className="flex-1 px-3 py-2 rounded-lg text-sm text-white focus:outline-none"
+                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+                    onKeyDown={(e) => e.key === "Enter" && handleInvite()}
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleInvite}
+                    disabled={inviting || !inviteEmail.trim()}
+                    className="px-4 py-2 rounded-lg text-sm font-medium bg-white text-black disabled:opacity-50 flex-shrink-0"
+                  >
+                    {inviting ? "..." : "Invitar"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Members table */}
+            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                    {["USUARIO", "EMAIL", "ROL", "ESTADO", "ACCIONES"].map((h) => (
+                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold tracking-wider" style={{ color: "rgba(255,255,255,0.4)" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredMembers.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-12 text-center text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>
+                        {searchQuery ? "Sin resultados para esa búsqueda." : "No hay miembros aún. Invita a alguien arriba."}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredMembers.map((member) => (
+                      <tr key={member.id} className="hover:bg-white/5 transition-colors" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 bg-white/10 text-white">
+                              {(member.name ?? member.email)[0].toUpperCase()}
+                            </div>
+                            <span className="text-white font-medium truncate">{member.name ?? member.email.split("@")[0]}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3" style={{ color: "rgba(255,255,255,0.5)" }}>{member.email}</td>
+                        <td className="px-4 py-3">
+                          <span className="text-xs px-2 py-0.5 rounded bg-white/10 text-white">Miembro</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-400">Activo</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => handleRemove(member.id)}
+                            className="text-xs px-3 py-1.5 rounded-lg transition-colors text-red-400 hover:bg-red-500/10"
+                          >
+                            Eliminar
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Danger zone */}
+            <div className="rounded-xl p-4 mt-2" style={{ border: "1px solid rgba(239,68,68,0.2)", background: "rgba(239,68,68,0.05)" }}>
+              <p className="text-sm uppercase tracking-wider mb-3 text-red-400">Zona de peligro</p>
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  Al eliminar el equipo los créditos asignados a los miembros se devolverán a tu cuenta.
+                </p>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
+                >
+                  Eliminar equipo
+                </button>
+              </div>
+            </div>
           </>
         )}
+
+        {/* ── Uso tab ── */}
+        {activeSubTab === "Uso" && (
+          <>
+            {/* Owner row */}
+            <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-white/10 text-white">P</div>
+                  <div>
+                    <p className="text-sm font-medium text-white">Propietario (tú)</p>
+                    <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{ownerPercent}% — {Math.floor(ENTERPRISE_CREDITS * ownerPercent / 100).toLocaleString("es-ES")} créditos</p>
+                  </div>
+                </div>
+                <span className="text-xs px-2 py-0.5 rounded bg-white/10 text-white">Propietario</span>
+              </div>
+              <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
+                <div className="h-full rounded-full bg-white" style={{ width: `${ownerPercent}%` }} />
+              </div>
+            </div>
+
+            {team.members.length === 0 ? (
+              <p className="text-sm text-center py-8" style={{ color: "rgba(255,255,255,0.4)" }}>
+                Aún no hay miembros. Ve a <button className="text-white underline" onClick={() => setActiveSubTab("Miembros")}>Miembros</button> para invitar.
+              </p>
+            ) : (
+              <>
+                {team.members.map((member) => {
+                  const pct = percentages[member.id] ?? 0;
+                  const chars = Math.floor(ENTERPRISE_CREDITS * pct / 100);
+                  return (
+                    <div key={member.id} className="rounded-xl p-4 space-y-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-white/10 text-white">
+                            {(member.name ?? member.email)[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-white">{member.name ?? member.email.split("@")[0]}</p>
+                            <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{chars.toLocaleString("es-ES")} créditos / mes</p>
+                          </div>
+                        </div>
+                        <span className="text-sm font-semibold text-white">{pct}%</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="range"
+                          min={0}
+                          max={100}
+                          value={pct}
+                          onChange={(e) => setPercentages((p) => ({ ...p, [member.id]: Number(e.target.value) }))}
+                          className="flex-1"
+                        />
+                        <input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={pct}
+                          onChange={(e) => setPercentages((p) => ({ ...p, [member.id]: Math.min(100, Math.max(0, Number(e.target.value))) }))}
+                          className="w-14 px-2 py-1 rounded-lg text-sm text-center text-white focus:outline-none"
+                          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+                        />
+                      </div>
+                      <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
+                        <div className="h-full rounded-full bg-white transition-all" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {totalAssigned > 100 && (
+                  <p className="text-xs font-medium text-center text-red-400">
+                    Los porcentajes superan el 100%. Ajústalos antes de guardar.
+                  </p>
+                )}
+
+                <button
+                  onClick={handleSaveDistribution}
+                  disabled={saving || totalAssigned > 100}
+                  className="w-full py-2.5 rounded-lg text-sm font-medium bg-white text-black disabled:opacity-50 transition-opacity"
+                >
+                  {saving ? "Guardando..." : "Guardar distribución"}
+                </button>
+                <p className="text-xs text-center" style={{ color: "rgba(255,255,255,0.3)" }}>
+                  Los créditos se redistribuyen automáticamente en cada renovación mensual.
+                </p>
+              </>
+            )}
+          </>
+        )}
+
+        {/* ── Planes tab ── */}
+        {activeSubTab === "Planes" && (
+          <div className="py-12 text-center space-y-4">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto" style={{ background: "rgba(255,255,255,0.06)" }}>
+              <CreditCard size={22} className="text-white" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-white mb-1">Planes disponibles</h3>
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Consulta y cambia tu plan desde la página de facturación.</p>
+            </div>
+            <button
+              onClick={onNavigateToBilling}
+              className="px-6 py-2.5 rounded-lg text-sm font-medium bg-white text-black transition-opacity hover:opacity-90"
+            >
+              Ver planes →
+            </button>
+          </div>
+        )}
+
+        {/* ── Facturación tab ── */}
+        {activeSubTab === "Facturación" && (
+          <div className="py-12 text-center space-y-4">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto" style={{ background: "rgba(255,255,255,0.06)" }}>
+              <CreditCard size={22} className="text-white" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-white mb-1">Facturación y pagos</h3>
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Gestiona tus métodos de pago, historial de facturas y renovaciones.</p>
+            </div>
+            <button
+              onClick={onNavigateToBilling}
+              className="px-6 py-2.5 rounded-lg text-sm font-medium bg-white text-black transition-opacity hover:opacity-90"
+            >
+              Ir a facturación →
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Invite */}
-      <div className="rounded-2xl border p-5 space-y-3" style={cardStyle}>
-        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#666666" }}>
-          Invitar miembro
-        </p>
-        <p className="text-xs" style={{ color: "#666666" }}>
-          El usuario debe tener cuenta activa en Elite Labs.
-        </p>
-        <div className="flex gap-2">
-          <input
-            type="email"
-            value={inviteEmail}
-            onChange={(e) => setInviteEmail(e.target.value)}
-            placeholder="email@ejemplo.com"
-            className="flex-1 px-3 py-2.5 rounded-xl text-sm text-gray-200 focus:outline-none"
-            style={{ background: "#111111", border: "1px solid #222222" }}
-            onKeyDown={(e) => e.key === "Enter" && handleInvite()}
-          />
-          <button
-            onClick={handleInvite}
-            disabled={inviting || !inviteEmail.trim()}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50 flex-shrink-0"
-            style={{ background: "#ffffff" }}
-          >
-            {inviting ? "..." : "Invitar"}
-          </button>
-        </div>
-      </div>
-
-      {/* Danger zone */}
-      <div className="rounded-2xl border p-5" style={{ background: "#111111", borderColor: "#3a1a1a" }}>
-        <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#7a3a3a" }}>
-          Zona de peligro
-        </p>
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-xs" style={{ color: "#666666" }}>
-            Al eliminar el equipo los créditos asignados a los miembros se devolverán a tu cuenta.
-          </p>
-          <button
-            onClick={() => setShowDeleteModal(true)}
-            className="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
-            style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.18)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; }}
-          >
-            Eliminar equipo
-          </button>
-        </div>
-      </div>
-
-      {/* Delete confirmation modal */}
+      {/* ── Delete confirmation modal ── */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
-          <div className="rounded-2xl border p-6 w-full max-w-sm space-y-4" style={{ background: "#111111", borderColor: "#222222" }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.8)" }}>
+          <div className="rounded-2xl p-6 w-full max-w-sm space-y-4" style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.1)" }}>
             <h3 className="text-base font-bold text-white">¿Eliminar el equipo &ldquo;{team.name}&rdquo;?</h3>
-            <p className="text-sm" style={{ color: "#888888" }}>
-              Los créditos asignados a los miembros se devolverán automáticamente a tu cuenta antes de eliminar el equipo. Los miembros perderán acceso inmediatamente.
+            <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
+              Los créditos asignados a los miembros se devolverán automáticamente a tu cuenta. Los miembros perderán acceso inmediatamente.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
                 disabled={deletingTeam}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50"
-                style={{ background: "#1a1a1a", border: "1px solid #222222", color: "#888888" }}
+                className="flex-1 py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
+                style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)" }}
               >
                 Cancelar
               </button>
               <button
                 onClick={handleDeleteTeam}
                 disabled={deletingTeam}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, #ef4444, #dc2626)" }}
+                className="flex-1 py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-50 bg-red-600 hover:bg-red-700 transition-colors"
               >
                 {deletingTeam ? "Eliminando..." : "Eliminar equipo"}
               </button>
@@ -5309,7 +5470,15 @@ export default function DashboardPage() {
                 onBilling={() => setActiveTab("billing")}
               />
             )}
-            {activeTab === "team" && <TeamTab />}
+            {activeTab === "team" && (
+              <TeamTab
+                plan={effectivePlan}
+                credits={credits}
+                extraCredits={extraCredits}
+                nextRenewalDate={nextRenewalDate}
+                onNavigateToBilling={() => setActiveTab("billing")}
+              />
+            )}
           </div>
         )}{/* end page content */}
       </main>
