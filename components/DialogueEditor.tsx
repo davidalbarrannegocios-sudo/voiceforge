@@ -3,14 +3,19 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import {
   Play, Pause, Download, Loader2, ChevronDown,
-  Mic, X, Upload, Plus, Music2,
+  Mic, X, Upload, Plus, Music2, GripVertical,
 } from 'lucide-react'
 import { VoiceBrowser, SelectedVoice } from '@/app/dashboard/VoiceBrowser'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface Character {
+interface DialogueLine {
   id: string
+  characterName: string
+  text: string
+}
+
+interface Character {
   name: string
   voiceId: string
   voiceName: string
@@ -20,9 +25,10 @@ interface Character {
   volume: number
 }
 
-interface DialogueLine {
-  characterId: string
-  text: string
+interface GenerationEntry {
+  url: string
+  format: 'mp3' | 'wav'
+  createdAt: number
 }
 
 interface Voice {
@@ -31,14 +37,8 @@ interface Voice {
   model?: string
 }
 
-interface GenerationEntry {
-  url: string
-  format: 'mp3' | 'wav'
-  createdAt: number
-}
-
 const CHARACTER_COLORS = [
-  '#60a5fa', '#f472b6', '#34d399', '#fb923c',
+  '#60a5fa', '#34d399', '#fb923c', '#f472b6',
   '#a78bfa', '#fbbf24', '#f87171', '#38bdf8',
 ]
 
@@ -61,31 +61,26 @@ const DIALOGUE_LANGUAGES = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function parseDialogueText(text: string): DialogueLine[] | null {
-  const lines = text.split('\n').filter(l => l.trim())
-  const result: DialogueLine[] = []
-  const charPattern = /^\(([^)]+)\)\s*(.+)$/
-  for (const line of lines) {
-    const match = line.trim().match(charPattern)
-    if (!match) return null
-    result.push({ characterId: match[1].trim(), text: match[2].trim() })
-  }
-  return result.length > 0 ? result : null
-}
-
-function extractCharacters(lines: DialogueLine[]): string[] {
-  const seen = new Set<string>()
-  const chars: string[] = []
-  for (const line of lines) {
-    if (!seen.has(line.characterId)) { seen.add(line.characterId); chars.push(line.characterId) }
-  }
-  return chars
+function uid() {
+  return Math.random().toString(36).slice(2, 10)
 }
 
 function formatTime(s: number): string {
   const m = Math.floor(s / 60)
   const sec = Math.floor(s % 60)
   return `${m}:${sec.toString().padStart(2, '0')}`
+}
+
+function parseImportText(text: string): { characterName: string; text: string }[] | null {
+  const lines = text.split('\n').filter(l => l.trim())
+  const pattern = /^\(([^)]+)\)\s*(.+)$/
+  const result: { characterName: string; text: string }[] = []
+  for (const line of lines) {
+    const match = line.trim().match(pattern)
+    if (!match) return null
+    result.push({ characterName: match[1].trim(), text: match[2].trim() })
+  }
+  return result.length > 0 ? result : null
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -101,12 +96,20 @@ interface Props {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, language }: Props) {
-  // Script state
-  const [rawText, setRawText] = useState('')
-  const [parsedLines, setParsedLines] = useState<DialogueLine[] | null>(null)
-  const [characters, setCharacters] = useState<Character[]>([])
-  const [parseError, setParseError] = useState<string | null>(null)
-  const [selectingVoiceFor, setSelectingVoiceFor] = useState<string | null>(null)
+  // Lines + characters
+  const [lines, setLines] = useState<DialogueLine[]>([
+    { id: uid(), characterName: 'Narrador', text: 'Era una noche oscura y tormentosa.' },
+    { id: uid(), characterName: 'Personaje 1', text: '¿Has escuchado lo que pasó anoche?' },
+    { id: uid(), characterName: 'Personaje 2', text: 'No, cuéntame. Estaba durmiendo.' },
+  ])
+  const [characters, setCharacters] = useState<Character[]>([
+    { name: 'Narrador', voiceId: '', voiceName: 'Voz estándar', model: 'elite-pro', color: CHARACTER_COLORS[0], speed: 1, volume: 1 },
+    { name: 'Personaje 1', voiceId: '', voiceName: 'Voz estándar', model: 'elite-pro', color: CHARACTER_COLORS[1], speed: 1, volume: 1 },
+    { name: 'Personaje 2', voiceId: '', voiceName: 'Voz estándar', model: 'elite-pro', color: CHARACTER_COLORS[2], speed: 1, volume: 1 },
+  ])
+  const [selectedLineId, setSelectedLineId] = useState<string | null>(null)
+  const [pickerLineId, setPickerLineId] = useState<string | null>(null)
+  const [newCharInput, setNewCharInput] = useState('')
 
   // Translation
   const [isTranslating, setIsTranslating] = useState(false)
@@ -129,82 +132,121 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
   const [duration, setDuration] = useState(0)
   const audioRef = useRef<HTMLAudioElement>(null)
 
-  // Preview
-  const [previewAudio, setPreviewAudio] = useState<string | null>(null)
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false)
+  // VoiceBrowser
+  const [selectingVoiceFor, setSelectingVoiceFor] = useState<string | null>(null)
 
-  // Manual character
-  const [showManualInput, setShowManualInput] = useState(false)
-  const [manualCharName, setManualCharName] = useState('')
+  // Drag & drop
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null)
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
 
-  // Right panel tab (mirrors TTS pattern)
+  // Right panel tab
   const [rightTab, setRightTab] = useState<'personajes' | 'audio'>('personajes')
 
-  const prevLanguage = useRef(language)
   const langPickerRef = useRef<HTMLDivElement>(null)
+  const pickerRef = useRef<HTMLDivElement>(null)
+  const prevLanguage = useRef(language)
 
   // ─── Derived ────────────────────────────────────────────────────────────────
 
-  const totalChars = parsedLines?.reduce((sum, l) => sum + l.text.length, 0) ?? 0
-  const hasAllVoices = characters.length > 0 && characters.every(c => c.voiceId)
-  const canGenerate = hasAllVoices && parsedLines && parsedLines.length > 0 && credits >= totalChars
+  const totalChars = lines.reduce((sum, l) => sum + l.text.length, 0)
+  const hasAllVoices = lines.length > 0 && lines.every(l => {
+    const char = characters.find(c => c.name === l.characterName)
+    return char?.voiceId
+  })
+  const canGenerate = hasAllVoices && lines.some(l => l.text.trim()) && credits >= totalChars
 
-  // ─── Lang picker close on outside click ─────────────────────────────────────
+  // ─── Character helpers ───────────────────────────────────────────────────────
 
-  useEffect(() => {
-    if (!showLangPicker) return
-    function handleClick(e: MouseEvent) {
-      if (langPickerRef.current && !langPickerRef.current.contains(e.target as Node)) {
-        setShowLangPicker(false)
-      }
+  function ensureCharacter(name: string): Character {
+    const existing = characters.find(c => c.name === name)
+    if (existing) return existing
+    const newChar: Character = {
+      name,
+      voiceId: '',
+      voiceName: 'Voz estándar',
+      model: 'elite-pro',
+      color: CHARACTER_COLORS[characters.length % CHARACTER_COLORS.length],
+      speed: 1,
+      volume: 1,
     }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [showLangPicker])
+    setCharacters(prev => [...prev, newChar])
+    return newChar
+  }
 
-  // ─── Script parsing ─────────────────────────────────────────────────────────
+  function updateCharacter(name: string, updates: Partial<Character>) {
+    setCharacters(prev => prev.map(c => c.name === name ? { ...c, ...updates } : c))
+  }
 
-  const handleTextChange = useCallback((text: string) => {
-    setRawText(text)
-    setAudioUrl(null)
-    setParseError(null)
+  const assignVoice = useCallback((charName: string, voiceId: string, voiceName: string) => {
+    updateCharacter(charName, { voiceId, voiceName })
+    setSelectingVoiceFor(null)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-    if (!text.trim()) { setParsedLines(null); setCharacters([]); return }
+  // ─── Line helpers ────────────────────────────────────────────────────────────
 
-    const lines = parseDialogueText(text)
-    if (!lines) {
-      setParsedLines(null)
-      if (text.includes('(') && text.includes(')')) {
-        setParseError('Usa el formato: (Nombre) Texto de la línea')
-      }
-      return
-    }
+  function addLine(characterName?: string) {
+    const lastChar = lines[lines.length - 1]?.characterName ?? 'Personaje 1'
+    const name = characterName ?? lastChar
+    ensureCharacter(name)
+    const newLine: DialogueLine = { id: uid(), characterName: name, text: '' }
+    setLines(prev => [...prev, newLine])
+    setSelectedLineId(newLine.id)
+    setTimeout(() => {
+      document.getElementById(`line-input-${newLine.id}`)?.focus()
+    }, 30)
+  }
 
-    setParsedLines(lines)
-    const charNames = extractCharacters(lines)
-    setCharacters(prev => {
-      const existingMap = new Map(prev.map(c => [c.name, c]))
-      return charNames.map((name, i) => {
-        if (existingMap.has(name)) return existingMap.get(name)!
-        return {
-          id: `char_${i}_${Date.now()}`,
-          name,
-          voiceId: '',
-          voiceName: 'Voz estándar',
-          model: 'elite-pro' as const,
-          color: CHARACTER_COLORS[i % CHARACTER_COLORS.length],
-          speed: 1,
-          volume: 1,
-        }
-      })
+  function updateLine(id: string, updates: Partial<DialogueLine>) {
+    setLines(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l))
+  }
+
+  function deleteLine(id: string) {
+    setLines(prev => {
+      const next = prev.filter(l => l.id !== id)
+      return next.length > 0 ? next : [{ id: uid(), characterName: prev[0]?.characterName ?? 'Personaje 1', text: '' }]
     })
-  }, [])
+    if (selectedLineId === id) setSelectedLineId(null)
+  }
 
-  // ─── Translation ────────────────────────────────────────────────────────────
+  function changeLineCharacter(lineId: string, charName: string) {
+    ensureCharacter(charName)
+    updateLine(lineId, { characterName: charName })
+    setPickerLineId(null)
+    setNewCharInput('')
+  }
+
+  // ─── Import ──────────────────────────────────────────────────────────────────
+
+  function importText(text: string) {
+    const parsed = parseImportText(text)
+    if (!parsed) return
+
+    // Build character map
+    const newChars: Character[] = [...characters]
+    const newLines: DialogueLine[] = parsed.map(({ characterName, text: lineText }) => {
+      if (!newChars.find(c => c.name === characterName)) {
+        newChars.push({
+          name: characterName,
+          voiceId: '', voiceName: 'Voz estándar', model: 'elite-pro',
+          color: CHARACTER_COLORS[newChars.length % CHARACTER_COLORS.length],
+          speed: 1, volume: 1,
+        })
+      }
+      return { id: uid(), characterName, text: lineText }
+    })
+
+    setCharacters(newChars)
+    setLines(newLines)
+    setAudioUrl(null)
+    setError(null)
+  }
+
+  // ─── Translation ─────────────────────────────────────────────────────────────
 
   const translateText = useCallback(async (targetLang: string) => {
-    if (!rawText.trim() || !parsedLines) return
+    if (!lines.some(l => l.text.trim())) return
     setIsTranslating(true)
+    const rawText = lines.map(l => `(${l.characterName}) ${l.text}`).join('\n')
     try {
       const res = await fetch('/api/translate-text', {
         method: 'POST',
@@ -212,82 +254,55 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
         body: JSON.stringify({ text: rawText, targetLang }),
       })
       const data = await res.json()
-      if (data.translatedText) handleTextChange(data.translatedText)
+      if (data.translatedText) importText(data.translatedText)
     } catch (err) {
       console.error('Translation error:', err)
     } finally {
       setIsTranslating(false)
     }
-  }, [rawText, parsedLines, handleTextChange])
+  }, [lines]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (language && language !== prevLanguage.current && rawText && parsedLines) {
+    if (language && language !== prevLanguage.current && lines.some(l => l.text.trim())) {
       const deeplLang = LANG_MAP[language] ?? language.toUpperCase()
       translateText(deeplLang)
     }
     prevLanguage.current = language
   }, [language]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ─── Character management ────────────────────────────────────────────────────
+  // ─── Outside click handlers ──────────────────────────────────────────────────
 
-  function updateCharacter(id: string, updates: Partial<Character>) {
-    setCharacters(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c))
-  }
-
-  const assignVoice = useCallback((charName: string, voiceId: string, voiceName: string, model: Character['model']) => {
-    setCharacters(prev => prev.map(c => c.name === charName ? { ...c, voiceId, voiceName, model } : c))
-    setSelectingVoiceFor(null)
-  }, [])
-
-  function addManualCharacter() {
-    const name = manualCharName.trim()
-    if (!name || characters.some(c => c.name === name)) return
-    setCharacters(prev => [...prev, {
-      id: `char_manual_${Date.now()}`,
-      name,
-      voiceId: '',
-      voiceName: 'Voz estándar',
-      model: 'elite-pro' as const,
-      color: CHARACTER_COLORS[prev.length % CHARACTER_COLORS.length],
-      speed: 1,
-      volume: 1,
-    }])
-    setManualCharName('')
-    setShowManualInput(false)
-  }
-
-  // ─── Preview single line ─────────────────────────────────────────────────────
-
-  async function handlePreviewLine(line: DialogueLine, char?: Character) {
-    if (!char?.voiceId || isPreviewLoading) return
-    setIsPreviewLoading(true)
-    setPreviewAudio(null)
-    try {
-      const res = await fetch('/api/dialogue/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lines: [{ text: line.text, voiceId: char.voiceId, model: char.model, characterName: char.name }],
-          preview: true,
-        }),
-      })
-      const data = await res.json()
-      if (data.audioUrl) setPreviewAudio(data.audioUrl)
-    } finally {
-      setIsPreviewLoading(false)
+  useEffect(() => {
+    if (!showLangPicker) return
+    const handler = (e: MouseEvent) => {
+      if (langPickerRef.current && !langPickerRef.current.contains(e.target as Node)) setShowLangPicker(false)
     }
-  }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showLangPicker])
 
-  // ─── Generate full dialogue ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (!pickerLineId) return
+    const handler = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerLineId(null); setNewCharInput('')
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [pickerLineId])
+
+  // ─── Generate ────────────────────────────────────────────────────────────────
 
   async function handleGenerate() {
-    if (!canGenerate || !parsedLines) return
+    if (!canGenerate) return
     setIsGenerating(true)
     setAudioUrl(null)
     setError(null)
     setGenerationProgress(0)
 
-    const estimatedMs = parsedLines.length * 3500
+    const filteredLines = lines.filter(l => l.text.trim())
+    const estimatedMs = filteredLines.length * 3500
     const startTime = Date.now()
     const progressInterval = setInterval(() => {
       const elapsed = Date.now() - startTime
@@ -299,8 +314,8 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          lines: parsedLines.map(line => {
-            const char = characters.find(c => c.name === line.characterId)!
+          lines: filteredLines.map(line => {
+            const char = characters.find(c => c.name === line.characterName)!
             return { text: line.text, voiceId: char.voiceId, model: char.model, characterName: char.name }
           }),
           outputFormat,
@@ -314,16 +329,12 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
       if (!res.ok) { setError(data.error ?? 'Error al generar el diálogo'); return }
 
       setGenerationProgress(100)
-
       if (data.audioUrl) {
         setAudioUrl(data.audioUrl)
-        setIsPlaying(false)
-        setCurrentTime(0)
-        setDuration(0)
+        setIsPlaying(false); setCurrentTime(0); setDuration(0)
         onCreditsUpdate(data.creditsRemaining)
         setGenerationHistory(prev => [
-          { url: data.audioUrl, format: outputFormat, createdAt: Date.now() },
-          ...prev,
+          { url: data.audioUrl, format: outputFormat, createdAt: Date.now() }, ...prev,
         ].slice(0, 3))
         setRightTab('audio')
       }
@@ -338,12 +349,24 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
 
   // ─── Example ─────────────────────────────────────────────────────────────────
 
-  const exampleText = `(Narrador) Era una noche oscura y tormentosa.
+  const EXAMPLE = `(Narrador) Era una noche oscura y tormentosa.
 (Personaje 1) ¿Has escuchado lo que pasó anoche?
 (Personaje 2) No, cuéntame. Estaba durmiendo.
 (Personaje 1) Alguien entró en la casa abandonada.
 (Personaje 2) ¡No puede ser!
 (Narrador) Y así comenzó la aventura.`
+
+  // ─── Drag helpers ────────────────────────────────────────────────────────────
+
+  function handleDrop(overIdx: number) {
+    if (draggedIdx === null || draggedIdx === overIdx) return
+    const next = [...lines]
+    const [removed] = next.splice(draggedIdx, 1)
+    next.splice(overIdx, 0, removed)
+    setLines(next)
+    setDraggedIdx(null)
+    setDragOverIdx(null)
+  }
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
@@ -359,129 +382,250 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
           }}
         >
 
-          {/* ── LEFT COLUMN: Script editor ── */}
+          {/* ── LEFT: Line editor ── */}
           <div
             className="flex-1 min-w-0 flex flex-col min-h-64 lg:min-h-0 border-b lg:border-b-0 lg:border-r"
             style={{ borderColor: 'rgba(255,255,255,0.08)' }}
           >
-            {/* Toolbar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-
-              {/* Import .txt */}
-              <label
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/[0.08] border border-white/10 text-xs text-white/50 cursor-pointer transition-all"
-              >
-                <Upload className="w-3.5 h-3.5" />
-                Importar
-                <input type="file" accept=".txt" className="hidden"
-                       onChange={e => {
-                         const f = e.target.files?.[0]
-                         if (!f) return
-                         const reader = new FileReader()
-                         reader.onload = ev => handleTextChange(ev.target?.result as string)
-                         reader.readAsText(f)
-                         e.target.value = ''
-                       }} />
-              </label>
-
-              {/* Example */}
-              {!rawText && (
-                <button
-                  onClick={() => handleTextChange(exampleText)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 500, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#9ca3af', cursor: 'pointer' }}
-                >
-                  Ejemplo
-                </button>
-              )}
+            {/* Top bar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <span style={{ fontSize: '14px', fontWeight: 500, color: '#ffffff' }}>Guión</span>
+              <div style={{ flex: 1 }} />
 
               {/* Translate */}
-              {parsedLines && (
+              {lines.some(l => l.text.trim()) && (
                 <div style={{ position: 'relative' }} ref={langPickerRef}>
                   <button
                     onClick={() => setShowLangPicker(p => !p)}
                     style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 500, background: showLangPicker ? 'rgba(255,255,255,0.08)' : 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#9ca3af', cursor: 'pointer' }}
                   >
-                    Traducir
-                    <ChevronDown style={{ width: '12px', height: '12px' }} />
+                    Traducir <ChevronDown style={{ width: '12px', height: '12px' }} />
                   </button>
                   {showLangPicker && (
                     <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 50, background: '#111111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '4px', minWidth: '140px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
                       {DIALOGUE_LANGUAGES.map(lang => (
-                        <button
-                          key={lang.code}
-                          onClick={() => {
-                            setShowLangPicker(false)
-                            translateText(LANG_MAP[lang.code] ?? lang.code.toUpperCase())
-                          }}
+                        <button key={lang.code}
+                          onClick={() => { setShowLangPicker(false); translateText(LANG_MAP[lang.code] ?? lang.code.toUpperCase()) }}
                           style={{ width: '100%', textAlign: 'left', padding: '7px 12px', fontSize: '13px', background: 'transparent', border: 'none', borderRadius: '8px', color: '#9ca3af', cursor: 'pointer' }}
                           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff' }}
                           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#9ca3af' }}
-                        >
-                          {lang.label}
-                        </button>
+                        >{lang.label}</button>
                       ))}
                     </div>
                   )}
                 </div>
               )}
 
-              <div style={{ flex: 1 }} />
+              {/* Import */}
+              <label
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/[0.08] border border-white/10 text-xs text-white/50 cursor-pointer transition-all"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                Importar
+                <input type="file" accept=".txt,.pdf,.doc,.docx" className="hidden"
+                       onChange={async e => {
+                         const f = e.target.files?.[0]
+                         if (!f) return
+                         if (f.name.toLowerCase().endsWith('.txt')) {
+                           const reader = new FileReader()
+                           reader.onload = ev => importText(ev.target?.result as string ?? '')
+                           reader.readAsText(f)
+                         } else {
+                           const formData = new FormData()
+                           formData.append('file', f)
+                           const res = await fetch('/api/extract-text', { method: 'POST', body: formData })
+                           const data = await res.json()
+                           if (data.text) importText(data.text)
+                         }
+                         e.target.value = ''
+                       }} />
+              </label>
 
-              {/* Export */}
-              {rawText && (
-                <button
-                  onClick={() => {
-                    const blob = new Blob([rawText], { type: 'text/plain' })
-                    const url = URL.createObjectURL(blob)
-                    const a = document.createElement('a')
-                    a.href = url; a.download = 'guion.txt'; a.click()
-                  }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 500, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#6b7280', cursor: 'pointer' }}
-                >
-                  Exportar
-                </button>
-              )}
+              {/* Example */}
+              <button
+                onClick={() => importText(EXAMPLE)}
+                style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 500, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#9ca3af', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
+              >
+                Ejemplo
+              </button>
 
               {/* Clear */}
-              {rawText && (
+              {lines.some(l => l.text.trim()) && (
                 <button
-                  onClick={() => { setRawText(''); setParsedLines(null); setCharacters([]); setAudioUrl(null) }}
+                  onClick={() => { setLines([{ id: uid(), characterName: lines[0]?.characterName ?? 'Personaje 1', text: '' }]); setAudioUrl(null); setError(null) }}
                   style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 500, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#6b7280', cursor: 'pointer' }}
                 >
-                  <X style={{ width: '13px', height: '13px' }} />
-                  Limpiar
+                  <X style={{ width: '13px', height: '13px' }} /> Limpiar
                 </button>
               )}
             </div>
 
-            {/* Textarea area */}
-            <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
+            {/* Line list */}
+            <div style={{ flex: 1, overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
               {isTranslating && (
-                <div style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'rgba(255,255,255,0.6)' }}>
-                    <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
-                    Traduciendo...
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 16px', fontSize: '12px', color: '#9ca3af', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+                  <Loader2 style={{ width: '13px', height: '13px', animation: 'spin 1s linear infinite' }} />
+                  Traduciendo...
                 </div>
               )}
-              <textarea
-                value={rawText}
-                onChange={e => handleTextChange(e.target.value)}
-                placeholder={`(Narrador) Era una noche oscura y tormentosa.\n(Personaje 1) ¿Has escuchado lo que pasó anoche?\n(Personaje 2) No, cuéntame. Estaba durmiendo.\n(Personaje 1) Alguien entró en la casa abandonada.\n(Narrador) Y así comenzó la aventura.`}
-                spellCheck={false}
-                style={{
-                  width: '100%', height: '100%', background: 'transparent', border: 'none',
-                  outline: 'none', resize: 'none', padding: '16px',
-                  fontSize: '14px', lineHeight: '1.75', color: 'rgba(255,255,255,0.85)',
-                  fontFamily: '"JetBrains Mono", "Fira Code", "Courier New", monospace',
-                }}
-                className="placeholder:text-white/20"
-              />
+
+              {lines.map((line, idx) => {
+                const char = characters.find(c => c.name === line.characterName)
+                const isActive = selectedLineId === line.id
+                const isDraggingOver = dragOverIdx === idx
+
+                return (
+                  <div
+                    key={line.id}
+                    draggable
+                    onDragStart={() => setDraggedIdx(idx)}
+                    onDragOver={e => { e.preventDefault(); setDragOverIdx(idx) }}
+                    onDrop={() => handleDrop(idx)}
+                    onDragEnd={() => { setDraggedIdx(null); setDragOverIdx(null) }}
+                    onClick={() => setSelectedLineId(line.id)}
+                    className="group"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '10px',
+                      padding: '10px 16px 10px 12px',
+                      borderLeft: isActive ? '2px solid rgba(255,255,255,0.35)' : '2px solid transparent',
+                      borderBottom: '1px solid rgba(255,255,255,0.04)',
+                      background: isDraggingOver ? 'rgba(255,255,255,0.04)' : isActive ? 'rgba(255,255,255,0.03)' : 'transparent',
+                      cursor: 'text',
+                      opacity: draggedIdx === idx ? 0.4 : 1,
+                      transition: 'background 0.1s, border-color 0.1s, opacity 0.15s',
+                    }}
+                  >
+                    {/* Drag handle */}
+                    <div
+                      style={{ cursor: 'grab', color: 'rgba(255,255,255,0.15)', flexShrink: 0, display: 'flex', alignItems: 'center' }}
+                      className="group-hover:text-white/30 transition-colors"
+                    >
+                      <GripVertical style={{ width: '14px', height: '14px' }} />
+                    </div>
+
+                    {/* Character avatar (click to change) */}
+                    <div style={{ position: 'relative', flexShrink: 0 }}>
+                      <button
+                        onClick={e => { e.stopPropagation(); setPickerLineId(pickerLineId === line.id ? null : line.id); setNewCharInput('') }}
+                        title={line.characterName}
+                        style={{
+                          width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
+                          background: char?.color ?? '#60a5fa',
+                          border: 'none', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '12px', fontWeight: 700, color: '#000',
+                        }}
+                      >
+                        {line.characterName.charAt(0).toUpperCase()}
+                      </button>
+
+                      {/* Character picker dropdown */}
+                      {pickerLineId === line.id && (
+                        <div
+                          ref={pickerRef}
+                          onClick={e => e.stopPropagation()}
+                          style={{ position: 'absolute', left: 0, top: 'calc(100% + 6px)', zIndex: 100, background: '#111111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '6px', minWidth: '180px', boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}
+                        >
+                          {characters.map(c => (
+                            <button
+                              key={c.name}
+                              onClick={() => changeLineCharacter(line.id, c.name)}
+                              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', background: line.characterName === c.name ? 'rgba(255,255,255,0.06)' : 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', textAlign: 'left' }}
+                              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                              onMouseLeave={e => (e.currentTarget.style.background = line.characterName === c.name ? 'rgba(255,255,255,0.06)' : 'transparent')}
+                            >
+                              <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: c.color, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: '#000' }}>
+                                {c.name.charAt(0).toUpperCase()}
+                              </div>
+                              <span style={{ fontSize: '13px', color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+                              {line.characterName === c.name && <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#6b7280' }}>✓</span>}
+                            </button>
+                          ))}
+                          {/* New character */}
+                          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: '4px', paddingTop: '4px' }}>
+                            {newCharInput !== null && (
+                              <div style={{ display: 'flex', gap: '4px', padding: '2px' }}>
+                                <input
+                                  autoFocus
+                                  value={newCharInput}
+                                  onChange={e => setNewCharInput(e.target.value)}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter' && newCharInput.trim()) changeLineCharacter(line.id, newCharInput.trim())
+                                    if (e.key === 'Escape') { setNewCharInput(''); setPickerLineId(null) }
+                                  }}
+                                  placeholder="Nuevo personaje..."
+                                  style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', padding: '5px 8px', fontSize: '12px', color: '#e2e8f0', outline: 'none' }}
+                                />
+                              </div>
+                            )}
+                            <button
+                              onClick={() => setNewCharInput(prev => prev === '' ? ' ' : '')}
+                              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 10px', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', color: '#6b7280' }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLButtonElement).style.color = '#9ca3af' }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#6b7280' }}
+                            >
+                              <Plus style={{ width: '12px', height: '12px' }} />
+                              Nuevo personaje
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Text input */}
+                    <input
+                      id={`line-input-${line.id}`}
+                      type="text"
+                      value={line.text}
+                      onChange={e => updateLine(line.id, { text: e.target.value })}
+                      onFocus={() => setSelectedLineId(line.id)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') { e.preventDefault(); addLine(line.characterName) }
+                        if (e.key === 'Backspace' && !line.text && lines.length > 1) {
+                          e.preventDefault()
+                          deleteLine(line.id)
+                          const prevLine = lines[idx - 1]
+                          if (prevLine) {
+                            setSelectedLineId(prevLine.id)
+                            setTimeout(() => document.getElementById(`line-input-${prevLine.id}`)?.focus(), 10)
+                          }
+                        }
+                      }}
+                      placeholder="Escribe el texto..."
+                      style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: '14px', color: 'rgba(255,255,255,0.85)', minWidth: 0 }}
+                      className="placeholder:text-white/20"
+                    />
+
+                    {/* Delete button (hover) */}
+                    <button
+                      onClick={e => { e.stopPropagation(); deleteLine(line.id) }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.25)', flexShrink: 0, borderRadius: '4px' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.6)'; (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.25)'; (e.currentTarget as HTMLButtonElement).style.background = 'none' }}
+                    >
+                      <X style={{ width: '13px', height: '13px' }} />
+                    </button>
+                  </div>
+                )
+              })}
+
+              {/* Add line button */}
+              <button
+                onClick={() => addLine()}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px 10px 40px', width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'rgba(255,255,255,0.25)', textAlign: 'left' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.25)')}
+              >
+                <Plus style={{ width: '14px', height: '14px' }} />
+                Añadir línea
+              </button>
             </div>
 
             {/* Footer */}
             <div style={{ flexShrink: 0 }}>
-              {/* Progress bar while generating */}
               {isGenerating && (
                 <div style={{ padding: '10px 16px 0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -492,219 +636,105 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                   </div>
                 </div>
               )}
-
-              {/* Error */}
-              {error && (
-                <div style={{ margin: '10px 16px 0', padding: '10px 12px', borderRadius: '8px', fontSize: '13px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}>
-                  {error}
-                </div>
-              )}
-              {parseError && (
-                <div style={{ margin: '10px 16px 0', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', color: '#fbbf24' }}>
-                  {parseError}
-                </div>
-              )}
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px' }}>
                 <span style={{ fontSize: '13px', color: '#6b7280' }}>
-                  {parsedLines?.length ?? 0} líneas
+                  {lines.length} {lines.length === 1 ? 'línea' : 'líneas'}
                   {totalChars > 0 && (
                     <span style={{ marginLeft: '6px', fontSize: '11px', color: '#444444' }}>
                       · {totalChars.toLocaleString('es-ES')} créditos
                     </span>
                   )}
                 </span>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <button
-                    onClick={handleGenerate}
-                    disabled={!canGenerate || isGenerating}
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                      padding: '8px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-                      color: '#000000', border: 'none',
-                      cursor: (!canGenerate || isGenerating) ? 'not-allowed' : 'pointer',
-                      background: '#ffffff',
-                      boxShadow: (!canGenerate || isGenerating) ? 'none' : '0 4px 15px rgba(255,255,255,0.1)',
-                      opacity: (!canGenerate || isGenerating) ? 0.5 : 1,
-                    }}
-                  >
-                    {isGenerating
-                      ? <><Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> Generando</>
-                      : <><Play style={{ width: '14px', height: '14px' }} /> Generar</>
-                    }
-                  </button>
-                </div>
               </div>
             </div>
           </div>
 
-          {/* ── RIGHT COLUMN: Personajes + Audio ── */}
+          {/* ── RIGHT: Personajes + Audio ── */}
           <div className="w-full lg:w-72 flex-shrink-0 flex flex-col min-h-0">
 
-            {/* Sliding pill tabs (mirrors TTS pattern exactly) */}
+            {/* Sliding pill tabs */}
             <div style={{ padding: '12px', flexShrink: 0 }}>
               <div style={{ position: 'relative', display: 'flex', background: '#111111', borderRadius: '8px', padding: '4px' }}>
-                <div style={{
-                  position: 'absolute', top: '4px', bottom: '4px', left: '4px',
-                  width: 'calc(50% - 4px)', background: '#222222', borderRadius: '6px',
-                  transform: rightTab === 'personajes' ? 'translateX(0)' : 'translateX(100%)',
-                  transition: 'transform 200ms ease-out',
-                }} />
-                <button
-                  onClick={() => setRightTab('personajes')}
-                  style={{ position: 'relative', zIndex: 10, flex: 1, padding: '6px 0', fontSize: '12px', fontWeight: 500, textAlign: 'center', color: rightTab === 'personajes' ? '#fff' : '#6b7280', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 200ms ease-out' }}
-                >
+                <div style={{ position: 'absolute', top: '4px', bottom: '4px', left: '4px', width: 'calc(50% - 4px)', background: '#222222', borderRadius: '6px', transform: rightTab === 'personajes' ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 200ms ease-out' }} />
+                <button onClick={() => setRightTab('personajes')} style={{ position: 'relative', zIndex: 10, flex: 1, padding: '6px 0', fontSize: '12px', fontWeight: 500, textAlign: 'center', color: rightTab === 'personajes' ? '#fff' : '#6b7280', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 200ms ease-out' }}>
                   Personajes
                 </button>
-                <button
-                  onClick={() => setRightTab('audio')}
-                  style={{ position: 'relative', zIndex: 10, flex: 1, padding: '6px 0', fontSize: '12px', fontWeight: 500, textAlign: 'center', color: rightTab === 'audio' ? '#fff' : '#6b7280', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 200ms ease-out' }}
-                >
+                <button onClick={() => setRightTab('audio')} style={{ position: 'relative', zIndex: 10, flex: 1, padding: '6px 0', fontSize: '12px', fontWeight: 500, textAlign: 'center', color: rightTab === 'audio' ? '#fff' : '#6b7280', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 200ms ease-out' }}>
                   Audio
                 </button>
               </div>
             </div>
 
-            {/* ── Personajes tab ── */}
+            {/* Personajes tab */}
             {rightTab === 'personajes' && (
               <div style={{ flex: 1, overflowY: 'auto', padding: '0 12px 16px', display: 'flex', flexDirection: 'column', gap: '20px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
 
-                {/* Character list */}
                 <div>
-                  <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6b7280', marginBottom: '10px' }}>
-                    Personajes detectados
-                  </p>
+                  <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6b7280', marginBottom: '10px' }}>Personajes</p>
 
-                  {characters.length === 0 ? (
-                    <div style={{ padding: '24px 0', textAlign: 'center' }}>
-                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#111111', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
-                        <Mic style={{ width: '16px', height: '16px', color: 'rgba(255,255,255,0.2)' }} />
-                      </div>
-                      <p style={{ fontSize: '12px', color: '#4b5563' }}>Escribe el guión para detectar personajes</p>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {characters.map(char => (
-                        <div key={char.id} style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
-                          {/* Avatar + name */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                            <div style={{
-                              width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
-                              background: char.color, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: '13px', fontWeight: 700, color: '#000',
-                            }}>
-                              {char.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <p style={{ fontSize: '13px', fontWeight: 500, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{char.name}</p>
-                              <p style={{ fontSize: '11px', color: '#4b5563' }}>
-                                {parsedLines?.filter(l => l.characterId === char.name).length ?? 0} líneas
-                              </p>
-                            </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {characters.map(char => (
+                      <div key={char.name} style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: char.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: '#000', flexShrink: 0 }}>
+                            {char.name.charAt(0).toUpperCase()}
                           </div>
-
-                          {/* Voice button */}
-                          <button
-                            onClick={() => setSelectingVoiceFor(char.name)}
-                            style={{
-                              width: '100%', textAlign: 'left',
-                              background: char.voiceId ? '#0d0d0d' : 'transparent',
-                              border: char.voiceId ? '1px solid rgba(255,255,255,0.08)' : '1px dashed rgba(255,255,255,0.15)',
-                              borderRadius: '8px', padding: '8px 10px', marginBottom: '10px',
-                              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
-                            }}
-                            onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)')}
-                            onMouseLeave={e => (e.currentTarget.style.borderColor = char.voiceId ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)')}
-                          >
-                            <Mic style={{ width: '13px', height: '13px', color: '#6b7280', flexShrink: 0 }} />
-                            <span style={{ fontSize: '12px', color: char.voiceId ? '#9ca3af' : '#4b5563', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                              {char.voiceId ? char.voiceName : 'Seleccionar voz →'}
-                            </span>
-                            {char.voiceId && (
-                              <button
-                                onClick={e => { e.stopPropagation(); updateCharacter(char.id, { voiceId: '', voiceName: 'Voz estándar' }) }}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4b5563', padding: 0, flexShrink: 0 }}
-                                onMouseEnter={e => (e.currentTarget.style.color = '#9ca3af')}
-                                onMouseLeave={e => (e.currentTarget.style.color = '#4b5563')}
-                              >
-                                <X style={{ width: '12px', height: '12px' }} />
-                              </button>
-                            )}
-                          </button>
-
-                          {/* Sliders */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            {[
-                              { label: 'Velocidad', key: 'speed' as const, min: 0.5, max: 2, step: 0.05, val: char.speed, fmt: (v: number) => `${v.toFixed(1)}x` },
-                              { label: 'Volumen', key: 'volume' as const, min: 0, max: 2, step: 0.05, val: char.volume, fmt: (v: number) => `${Math.round(v * 100)}%` },
-                            ].map(({ label, key, min, max, step, val, fmt }) => (
-                              <div key={key} style={{ display: 'flex', alignItems: 'center', padding: '0 4px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', height: '36px', gap: '10px' }}>
-                                <span style={{ fontSize: '12px', fontWeight: 500, color: '#888888', width: '64px', flexShrink: 0 }}>{label}</span>
-                                <input
-                                  type="range" min={min} max={max} step={step} value={val}
-                                  onChange={e => updateCharacter(char.id, { [key]: parseFloat(e.target.value) })}
-                                  className="flex-1 accent-white h-1"
-                                />
-                                <span style={{ fontSize: '11px', color: '#6b7280', width: '32px', textAlign: 'right', flexShrink: 0 }}>{fmt(val)}</span>
-                              </div>
-                            ))}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontSize: '13px', fontWeight: 500, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{char.name}</p>
+                            <p style={{ fontSize: '11px', color: '#4b5563' }}>
+                              {lines.filter(l => l.characterName === char.name).length} líneas
+                            </p>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
 
-                  {/* Manual character button */}
-                  <div style={{ marginTop: '8px' }}>
-                    {showManualInput ? (
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <input
-                          autoFocus
-                          value={manualCharName}
-                          onChange={e => setManualCharName(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') addManualCharacter(); if (e.key === 'Escape') { setShowManualInput(false); setManualCharName('') } }}
-                          placeholder="Nombre"
-                          style={{ flex: 1, background: '#111111', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', padding: '6px 10px', fontSize: '12px', color: '#e2e8f0', outline: 'none' }}
-                        />
+                        {/* Voice button */}
                         <button
-                          onClick={addManualCharacter}
-                          style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px', color: '#9ca3af', cursor: 'pointer' }}
-                        >OK</button>
-                        <button
-                          onClick={() => { setShowManualInput(false); setManualCharName('') }}
-                          style={{ padding: '6px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#4b5563' }}
-                        ><X style={{ width: '14px', height: '14px' }} /></button>
+                          onClick={() => setSelectingVoiceFor(char.name)}
+                          style={{ width: '100%', textAlign: 'left', background: char.voiceId ? '#0d0d0d' : 'transparent', border: char.voiceId ? '1px solid rgba(255,255,255,0.08)' : '1px dashed rgba(255,255,255,0.15)', borderRadius: '8px', padding: '8px 10px', marginBottom: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                          onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)')}
+                          onMouseLeave={e => (e.currentTarget.style.borderColor = char.voiceId ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)')}
+                        >
+                          <Mic style={{ width: '13px', height: '13px', color: '#6b7280', flexShrink: 0 }} />
+                          <span style={{ fontSize: '12px', color: char.voiceId ? '#9ca3af' : '#4b5563', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                            {char.voiceId ? char.voiceName : 'Seleccionar voz →'}
+                          </span>
+                          {char.voiceId && (
+                            <button
+                              onClick={e => { e.stopPropagation(); updateCharacter(char.name, { voiceId: '', voiceName: 'Voz estándar' }) }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4b5563', padding: 0, flexShrink: 0 }}
+                              onMouseEnter={e => (e.currentTarget.style.color = '#9ca3af')}
+                              onMouseLeave={e => (e.currentTarget.style.color = '#4b5563')}
+                            >
+                              <X style={{ width: '12px', height: '12px' }} />
+                            </button>
+                          )}
+                        </button>
+
+                        {/* Speed + Volume sliders */}
+                        {[
+                          { label: 'Velocidad', key: 'speed' as const, min: 0.5, max: 2, step: 0.05, val: char.speed, fmt: (v: number) => `${v.toFixed(1)}x` },
+                          { label: 'Volumen',   key: 'volume' as const, min: 0,   max: 2, step: 0.05, val: char.volume, fmt: (v: number) => `${Math.round(v * 100)}%` },
+                        ].map(({ label, key, min, max, step, val, fmt }) => (
+                          <div key={key} style={{ display: 'flex', alignItems: 'center', padding: '0 4px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', height: '36px', gap: '10px', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '12px', fontWeight: 500, color: '#888888', width: '60px', flexShrink: 0 }}>{label}</span>
+                            <input type="range" min={min} max={max} step={step} value={val}
+                                   onChange={e => updateCharacter(char.name, { [key]: parseFloat(e.target.value) })}
+                                   className="flex-1 accent-white h-1" />
+                            <span style={{ fontSize: '11px', color: '#6b7280', width: '32px', textAlign: 'right', flexShrink: 0 }}>{fmt(val)}</span>
+                          </div>
+                        ))}
                       </div>
-                    ) : (
-                      <button
-                        onClick={() => setShowManualInput(true)}
-                        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', background: 'transparent', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '10px', fontSize: '12px', color: '#4b5563', cursor: 'pointer' }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.2)'; (e.currentTarget as HTMLButtonElement).style.color = '#9ca3af' }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#4b5563' }}
-                      >
-                        <Plus style={{ width: '13px', height: '13px' }} />
-                        Personaje manual
-                      </button>
-                    )}
+                    ))}
                   </div>
                 </div>
 
                 {/* Audio settings */}
                 <div>
-                  <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6b7280', marginBottom: '10px' }}>
-                    Configuración de audio
-                  </p>
-
+                  <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6b7280', marginBottom: '10px' }}>Configuración de audio</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {/* Pause between lines */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', background: '#111111', borderRadius: '10px', height: '40px' }}>
                       <span style={{ fontSize: '12px', fontWeight: 500, color: '#888888' }}>Pausa entre líneas</span>
-                      <select
-                        value={pauseBetweenLines}
-                        onChange={e => setPauseBetweenLines(Number(e.target.value))}
-                        style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '12px', color: '#9ca3af', cursor: 'pointer' }}
-                      >
+                      <select value={pauseBetweenLines} onChange={e => setPauseBetweenLines(Number(e.target.value))} style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '12px', color: '#9ca3af', cursor: 'pointer' }}>
                         <option value={0} style={{ background: '#111' }}>Sin pausa</option>
                         <option value={300} style={{ background: '#111' }}>0.3s</option>
                         <option value={500} style={{ background: '#111' }}>0.5s</option>
@@ -713,8 +743,6 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                         <option value={2000} style={{ background: '#111' }}>2s</option>
                       </select>
                     </div>
-
-                    {/* Format toggle (sliding pill, same as TTS normalize) */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', background: '#111111', borderRadius: '10px', height: '40px' }}>
                       <span style={{ fontSize: '12px', fontWeight: 500, color: '#888888' }}>Formato</span>
                       <div style={{ position: 'relative', display: 'flex', background: '#000000', borderRadius: '6px', padding: '2px' }}>
@@ -723,22 +751,11 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                         <button onClick={() => setOutputFormat('wav')} style={{ position: 'relative', zIndex: 10, padding: '2px 10px', fontSize: '11px', fontWeight: 500, color: outputFormat === 'wav' ? '#fff' : '#6b7280', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 200ms ease-out' }}>WAV</button>
                       </div>
                     </div>
-
-                    {/* Credits row */}
-                    <div style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '0 14px', background: credits < totalChars && totalChars > 0 ? 'rgba(239,68,68,0.08)' : '#111111',
-                      borderRadius: '10px', height: '40px',
-                      border: credits < totalChars && totalChars > 0 ? '1px solid rgba(239,68,68,0.2)' : '1px solid transparent',
-                    }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', background: credits < totalChars && totalChars > 0 ? 'rgba(239,68,68,0.08)' : '#111111', border: credits < totalChars && totalChars > 0 ? '1px solid rgba(239,68,68,0.2)' : '1px solid transparent', borderRadius: '10px', height: '40px' }}>
                       <span style={{ fontSize: '12px', fontWeight: 500, color: '#888888' }}>Créditos</span>
-                      <span style={{ fontSize: '12px', color: credits < totalChars && totalChars > 0 ? '#f87171' : '#6b7280' }}>
-                        {credits.toLocaleString()} disponibles
-                      </span>
+                      <span style={{ fontSize: '12px', color: credits < totalChars && totalChars > 0 ? '#f87171' : '#6b7280' }}>{credits.toLocaleString()} disponibles</span>
                     </div>
                   </div>
-
-                  {/* Hint */}
                   {!hasAllVoices && characters.length > 0 && (
                     <p style={{ fontSize: '11px', color: '#d97706', marginTop: '10px', padding: '8px 12px', background: 'rgba(251,191,36,0.06)', borderRadius: '8px', border: '1px solid rgba(251,191,36,0.15)' }}>
                       Asigna una voz a cada personaje para generar
@@ -748,17 +765,16 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
               </div>
             )}
 
-            {/* ── Audio tab ── */}
+            {/* Audio tab */}
             {rightTab === 'audio' && (
               <div style={{ flex: 1, overflowY: 'auto', padding: '0 12px 16px', display: 'flex', flexDirection: 'column', gap: '16px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
-
                 {!audioUrl && !isGenerating ? (
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '32px 0' }}>
-                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#111111', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '32px 0', gap: '12px' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#111111', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Music2 style={{ width: '20px', height: '20px', color: 'rgba(255,255,255,0.15)' }} />
                     </div>
                     <p style={{ fontSize: '13px', color: '#4b5563', fontWeight: 500 }}>El audio aparecerá aquí</p>
-                    <p style={{ fontSize: '11px', color: '#374151', marginTop: '4px' }}>Genera el diálogo para escucharlo</p>
+                    <p style={{ fontSize: '11px', color: '#374151' }}>Genera el diálogo para escucharlo</p>
                   </div>
                 ) : isGenerating ? (
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '32px 0', gap: '12px' }}>
@@ -773,105 +789,93 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                   </div>
                 ) : audioUrl ? (
                   <>
-                    {/* Hidden audio element */}
                     {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                    <audio
-                      ref={audioRef}
-                      src={audioUrl}
-                      onPlay={() => setIsPlaying(true)}
-                      onPause={() => setIsPlaying(false)}
-                      onEnded={() => { setIsPlaying(false); setCurrentTime(0) }}
-                      onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime ?? 0)}
-                      onLoadedMetadata={() => setDuration(audioRef.current?.duration ?? 0)}
-                    />
+                    <audio ref={audioRef} src={audioUrl}
+                           onPlay={() => setIsPlaying(true)}
+                           onPause={() => setIsPlaying(false)}
+                           onEnded={() => { setIsPlaying(false); setCurrentTime(0) }}
+                           onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime ?? 0)}
+                           onLoadedMetadata={() => setDuration(audioRef.current?.duration ?? 0)} />
 
-                    {/* Player card */}
                     <div style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '14px' }}>
-                      {/* Progress bar */}
-                      <div
-                        style={{ height: '3px', borderRadius: '9999px', background: 'rgba(255,255,255,0.1)', overflow: 'hidden', marginBottom: '14px', cursor: 'pointer' }}
-                        onClick={e => {
-                          if (!audioRef.current || !duration) return
-                          const rect = e.currentTarget.getBoundingClientRect()
-                          audioRef.current.currentTime = ((e.clientX - rect.left) / rect.width) * duration
-                        }}
-                      >
+                      <div style={{ height: '3px', borderRadius: '9999px', background: 'rgba(255,255,255,0.1)', overflow: 'hidden', marginBottom: '14px', cursor: 'pointer' }}
+                           onClick={e => { if (!audioRef.current || !duration) return; const rect = e.currentTarget.getBoundingClientRect(); audioRef.current.currentTime = ((e.clientX - rect.left) / rect.width) * duration }}>
                         <div style={{ height: '100%', borderRadius: '9999px', width: `${duration ? (currentTime / duration) * 100 : 0}%`, background: '#ffffff', transition: 'width 0.1s linear' }} />
                       </div>
-
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <button
-                          onClick={() => isPlaying ? audioRef.current?.pause() : audioRef.current?.play()}
-                          style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#ffffff', color: '#000000', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-                        >
+                        <button onClick={() => isPlaying ? audioRef.current?.pause() : audioRef.current?.play()}
+                                style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#ffffff', color: '#000', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                           {isPlaying ? <Pause style={{ width: '14px', height: '14px' }} /> : <Play style={{ width: '14px', height: '14px', marginLeft: '2px' }} />}
                         </button>
-                        <span style={{ fontSize: '12px', color: '#6b7280', fontFamily: 'monospace', flex: 1 }}>
-                          {formatTime(currentTime)} / {formatTime(duration)}
-                        </span>
-                        <button
-                          onClick={handleGenerate}
-                          disabled={!canGenerate || isGenerating}
-                          style={{ fontSize: '11px', color: '#4b5563', background: 'none', border: 'none', cursor: 'pointer' }}
-                          onMouseEnter={e => (e.currentTarget.style.color = '#9ca3af')}
-                          onMouseLeave={e => (e.currentTarget.style.color = '#4b5563')}
-                        >
-                          ↻ Regenerar
+                        <span style={{ fontSize: '12px', color: '#6b7280', fontFamily: 'monospace', flex: 1 }}>{formatTime(currentTime)} / {formatTime(duration)}</span>
+                        <button onClick={handleGenerate} disabled={!canGenerate || isGenerating} style={{ fontSize: '11px', color: '#4b5563', background: 'none', border: 'none', cursor: 'pointer' }}
+                                onMouseEnter={e => (e.currentTarget.style.color = '#9ca3af')} onMouseLeave={e => (e.currentTarget.style.color = '#4b5563')}>
+                          ↻
                         </button>
                       </div>
                     </div>
 
-                    {/* Download */}
-                    <a
-                      href={audioUrl}
-                      download={`dialogo.${outputFormat}`}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', fontSize: '13px', color: '#9ca3af', textDecoration: 'none' }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLAnchorElement).style.color = '#fff' }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLAnchorElement).style.color = '#9ca3af' }}
-                    >
+                    <a href={audioUrl} download={`dialogo.${outputFormat}`}
+                       style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', fontSize: '13px', color: '#9ca3af', textDecoration: 'none' }}
+                       onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLAnchorElement).style.color = '#fff' }}
+                       onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLAnchorElement).style.color = '#9ca3af' }}>
                       <Download style={{ width: '14px', height: '14px' }} />
                       Descargar {outputFormat.toUpperCase()}
                     </a>
 
-                    {/* Generation history */}
                     {generationHistory.length > 1 && (
                       <div>
-                        <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4b5563', marginBottom: '8px' }}>
-                          Anteriores
-                        </p>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          {generationHistory.slice(1).map((entry, i) => (
-                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', background: '#111111', borderRadius: '8px' }}>
-                              <Music2 style={{ width: '13px', height: '13px', color: '#4b5563', flexShrink: 0 }} />
-                              <span style={{ fontSize: '11px', color: '#6b7280', flex: 1 }}>
-                                {new Date(entry.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} · {entry.format.toUpperCase()}
-                              </span>
-                              <a
-                                href={entry.url}
-                                download={`dialogo-${i + 2}.${entry.format}`}
-                                style={{ color: '#4b5563', textDecoration: 'none' }}
-                                onMouseEnter={e => (e.currentTarget.style.color = '#9ca3af')}
-                                onMouseLeave={e => (e.currentTarget.style.color = '#4b5563')}
-                              >
-                                <Download style={{ width: '13px', height: '13px' }} />
-                              </a>
-                            </div>
-                          ))}
-                        </div>
+                        <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4b5563', marginBottom: '8px' }}>Anteriores</p>
+                        {generationHistory.slice(1).map((entry, i) => (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', background: '#111111', borderRadius: '8px', marginBottom: '4px' }}>
+                            <Music2 style={{ width: '13px', height: '13px', color: '#4b5563', flexShrink: 0 }} />
+                            <span style={{ fontSize: '11px', color: '#6b7280', flex: 1 }}>
+                              {new Date(entry.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} · {entry.format.toUpperCase()}
+                            </span>
+                            <a href={entry.url} download={`dialogo-${i + 2}.${entry.format}`} style={{ color: '#4b5563', textDecoration: 'none' }}
+                               onMouseEnter={e => (e.currentTarget.style.color = '#9ca3af')} onMouseLeave={e => (e.currentTarget.style.color = '#4b5563')}>
+                              <Download style={{ width: '13px', height: '13px' }} />
+                            </a>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </>
                 ) : null}
-
-                {/* Preview audio autoplay */}
-                {previewAudio && <audio src={previewAudio} autoPlay className="hidden" />}
               </div>
             )}
+
+          {/* Generate button — pinned to bottom of right panel */}
+          <div style={{ flexShrink: 0, padding: '12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            {error && (
+              <div style={{ marginBottom: '8px', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}>
+                {error}
+              </div>
+            )}
+            <button
+              onClick={handleGenerate}
+              disabled={!canGenerate || isGenerating}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+                color: '#000000', border: 'none',
+                cursor: (!canGenerate || isGenerating) ? 'not-allowed' : 'pointer',
+                background: '#ffffff',
+                boxShadow: (!canGenerate || isGenerating) ? 'none' : '0 4px 15px rgba(255,255,255,0.1)',
+                opacity: (!canGenerate || isGenerating) ? 0.5 : 1,
+              }}
+            >
+              {isGenerating
+                ? <><Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> Generando</>
+                : <><Play style={{ width: '14px', height: '14px' }} /> Generar</>
+              }
+            </button>
+          </div>
           </div>
         </div>
       </div>
 
-      {/* ── VoiceBrowser modal ── */}
+      {/* VoiceBrowser modal */}
       {selectingVoiceFor && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectingVoiceFor(null)} />
@@ -880,10 +884,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
               <div>
                 <h3 className="text-sm font-semibold text-white">Seleccionar voz</h3>
                 <p className="text-xs text-white/40 mt-0.5">
-                  Para:{' '}
-                  <span style={{ color: characters.find(c => c.name === selectingVoiceFor)?.color }}>
-                    {selectingVoiceFor}
-                  </span>
+                  Para: <span style={{ color: characters.find(c => c.name === selectingVoiceFor)?.color }}>{selectingVoiceFor}</span>
                 </p>
               </div>
               <button onClick={() => setSelectingVoiceFor(null)} className="p-1.5 rounded-lg hover:bg-white/[0.05] text-white/40 hover:text-white transition-colors">
@@ -895,7 +896,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                 clonedVoices={userVoices.map(v => ({ id: v.id, name: v.name }))}
                 onSelect={(voice: SelectedVoice | null) => {
                   if (!voice || !selectingVoiceFor) return
-                  assignVoice(selectingVoiceFor, voice.referenceId, voice.name, 'elite-pro')
+                  assignVoice(selectingVoiceFor, voice.referenceId, voice.name)
                 }}
                 onClose={() => setSelectingVoiceFor(null)}
                 plan={plan}
