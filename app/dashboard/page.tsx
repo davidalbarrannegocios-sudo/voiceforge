@@ -3474,124 +3474,126 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
               {!historySearch && <p className="text-xs mt-1" style={{ color: "#444444" }}>Las traducciones que realices aparecerán aquí</p>}
             </div>
           ) : (
-            <div className="rounded-xl border border-white/[0.08]">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-white/[0.08] bg-white/[0.02]">
-                    <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3 w-[35%]">Archivo</th>
-                    <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3 w-[15%]">Idioma destino</th>
-                    <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3 w-[13%]">Estado</th>
-                    <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3 w-[12%]">Fecha</th>
-                    <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3 w-[13%]">Retención</th>
-                    <th className="text-right text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3 w-[12%]">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredHistory.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-12 text-center text-sm text-white/20">
-                        No hay traducciones en el historial
-                      </td>
-                    </tr>
-                  ) : filteredHistory.map((task: TTranslateTask) => (
-                      <tr
-                        key={task.id}
-                        className={`border-b border-white/5 transition-colors ${activeTranslationId === task.id ? 'bg-white/[0.04]' : 'hover:bg-white/[0.02]'}`}
-                      >
-                        {/* Archivo */}
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-md bg-white/[0.08] flex items-center justify-center flex-shrink-0">
-                              <Globe className="w-3 h-3 text-white/40" />
-                            </div>
-                            <span className="text-sm text-white/70 truncate max-w-[100px]">
-                              {task.fileName ?? '—'}
-                            </span>
-                          </div>
-                        </td>
+            <div className="space-y-2">
+              {filteredHistory.map((task: TTranslateTask) => (
+                <div
+                  key={task.id}
+                  className={`group flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all cursor-default ${
+                    activeTranslationId === task.id
+                      ? 'border-white/20 bg-white/[0.06]'
+                      : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/10'
+                  }`}
+                >
+                  {/* Icono idioma */}
+                  <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center flex-shrink-0 text-lg">
+                    {getLanguageFlag(task.targetLanguage)}
+                  </div>
 
-                        {/* Idioma destino */}
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-base">{getLanguageFlag(task.targetLanguage)}</span>
-                            <span className="text-sm text-white/60">{task.targetLanguageName ?? getLanguageName(task.targetLanguage)}</span>
-                          </div>
-                        </td>
-
-                        {/* Estado */}
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                            task.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400'
-                            : task.status === 'processing' ? 'bg-amber-500/10 text-amber-400'
-                            : task.status === 'expired' ? 'bg-white/5 text-white/25'
-                            : 'bg-red-500/10 text-red-400'
-                          }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${
-                              task.status === 'completed' ? 'bg-emerald-400'
-                              : task.status === 'processing' ? 'bg-amber-400 animate-pulse'
-                              : task.status === 'expired' ? 'bg-white/25'
-                              : 'bg-red-400'
-                            }`} />
-                            {task.status === 'completed' ? 'Completado'
-                              : task.status === 'processing' ? 'Procesando'
-                              : task.status === 'expired' ? 'Expirado'
-                              : task.status ?? '—'}
+                  {/* Info principal */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-sm text-white/80 font-medium truncate max-w-[280px]">
+                        {task.fileName?.replace(/\.[^/.]+$/, '') ?? 'Audio'}
+                      </span>
+                      <span className={`flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                        task.status === 'completed'
+                          ? 'bg-emerald-500/10 text-emerald-400'
+                          : task.status === 'expired'
+                            ? 'bg-white/5 text-white/20'
+                            : 'bg-amber-500/10 text-amber-400'
+                      }`}>
+                        <span className={`w-1 h-1 rounded-full ${
+                          task.status === 'completed' ? 'bg-emerald-400'
+                          : task.status === 'expired' ? 'bg-white/20'
+                          : 'bg-amber-400 animate-pulse'
+                        }`} />
+                        {task.status === 'completed' ? 'Completado'
+                         : task.status === 'expired' ? 'Expirado'
+                         : 'Procesando'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-white/30">
+                      <span>{getLanguageName(task.targetLanguage)}</span>
+                      <span>·</span>
+                      <span>
+                        {task.createdAt
+                          ? new Date(task.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
+                          : '—'}
+                      </span>
+                      {task.expiresAt && new Date(task.expiresAt) > new Date() && (
+                        <>
+                          <span>·</span>
+                          <span className="text-white/20">
+                            Expira en {Math.ceil((new Date(task.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))}d
                           </span>
-                        </td>
+                        </>
+                      )}
+                    </div>
+                  </div>
 
-                        {/* Fecha */}
-                        <td className="px-4 py-3 text-sm text-white/40">
-                          {task.createdAt
-                            ? new Date(task.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
-                            : '—'}
-                        </td>
+                  {/* Barra de progreso inline cuando está activo */}
+                  {activeTranslationId === task.id && task.audioUrl && (
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <div
+                        className="w-24 h-1 bg-white/10 rounded-full cursor-pointer"
+                        onClick={e => {
+                          if (!historyAudioRef.current) return
+                          const rect = e.currentTarget.getBoundingClientRect()
+                          const pct = (e.clientX - rect.left) / rect.width
+                          historyAudioRef.current.currentTime = pct * (historyAudioRef.current.duration || 0)
+                        }}
+                      >
+                        <div
+                          className="h-full bg-white/50 rounded-full"
+                          style={{
+                            width: historyAudioRef.current?.duration
+                              ? `${(historyAudioRef.current.currentTime / historyAudioRef.current.duration) * 100}%`
+                              : '0%'
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
 
-                        {/* Retención */}
-                        <td className="px-4 py-3 text-sm text-white/30">
-                          {task.expiresAt
-                            ? (() => {
-                                const days = Math.ceil((new Date(task.expiresAt).getTime() - Date.now()) / 86_400_000);
-                                return days > 0 ? `Expira en ${days}d` : 'Expirado';
-                              })()
-                            : task.status === 'expired' ? 'Expirado' : '—'}
-                        </td>
-
-                        {/* Acciones */}
-                        <td className="px-4 py-3 w-[12%]">
-                          <div className="flex items-center justify-end gap-1">
-                            <button
-                              onClick={() => {
-                                if (!historyAudioRef.current) return;
-                                if (activeTranslationId === task.id && isHistoryPlaying) {
-                                  historyAudioRef.current.pause();
-                                  setIsHistoryPlaying(false);
-                                  setActiveTranslationId(null);
-                                } else {
-                                  historyAudioRef.current.src = task.audioUrl ?? '';
-                                  historyAudioRef.current.play();
-                                  setActiveTranslationId(task.id);
-                                }
-                              }}
-                              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/40 hover:text-white transition-colors"
-                            >
-                              {activeTranslationId === task.id && isHistoryPlaying
-                                ? <Pause className="w-3.5 h-3.5" />
-                                : <Play className="w-3.5 h-3.5 ml-0.5" />}
-                            </button>
-                            <a
-                              href={task.audioUrl ?? '#'}
-                              download="traduccion.mp3"
-                              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/40 hover:text-white transition-colors"
-                              title="Descargar"
-                            >
-                              <Download className="w-3.5 h-3.5" />
-                            </a>
-                          </div>
-                        </td>
-                      </tr>
-                  ))}
-                </tbody>
-              </table>
+                  {/* Acciones */}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {task.audioUrl && task.status === 'completed' && (
+                      <>
+                        <button
+                          onClick={() => {
+                            if (!historyAudioRef.current) return
+                            if (activeTranslationId === task.id && isHistoryPlaying) {
+                              historyAudioRef.current.pause()
+                              setIsHistoryPlaying(false)
+                              setActiveTranslationId(null)
+                            } else {
+                              historyAudioRef.current.src = task.audioUrl!
+                              historyAudioRef.current.play()
+                              setActiveTranslationId(task.id)
+                            }
+                          }}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/40 hover:text-white transition-colors"
+                        >
+                          {activeTranslationId === task.id && isHistoryPlaying
+                            ? <Pause className="w-3.5 h-3.5" />
+                            : <Play className="w-3.5 h-3.5 ml-0.5" />}
+                        </button>
+                        <a
+                          href={task.audioUrl}
+                          download={`${task.fileName?.replace(/\.[^/.]+$/, '') ?? 'traduccion'}-${task.targetLanguage}.mp3`}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/40 hover:text-white transition-colors"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </a>
+                      </>
+                    )}
+                    {task.status === 'expired' && (
+                      <span className="text-xs text-white/15 px-2">Expirado</span>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
