@@ -3474,8 +3474,8 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
               {!historySearch && <p className="text-xs mt-1" style={{ color: "#444444" }}>Las traducciones que realices aparecerán aquí</p>}
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-white/[0.08]">
-              <table className="w-full">
+            <div className="rounded-xl border border-white/[0.08] overflow-x-auto">
+              <table className="w-full min-w-[700px]">
                 <thead>
                   <tr className="border-b border-white/[0.08] bg-white/[0.02]">
                     <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3">Archivo</th>
@@ -3483,7 +3483,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                     <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3">Estado</th>
                     <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3">Fecha</th>
                     <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3">Retención</th>
-                    <th className="text-right text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3">Acciones</th>
+                    <th className="text-right text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3 w-24">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -3557,7 +3557,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                         </td>
 
                         {/* Acciones */}
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 w-24">
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => {
