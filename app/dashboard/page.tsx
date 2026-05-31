@@ -3474,16 +3474,16 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
               {!historySearch && <p className="text-xs mt-1" style={{ color: "#444444" }}>Las traducciones que realices aparecerán aquí</p>}
             </div>
           ) : (
-            <div className="rounded-xl border border-white/[0.08] overflow-x-auto">
-              <table className="w-full min-w-[700px]">
+            <div className="rounded-xl border border-white/[0.08]">
+              <table className="w-full">
                 <thead>
                   <tr className="border-b border-white/[0.08] bg-white/[0.02]">
-                    <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3">Archivo</th>
-                    <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3">Idioma destino</th>
-                    <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3">Estado</th>
-                    <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3">Fecha</th>
-                    <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3">Retención</th>
-                    <th className="text-right text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3 w-24">Acciones</th>
+                    <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3 w-[35%]">Archivo</th>
+                    <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3 w-[15%]">Idioma destino</th>
+                    <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3 w-[13%]">Estado</th>
+                    <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3 w-[12%]">Fecha</th>
+                    <th className="text-left text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3 w-[13%]">Retención</th>
+                    <th className="text-right text-[11px] font-medium text-white/30 uppercase tracking-wider px-4 py-3 w-[12%]">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -3504,7 +3504,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                             <div className="w-6 h-6 rounded-md bg-white/[0.08] flex items-center justify-center flex-shrink-0">
                               <Globe className="w-3 h-3 text-white/40" />
                             </div>
-                            <span className="text-sm text-white/70 truncate max-w-[160px]">
+                            <span className="text-sm text-white/70 truncate max-w-[100px]">
                               {task.fileName ?? '—'}
                             </span>
                           </div>
@@ -3542,7 +3542,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                         {/* Fecha */}
                         <td className="px-4 py-3 text-sm text-white/40">
                           {task.createdAt
-                            ? new Date(task.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
+                            ? new Date(task.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
                             : '—'}
                         </td>
 
@@ -3557,7 +3557,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                         </td>
 
                         {/* Acciones */}
-                        <td className="px-4 py-3 w-24">
+                        <td className="px-4 py-3 w-[12%]">
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => {
