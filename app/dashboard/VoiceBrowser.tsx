@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { Globe } from "lucide-react";
 import { FREE_VOICE_IDS } from "@/lib/free-voice-ids";
 import { CustomSelect } from "@/components/CustomSelect";
@@ -66,13 +65,6 @@ export { FREE_VOICE_IDS };
 export { getGender, getAge, formatCount };
 export { VoiceAvatar };
 
-function isPremiumVoice(id: string) {
-  return !FREE_VOICE_IDS.has(id);
-}
-
-function canUsePremium(plan?: string) {
-  return !!plan && plan !== "free";
-}
 
 function getGender(tags: string[]): "male" | "female" | null {
   const t = tags.map((s) => s.toLowerCase());
@@ -372,68 +364,6 @@ function VoiceAvatar({ name, coverImage, size = "md", id }: { name: string; cove
   return <VoiceAvatarGenerative seed={id ?? name} size={pxSize} className="flex-shrink-0" />;
 }
 
-function TierPill({
-  active,
-  onClick,
-  amber,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  amber?: boolean;
-  children: React.ReactNode;
-}) {
-  const style = amber
-    ? active
-      ? { background: "rgba(245,158,11,0.2)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.4)" }
-      : { background: "transparent", color: "#666666", border: "1px solid #2a2a2a" }
-    : active
-    ? { background: "rgba(255,255,255,0.1)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.2)" }
-    : { background: "transparent", color: "#666666", border: "1px solid #2a2a2a" };
-
-  return (
-    <button onClick={onClick} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" style={style}>
-      {children}
-    </button>
-  );
-}
-
-function UpgradePrompt({ onClose }: { onClose: () => void }) {
-  const router = useRouter();
-  return (
-    <div
-      className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl"
-      style={{ background: "rgba(0,0,0,0.75)" }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div className="rounded-2xl p-6 w-72 text-center border" style={{ background: "#0d0d0d", borderColor: "#222222" }}>
-        <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(245,158,11,0.12)" }}>
-          <span className="text-2xl">🔒</span>
-        </div>
-        <h3 className="text-white font-bold text-base mb-1">Voz Premium</h3>
-        <p className="text-sm mb-5" style={{ color: "#888888" }}>
-          Esta voz requiere plan Starter o superior
-        </p>
-        <div className="flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2 rounded-lg text-sm font-medium"
-            style={{ background: "#111111", color: "#888888", border: "1px solid #2a2a2a" }}
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={() => router.push("/pricing")}
-            className="flex-1 py-2 rounded-lg text-sm font-semibold text-white"
-            style={{ background: "#ffffff" }}
-          >
-            Ver planes
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function HeartIcon({ filled }: { filled: boolean }) {
   return (
@@ -785,8 +715,6 @@ function VoiceCard({
   previewLoadingId,
   onPreview,
   onUse,
-  isLocked,
-  isPremium,
   isFavorite,
   onToggleFavorite,
 }: {
@@ -795,8 +723,6 @@ function VoiceCard({
   previewLoadingId: string | null;
   onPreview: (id: string, sampleUrl?: string) => void;
   onUse: (voice: FishVoice) => void;
-  isLocked: boolean;
-  isPremium: boolean;
   isFavorite: boolean;
   onToggleFavorite: (voice: FishVoice) => void;
 }) {
@@ -839,14 +765,6 @@ function VoiceCard({
           <div className="flex-1 min-w-0 pt-0.5">
             <div className="flex items-center gap-1.5 mb-0.5 pr-8">
               <span className="text-sm font-semibold text-white truncate leading-tight">{voice.title}</span>
-              {isPremium && (
-                <span
-                  className="px-1.5 py-0.5 rounded text-xs font-bold flex-shrink-0"
-                  style={{ background: "rgba(245,158,11,0.12)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.2)" }}
-                >
-                  ✦
-                </span>
-              )}
             </div>
             {authorName && (
               <p className="text-xs mb-0.5" style={{ color: "#6b7280" }}>· {authorName}</p>
@@ -915,11 +833,7 @@ function VoiceCard({
         <button
           onClick={(e) => { e.stopPropagation(); onUse(voice); }}
           className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex-shrink-0"
-          style={
-            isLocked
-              ? { background: "rgba(20,20,20,0.9)", color: "#3a3a3a", border: "1px solid #1a1a1a" }
-              : { background: "#ffffff", color: "#000000" }
-          }
+          style={{ background: "#ffffff", color: "#000000" }}
         >
           Usar →
         </button>
@@ -934,9 +848,7 @@ export function VoiceBrowser({
   clonedVoices,
   onSelect,
   onClose,
-  plan,
   voiceListEndpoint,
-  disablePremiumLock,
   showExternalFilters,
   defaultLanguage,
 }: {
@@ -945,7 +857,6 @@ export function VoiceBrowser({
   onClose: () => void;
   plan?: string;
   voiceListEndpoint?: string;
-  disablePremiumLock?: boolean;
   showExternalFilters?: boolean;
   defaultLanguage?: string;
 }) {
@@ -956,7 +867,6 @@ export function VoiceBrowser({
   const [language, setLanguage] = useState(isExternalSource ? "" : (defaultLanguage ?? "es"));
   const [accent, setAccent] = useState("all");
   const [availableAccents, setAvailableAccents] = useState<string[]>([]);
-  const [tier, setTier] = useState<"all" | "free" | "premium">("all");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [publicVoices, setPublicVoices] = useState<FishVoice[]>([]);
@@ -967,13 +877,12 @@ export function VoiceBrowser({
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  // Refs for progressive accumulation when a tier filter is active
-  const tierRawRef = useRef<FishVoice[]>([]); // accumulated raw voices
-  const tierFishPageRef = useRef(1);          // next Fish Audio page to fetch
-  const tierHasMoreRef = useRef(true);        // whether more Fish Audio pages exist
+  // Refs for progressive accumulation when advanced filters are active
+  const tierRawRef = useRef<FishVoice[]>([]);
+  const tierFishPageRef = useRef(1);
+  const tierHasMoreRef = useRef(true);
   const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
   const [previewingId, setPreviewingId] = useState<string | null>(null);
-  const [showUpgrade, setShowUpgrade] = useState(false);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [filters, setFilters] = useState<AdvancedFilters>(EMPTY_FILTERS);
   const [appliedFilters, setAppliedFilters] = useState<AdvancedFilters>(EMPTY_FILTERS);
@@ -1006,7 +915,6 @@ export function VoiceBrowser({
     return () => controller.abort();
   }, [tab, communitySearchDebounced]);
 
-  const userCanUsePremium = canUsePremium(plan);
   const activeFilterCount = isExternalSource
     ? [elevenFilters.gender, elevenFilters.age, elevenFilters.useCase].filter(Boolean).length
     : filters.genders.length + filters.ages.length + filters.useCases.length + filters.qualities.length;
@@ -1163,16 +1071,12 @@ export function VoiceBrowser({
     async function run() {
       setLoading(true);
       const hasAppliedFilters = Object.values(appliedFilters).some((arr) => arr.length > 0);
-      const needsAccumulation = tier !== "all" || hasAppliedFilters;
+      const needsAccumulation = hasAppliedFilters;
       try {
         if (needsAccumulation) {
           const MAX_PAGES = 20;
           const targetCount = 20; // always page 1 after reset
-          const matchesCriteria = (v: FishVoice) => {
-            if (tier === "free" && isPremiumVoice(v._id)) return false;
-            if (tier === "premium" && !isPremiumVoice(v._id)) return false;
-            return matchesAdvancedFilters(v, appliedFilters);
-          };
+          const matchesCriteria = (v: FishVoice) => matchesAdvancedFilters(v, appliedFilters);
           while (tierHasMoreRef.current && tierFishPageRef.current <= MAX_PAGES) {
             if (tierRawRef.current.filter(matchesCriteria).length >= targetCount) break;
 
@@ -1231,7 +1135,7 @@ export function VoiceBrowser({
     run();
     return () => { controller.abort(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, tier, language, debouncedSearch, accent, appliedFilters, appliedElevenFilters]);
+  }, [tab, language, debouncedSearch, accent, appliedFilters, appliedElevenFilters]);
 
   // Separate effect for page navigation (no buffer reset — just slices into existing data)
   useEffect(() => {
@@ -1243,16 +1147,12 @@ export function VoiceBrowser({
     async function run() {
       setLoading(true);
       const hasAppliedFilters = Object.values(appliedFilters).some((arr) => arr.length > 0);
-      const needsAccumulation = tier !== "all" || hasAppliedFilters;
+      const needsAccumulation = hasAppliedFilters;
       try {
         if (needsAccumulation) {
           const MAX_PAGES = 20;
           const targetCount = page * 20;
-          const matchesCriteria = (v: FishVoice) => {
-            if (tier === "free" && isPremiumVoice(v._id)) return false;
-            if (tier === "premium" && !isPremiumVoice(v._id)) return false;
-            return matchesAdvancedFilters(v, appliedFilters);
-          };
+          const matchesCriteria = (v: FishVoice) => matchesAdvancedFilters(v, appliedFilters);
           while (tierHasMoreRef.current && tierFishPageRef.current <= MAX_PAGES) {
             if (tierRawRef.current.filter(matchesCriteria).length >= targetCount) break;
 
@@ -1363,10 +1263,6 @@ export function VoiceBrowser({
   }
 
   function handleVoiceClick(voice: FishVoice) {
-    if (!disablePremiumLock && isPremiumVoice(voice._id) && !userCanUsePremium) {
-      setShowUpgrade(true);
-      return;
-    }
     saveRecentVoice(voice);
     handleSelect({
       referenceId: voice._id,
@@ -1381,24 +1277,16 @@ export function VoiceBrowser({
     });
   }
 
-  const applyTierFilters = (voices: FishVoice[]) => voices.filter((v) => {
-    if (!disablePremiumLock) {
-      if (tier === "free" && isPremiumVoice(v._id)) return false;
-      if (tier === "premium" && !isPremiumVoice(v._id)) return false;
-    }
-    return matchesAdvancedFilters(v, appliedFilters);
-  });
-
-  const filteredVoices = applyTierFilters(publicVoices);
+  const filteredVoices = publicVoices.filter((v) => matchesAdvancedFilters(v, appliedFilters));
 
   const hasActiveFilters = Object.values(appliedFilters).some((arr) => arr.length > 0);
 
-  // When tier is filtered, paginate the accumulated filteredVoices client-side
-  const pageSlice = tier !== "all"
+  // When advanced filters are active, paginate the accumulated filteredVoices client-side
+  const pageSlice = hasActiveFilters
     ? filteredVoices.slice((page - 1) * 20, page * 20)
     : filteredVoices;
 
-  const applyFeatured = !isExternalSource && page === 1 && !debouncedSearch && accent === "all" && !hasActiveFilters && tier === "all" && featuredVoices.length > 0 && (language === "es" || language === "");
+  const applyFeatured = !isExternalSource && page === 1 && !debouncedSearch && accent === "all" && !hasActiveFilters && featuredVoices.length > 0 && (language === "es" || language === "");
   const displayedVoices = applyFeatured
     ? [
         // applyFeatured requires tier === "all", so no tier filter needed here
@@ -1409,11 +1297,7 @@ export function VoiceBrowser({
       ]
     : pageSlice;
 
-  const filteredRecent = recentVoices.filter((v) => {
-    if (tier === "free") return !isPremiumVoice(v._id);
-    if (tier === "premium") return isPremiumVoice(v._id);
-    return true;
-  });
+  const filteredRecent = recentVoices;
 
   const totalPages = Math.ceil(total / 20);
 
@@ -1435,8 +1319,6 @@ export function VoiceBrowser({
         className="w-[90vw] max-w-5xl flex flex-col rounded-2xl border relative"
         style={{ background: "#0a0a0a", borderColor: "#1a1a1a", height: "88vh" }}
       >
-        {showUpgrade && <UpgradePrompt onClose={() => setShowUpgrade(false)} />}
-
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "#1a1a1a" }}>
           <h2 className="text-base font-bold text-white">Seleccionar voz</h2>
@@ -1597,18 +1479,6 @@ export function VoiceBrowser({
                   </button>
                 </div>
 
-                {/* Tier pills — hidden for external voice sources */}
-                {!isExternalSource && (
-                  <div className="flex items-center gap-2 mb-4">
-                    <TierPill active={tier === "all"} onClick={() => setTier("all")}>Todas</TierPill>
-                    <TierPill active={tier === "free"} onClick={() => setTier("free")}>Gratis</TierPill>
-                    <TierPill active={tier === "premium"} onClick={() => setTier("premium")} amber>✦ Premium</TierPill>
-                    {!userCanUsePremium && tier === "premium" && (
-                      <span className="text-xs ml-1" style={{ color: "#444460" }}>Requiere plan Starter+</span>
-                    )}
-                  </div>
-                )}
-
                 {/* Default voice row — hidden for external voice sources */}
                 {!isExternalSource && (
                   <button
@@ -1645,24 +1515,18 @@ export function VoiceBrowser({
                   <p className="text-center py-16 text-sm" style={{ color: "#666666" }}>No se encontraron voces</p>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2 p-2">
-                    {displayedVoices.map((voice) => {
-                      const isPremium = !disablePremiumLock && isPremiumVoice(voice._id);
-                      const isLocked = isPremium && !userCanUsePremium;
-                      return (
-                        <VoiceCard
-                          key={voice._id}
-                          voice={voice}
-                          previewingId={previewingId}
-                          previewLoadingId={previewLoadingId}
-                          onPreview={handlePreview}
-                          onUse={handleVoiceClick}
-                          isPremium={isPremium}
-                          isLocked={isLocked}
-                          isFavorite={favoriteIds.has(voice._id)}
-                          onToggleFavorite={toggleFavorite}
-                        />
-                      );
-                    })}
+                    {displayedVoices.map((voice) => (
+                      <VoiceCard
+                        key={voice._id}
+                        voice={voice}
+                        previewingId={previewingId}
+                        previewLoadingId={previewLoadingId}
+                        onPreview={handlePreview}
+                        onUse={handleVoiceClick}
+                        isFavorite={favoriteIds.has(voice._id)}
+                        onToggleFavorite={toggleFavorite}
+                      />
+                    ))}
                   </div>
                 )}
 
@@ -1694,13 +1558,6 @@ export function VoiceBrowser({
             {/* ── Recent tab ── */}
             {tab === "recent" && (
               <div className="px-6 py-4">
-                {/* Tier pills */}
-                <div className="flex items-center gap-2 mb-4">
-                  <TierPill active={tier === "all"} onClick={() => setTier("all")}>Todas</TierPill>
-                  <TierPill active={tier === "free"} onClick={() => setTier("free")}>Gratis</TierPill>
-                  <TierPill active={tier === "premium"} onClick={() => setTier("premium")} amber>✦ Premium</TierPill>
-                </div>
-
                 {filteredRecent.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-24" style={{ color: "#666666" }}>
                     <svg className="mb-4" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1718,24 +1575,18 @@ export function VoiceBrowser({
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-2">
-                    {filteredRecent.map((voice) => {
-                      const isPremium = !disablePremiumLock && isPremiumVoice(voice._id);
-                      const isLocked = isPremium && !userCanUsePremium;
-                      return (
-                        <VoiceCard
-                          key={voice._id}
-                          voice={voice}
-                          previewingId={previewingId}
-                          previewLoadingId={previewLoadingId}
-                          onPreview={handlePreview}
-                          onUse={handleVoiceClick}
-                          isPremium={isPremium}
-                          isLocked={isLocked}
-                          isFavorite={favoriteIds.has(voice._id)}
-                          onToggleFavorite={toggleFavorite}
-                        />
-                      );
-                    })}
+                    {filteredRecent.map((voice) => (
+                      <VoiceCard
+                        key={voice._id}
+                        voice={voice}
+                        previewingId={previewingId}
+                        previewLoadingId={previewLoadingId}
+                        onPreview={handlePreview}
+                        onUse={handleVoiceClick}
+                        isFavorite={favoriteIds.has(voice._id)}
+                        onToggleFavorite={toggleFavorite}
+                      />
+                    ))}
                   </div>
                 )}
               </div>
@@ -1746,24 +1597,18 @@ export function VoiceBrowser({
               <div className="px-6 py-4">
                 <p className="text-xs mb-4" style={{ color: "#666666" }}>Voces de calidad curadas y siempre disponibles.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-2">
-                  {DEFAULT_VOICES.map((voice) => {
-                    const isPremium = !disablePremiumLock && isPremiumVoice(voice._id);
-                    const isLocked = isPremium && !userCanUsePremium;
-                    return (
-                      <VoiceCard
-                        key={voice._id}
-                        voice={voice}
-                        previewingId={previewingId}
-                        previewLoadingId={previewLoadingId}
-                        onPreview={handlePreview}
-                        onUse={handleVoiceClick}
-                        isPremium={isPremium}
-                        isLocked={isLocked}
-                        isFavorite={favoriteIds.has(voice._id)}
-                        onToggleFavorite={toggleFavorite}
-                      />
-                    );
-                  })}
+                  {DEFAULT_VOICES.map((voice) => (
+                    <VoiceCard
+                      key={voice._id}
+                      voice={voice}
+                      previewingId={previewingId}
+                      previewLoadingId={previewLoadingId}
+                      onPreview={handlePreview}
+                      onUse={handleVoiceClick}
+                      isFavorite={favoriteIds.has(voice._id)}
+                      onToggleFavorite={toggleFavorite}
+                    />
+                  ))}
                 </div>
               </div>
             )}
@@ -1805,8 +1650,6 @@ export function VoiceBrowser({
                         tags: [],
                         task_count: 0,
                       };
-                      const isPremium = !disablePremiumLock && isPremiumVoice(fav.voiceId);
-                      const isLocked = isPremium && !userCanUsePremium;
                       return (
                         <VoiceCard
                           key={fav.id}
@@ -1815,8 +1658,6 @@ export function VoiceBrowser({
                           previewLoadingId={previewLoadingId}
                           onPreview={handlePreview}
                           onUse={handleVoiceClick}
-                          isPremium={isPremium}
-                          isLocked={isLocked}
                           isFavorite={true}
                           onToggleFavorite={toggleFavorite}
                         />
@@ -1872,8 +1713,6 @@ export function VoiceBrowser({
                           previewLoadingId={previewLoadingId}
                           onPreview={handlePreview}
                           onUse={() => voice.fishAudioModelId && handleSelect({ referenceId: voice.fishAudioModelId, name: voice.name, isCloned: true })}
-                          isPremium={false}
-                          isLocked={false}
                           isFavorite={false}
                           onToggleFavorite={() => {}}
                         />
