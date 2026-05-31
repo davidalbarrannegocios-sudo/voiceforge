@@ -4682,7 +4682,6 @@ function TeamTab({
   const [loading, setLoading] = useState(true);
   const [teamName, setTeamName] = useState("");
   const [creating, setCreating] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [percentages, setPercentages] = useState<Record<string, number>>({});
@@ -4692,7 +4691,6 @@ function TeamTab({
   const [deletingTeam, setDeletingTeam] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<TeamSubTab>("Miembros");
   const [searchQuery, setSearchQuery] = useState("");
-  const [showInviteForm, setShowInviteForm] = useState(false);
 
   useEffect(() => {
     fetch("/api/team")
@@ -4733,21 +4731,19 @@ function TeamTab({
     }
   }
 
-  async function handleInvite() {
-    if (!inviteEmail.trim()) return;
+  async function handleInvite(email: string) {
+    if (!email.trim()) return;
     setInviting(true);
     try {
       const res = await fetch("/api/team/invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: inviteEmail.trim() }),
+        body: JSON.stringify({ email: email.trim() }),
       });
       const data = await res.json();
       if (!res.ok) { flash("error", data.error); return; }
       setTeam((t) => t ? { ...t, members: [...t.members, data.member] } : t);
       setPercentages((p) => ({ ...p, [data.member.id]: 0 }));
-      setInviteEmail("");
-      setShowInviteForm(false);
       flash("success", "Miembro añadido al equipo");
     } finally {
       setInviting(false);
@@ -4945,38 +4941,16 @@ function TeamTab({
                 />
               </div>
               <button
-                onClick={() => setShowInviteForm((v) => !v)}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-white text-black flex-shrink-0 transition-opacity hover:opacity-90"
+                disabled={inviting}
+                onClick={() => {
+                  const email = window.prompt("Email del miembro a invitar:");
+                  if (email?.trim()) handleInvite(email.trim());
+                }}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-white text-black flex-shrink-0 transition-opacity hover:opacity-90 disabled:opacity-50"
               >
-                Invitar miembro
+                {inviting ? "Invitando..." : "Invitar miembro"}
               </button>
             </div>
-
-            {/* Invite form */}
-            {showInviteForm && (
-              <div className="rounded-xl p-4 space-y-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>El usuario debe tener cuenta activa en Elite Labs.</p>
-                <div className="flex gap-2">
-                  <input
-                    type="email"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="email@ejemplo.com"
-                    className="flex-1 px-3 py-2 rounded-lg text-sm text-white focus:outline-none"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
-                    onKeyDown={(e) => e.key === "Enter" && handleInvite()}
-                    autoFocus
-                  />
-                  <button
-                    onClick={handleInvite}
-                    disabled={inviting || !inviteEmail.trim()}
-                    className="px-4 py-2 rounded-lg text-sm font-medium bg-white text-black disabled:opacity-50 flex-shrink-0"
-                  >
-                    {inviting ? "..." : "Invitar"}
-                  </button>
-                </div>
-              </div>
-            )}
 
             {/* Members table */}
             <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
