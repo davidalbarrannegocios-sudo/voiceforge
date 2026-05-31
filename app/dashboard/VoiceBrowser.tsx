@@ -1220,7 +1220,10 @@ export function VoiceBrowser({
       new Promise<boolean>((resolve) => {
         const audio = new Audio(url);
         let done = false;
-        const finish = (ok: boolean) => { if (!done) { done = true; resolve(ok); } };
+        let tid: ReturnType<typeof setTimeout>;
+        const finish = (ok: boolean) => {
+          if (!done) { done = true; clearTimeout(tid); resolve(ok); }
+        };
         audio.onerror = () => finish(false);
         audio.onplaying = () => {
           audio.onended = () => setPreviewingId(null);
@@ -1229,7 +1232,8 @@ export function VoiceBrowser({
           finish(true);
         };
         audio.play().catch(() => finish(false));
-        setTimeout(() => { audio.src = ""; finish(false); }, 3000);
+        // Only abort the URL attempt if playback hasn't started within 3 s
+        tid = setTimeout(() => { audio.src = ""; finish(false); }, 3000);
       });
 
     const fastUrls = [
