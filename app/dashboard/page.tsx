@@ -4691,6 +4691,11 @@ function TeamTab({
   const [deletingTeam, setDeletingTeam] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<TeamSubTab>("Miembros");
   const [searchQuery, setSearchQuery] = useState("");
+  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+  const [invoices, setInvoices] = useState<{ id: string; date: number; amount: number; currency: string; status: string | null; pdfUrl: string | null }[]>([]);
+  const [invoicePm, setInvoicePm] = useState<{ brand: string; last4: string } | null>(null);
+  const [invoicesLoading, setInvoicesLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     fetch("/api/team")
@@ -4706,6 +4711,25 @@ function TeamTab({
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (activeSubTab !== "Facturación") return;
+    setInvoicesLoading(true);
+    Promise.all([
+      fetch("/api/billing/invoices").then((r) => r.json()),
+      fetch("/api/billing/payment-methods").then((r) => r.json()),
+    ]).then(([invData, pmData]) => {
+      setInvoices(invData.invoices ?? []);
+      const methods: { brand: string; last4: string; isDefault: boolean }[] = pmData.paymentMethods ?? [];
+      setInvoicePm(methods.find((m) => m.isDefault) ?? methods[0] ?? null);
+    }).catch(() => {}).finally(() => setInvoicesLoading(false));
+  }, [activeSubTab]);
+
+  async function openPortal() {
+    const res = await fetch("/api/create-portal-session", { method: "POST" });
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+  }
 
   function flash(type: "error" | "success", msg: string) {
     if (type === "error") { setError(msg); setSuccess(null); }
@@ -5112,39 +5136,197 @@ function TeamTab({
 
         {/* ── Planes tab ── */}
         {activeSubTab === "Planes" && (
-          <div className="py-12 text-center space-y-4">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto" style={{ background: "rgba(255,255,255,0.06)" }}>
-              <CreditCard size={22} className="text-white" />
+          <div className="space-y-5">
+            {/* Billing toggle */}
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-white font-medium">Planes disponibles</p>
+              <div className="flex items-center gap-1 rounded-lg p-1" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                {(["monthly", "annual"] as const).map((b) => (
+                  <button
+                    key={b}
+                    onClick={() => setBilling(b)}
+                    className="px-3 py-1 rounded-md text-xs font-medium transition-all"
+                    style={billing === b ? { background: "#ffffff", color: "#000000" } : { color: "rgba(255,255,255,0.5)" }}
+                  >
+                    {b === "monthly" ? "Mensual" : "Anual −17%"}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div>
-              <h3 className="text-base font-semibold text-white mb-1">Planes disponibles</h3>
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Consulta y cambia tu plan desde la página de facturación.</p>
+
+            {/* Plan cards — skip free */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {BILLING_PLANS.filter((p) => p.key !== "free").map((p) => {
+                const isCurrent = plan === p.key;
+                const planBadge = PLAN_BADGE[p.key];
+                const monthlyPrice = billing === "annual" && p.price > 0
+                  ? Math.round(p.price * 0.83 * 10) / 10
+                  : p.price;
+                const borderColor = isCurrent ? (planBadge?.color ?? "#888888") : p.popular ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.1)";
+
+                return (
+                  <div
+                    key={p.key}
+                    style={{
+                      borderRadius: "16px",
+                      border: `1px solid ${borderColor}`,
+                      background: isCurrent ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.02)",
+                      padding: "20px 16px 16px",
+                      display: "flex",
+                      flexDirection: "column",
+                      position: "relative",
+                    }}
+                  >
+                    {/* Name + badge */}
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "6px", marginBottom: "4px" }}>
+                      <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{p.name}</span>
+                      {isCurrent ? (
+                        <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px", color: planBadge?.color, background: planBadge?.bg, letterSpacing: "0.05em", whiteSpace: "nowrap", flexShrink: 0 }}>
+                          ACTUAL
+                        </span>
+                      ) : p.popular ? (
+                        <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.2)", color: "#ffffff", background: "rgba(255,255,255,0.05)", whiteSpace: "nowrap", flexShrink: 0 }}>
+                          Popular
+                        </span>
+                      ) : p.key === "enterprise" ? (
+                        <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(16,185,129,0.45)", color: "#6ee7b7", background: "rgba(16,185,129,0.05)", whiteSpace: "nowrap", flexShrink: 0 }}>
+                          Equipos
+                        </span>
+                      ) : null}
+                    </div>
+
+                    {/* Description */}
+                    <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginBottom: "14px", lineHeight: 1.4 }}>{p.description}</p>
+
+                    {/* Price */}
+                    <div style={{ marginBottom: "14px" }}>
+                      {billing === "annual" && (
+                        <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.25)", textDecoration: "line-through", lineHeight: 1 }}>${p.price}/mes</p>
+                      )}
+                      <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
+                        <span style={{ fontSize: "28px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>${monthlyPrice}</span>
+                        <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginLeft: "2px" }}>/mes</span>
+                      </div>
+                      <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", marginTop: "2px" }}>{costPer10k(monthlyPrice, p.characters)}</p>
+                    </div>
+
+                    {/* CTA */}
+                    <button
+                      onClick={() => {
+                        if (isCurrent) return;
+                        if (plan !== "free") { openPortal(); return; }
+                        router.push(`/checkout/${p.key}?billing=${billing}`);
+                      }}
+                      disabled={isCurrent}
+                      className="w-full py-2.5 rounded-lg text-sm font-semibold mb-4 transition-opacity disabled:cursor-not-allowed"
+                      style={isCurrent
+                        ? { border: "1px solid rgba(255,255,255,0.1)", background: "transparent", color: "rgba(255,255,255,0.25)" }
+                        : p.popular
+                        ? { background: "#ffffff", color: "#000000" }
+                        : { border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "#e5e7eb" }}
+                    >
+                      {isCurrent ? "Plan actual" : plan !== "free" ? `Cambiar a ${p.name}` : "Suscribirse"}
+                    </button>
+
+                    {/* Divider */}
+                    <div style={{ height: "1px", background: "rgba(255,255,255,0.08)", marginBottom: "12px" }} />
+
+                    {/* Features */}
+                    <ul style={{ listStyle: "none", padding: 0, margin: 0, flex: 1 }}>
+                      {p.features.map((f, i) => (
+                        <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "12px", lineHeight: 1.6, color: "rgba(255,255,255,0.75)", paddingTop: "8px", paddingBottom: "8px", borderBottom: i < p.features.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
+                          <FeatureTick />{f}
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* Character count footer */}
+                    <div style={{ marginTop: "12px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                      <p style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.5)", textAlign: "center" }}>
+                        {p.characters.toLocaleString("es-ES")} caracteres/mes
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <button
-              onClick={onNavigateToBilling}
-              className="px-6 py-2.5 rounded-lg text-sm font-medium bg-white text-black transition-opacity hover:opacity-90"
-            >
-              Ver planes →
-            </button>
           </div>
         )}
 
         {/* ── Facturación tab ── */}
         {activeSubTab === "Facturación" && (
-          <div className="py-12 text-center space-y-4">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto" style={{ background: "rgba(255,255,255,0.06)" }}>
-              <CreditCard size={22} className="text-white" />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-white mb-1">Facturación y pagos</h3>
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Gestiona tus métodos de pago, historial de facturas y renovaciones.</p>
-            </div>
-            <button
-              onClick={onNavigateToBilling}
-              className="px-6 py-2.5 rounded-lg text-sm font-medium bg-white text-black transition-opacity hover:opacity-90"
-            >
-              Ir a facturación →
-            </button>
+          <div className="space-y-5">
+            {/* Payment method */}
+            {invoicePm && (
+              <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                <div className="w-10 h-7 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                  <CreditCard size={14} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-sm text-white font-medium capitalize">{invoicePm.brand} ···· {invoicePm.last4}</p>
+                  <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Método de pago activo</p>
+                </div>
+                <button
+                  onClick={openPortal}
+                  className="ml-auto text-xs underline underline-offset-2 transition-opacity hover:opacity-70"
+                  style={{ color: "rgba(255,255,255,0.5)" }}
+                >
+                  Gestionar
+                </button>
+              </div>
+            )}
+
+            {/* Invoices table */}
+            {invoicesLoading ? (
+              <div className="py-10 flex justify-center">
+                <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+              </div>
+            ) : invoices.length === 0 ? (
+              <div className="py-12 text-center">
+                <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>No hay facturas aún.</p>
+              </div>
+            ) : (
+              <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                      {["FECHA", "DESCRIPCIÓN", "IMPORTE", "ESTADO", "DESCARGAR"].map((h) => (
+                        <th key={h} className="px-4 py-3 text-left text-xs font-semibold tracking-wider" style={{ color: "rgba(255,255,255,0.4)" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {invoices.map((inv, i) => {
+                      const statusColor = inv.status === "paid" ? { bg: "rgba(74,222,128,0.1)", color: "#4ade80" }
+                        : inv.status === "open" ? { bg: "rgba(251,191,36,0.1)", color: "#fbbf24" }
+                        : { bg: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)" };
+                      const statusLabel = inv.status === "paid" ? "Pagada" : inv.status === "open" ? "Pendiente" : inv.status ?? "—";
+                      return (
+                        <tr key={inv.id} className="hover:bg-white/5 transition-colors" style={{ borderBottom: i < invoices.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                          <td className="px-4 py-3 text-white">
+                            {new Date(inv.date).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
+                          </td>
+                          <td className="px-4 py-3" style={{ color: "rgba(255,255,255,0.6)" }}>Suscripción Elite Labs</td>
+                          <td className="px-4 py-3 text-white font-medium">
+                            {inv.amount.toLocaleString("es-ES", { style: "currency", currency: inv.currency.toUpperCase() })}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-xs px-2 py-0.5 rounded" style={{ background: statusColor.bg, color: statusColor.color }}>{statusLabel}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            {inv.pdfUrl ? (
+                              <a href={inv.pdfUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-3 py-1.5 rounded-lg transition-colors" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}>
+                                PDF
+                              </a>
+                            ) : <span style={{ color: "rgba(255,255,255,0.2)" }}>—</span>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>
