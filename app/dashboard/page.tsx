@@ -2937,7 +2937,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // History state
-  const [historyTasks, setHistoryTasks] = useState<TTranslateTask[]>([]);
+  const [historyTasks, setHistoryTasks] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
 
@@ -3493,7 +3493,8 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                         No hay traducciones en el historial
                       </td>
                     </tr>
-                  ) : historyTasks.map((task: TTranslateTask) => {
+                  ) : historyTasks.map((task: any) => {
+                    console.log('[row render] id:', task.id, 'audioUrl:', task.audioUrl, 'status:', task.status);
                     const audioUrl = task.audioUrl;
                     return (
                       <tr
