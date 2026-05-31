@@ -327,14 +327,9 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
         {/* ── LEFT: Script editor ── */}
         <div className="flex-1 flex flex-col overflow-hidden border-r border-white/[0.08]">
 
-          {/* Toolbar */}
-          <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3 border-b border-white/[0.08]">
-            <h2 className="text-sm font-semibold text-white">Guión</h2>
-            {parsedLines && (
-              <span className="text-xs text-white/30">
-                {parsedLines.length} líneas · {totalChars.toLocaleString()} cr
-              </span>
-            )}
+          {/* Compact toolbar */}
+          <div className="flex-shrink-0 flex items-center gap-2 px-3 py-2 border-b border-white/[0.08]">
+            <span className="text-xs font-medium text-white/50">Guión</span>
             <div className="flex-1" />
 
             {/* Translate */}
@@ -342,7 +337,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
               <div className="relative">
                 <button
                   onClick={() => setShowLangPicker(p => !p)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.08] border border-white/10 text-xs text-white/50 transition-all"
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5 hover:bg-white/[0.08] border border-white/[0.08] text-[11px] text-white/40 transition-all"
                 >
                   Traducir
                   <ChevronDown className="w-3 h-3" />
@@ -371,8 +366,8 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
             )}
 
             {/* Import .txt */}
-            <label className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.08] border border-white/10 text-xs text-white/50 cursor-pointer transition-all">
-              <Upload className="w-3.5 h-3.5" />
+            <label className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5 hover:bg-white/[0.08] border border-white/[0.08] text-[11px] text-white/40 cursor-pointer transition-all">
+              <Upload className="w-3 h-3" />
               Importar
               <input type="file" accept=".txt" className="hidden"
                      onChange={e => {
@@ -393,23 +388,20 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                   const a = document.createElement('a')
                   a.href = url; a.download = 'guion.txt'; a.click()
                 }}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.08] border border-white/10 text-xs text-white/50 transition-all"
+                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5 hover:bg-white/[0.08] border border-white/[0.08] text-[11px] text-white/40 transition-all"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-3 h-3" />
                 Exportar
               </button>
             )}
 
             {/* Clear */}
-            {rawText && (
-              <button
-                onClick={() => { setRawText(''); setParsedLines(null); setCharacters([]) }}
-                className="p-1.5 rounded-lg hover:bg-white/[0.08] text-white/30 hover:text-white transition-colors"
-                title="Limpiar"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
+            <button
+              onClick={() => { setRawText(''); setParsedLines(null); setCharacters([]) }}
+              className="p-1 rounded-lg hover:bg-white/[0.08] text-white/20 hover:text-white/50 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
 
           {/* Textarea */}
@@ -424,179 +416,137 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
             <textarea
               value={rawText}
               onChange={e => handleTextChange(e.target.value)}
-              placeholder={`Escribe tu diálogo aquí...\n\nFormato:\n(Personaje) Texto de la línea`}
-              className="w-full h-full bg-transparent p-4 text-sm text-white/85 placeholder:text-white/20 outline-none resize-none font-mono leading-relaxed"
+              placeholder={`(Narrador) Era una noche oscura...\n(Personaje 1) ¿Has escuchado lo que pasó?\n(Personaje 2) No, cuéntame.`}
+              className="w-full h-full bg-transparent px-3 py-3 text-sm text-white/80 placeholder:text-white/15 outline-none resize-none font-mono leading-relaxed"
               spellCheck={false}
             />
           </div>
 
-          {/* Parsed lines preview */}
-          {parsedLines && parsedLines.length > 0 && (
-            <div className="flex-shrink-0 border-t border-white/[0.08] max-h-[220px] overflow-y-auto">
-              <div className="px-4 py-2 text-[10px] text-white/30 uppercase tracking-wider sticky top-0 bg-black/80 backdrop-blur-sm">
-                Vista previa — {parsedLines.length} líneas
-              </div>
-              {parsedLines.map((line, i) => {
-                const char = characters.find(c => c.name === line.characterId)
-                return (
-                  <div key={i} className="flex items-start gap-3 px-4 py-1.5 hover:bg-white/[0.02] group">
-                    <span className="text-xs font-semibold w-24 flex-shrink-0 truncate mt-0.5"
-                          style={{ color: char?.color ?? 'rgba(255,255,255,0.25)' }}>
-                      {line.characterId}
-                    </span>
-                    <span className="text-xs text-white/60 flex-1 leading-relaxed">{line.text}</span>
-                    <button
-                      onClick={() => handlePreviewLine(line, char)}
-                      disabled={!char?.voiceId}
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 text-white/40 transition-all disabled:cursor-not-allowed"
-                      title="Pre-escuchar"
-                    >
-                      {isPreviewLoading && previewLine === line.text
-                        ? <Loader2 className="w-3 h-3 animate-spin" />
-                        : <Play className="w-3 h-3" />}
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* Footer */}
-          <div className="flex-shrink-0 flex items-center gap-3 px-4 py-2.5 border-t border-white/[0.08]">
+          {/* Footer with stats */}
+          <div className="flex-shrink-0 flex items-center gap-3 px-3 py-2 border-t border-white/[0.08]">
+            <span className="text-[11px] text-white/20">
+              {parsedLines?.length ?? 0} líneas · {totalChars.toLocaleString()} cr
+            </span>
             {!rawText && (
-              <button onClick={() => handleTextChange(exampleText)} className="text-xs text-white/25 hover:text-white/50 transition-colors">
-                → Cargar ejemplo
+              <button onClick={() => handleTextChange(exampleText)}
+                      className="text-[11px] text-white/20 hover:text-white/40 transition-colors">
+                → Ejemplo
               </button>
             )}
             <div className="flex-1" />
-            {parseError && <span className="text-xs text-amber-400/70">{parseError}</span>}
-            {error && <span className="text-xs text-red-400/70 truncate max-w-[200px]">{error}</span>}
+            {parseError && <span className="text-[11px] text-amber-400/70">{parseError}</span>}
+            {error && <span className="text-[11px] text-red-400/70 truncate max-w-[180px]">{error}</span>}
           </div>
         </div>
 
-        {/* ── CENTER: Characters + settings ── */}
-        <div className="w-[280px] flex-shrink-0 flex flex-col overflow-hidden border-r border-white/[0.08]">
+        {/* ── CENTER: Characters (compact) ── */}
+        <div className="w-[220px] flex-shrink-0 flex flex-col overflow-hidden border-r border-white/[0.08]">
 
-          <div className="flex-shrink-0 px-4 py-3 border-b border-white/[0.08]">
-            <p className="text-sm font-semibold text-white">Personajes</p>
-            {characters.length > 0 && (
-              <p className="text-xs text-white/30 mt-0.5">
-                {characters.length} detectados · {hasAllVoices ? '✓ Listos' : 'Asigna voces'}
-              </p>
-            )}
+          <div className="flex-shrink-0 px-3 py-2 border-b border-white/[0.08]">
+            <span className="text-xs font-medium text-white/50">Personajes</span>
           </div>
 
-          {/* Character list */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          {/* Scrollable character list */}
+          <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
             {characters.length === 0 ? (
-              <div className="text-center py-8 text-white/[0.15] text-xs">
-                Los personajes aparecerán aquí
-              </div>
+              <p className="text-[11px] text-white/15 text-center py-4">
+                Escribe el guión para detectar personajes
+              </p>
             ) : characters.map(char => (
-              <div key={char.id} className="bg-white/[0.02] border border-white/[0.08] rounded-xl p-3">
+              <div key={char.id} className="bg-white/[0.02] border border-white/[0.08] rounded-lg p-2">
 
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: char.color }} />
-                  <span className="text-sm font-medium text-white">{char.name}</span>
-                  <span className="text-[10px] text-white/25 ml-auto">
-                    {parsedLines?.filter(l => l.characterId === char.name).length ?? 0} líneas
+                {/* Name */}
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: char.color }} />
+                  <span className="text-xs font-medium text-white/80 truncate">{char.name}</span>
+                  <span className="text-[10px] text-white/20 ml-auto">
+                    {parsedLines?.filter(l => l.characterId === char.name).length ?? 0}
                   </span>
                 </div>
 
+                {/* Voice picker */}
                 <button
                   onClick={() => setSelectingVoiceFor(char.name)}
-                  className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs border transition-all mb-3 ${
+                  className={`w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-[11px] border transition-all mb-1.5 ${
                     char.voiceId
-                      ? 'border-white/10 bg-white/[0.05] text-white/70'
-                      : 'border-dashed border-white/20 text-white/30'
+                      ? 'border-white/10 bg-white/5 text-white/60'
+                      : 'border-dashed border-white/15 text-white/25'
                   }`}
                 >
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <Mic className="w-3 h-3 flex-shrink-0" />
-                    <span className="truncate">{char.voiceId ? char.voiceName : 'Seleccionar voz →'}</span>
-                  </div>
-                  <ChevronRight className="w-3 h-3 flex-shrink-0" />
+                  <Mic className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{char.voiceId ? char.voiceName : 'Voz →'}</span>
                 </button>
 
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-white/30 w-16">Velocidad</span>
-                    <input type="range" min={0.5} max={2} step={0.1} value={char.speed}
+                {/* Speed + volume compact grid */}
+                <div className="grid grid-cols-2 gap-1">
+                  <div>
+                    <span className="text-[9px] text-white/20">Vel. {char.speed.toFixed(1)}x</span>
+                    <input type="range" min={0.5} max={2} step={0.1}
+                           value={char.speed}
                            onChange={e => updateCharacter(char.id, { speed: parseFloat(e.target.value) })}
-                           className="flex-1 accent-white h-1" />
-                    <span className="text-[10px] text-white/40 w-8 text-right">{char.speed.toFixed(1)}x</span>
+                           className="w-full accent-white h-0.5 mt-0.5" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-white/30 w-16">Volumen</span>
-                    <input type="range" min={0} max={2} step={0.1} value={char.volume}
+                  <div>
+                    <span className="text-[9px] text-white/20">Vol. {Math.round(char.volume * 100)}%</span>
+                    <input type="range" min={0} max={2} step={0.1}
+                           value={char.volume}
                            onChange={e => updateCharacter(char.id, { volume: parseFloat(e.target.value) })}
-                           className="flex-1 accent-white h-1" />
-                    <span className="text-[10px] text-white/40 w-8 text-right">{Math.round(char.volume * 100)}%</span>
+                           className="w-full accent-white h-0.5 mt-0.5" />
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Global settings */}
-          <div className="flex-shrink-0 border-t border-white/[0.08] p-3 space-y-2.5">
-            <p className="text-[10px] text-white/30 uppercase tracking-wider">Ajustes globales</p>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-white/40 flex-1">Pausa entre líneas</span>
-              <select
-                value={pauseBetweenLines}
-                onChange={e => setPauseBetweenLines(Number(e.target.value))}
-                className="bg-white/[0.05] border border-white/10 rounded-lg px-2 py-1 text-xs text-white/60 outline-none"
-              >
-                <option value={0}>Sin pausa</option>
+          {/* Global settings compact */}
+          <div className="flex-shrink-0 border-t border-white/[0.08] p-2 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-white/30">Pausa</span>
+              <select value={pauseBetweenLines}
+                      onChange={e => setPauseBetweenLines(Number(e.target.value))}
+                      className="bg-white/5 border border-white/[0.08] rounded px-1.5 py-0.5 text-[10px] text-white/50 outline-none">
+                <option value={0}>0s</option>
                 <option value={300}>0.3s</option>
                 <option value={500}>0.5s</option>
                 <option value={1000}>1s</option>
                 <option value={2000}>2s</option>
               </select>
             </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-white/40 flex-1">Formato</span>
-              <div className="flex gap-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-white/30">Formato</span>
+              <div className="flex gap-0.5">
                 {(['mp3', 'wav'] as const).map(fmt => (
-                  <button
-                    key={fmt}
-                    onClick={() => setOutputFormat(fmt)}
-                    className={`px-2 py-1 rounded-md text-[11px] transition-all ${
-                      outputFormat === fmt ? 'bg-white text-black font-medium' : 'bg-white/[0.05] text-white/40 hover:bg-white/10'
-                    }`}
-                  >
+                  <button key={fmt} onClick={() => setOutputFormat(fmt)}
+                          className={`px-2 py-0.5 rounded text-[10px] transition-all ${
+                            outputFormat === fmt ? 'bg-white text-black' : 'bg-white/5 text-white/30'
+                          }`}>
                     {fmt.toUpperCase()}
                   </button>
                 ))}
               </div>
             </div>
-
-            <div className={`flex justify-between text-xs px-2 py-1.5 rounded-lg ${
-              credits >= totalChars ? 'bg-white/[0.03] text-white/30' : 'bg-red-500/[0.08] text-red-400/70'
+            <div className={`flex justify-between text-[10px] px-1 ${
+              credits >= totalChars ? 'text-white/20' : 'text-red-400/60'
             }`}>
-              <span>{totalChars.toLocaleString()} créditos</span>
-              <span>{credits.toLocaleString()} disponibles</span>
+              <span>{totalChars.toLocaleString()} cr</span>
+              <span>{credits.toLocaleString()} disp.</span>
             </div>
           </div>
 
           {/* Generate button */}
-          <div className="flex-shrink-0 p-3 border-t border-white/[0.08]">
+          <div className="flex-shrink-0 p-2 border-t border-white/[0.08]">
             <button
               onClick={handleGenerate}
               disabled={!canGenerate || isGenerating}
-              className="w-full py-3 bg-white text-black text-sm font-semibold rounded-xl hover:bg-white/90 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-2 bg-white text-black text-xs font-semibold rounded-lg hover:bg-white/90 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
             >
-              {isGenerating ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Generando...</>
-              ) : (
-                <><Play className="w-4 h-4" /> Generar diálogo</>
-              )}
+              {isGenerating
+                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generando...</>
+                : <><Play className="w-3.5 h-3.5" /> Generar</>
+              }
             </button>
             {!hasAllVoices && characters.length > 0 && (
-              <p className="text-[11px] text-amber-400/60 text-center mt-2">
+              <p className="text-[10px] text-amber-400/60 text-center mt-1.5">
                 Asigna voz a todos los personajes
               </p>
             )}
@@ -604,87 +554,81 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
         </div>
 
         {/* ── RIGHT: Audio result ── */}
-        <div className="w-[320px] flex-shrink-0 flex flex-col overflow-hidden">
+        <div className="w-[240px] flex-shrink-0 flex flex-col overflow-hidden">
 
-          <div className="flex-shrink-0 px-4 py-3 border-b border-white/[0.08]">
-            <p className="text-sm font-semibold text-white">Audio</p>
+          <div className="flex-shrink-0 px-3 py-2 border-b border-white/[0.08]">
+            <span className="text-xs font-medium text-white/50">Audio</span>
           </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4">
+          <div className="flex-1 flex flex-col items-center justify-center p-4">
             {!audioUrl && !isGenerating ? (
               <div className="text-center">
-                <div className="w-16 h-16 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center mb-3 mx-auto">
-                  <MessageSquare className="w-7 h-7 text-white/[0.15]" />
+                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/[0.08] flex items-center justify-center mb-2 mx-auto">
+                  <MessageSquare className="w-5 h-5 text-white/15" />
                 </div>
-                <p className="text-sm text-white/20">El audio aparecerá aquí</p>
-                <p className="text-xs text-white/10 mt-1">Genera el diálogo para escucharlo</p>
+                <p className="text-xs text-white/20">El audio aparecerá aquí</p>
               </div>
             ) : isGenerating ? (
-              <div className="text-center space-y-3 w-full">
-                <Loader2 className="w-8 h-8 animate-spin text-white/30 mx-auto" />
-                <p className="text-sm text-white/40">Generando diálogo...</p>
-                <div className="w-full bg-white/[0.05] rounded-full h-1">
-                  <div className="bg-white/40 h-1 rounded-full transition-all duration-500"
+              <div className="text-center w-full space-y-2">
+                <Loader2 className="w-6 h-6 animate-spin text-white/30 mx-auto" />
+                <p className="text-xs text-white/30">Generando...</p>
+                <div className="w-full bg-white/5 rounded-full h-0.5">
+                  <div className="bg-white/30 h-0.5 rounded-full transition-all duration-500"
                        style={{ width: `${generationProgress}%` }} />
                 </div>
-                <p className="text-xs text-white/25">{generationProgress}% completado</p>
+                <p className="text-[10px] text-white/20">{generationProgress}%</p>
               </div>
             ) : audioUrl ? (
-              <div className="w-full space-y-4">
-                <div className="bg-white/[0.02] border border-white/[0.08] rounded-xl p-4">
-                  {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                  <audio
-                    ref={audioRef}
-                    src={audioUrl}
-                    onPlay={() => setIsPlaying(true)}
-                    onPause={() => setIsPlaying(false)}
-                    onEnded={() => { setIsPlaying(false); setCurrentTime(0) }}
-                    onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime ?? 0)}
-                    onLoadedMetadata={() => setDuration(audioRef.current?.duration ?? 0)}
-                  />
+              <div className="w-full space-y-3">
+                {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                <audio
+                  ref={audioRef}
+                  src={audioUrl}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  onEnded={() => { setIsPlaying(false); setCurrentTime(0) }}
+                  onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime ?? 0)}
+                  onLoadedMetadata={() => setDuration(audioRef.current?.duration ?? 0)}
+                />
 
-                  {/* Progress bar */}
+                {/* Minimal player */}
+                <div className="bg-white/[0.02] border border-white/[0.08] rounded-xl p-3">
                   <div
-                    className="h-1 bg-white/10 rounded-full mb-4 cursor-pointer"
+                    className="h-0.5 bg-white/10 rounded-full mb-3 cursor-pointer"
                     onClick={e => {
                       if (!audioRef.current || !duration) return
                       const rect = e.currentTarget.getBoundingClientRect()
                       audioRef.current.currentTime = ((e.clientX - rect.left) / rect.width) * duration
                     }}
                   >
-                    <div className="h-full bg-white rounded-full transition-all"
+                    <div className="h-full bg-white/60 rounded-full transition-all"
                          style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }} />
                   </div>
-
-                  {/* Controls */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={() => {
-                        if (isPlaying) audioRef.current?.pause()
-                        else audioRef.current?.play()
-                      }}
-                      className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:bg-white/90 flex-shrink-0"
+                      onClick={() => isPlaying ? audioRef.current?.pause() : audioRef.current?.play()}
+                      className="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center hover:bg-white/90 flex-shrink-0"
                     >
-                      {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                      {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 ml-0.5" />}
                     </button>
-                    <p className="text-xs text-white/50 font-mono">
+                    <span className="text-[10px] text-white/30 font-mono">
                       {formatTime(currentTime)} / {formatTime(duration)}
-                    </p>
+                    </span>
                   </div>
                 </div>
 
                 <a
                   href={audioUrl}
                   download={`dialogo.${outputFormat}`}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-white/[0.05] hover:bg-white/10 border border-white/10 rounded-xl text-sm text-white/60 hover:text-white transition-all"
+                  className="w-full flex items-center justify-center gap-1.5 py-2 bg-white/5 hover:bg-white/[0.08] border border-white/[0.08] rounded-lg text-xs text-white/50 hover:text-white transition-all"
                 >
-                  <Download className="w-4 h-4" />
+                  <Download className="w-3.5 h-3.5" />
                   Descargar {outputFormat.toUpperCase()}
                 </a>
 
                 <button
                   onClick={handleGenerate}
-                  className="w-full py-2 text-xs text-white/30 hover:text-white/60 transition-colors"
+                  className="w-full py-1.5 text-[11px] text-white/20 hover:text-white/40 transition-colors"
                 >
                   ↻ Regenerar
                 </button>
@@ -692,12 +636,12 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
             ) : null}
           </div>
 
-          {/* Preview section */}
+          {/* Preview playback */}
           {(previewLine || isPreviewLoading) && (
             <div className="flex-shrink-0 border-t border-white/[0.08] p-3">
               <p className="text-[10px] text-white/30 mb-1.5">Pre-escucha</p>
               <div className="flex items-center gap-2">
-                <p className="flex-1 text-xs text-white/50 truncate">{previewLine}</p>
+                <p className="flex-1 text-[11px] text-white/50 truncate">{previewLine}</p>
                 {isPreviewLoading
                   ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white/40 flex-shrink-0" />
                   : previewAudio && <audio src={previewAudio} autoPlay className="hidden" />
