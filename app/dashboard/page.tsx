@@ -1516,7 +1516,7 @@ function GenerateTab({
           onClose={() => setShowBrowser(false)}
           plan={plan}
           voiceListEndpoint={selectedModel === "turbo" ? "/api/ai33-voices-eleven" : undefined}
-          disablePremiumLock={selectedModel === "turbo"}
+
           showExternalFilters={selectedModel === "turbo"}
           defaultLanguage={selectedModel === "turbo" ? "en" : "es"}
         />
