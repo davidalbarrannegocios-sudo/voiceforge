@@ -3487,15 +3487,13 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                   </tr>
                 </thead>
                 <tbody>
-                  {historyTasks.length === 0 ? (
+                  {filteredHistory.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-4 py-12 text-center text-sm text-white/20">
                         No hay traducciones en el historial
                       </td>
                     </tr>
-                  ) : historyTasks.map((task: TTranslateTask) => {
-                    console.log('[row render] id:', task.id, 'audioUrl:', task.audioUrl, 'status:', task.status);
-                    return (
+                  ) : filteredHistory.map((task: TTranslateTask) => (
                       <tr
                         key={task.id}
                         className={`border-b border-white/5 transition-colors ${activeTranslationId === task.id ? 'bg-white/[0.04]' : 'hover:bg-white/[0.02]'}`}
@@ -3591,8 +3589,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                           </div>
                         </td>
                       </tr>
-                    );
-                  })}
+                  ))}
                 </tbody>
               </table>
             </div>
