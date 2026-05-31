@@ -3561,39 +3561,33 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                         {/* Acciones */}
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-end gap-1">
-                            {task.audioUrl && task.status === 'completed' ? (
-                              <>
-                                <button
-                                  onClick={() => {
-                                    if (!historyAudioRef.current) return;
-                                    if (activeTranslationId === task.id && isHistoryPlaying) {
-                                      historyAudioRef.current.pause();
-                                      setIsHistoryPlaying(false);
-                                      setActiveTranslationId(null);
-                                    } else {
-                                      historyAudioRef.current.src = task.audioUrl!;
-                                      historyAudioRef.current.play();
-                                      setActiveTranslationId(task.id);
-                                    }
-                                  }}
-                                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/40 hover:text-white transition-colors"
-                                >
-                                  {activeTranslationId === task.id && isHistoryPlaying
-                                    ? <Pause className="w-3.5 h-3.5" />
-                                    : <Play className="w-3.5 h-3.5 ml-0.5" />}
-                                </button>
-                                <a
-                                  href={task.audioUrl}
-                                  download={`traduccion-${task.targetLanguageName ?? task.targetLanguage}.mp3`}
-                                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/40 hover:text-white transition-colors"
-                                  title="Descargar"
-                                >
-                                  <Download className="w-3.5 h-3.5" />
-                                </a>
-                              </>
-                            ) : (
-                              <span className="text-xs text-white/15 pr-2">—</span>
-                            )}
+                            <button
+                              onClick={() => {
+                                if (!historyAudioRef.current) return;
+                                if (activeTranslationId === task.id && isHistoryPlaying) {
+                                  historyAudioRef.current.pause();
+                                  setIsHistoryPlaying(false);
+                                  setActiveTranslationId(null);
+                                } else {
+                                  historyAudioRef.current.src = task.audioUrl ?? '';
+                                  historyAudioRef.current.play();
+                                  setActiveTranslationId(task.id);
+                                }
+                              }}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/40 hover:text-white transition-colors"
+                            >
+                              {activeTranslationId === task.id && isHistoryPlaying
+                                ? <Pause className="w-3.5 h-3.5" />
+                                : <Play className="w-3.5 h-3.5 ml-0.5" />}
+                            </button>
+                            <a
+                              href={task.audioUrl ?? '#'}
+                              download="traduccion.mp3"
+                              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/40 hover:text-white transition-colors"
+                              title="Descargar"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                            </a>
                           </div>
                         </td>
                       </tr>
