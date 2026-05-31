@@ -3561,7 +3561,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                         {/* Acciones */}
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-end gap-1">
-                            {audioUrl && task.status !== 'expired' ? (
+                            {task.audioUrl && task.status === 'completed' ? (
                               <>
                                 <button
                                   onClick={() => {
@@ -3571,21 +3571,20 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                                       setIsHistoryPlaying(false);
                                       setActiveTranslationId(null);
                                     } else {
-                                      historyAudioRef.current.src = audioUrl;
+                                      historyAudioRef.current.src = task.audioUrl!;
                                       historyAudioRef.current.play();
                                       setActiveTranslationId(task.id);
                                     }
                                   }}
                                   className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/40 hover:text-white transition-colors"
-                                  title={activeTranslationId === task.id && isHistoryPlaying ? 'Pausar' : 'Reproducir'}
                                 >
                                   {activeTranslationId === task.id && isHistoryPlaying
                                     ? <Pause className="w-3.5 h-3.5" />
                                     : <Play className="w-3.5 h-3.5 ml-0.5" />}
                                 </button>
                                 <a
-                                  href={audioUrl}
-                                  download={`traduccion-${task.targetLanguage ?? 'audio'}.mp3`}
+                                  href={task.audioUrl}
+                                  download={`traduccion-${task.targetLanguageName ?? task.targetLanguage}.mp3`}
                                   className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/40 hover:text-white transition-colors"
                                   title="Descargar"
                                 >
@@ -3593,9 +3592,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                                 </a>
                               </>
                             ) : (
-                              <span className="text-xs text-white/15 pr-2">
-                                {task.status === 'expired' ? 'Expirado' : '—'}
-                              </span>
+                              <span className="text-xs text-white/15 pr-2">—</span>
                             )}
                           </div>
                         </td>
