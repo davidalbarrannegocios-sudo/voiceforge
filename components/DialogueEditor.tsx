@@ -318,25 +318,12 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
 
   return (
     <>
-      <div style={{ minHeight: 'calc(100vh - 88px)', overflow: 'auto' }}>
-        <div
-          className="flex flex-col lg:flex-row"
-          style={{
-            background: '#000000',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '14px',
-            overflow: 'hidden',
-            maxHeight: 'calc(100vh - 120px)',
-          }}
-        >
-
-          {/* ── LEFT: Line editor ── */}
-          <div
-            className="flex-1 min-w-0 flex flex-col min-h-64 lg:min-h-0 border-b lg:border-b-0 lg:border-r"
-            style={{ borderColor: 'rgba(255,255,255,0.08)' }}
-          >
-            {/* Top bar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <div
+        className="h-full flex flex-col overflow-hidden"
+        style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px' }}
+      >
+        {/* Top bar — full width, no scroll */}
+        <div className="flex items-center gap-2 flex-shrink-0 border-b border-white/[0.06]" style={{ padding: '10px 16px' }}>
               <span style={{ fontSize: '14px', fontWeight: 500, color: '#ffffff' }}>Guión</span>
               <div style={{ flex: 1 }} />
 
@@ -393,11 +380,17 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                   <X style={{ width: '13px', height: '13px' }} /> Limpiar
                 </button>
               )}
-            </div>
+        </div>
+
+        {/* Two-column area */}
+        <div className="flex flex-1 overflow-hidden">
+
+          {/* ── LEFT: Line editor ── */}
+          <div className="flex-1 min-w-0 flex flex-col overflow-hidden border-r border-white/[0.08]">
 
             {/* Paste zone — shown when all lines are empty */}
             {allLinesEmpty && (
-              <div style={{ padding: '12px 16px 0', flexShrink: 0 }}>
+              <div className="flex-shrink-0 px-4 pt-3">
                 <textarea
                   placeholder={"Pega tu guión aquí o escribe línea a línea...\nFormato: (Personaje) Texto de la línea"}
                   rows={3}
@@ -416,7 +409,8 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
 
             {/* Line list */}
             <div
-              style={{ flex: 1, overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}
+              className="flex-1 overflow-y-auto"
+              style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}
             >
               {lines.map((line, idx) => {
                 const char = characters.find(c => c.name === line.characterName)
@@ -555,7 +549,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
             </div>
 
             {/* Bottom status bar */}
-            <div style={{ flexShrink: 0, borderTop: '1px solid rgba(255,255,255,0.06)', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="flex-shrink-0 flex items-center gap-3 px-4 border-t border-white/[0.06]" style={{ padding: '10px 16px' }}>
               <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>
                 {lines.length} {lines.length === 1 ? 'línea' : 'líneas'}
                 {totalChars > 0 && <span style={{ marginLeft: '8px', color: 'rgba(255,255,255,0.2)' }}>· {totalChars.toLocaleString('es-ES')} créditos</span>}
@@ -572,8 +566,8 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
           </div>
 
           {/* ── RIGHT: Panel ── */}
-          <div className="w-full lg:w-72 flex-shrink-0 flex flex-col min-h-0">
-            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '20px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
+          <div className="w-[300px] flex-shrink-0 flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto px-3 py-4" style={{ display: 'flex', flexDirection: 'column', gap: '20px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
 
               {/* PERSONAJES */}
               <div>
@@ -727,7 +721,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
             </div>
 
             {/* Generate button — pinned bottom */}
-            <div style={{ flexShrink: 0, padding: '12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex-shrink-0 p-3 border-t border-white/[0.06]" style={{ background: '#000000' }}>
               <button
                 onClick={handleGenerate}
                 disabled={!canGenerate || isGenerating}
@@ -740,8 +734,8 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
               </button>
             </div>
           </div>
-        </div>
-      </div>
+        </div>{/* end two-column area */}
+      </div>{/* end h-full container */}
 
       {/* Toast */}
       {toast && (

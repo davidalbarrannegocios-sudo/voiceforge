@@ -5220,6 +5220,15 @@ export default function DashboardPage() {
               onHistoryUpdate={(item) => setImageHistory(prev => [item, ...prev])}
             />
           </div>
+        ) : activeTab === "dialogue" ? (
+          <div className="flex-1 overflow-hidden p-4">
+            <DialogueEditor
+              userVoices={voices}
+              plan={effectivePlan}
+              credits={credits ?? 0}
+              onCreditsUpdate={(newCredits) => setCredits(newCredits)}
+            />
+          </div>
         ) : (
           <div className="flex-1 overflow-auto p-4">
             {successPlan && !planChanged && (
@@ -5301,16 +5310,6 @@ export default function DashboardPage() {
               />
             )}
             {activeTab === "team" && <TeamTab />}
-            {activeTab === "dialogue" && (
-              <div style={{ padding: "24px", maxWidth: "1100px" }}>
-                <DialogueEditor
-                  userVoices={voices}
-                  plan={effectivePlan}
-                  credits={credits ?? 0}
-                  onCreditsUpdate={(newCredits) => setCredits(newCredits)}
-                />
-              </div>
-            )}
           </div>
         )}{/* end page content */}
       </main>
