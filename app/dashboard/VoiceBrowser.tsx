@@ -1398,7 +1398,7 @@ export function VoiceBrowser({
     ? filteredVoices.slice((page - 1) * 20, page * 20)
     : filteredVoices;
 
-  const applyFeatured = !isExternalSource && page === 1 && !debouncedSearch && accent === "all" && !hasActiveFilters && tier === "all" && featuredVoices.length > 0;
+  const applyFeatured = !isExternalSource && page === 1 && !debouncedSearch && accent === "all" && !hasActiveFilters && tier === "all" && featuredVoices.length > 0 && (language === "es" || language === "");
   const displayedVoices = applyFeatured
     ? [
         // applyFeatured requires tier === "all", so no tier filter needed here
