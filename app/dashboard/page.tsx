@@ -3009,8 +3009,10 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
     try {
       const res = await fetch("/api/translation-tasks");
       const data = await res.json();
-      console.log('[translate history] first item keys:', Object.keys((data.tasks ?? [])[0] ?? {}));
-      console.log('[translate history] first item:', JSON.stringify((data.tasks ?? [])[0], null, 2));
+      const firstItem = (data.tasks ?? [])[0];
+      if (firstItem) {
+        console.log('[translate item ALL fields]:', JSON.stringify(firstItem, null, 2));
+      }
       setHistoryTasks(data.tasks ?? []);
     } catch { /* ignore */ } finally { setLoadingHistory(false); }
   }
