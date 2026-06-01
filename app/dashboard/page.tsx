@@ -4236,6 +4236,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
   const [referrals, setReferrals] = useState<ReferralEntry[]>([]);
   const [referralBalance, setReferralBalance] = useState(0);
   const [referralEarned, setReferralEarned] = useState(0);
+  const [referralSignups, setReferralSignups] = useState(0);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -4260,6 +4261,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
       setReferrals(data.referrals ?? []);
       setReferralBalance(data.referralBalance ?? 0);
       setReferralEarned(data.referralEarned ?? 0);
+      setReferralSignups(data.referralCount ?? 0);
       setCanWithdraw(data.canWithdraw ?? false);
     } finally {
       setLoading(false);
@@ -4437,6 +4439,13 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
                 <p style={{ fontSize: 11, color: "#888888", marginBottom: 4 }}>Créditos Totales Ganados</p>
                 <p style={{ fontSize: 22, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
                   {loading ? <span style={{ color: "#444444" }}>—</span> : centsToUSD(referralEarned)}
+                </p>
+              </div>
+              <div style={{ width: 1, height: 40, background: "#222222", flexShrink: 0 }} />
+              <div>
+                <p style={{ fontSize: 11, color: "#888888", marginBottom: 4 }}>Registrados con tu enlace</p>
+                <p style={{ fontSize: 22, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
+                  {loading ? <span style={{ color: "#444444" }}>—</span> : referralSignups}
                 </p>
               </div>
             </div>

@@ -26,15 +26,19 @@ export async function GET() {
 
   const canWithdraw = user.affiliateApplications.length > 0;
 
+  const allReferrals = user.referralsGiven;
+
   return NextResponse.json({
     referralCode: user.referralCode,
-    referrals: user.referralsGiven,
+    referrals: allReferrals,
     pendingReward,
     totalEarned,
     referralBalance: user.referralBalance,
     referralEarned: user.referralEarned,
-    referralCount: user.referralsGiven.length,
-    referralCompleted: user.referralsGiven.filter((r) => r.status !== "pending").length,
+    referralCount: allReferrals.length,
+    referredSignupsCount: allReferrals.length,
+    referredConversionsCount: allReferrals.filter((r) => r.status !== "pending").length,
+    referralCompleted: allReferrals.filter((r) => r.status !== "pending").length,
     canWithdraw,
   });
 }
