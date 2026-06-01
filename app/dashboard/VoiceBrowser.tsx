@@ -1319,11 +1319,19 @@ export function VoiceBrowser({
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="w-[90vw] max-w-5xl flex flex-col rounded-2xl border relative"
-        style={{ background: "#0a0a0a", borderColor: "#1a1a1a", height: "88vh" }}
+        className="w-[90vw] max-w-5xl flex flex-col relative"
+        style={{
+          height: "88vh",
+          background: "rgba(40, 40, 45, 0.75)",
+          backdropFilter: "blur(30px) saturate(200%) brightness(110%)",
+          WebkitBackdropFilter: "blur(30px) saturate(200%) brightness(110%)",
+          border: "1px solid rgba(255, 255, 255, 0.18)",
+          boxShadow: "0 25px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)",
+          borderRadius: "16px",
+        }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "#1a1a1a" }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
           <h2 className="text-base font-bold text-white">Seleccionar voz</h2>
           <button
             onClick={onClose}
@@ -1340,7 +1348,7 @@ export function VoiceBrowser({
 
         {/* Tabs */}
         {!isExternalSource && (
-          <div className="flex border-b px-6 flex-shrink-0" style={{ borderColor: "#1a1a1a" }}>
+          <div className="flex border-b px-6 flex-shrink-0" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
             {TABS.map(({ key, label }) => (
               <button
                 key={key}
