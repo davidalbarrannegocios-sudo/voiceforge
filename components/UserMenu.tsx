@@ -115,7 +115,7 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
             {/* Balance card */}
             {showRing && (
               <>
-                <div className="rounded-lg p-3 mb-2" style={{ background: "rgba(255,255,255,0.05)" }}>
+                <div className="rounded-lg p-3 mb-2" style={{ background: "#1c1c1c" }}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Zap size={14} className="text-gray-400" />
@@ -142,7 +142,7 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
                 </div>
 
                 {/* Plan badge */}
-                <div className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: "rgba(255,255,255,0.05)" }}>
+                <div className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: "#1c1c1c" }}>
                   <div>
                     <p className="text-xs" style={{ color: "#6b7280" }}>Plan actual</p>
                     <p className="text-white text-sm font-medium capitalize">{plan ?? "Free"}</p>

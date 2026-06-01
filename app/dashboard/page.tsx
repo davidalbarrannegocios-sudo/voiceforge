@@ -5511,7 +5511,7 @@ export default function DashboardPage() {
           };
           const { title, Icon } = TAB_META[activeTab] ?? { title: "", Icon: Home };
           return (
-            <div style={{ height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", position: "sticky", top: 0, zIndex: 10, borderBottom: "1px solid #1a1a1a", background: "#000000", flexShrink: 0 }}>
+            <div style={{ height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", position: "sticky", top: 0, zIndex: 200, borderBottom: "1px solid #1a1a1a", background: "#000000", flexShrink: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 {/* Hamburger — opens mobile drawer / collapses desktop sidebar */}
                 <button
