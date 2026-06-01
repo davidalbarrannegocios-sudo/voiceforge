@@ -459,65 +459,147 @@ function HomeTab({
         </p>
       </div>
 
-      {/* 4 cards de productos */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {PRODUCT_CARDS.map((card, i) => {
-          const Icon = card.Icon
-          return (
-            <button
-              key={card.id}
-              onClick={() => setActiveTab(card.id as Tab)}
-              className="group relative overflow-hidden flex flex-col p-5 rounded-2xl border border-[#1e1e1e] hover:border-white/20 bg-[#111111] hover:bg-white text-left transition-all duration-200 hover:-translate-y-0.5"
-            >
-              {/* Partículas flotantes — Texto a Voz */}
+      {/* Cards de productos — estilo ElevenLabs */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {PRODUCT_CARDS.map((card, i) => (
+          <button
+            key={card.id}
+            onClick={() => setActiveTab(card.id as Tab)}
+            className="group bg-white/5 border border-white/10 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:bg-white/[0.08] hover:border-white/20 hover:scale-[1.02] text-left"
+          >
+            {/* Zona visual */}
+            <div className="h-44 relative overflow-hidden flex items-center justify-center p-5 bg-white/[0.02]">
+
+              {/* Texto a Voz — editor de texto + barra de audio */}
               {i === 0 && (
-                <div className="absolute bottom-4 right-4 w-14 h-10 overflow-hidden pointer-events-none opacity-25 group-hover:opacity-60 transition-opacity duration-200">
-                  <div className="absolute w-[5px] h-[5px] rounded-full bg-white group-hover:bg-black/60 card-float-1 transition-colors duration-200" style={{ left: '15%', bottom: 0 }} />
-                  <div className="absolute w-[7px] h-[7px] rounded-full bg-white group-hover:bg-black/60 card-float-2 transition-colors duration-200" style={{ left: '47%', bottom: 0 }} />
-                  <div className="absolute w-[5px] h-[5px] rounded-full bg-white group-hover:bg-black/60 card-float-3 transition-colors duration-200" style={{ left: '76%', bottom: 0 }} />
-                </div>
-              )}
-              {/* Puntos de chat — Texto a Diálogo */}
-              {i === 1 && (
-                <div className="absolute bottom-4 right-4 flex items-center gap-[5px] pointer-events-none opacity-25 group-hover:opacity-65 transition-opacity duration-200">
-                  <div className="w-[7px] h-[7px] rounded-full bg-white group-hover:bg-black/60 card-chat-1 transition-colors duration-200" />
-                  <div className="w-[7px] h-[7px] rounded-full bg-white group-hover:bg-black/60 card-chat-2 transition-colors duration-200" />
-                  <div className="w-[7px] h-[7px] rounded-full bg-white group-hover:bg-black/60 card-chat-3 transition-colors duration-200" />
-                </div>
-              )}
-              {/* Barras ecualizador — Audio a Texto */}
-              {i === 2 && (
-                <div className="absolute bottom-4 right-4 flex items-end gap-[4px] pointer-events-none opacity-25 group-hover:opacity-65 transition-opacity duration-200" style={{ height: '20px' }}>
-                  <div className="w-[3px] rounded-sm bg-white group-hover:bg-black/60 card-eq-1 transition-colors duration-200" style={{ height: '3px' }} />
-                  <div className="w-[3px] rounded-sm bg-white group-hover:bg-black/60 card-eq-2 transition-colors duration-200" style={{ height: '3px' }} />
-                  <div className="w-[3px] rounded-sm bg-white group-hover:bg-black/60 card-eq-3 transition-colors duration-200" style={{ height: '3px' }} />
-                  <div className="w-[3px] rounded-sm bg-white group-hover:bg-black/60 card-eq-4 transition-colors duration-200" style={{ height: '3px' }} />
-                </div>
-              )}
-              {/* Punto en órbita — Traducción de Audio */}
-              {i === 3 && (
-                <div className="absolute bottom-4 right-4 w-7 h-7 pointer-events-none opacity-25 group-hover:opacity-65 transition-opacity duration-200">
-                  <div className="absolute inset-[4px] rounded-full border border-white/60 group-hover:border-black/40 transition-colors duration-200" />
-                  <div className="absolute w-[5px] h-[5px] rounded-full bg-white group-hover:bg-black/70 card-orbit-dot transition-colors duration-200" style={{ top: '50%', left: '50%', marginTop: '-2.5px', marginLeft: '-2.5px' }} />
-                </div>
-              )}
-              {/* Destello diagonal — Imagen y Video */}
-              {i === 4 && (
-                <div className="absolute bottom-0 right-0 w-20 h-[60px] overflow-hidden pointer-events-none rounded-br-2xl opacity-30 group-hover:opacity-55 transition-opacity duration-200">
-                  <div className="card-shimmer absolute top-[-20px] left-0 w-[18px] h-[120%] bg-gradient-to-b from-transparent via-white to-transparent group-hover:via-black/35 transition-colors duration-200" />
+                <div className="w-full flex flex-col gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <div className="h-[5px] bg-white/20 rounded-full w-full" />
+                    <div className="h-[5px] bg-white/[0.12] rounded-full w-4/5" />
+                    <div className="h-[5px] bg-white/20 rounded-full w-full" />
+                    <div className="h-[5px] bg-white/[0.12] rounded-full w-3/5" />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div className="h-[3px] bg-white/10 rounded-full w-full relative">
+                      <div className="absolute inset-y-0 left-0 w-2/5 rounded-full bg-gradient-to-r from-violet-400/50 to-blue-400/50" />
+                      <div className="absolute top-1/2 -translate-y-1/2 w-[11px] h-[11px] rounded-full bg-white border border-white/20 shadow" style={{ left: 'calc(40% - 5.5px)' }} />
+                    </div>
+                    <div className="flex items-end gap-[2px] justify-center">
+                      {[4,7,5,9,6,11,8,5,10,7,4,8,6,9,5,7,4,6,9,5].map((h, j) => (
+                        <div
+                          key={j}
+                          className={`w-[2px] rounded-full origin-bottom card-eq-v-${(j % 8) + 1} group-hover:opacity-90 transition-opacity`}
+                          style={{ height: `${h}px`, background: 'linear-gradient(to top, rgba(139,92,246,0.3), rgba(99,102,241,0.65))' }}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
 
-              <div className="relative z-10">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3 flex-shrink-0 bg-white/[0.08] border border-white/[0.08] group-hover:bg-black/10 group-hover:border-black/10 transition-colors duration-200">
-                  <Icon size={16} className="text-[#aaaaaa] group-hover:text-black transition-colors duration-200" />
+              {/* Texto a Diálogo — burbujas de chat */}
+              {i === 1 && (
+                <div className="w-full flex flex-col gap-2.5">
+                  <div className="card-bubble-1 flex items-end gap-2">
+                    <div className="w-6 h-6 rounded-full flex-shrink-0 bg-blue-500/35" />
+                    <div className="bg-white/10 rounded-xl rounded-bl-none px-3 py-2">
+                      <div className="h-[5px] bg-white/30 rounded-full w-20" />
+                    </div>
+                  </div>
+                  <div className="card-bubble-2 flex items-end gap-2 justify-end">
+                    <div className="bg-white/10 rounded-xl rounded-br-none px-3 py-2">
+                      <div className="h-[5px] bg-white/30 rounded-full w-24" />
+                    </div>
+                    <div className="w-6 h-6 rounded-full flex-shrink-0 bg-emerald-500/35" />
+                  </div>
+                  <div className="card-bubble-3 flex items-end gap-2">
+                    <div className="w-6 h-6 rounded-full flex-shrink-0 bg-orange-500/35" />
+                    <div className="bg-white/10 rounded-xl rounded-bl-none px-3 py-2">
+                      <div className="h-[5px] bg-white/30 rounded-full w-14" />
+                    </div>
+                  </div>
                 </div>
-                <p className="text-sm font-semibold text-white group-hover:text-black mb-1 transition-colors duration-200">{card.title}</p>
-                <p className="text-xs leading-relaxed text-[#555555] group-hover:text-black/50 transition-colors duration-200">{card.description}</p>
-              </div>
-            </button>
-          )
-        })}
+              )}
+
+              {/* Audio a Texto — ecualizador → líneas de texto */}
+              {i === 2 && (
+                <div className="w-full flex items-center gap-4">
+                  <div className="flex items-end gap-[3px] flex-shrink-0" style={{ height: '40px' }}>
+                    {[8,14,10,18,12,16,9,13].map((h, j) => (
+                      <div
+                        key={j}
+                        className={`w-[3px] rounded-full origin-bottom card-eq-v-${j + 1} bg-white/50`}
+                        style={{ height: `${h}px` }}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-white/25 text-base flex-shrink-0">→</span>
+                  <div className="flex-1 flex flex-col gap-2">
+                    <div className="h-[5px] bg-white/20 rounded-full w-full" />
+                    <div className="h-[5px] bg-white/15 rounded-full w-4/5" />
+                    <div className="h-[5px] bg-white/20 rounded-full w-3/5" />
+                  </div>
+                </div>
+              )}
+
+              {/* Traducción de Audio — ES → curva animada → EN/FR/DE */}
+              {i === 3 && (
+                <div className="w-full flex items-center gap-2">
+                  <div className="flex-shrink-0">
+                    <div className="w-9 h-9 rounded-full border border-white/15 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                      <span className="text-[11px] font-bold text-white/70">ES</span>
+                    </div>
+                  </div>
+                  <div className="flex-1 relative" style={{ height: '32px' }}>
+                    <svg className="w-full h-full" viewBox="0 0 80 32" fill="none" preserveAspectRatio="none">
+                      <path d="M4 16 Q40 5 76 16" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none" />
+                      <path d="M4 16 Q40 27 76 16" stroke="rgba(255,255,255,0.08)" strokeWidth="1" fill="none" />
+                      <circle r="3" fill="rgba(255,255,255,0.6)">
+                        <animateMotion dur="2.2s" repeatCount="indefinite" path="M4 16 Q40 5 76 16" />
+                      </circle>
+                    </svg>
+                  </div>
+                  <div className="flex flex-col gap-1 flex-shrink-0">
+                    {['EN','FR','DE'].map((lang) => (
+                      <div key={lang} className="px-2 py-[3px] rounded border border-white/10" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                        <span className="text-[9px] font-semibold text-white/50 leading-none">{lang}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Imagen y Video — prompt + grid de thumbnails */}
+              {i === 4 && (
+                <div className="w-full flex flex-col gap-2">
+                  <div className="border border-white/10 rounded-lg px-3 py-1.5 flex items-center gap-2" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    <div className="w-1.5 h-1.5 rounded-full bg-white/30 flex-shrink-0" />
+                    <div className="h-[5px] bg-white/15 rounded-full flex-1" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5" style={{ height: '104px' }}>
+                    {[
+                      { base: 'from-violet-500/25 to-blue-600/20',   over: 'from-violet-400/40 to-indigo-500/30', cls: 'card-grad-p-1' },
+                      { base: 'from-sky-500/25 to-cyan-500/20',      over: 'from-blue-400/40 to-sky-500/30',      cls: 'card-grad-p-2' },
+                      { base: 'from-amber-500/25 to-rose-500/20',    over: 'from-orange-400/40 to-pink-500/30',   cls: 'card-grad-p-3' },
+                      { base: 'from-emerald-500/25 to-teal-500/20',  over: 'from-green-400/40 to-emerald-600/30', cls: 'card-grad-p-4' },
+                    ].map((g, j) => (
+                      <div key={j} className="rounded-lg relative overflow-hidden">
+                        <div className={`absolute inset-0 bg-gradient-to-br ${g.base}`} />
+                        <div className={`absolute inset-0 bg-gradient-to-br ${g.over} ${g.cls}`} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Zona info */}
+            <div className="px-4 py-3.5 border-t border-white/5">
+              <p className="text-sm font-medium text-white">{card.title}</p>
+              <p className="text-xs text-white/40 mt-0.5 leading-relaxed">{card.description}</p>
+            </div>
+          </button>
+        ))}
       </div>
 
       {/* Últimas generaciones */}
