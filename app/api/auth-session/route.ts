@@ -4,20 +4,53 @@ import { UAParser } from "ua-parser-js";
 import { prisma } from "@/lib/prisma";
 
 async function getGeo(ip: string): Promise<{ country: string | null; city: string | null }> {
-  if (!ip || ip === "unknown" || ip.startsWith("127.") || ip.startsWith("::")) {
-    return { country: null, city: null };
+  // Skip private/loopback IPs
+  if (
+    !ip ||
+    ip === "127.0.0.1" ||
+    ip === "::1" ||
+    ip.startsWith("192.168.") ||
+    ip.startsWith("10.") ||
+    ip.startsWith("172.16.") ||
+    ip.startsWith("fc00:") ||
+    ip.startsWith("fe80:")
+  ) {
+    console.log("[auth-session/geo] Local IP, skipping geo:", ip);
+    return { country: "Local", city: "Development" };
   }
+
+  // Provider 1: ip-api.com (free, no key, 45 req/min, HTTP only)
   try {
-    const res = await fetch(`https://ipapi.co/${ip}/json/`, { signal: AbortSignal.timeout(3000) });
-    if (!res.ok) return { country: null, city: null };
+    const res = await fetch(
+      `http://ip-api.com/json/${ip}?fields=status,country,city`,
+      { signal: AbortSignal.timeout(4000) }
+    );
     const data = await res.json();
-    return {
-      country: typeof data.country_name === "string" ? data.country_name : null,
-      city: typeof data.city === "string" ? data.city : null,
-    };
-  } catch {
-    return { country: null, city: null };
+    console.log("[auth-session/geo] ip-api.com response for", ip, ":", JSON.stringify(data));
+    if (data.status === "success" && data.country) {
+      return { country: data.country, city: data.city ?? null };
+    }
+  } catch (err) {
+    console.warn("[auth-session/geo] ip-api.com failed:", err);
   }
+
+  // Provider 2: ipapi.co fallback
+  try {
+    const res = await fetch(
+      `https://ipapi.co/${ip}/json/`,
+      { signal: AbortSignal.timeout(4000) }
+    );
+    const data = await res.json();
+    console.log("[auth-session/geo] ipapi.co response for", ip, ":", JSON.stringify(data));
+    if (data.country_name) {
+      return { country: data.country_name, city: data.city ?? null };
+    }
+  } catch (err) {
+    console.warn("[auth-session/geo] ipapi.co failed:", err);
+  }
+
+  console.warn("[auth-session/geo] All geo providers failed for IP:", ip);
+  return { country: null, city: null };
 }
 
 export async function POST(req: NextRequest) {
@@ -30,10 +63,12 @@ export async function POST(req: NextRequest) {
   });
   if (!user) return NextResponse.json({ ok: false }, { status: 404 });
 
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip") ||
-    null;
+  const forwarded = req.headers.get("x-forwarded-for");
+  const ip = forwarded
+    ? forwarded.split(",")[0].trim()
+    : (req.headers.get("x-real-ip") ?? req.headers.get("cf-connecting-ip") ?? "0.0.0.0");
+
+  console.log("[auth-session] IP headers — x-forwarded-for:", req.headers.get("x-forwarded-for"), "| x-real-ip:", req.headers.get("x-real-ip"), "| resolved:", ip);
 
   const uaString = req.headers.get("user-agent") || "";
   const parser = new UAParser(uaString);
@@ -41,7 +76,9 @@ export async function POST(req: NextRequest) {
   const os = parser.getOS().name || null;
   const deviceType = parser.getDevice().type || "desktop";
 
-  const { country, city } = ip ? await getGeo(ip) : { country: null, city: null };
+  const { country, city } = await getGeo(ip);
+
+  console.log("[auth-session] Saving session — userId:", user.id, "| ip:", ip, "| country:", country, "| city:", city);
 
   await prisma.userSession.create({
     data: {
