@@ -31,6 +31,10 @@ model User {
   referralEarned        Int                    @default(0)
   stripePriceId         String?
   disabledUntil         DateTime?
+  affiliateType         String    @default("standard")
+  hasDiscount           Boolean   @default(false)
+  discountPercentage    Int       @default(10)
+  discountLabel         String    @default("DESCUENTO")
   affiliateApplications AffiliateApplication[]
   clonedVoices          ClonedVoice[]
   creditPacks           CreditPack[]
