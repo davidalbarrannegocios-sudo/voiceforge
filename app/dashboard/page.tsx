@@ -2403,10 +2403,10 @@ const BILLING_PLANS = [
     name: "Free",
     description: "Para explorar la plataforma",
     price: 0,
-    characters: 5_000,
+    characters: 10_000,
     popular: false,
     features: [
-      "5.000 caracteres al registrarte",
+      "10.000 caracteres al registrarte",
       "Voz aleatoria (sin selección)",
       "2 transcripciones/traducciones",
       "Sin clonación de voz",
@@ -5539,8 +5539,8 @@ export default function DashboardPage() {
                   <HelpCircle size={16} />
                 </button>
                 <UserMenu
-                  used={credits !== null ? Math.max(0, (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 5_000) + extraCredits - credits) : undefined}
-                  total={credits !== null ? (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 5_000) + extraCredits : undefined}
+                  used={credits !== null ? Math.max(0, (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 10_000) + extraCredits - credits) : undefined}
+                  total={credits !== null ? (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 10_000) + extraCredits : undefined}
                   plan={plan}
                 />
               </div>

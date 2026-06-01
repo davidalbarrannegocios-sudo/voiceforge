@@ -112,7 +112,7 @@ export default function SignUpPage() {
         {step === "start" ? (
           <>
             <h1 className="text-white text-3xl font-bold mb-1">Crea tu cuenta</h1>
-            <p className="text-gray-400 text-sm mb-8">Empieza gratis con 5.000 caracteres al mes</p>
+            <p className="text-gray-400 text-sm mb-8">Empieza gratis con 10.000 caracteres al mes</p>
 
             <button
               onClick={handleGoogle}

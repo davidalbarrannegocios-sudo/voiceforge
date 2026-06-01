@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 
 export const PLAN_CREDITS: Record<string, number> = {
-  free:       5_000,
+  free:       10_000,
   starter:    200_000,
   pro:        500_000,
   elite:      1_000_000,

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Crear cuenta gratis',
-  description: 'Crea tu cuenta en Elite Labs y empieza a generar voces con IA gratis. 5.000 caracteres gratuitos al registrarte.',
+  description: 'Crea tu cuenta en Elite Labs y empieza a generar voces con IA gratis. 10.000 caracteres gratuitos al registrarte.',
   alternates: {
     canonical: 'https://www.elitelabs.es/sign-up',
     languages: {
