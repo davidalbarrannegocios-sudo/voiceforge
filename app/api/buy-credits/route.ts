@@ -2,6 +2,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getStripe, CREDIT_PACKS, type PackKey } from "@/lib/stripe";
+import { cookies } from "next/headers";
 
 export const runtime = "nodejs";
 
@@ -20,6 +21,14 @@ export async function POST(req: Request) {
   const user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
   if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
+  const cookieStore = await cookies();
+  const affiliateRef = cookieStore.get("affiliateRef")?.value ?? null;
+
+  const originalAmountCents = pack.price * 100;
+  const finalAmountCents = affiliateRef
+    ? Math.round(originalAmountCents * 0.9)
+    : originalAmountCents;
+
   const stripe = getStripe();
 
   let customerId = user.stripeCustomerId;
@@ -33,16 +42,23 @@ export async function POST(req: Request) {
   }
 
   const paymentIntent = await stripe.paymentIntents.create({
-    amount: pack.price * 100,
+    amount: finalAmountCents,
     currency: "usd",
     customer: customerId,
-    metadata: { userId: user.id, packKey, credits: pack.credits.toString() },
+    metadata: {
+      userId: user.id,
+      packKey,
+      credits: pack.credits.toString(),
+      ...(affiliateRef ? { affiliateRef } : {}),
+    },
   });
 
   return NextResponse.json({
     clientSecret: paymentIntent.client_secret,
     credits: pack.credits,
-    price: pack.price,
+    originalPrice: pack.price,
+    finalPrice: finalAmountCents / 100,
     label: pack.label,
+    discount: affiliateRef ? { active: true, percent: 10, refCode: affiliateRef } : { active: false, percent: 0, refCode: null },
   });
 }

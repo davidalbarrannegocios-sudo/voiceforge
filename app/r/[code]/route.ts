@@ -9,7 +9,16 @@ export async function GET(
   url.pathname = "/sign-up";
 
   const res = NextResponse.redirect(url);
-  res.cookies.set("referralCode", code.toUpperCase(), {
+  const upperCode = code.toUpperCase();
+  // For signup attribution (deleted after signup)
+  res.cookies.set("referralCode", upperCode, {
+    httpOnly: true,
+    maxAge: 30 * 24 * 60 * 60,
+    path: "/",
+    sameSite: "lax",
+  });
+  // For checkout discount (persists past signup, read server-side)
+  res.cookies.set("affiliateRef", upperCode, {
     httpOnly: true,
     maxAge: 30 * 24 * 60 * 60,
     path: "/",

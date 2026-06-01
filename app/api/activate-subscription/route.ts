@@ -2,6 +2,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getStripe, getPriceId, PLAN_CREDITS, PLANS, type PlanKey } from "@/lib/stripe";
+import { cookies } from "next/headers";
 
 export const runtime = "nodejs";
 
@@ -81,12 +82,28 @@ export async function POST(req: Request) {
       await stripe.subscriptions.cancel(sub.id);
     }
 
+    // Check for affiliate discount cookie
+    const cookieStore = await cookies();
+    const affiliateRef = cookieStore.get("affiliateRef")?.value ?? null;
+    let couponId: string | undefined;
+    if (affiliateRef) {
+      const coupon = await stripe.coupons.create({
+        percent_off: 10,
+        duration: "once",
+        name: "Descuento afiliado 10%",
+        metadata: { affiliateRef },
+      });
+      couponId = coupon.id;
+      console.log("[activate-subscription] Discount coupon created:", couponId, "for affiliateRef:", affiliateRef);
+    }
+
     // Create subscription — first payment charged immediately
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
       items: [{ price: priceId }],
       default_payment_method: paymentMethodId,
-      metadata: { userId: user.id, planKey },
+      metadata: { userId: user.id, planKey, ...(affiliateRef ? { affiliateRef } : {}) },
+      ...(couponId ? { discounts: [{ coupon: couponId }] } : {}),
     });
     console.log("[activate-subscription] Suscripción creada:", subscription.id, "status:", subscription.status);
 

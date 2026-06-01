@@ -101,11 +101,13 @@ function CheckoutForm({
   billing,
   setBilling,
   customerId,
+  discount,
 }: {
   planKey: PlanKey;
   billing: "monthly" | "annual";
   setBilling: (b: "monthly" | "annual") => void;
   customerId: string;
+  discount: Discount;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -123,7 +125,14 @@ function CheckoutForm({
     ? Math.round(plan.price * 0.83 * 10) / 10
     : plan.price;
   const annualTotal = Math.round(monthlyPrice * 12);
-  const displayPrice = billing === "annual" ? `$${annualTotal}/año` : `$${plan.price}/mes`;
+
+  // Discount calculations
+  const discountFactor = discount.active ? (1 - discount.percent / 100) : 1;
+  const discountedMonthly = Math.round(monthlyPrice * discountFactor * 10) / 10;
+  const discountedAnnual = Math.round(annualTotal * discountFactor);
+  const displayPrice = billing === "annual"
+    ? `$${discount.active ? discountedAnnual : annualTotal}/año`
+    : `$${discount.active ? discountedMonthly : plan.price}/mes`;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -184,6 +193,16 @@ function CheckoutForm({
 
       {/* ── LEFT COLUMN ── */}
       <div style={{ flex: "0 0 55%", height: "100vh", overflowY: "auto", padding: "48px 56px", display: "flex", flexDirection: "column", gap: "32px" }}>
+
+        {/* Discount banner */}
+        {discount.active && (
+          <div style={{ padding: "12px 16px", borderRadius: "10px", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "18px" }}>🎉</span>
+            <p style={{ fontSize: "13px", color: "#4ade80", fontWeight: 600, margin: 0 }}>
+              Tienes un {discount.percent}% de descuento aplicado gracias a tu enlace de afiliado
+            </p>
+          </div>
+        )}
 
         {/* Back + title */}
         <div>
@@ -319,6 +338,16 @@ function CheckoutForm({
             <span>Suscripción {billing === "annual" ? "anual" : "mensual"}</span>
             <span>${billing === "annual" ? `${monthlyPrice}/mes` : `${plan.price}/mes`}</span>
           </div>
+          {discount.active && (
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", color: "#4ade80", marginBottom: "8px" }}>
+              <span>Descuento afiliado ({discount.percent}%)</span>
+              <span>
+                −${billing === "annual"
+                  ? (annualTotal - discountedAnnual).toFixed(2)
+                  : (monthlyPrice - discountedMonthly).toFixed(2)}
+              </span>
+            </div>
+          )}
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", color: "#555555", marginBottom: "16px" }}>
             <span>Impuesto estimado</span>
             <span>$0.00</span>
@@ -326,7 +355,14 @@ function CheckoutForm({
           <div style={{ height: "1px", background: "#1a1a1a", marginBottom: "16px" }} />
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: "15px", fontWeight: 700, color: "#ffffff", marginBottom: "20px" }}>
             <span>Importe a pagar hoy</span>
-            <span>{displayPrice}</span>
+            <div style={{ textAlign: "right" }}>
+              {discount.active && (
+                <span style={{ fontSize: "12px", color: "#555555", textDecoration: "line-through", marginRight: "8px" }}>
+                  ${billing === "annual" ? `${annualTotal}/año` : `${plan.price}/mes`}
+                </span>
+              )}
+              <span style={{ color: discount.active ? "#4ade80" : "#ffffff" }}>{displayPrice}</span>
+            </div>
           </div>
 
           {/* Submit */}
@@ -374,10 +410,12 @@ function CreditCheckoutForm({
   pack,
   packKey,
   paymentIntentId,
+  discount,
 }: {
-  pack: { label: string; credits: number; price: number };
+  pack: PackWithDiscount;
   packKey: string;
   paymentIntentId: string;
+  discount: Discount;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -429,6 +467,14 @@ function CreditCheckoutForm({
       {/* Left — form */}
       <div style={{ flex: "0 0 55%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "60px 48px", minHeight: "100vh" }}>
         <div style={{ width: "100%", maxWidth: "420px" }}>
+          {discount.active && (
+            <div style={{ padding: "12px 16px", borderRadius: "10px", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", display: "flex", alignItems: "center", gap: "10px", marginBottom: "24px" }}>
+              <span style={{ fontSize: "18px" }}>🎉</span>
+              <p style={{ fontSize: "13px", color: "#4ade80", fontWeight: 600, margin: 0 }}>
+                Tienes un {discount.percent}% de descuento aplicado gracias a tu enlace de afiliado
+              </p>
+            </div>
+          )}
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "32px" }}>
             <Lock size={14} style={{ color: "#444444" }} />
             <span style={{ fontSize: "12px", color: "#444444" }}>Pago seguro con Stripe</span>
@@ -459,7 +505,7 @@ function CreditCheckoutForm({
             >
               {loading ? (
                 <><svg style={{ color: "#888888" }} className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Procesando...</>
-              ) : `Pagar $${pack.price}`}
+              ) : `Pagar $${pack.finalPrice}`}
             </button>
 
             <p style={{ fontSize: "11px", color: "#333333", textAlign: "center" }}>
@@ -477,9 +523,21 @@ function CreditCheckoutForm({
             <p style={{ fontSize: "16px", fontWeight: 700, color: "#ffffff", marginBottom: "4px" }}>{pack.label}</p>
             <p style={{ fontSize: "13px", color: "#555555", marginBottom: "16px" }}>Créditos extra · pago único</p>
             <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", marginBottom: "16px" }} />
+            {discount.active && (
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                <span style={{ fontSize: "13px", color: "#888888" }}>Precio original</span>
+                <span style={{ fontSize: "15px", color: "#555555", textDecoration: "line-through" }}>${pack.originalPrice}</span>
+              </div>
+            )}
+            {discount.active && (
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                <span style={{ fontSize: "13px", color: "#4ade80" }}>Descuento ({discount.percent}%)</span>
+                <span style={{ fontSize: "13px", color: "#4ade80" }}>−${(pack.originalPrice - pack.finalPrice).toFixed(2)}</span>
+              </div>
+            )}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: "13px", color: "#888888" }}>Total</span>
-              <span style={{ fontSize: "22px", fontWeight: 800, color: "#ffffff" }}>${pack.price}</span>
+              <span style={{ fontSize: "22px", fontWeight: 800, color: discount.active ? "#4ade80" : "#ffffff" }}>${pack.finalPrice}</span>
             </div>
           </div>
           {[
@@ -661,6 +719,9 @@ function ChangePlanConfirm({
   );
 }
 
+type Discount = { active: boolean; percent: number; refCode: string | null };
+type PackWithDiscount = { label: string; credits: number; originalPrice: number; finalPrice: number };
+
 /* ─── Data loader — fetches intent then renders form ─────── */
 function CheckoutContent() {
   const params = useParams<{ plan: string }>();
@@ -678,10 +739,18 @@ function CheckoutContent() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [hasActiveSub, setHasActiveSub] = useState<boolean | null>(null);
   const [currentPlan, setCurrentPlan] = useState<string>("free");
+  const [discount, setDiscount] = useState<Discount>({ active: false, percent: 0, refCode: null });
+  const [packData, setPackData] = useState<PackWithDiscount | null>(null);
 
   useEffect(() => {
     if (!isCreditPack && !isPlan) { router.replace("/pricing"); return; }
     let cancelled = false;
+
+    // Always fetch discount info first (cookie is httpOnly, must be read server-side)
+    fetch("/api/discount")
+      .then(r => r.json())
+      .then(d => { if (!cancelled) setDiscount({ active: !!d.active, percent: d.percent ?? 10, refCode: d.refCode ?? null }); })
+      .catch(() => {});
 
     if (isCreditPack) {
       fetch("/api/buy-credits", {
@@ -692,8 +761,16 @@ function CheckoutContent() {
         .then((r) => r.json())
         .then((data) => {
           if (cancelled) return;
-          if (data.clientSecret) { setClientSecret(data.clientSecret); }
-          else { setFetchError(data.error ?? "No se pudo iniciar el proceso de pago"); }
+          if (data.clientSecret) {
+            setClientSecret(data.clientSecret);
+            setPackData({
+              label: data.label,
+              credits: data.credits,
+              originalPrice: data.originalPrice,
+              finalPrice: data.finalPrice,
+            });
+            if (data.discount?.active) setDiscount(data.discount);
+          } else { setFetchError(data.error ?? "No se pudo iniciar el proceso de pago"); }
         })
         .catch(() => { if (!cancelled) setFetchError("Error de conexión. Inténtalo de nuevo."); });
     } else {
@@ -707,7 +784,6 @@ function CheckoutContent() {
           if (data.billingInterval) setBilling(data.billingInterval);
 
           if (!data.hasActiveSub) {
-            // New subscription — fetch SetupIntent
             fetch("/api/create-subscription", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -724,7 +800,6 @@ function CheckoutContent() {
         })
         .catch(() => {
           if (!cancelled) {
-            // On error checking sub status, fall through to normal checkout
             setHasActiveSub(false);
             fetch("/api/create-subscription", {
               method: "POST",
@@ -778,18 +853,18 @@ function CheckoutContent() {
   }
 
   if (isCreditPack) {
-    const pack = CREDIT_PACKS[rawKey];
     const paymentIntentId = clientSecret.split("_secret_")[0];
+    const pack = packData ?? { ...CREDIT_PACKS[rawKey], originalPrice: CREDIT_PACKS[rawKey].price, finalPrice: CREDIT_PACKS[rawKey].price };
     return (
       <Elements stripe={stripePromise} options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}>
-        <CreditCheckoutForm pack={pack} packKey={rawKey} paymentIntentId={paymentIntentId} />
+        <CreditCheckoutForm pack={pack} packKey={rawKey} paymentIntentId={paymentIntentId} discount={discount} />
       </Elements>
     );
   }
 
   return (
     <Elements stripe={stripePromise} options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}>
-      <CheckoutForm planKey={rawKey as PlanKey} billing={billing} setBilling={setBilling} customerId={customerId!} />
+      <CheckoutForm planKey={rawKey as PlanKey} billing={billing} setBilling={setBilling} customerId={customerId!} discount={discount} />
     </Elements>
   );
 }
