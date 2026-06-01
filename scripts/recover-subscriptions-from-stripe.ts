@@ -48,7 +48,7 @@ async function main() {
   const isLive = stripeKey.startsWith("sk_live_");
   console.log(`Stripe: ${isLive ? "✅ LIVE" : "⚠️  TEST"}\n`);
 
-  const stripe = new Stripe(stripeKey, { apiVersion: "2025-05-28.basil" });
+  const stripe = new Stripe(stripeKey, { apiVersion: "2026-04-22.dahlia" });
   const priceToplan = buildPriceMap();
 
   console.log("Price IDs configurados:");

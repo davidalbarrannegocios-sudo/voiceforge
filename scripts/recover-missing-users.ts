@@ -51,7 +51,7 @@ async function main() {
   }
   console.log("✅ Clave Clerk de PRODUCCIÓN\n");
 
-  const stripe = new Stripe(stripeKey, { apiVersion: "2025-05-28.basil" });
+  const stripe = new Stripe(stripeKey, { apiVersion: "2026-04-22.dahlia" });
 
   // Hardcoded from Stripe metadata — these are the users with active subs not in DB
   const MISSING = [
