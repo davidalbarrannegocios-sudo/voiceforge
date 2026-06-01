@@ -469,32 +469,44 @@ function HomeTab({
               onClick={() => setActiveTab(card.id as Tab)}
               className="group relative overflow-hidden flex flex-col p-5 rounded-2xl border border-[#1e1e1e] hover:border-white/20 bg-[#111111] hover:bg-white text-left transition-all duration-200 hover:-translate-y-0.5"
             >
-              <svg
-                className={`absolute top-0 right-0 w-36 h-36 opacity-15 group-hover:opacity-10 transition-opacity duration-300 wave-anim-${(i % 3) + 1}`}
-                style={{ animationDelay: `${-i * 2}s` }}
-                viewBox="0 0 160 160" fill="none"
-              >
-                {i === 0 && <>
-                  <path d="M160 0 Q120 40 160 80" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none"/>
-                  <path d="M160 20 Q110 60 160 100" stroke="rgba(255,255,255,0.2)" strokeWidth="1" fill="none"/>
-                  <path d="M160 40 Q100 80 160 120" stroke="rgba(255,255,255,0.1)" strokeWidth="0.8" fill="none"/>
-                </>}
-                {i === 1 && <>
-                  <ellipse cx="130" cy="30" rx="40" ry="20" stroke="rgba(255,255,255,0.25)" strokeWidth="1.2" fill="none"/>
-                  <ellipse cx="140" cy="60" rx="30" ry="15" stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"/>
-                  <ellipse cx="148" cy="85" rx="20" ry="10" stroke="rgba(255,255,255,0.1)" strokeWidth="0.8" fill="none"/>
-                </>}
-                {i === 2 && <>
-                  <path d="M120 0 L160 40 L160 0 Z" fill="rgba(255,255,255,0.08)"/>
-                  <path d="M140 0 L160 20 L160 0 Z" fill="rgba(255,255,255,0.12)"/>
-                  <circle cx="150" cy="60" r="25" stroke="rgba(255,255,255,0.1)" strokeWidth="1" fill="none"/>
-                </>}
-                {i === 3 && <>
-                  <path d="M80 0 Q120 30 160 20 Q140 60 160 80" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none"/>
-                  <path d="M100 0 Q130 40 160 40" stroke="rgba(255,255,255,0.12)" strokeWidth="1" fill="none"/>
-                  <path d="M120 0 Q145 35 160 60" stroke="rgba(255,255,255,0.08)" strokeWidth="0.8" fill="none"/>
-                </>}
-              </svg>
+              {/* Partículas flotantes — Texto a Voz */}
+              {i === 0 && (
+                <div className="absolute bottom-4 right-4 w-14 h-10 overflow-hidden pointer-events-none opacity-25 group-hover:opacity-60 transition-opacity duration-200">
+                  <div className="absolute w-[5px] h-[5px] rounded-full bg-white group-hover:bg-black/60 card-float-1 transition-colors duration-200" style={{ left: '15%', bottom: 0 }} />
+                  <div className="absolute w-[7px] h-[7px] rounded-full bg-white group-hover:bg-black/60 card-float-2 transition-colors duration-200" style={{ left: '47%', bottom: 0 }} />
+                  <div className="absolute w-[5px] h-[5px] rounded-full bg-white group-hover:bg-black/60 card-float-3 transition-colors duration-200" style={{ left: '76%', bottom: 0 }} />
+                </div>
+              )}
+              {/* Puntos de chat — Texto a Diálogo */}
+              {i === 1 && (
+                <div className="absolute bottom-4 right-4 flex items-center gap-[5px] pointer-events-none opacity-25 group-hover:opacity-65 transition-opacity duration-200">
+                  <div className="w-[7px] h-[7px] rounded-full bg-white group-hover:bg-black/60 card-chat-1 transition-colors duration-200" />
+                  <div className="w-[7px] h-[7px] rounded-full bg-white group-hover:bg-black/60 card-chat-2 transition-colors duration-200" />
+                  <div className="w-[7px] h-[7px] rounded-full bg-white group-hover:bg-black/60 card-chat-3 transition-colors duration-200" />
+                </div>
+              )}
+              {/* Barras ecualizador — Audio a Texto */}
+              {i === 2 && (
+                <div className="absolute bottom-4 right-4 flex items-end gap-[4px] pointer-events-none opacity-25 group-hover:opacity-65 transition-opacity duration-200" style={{ height: '20px' }}>
+                  <div className="w-[3px] rounded-sm bg-white group-hover:bg-black/60 card-eq-1 transition-colors duration-200" style={{ height: '3px' }} />
+                  <div className="w-[3px] rounded-sm bg-white group-hover:bg-black/60 card-eq-2 transition-colors duration-200" style={{ height: '3px' }} />
+                  <div className="w-[3px] rounded-sm bg-white group-hover:bg-black/60 card-eq-3 transition-colors duration-200" style={{ height: '3px' }} />
+                  <div className="w-[3px] rounded-sm bg-white group-hover:bg-black/60 card-eq-4 transition-colors duration-200" style={{ height: '3px' }} />
+                </div>
+              )}
+              {/* Punto en órbita — Traducción de Audio */}
+              {i === 3 && (
+                <div className="absolute bottom-4 right-4 w-7 h-7 pointer-events-none opacity-25 group-hover:opacity-65 transition-opacity duration-200">
+                  <div className="absolute inset-[4px] rounded-full border border-white/60 group-hover:border-black/40 transition-colors duration-200" />
+                  <div className="absolute w-[5px] h-[5px] rounded-full bg-white group-hover:bg-black/70 card-orbit-dot transition-colors duration-200" style={{ top: '50%', left: '50%', marginTop: '-2.5px', marginLeft: '-2.5px' }} />
+                </div>
+              )}
+              {/* Destello diagonal — Imagen y Video */}
+              {i === 4 && (
+                <div className="absolute bottom-0 right-0 w-20 h-[60px] overflow-hidden pointer-events-none rounded-br-2xl opacity-30 group-hover:opacity-55 transition-opacity duration-200">
+                  <div className="card-shimmer absolute top-[-20px] left-0 w-[18px] h-[120%] bg-gradient-to-b from-transparent via-white to-transparent group-hover:via-black/35 transition-colors duration-200" />
+                </div>
+              )}
 
               <div className="relative z-10">
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3 flex-shrink-0 bg-white/[0.08] border border-white/[0.08] group-hover:bg-black/10 group-hover:border-black/10 transition-colors duration-200">
