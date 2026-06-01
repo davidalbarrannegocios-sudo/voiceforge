@@ -1314,7 +1314,7 @@ export function VoiceBrowser({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.8)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
@@ -1325,7 +1325,7 @@ export function VoiceBrowser({
           background: "rgba(20, 20, 22, 0.55)",
           backdropFilter: "blur(40px) saturate(180%) brightness(105%)",
           WebkitBackdropFilter: "blur(40px) saturate(180%) brightness(105%)",
-          border: "1px solid rgba(255, 255, 255, 0.18)",
+          border: "1px solid rgba(255, 255, 255, 0.07)",
           boxShadow: "0 25px 50px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 0.5px rgba(255,255,255,0.06)",
           borderRadius: "16px",
         }}
