@@ -87,7 +87,7 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
 
       {/* Dropdown */}
       <div
-        className={`absolute right-0 top-full mt-2 w-72 rounded-xl shadow-2xl z-50 overflow-hidden transition-all duration-200 ease-out ${
+        className={`absolute right-0 top-full mt-2 w-72 rounded-xl shadow-2xl z-[9999] overflow-hidden transition-all duration-200 ease-out ${
           open ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-2 pointer-events-none"
         }`}
         style={{ background: "#111111", border: "1px solid #222222" }}
