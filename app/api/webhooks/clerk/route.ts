@@ -2,6 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Webhook } from 'svix'
 import { clerkClient } from '@clerk/nextjs/server'
 import { isDisposableEmail } from '@/lib/disposable-email-domains'
+import { prisma } from '@/lib/prisma'
+
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+
+async function ensureReferralCode(userId: string): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, referralCode: true } })
+  if (!user || user.referralCode) return
+  for (let i = 0; i < 20; i++) {
+    let code = ''
+    for (let j = 0; j < 6; j++) code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]
+    const exists = await prisma.user.findUnique({ where: { referralCode: code }, select: { id: true } })
+    if (!exists) {
+      await prisma.user.update({ where: { id: userId }, data: { referralCode: code } })
+      return
+    }
+  }
+}
 
 export const runtime = 'nodejs'
 
@@ -42,7 +59,16 @@ export async function POST(req: NextRequest) {
     const email       = event.data.email_addresses?.[0]?.email_address ?? ''
     const clerkUserId = event.data.id
 
-    if (!isDisposableEmail(email)) return NextResponse.json({ ok: true })
+    if (!isDisposableEmail(email)) {
+      // Try to assign referral code if user already exists in DB
+      const dbUser = await prisma.user.findUnique({ where: { clerkId: clerkUserId }, select: { id: true, referralCode: true } })
+      if (dbUser && !dbUser.referralCode) {
+        await ensureReferralCode(dbUser.id).catch(err =>
+          console.warn('[clerk-webhook] ensureReferralCode failed:', err instanceof Error ? err.message : err)
+        )
+      }
+      return NextResponse.json({ ok: true })
+    }
 
     console.warn(`[clerk-webhook] Disposable email on signup: ${email} — banning ${clerkUserId}`)
     try {

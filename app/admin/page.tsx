@@ -1582,7 +1582,7 @@ const NAV_ITEMS_BASE: { key: Section; label: string; Icon: React.ElementType }[]
   { key: "subscriptions", label: "Suscripciones",   Icon: CreditCard },
   { key: "engines",       label: "Motores",          Icon: Mic2 },
   { key: "support",       label: "Soporte",          Icon: Ticket },
-  { key: "affiliates",    label: "Afiliados",        Icon: Handshake },
+  { key: "affiliates",    label: "Afiliados ↗",      Icon: Handshake, href: "/admin/afiliados" },
   { key: "withdrawals",   label: "Retiros",          Icon: Wallet },
   { key: "analytics",     label: "Analytics",        Icon: BarChart2 },
   { key: "config",        label: "Configuración",    Icon: Settings },
@@ -1821,8 +1821,8 @@ export default function AdminPage() {
           <p style={{ fontSize: "11px", color: "#555555", marginTop: "2px", margin: 0 }}>Elite Labs</p>
         </div>
         <nav style={{ flex: 1, padding: "8px", overflowY: "auto" }}>
-          {NAV_ITEMS.map(({ key, label, Icon, badge }) => (
-            <button key={key} onClick={() => setActiveSection(key)} style={{ width: "100%", display: "flex", alignItems: "center", gap: "10px", padding: "8px 12px", borderRadius: "8px", border: "none", cursor: "pointer", background: activeSection === key ? "rgba(255,255,255,0.08)" : "transparent", color: activeSection === key ? "#ffffff" : "#666666", fontSize: "13px", fontWeight: activeSection === key ? 600 : 400, marginBottom: "1px", textAlign: "left", transition: "all 0.15s" }}>
+          {NAV_ITEMS.map(({ key, label, Icon, badge, href }: { key: string; label: string; Icon: React.ElementType; badge: number; href?: string }) => (
+            <button key={key} onClick={() => href ? router.push(href) : setActiveSection(key as Section)} style={{ width: "100%", display: "flex", alignItems: "center", gap: "10px", padding: "8px 12px", borderRadius: "8px", border: "none", cursor: "pointer", background: activeSection === key ? "rgba(255,255,255,0.08)" : "transparent", color: activeSection === key ? "#ffffff" : "#666666", fontSize: "13px", fontWeight: activeSection === key ? 600 : 400, marginBottom: "1px", textAlign: "left", transition: "all 0.15s" }}>
               <Icon size={15} style={{ flexShrink: 0 }} />
               <span style={{ flex: 1 }}>{label}</span>
               {badge > 0 && <span style={{ fontSize: "10px", fontWeight: 700, padding: "1px 6px", borderRadius: "999px", background: "rgba(239,68,68,0.85)", color: "#fff" }}>{badge}</span>}
