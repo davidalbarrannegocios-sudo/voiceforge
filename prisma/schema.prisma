@@ -30,6 +30,7 @@ model User {
   referralBalance       Int                    @default(0)
   referralEarned        Int                    @default(0)
   stripePriceId         String?
+  disabledUntil         DateTime?
   affiliateApplications AffiliateApplication[]
   clonedVoices          ClonedVoice[]
   creditPacks           CreditPack[]
@@ -293,6 +294,7 @@ model UserSession {
   browser   String?
   os        String?
   country   String?
+  city      String?
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
 }

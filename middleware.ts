@@ -8,6 +8,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/sso-callback(.*)",
+  "/suspended(.*)",
   "/r/(.*)",
   "/api/webhooks/stripe",
   "/api/public-voices",
@@ -16,13 +17,19 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
-  if (!isPublicRoute(req)) {
-    const { userId } = await auth();
-    if (!userId) {
-      // Redirect to /sign-in WITHOUT redirect_url so Clerk always
-      // uses NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard after login
-      return NextResponse.redirect(new URL("/sign-in", req.url));
-    }
+  if (isPublicRoute(req)) return;
+
+  const { userId, sessionClaims } = await auth();
+  if (!userId) {
+    return NextResponse.redirect(new URL("/sign-in", req.url));
+  }
+
+  // Check suspension via Clerk publicMetadata (no DB call needed)
+  const meta = sessionClaims?.publicMetadata as { suspendedUntil?: string } | undefined;
+  if (meta?.suspendedUntil && new Date(meta.suspendedUntil) > new Date()) {
+    const url = new URL("/suspended", req.url);
+    url.searchParams.set("until", meta.suspendedUntil);
+    return NextResponse.redirect(url);
   }
 });
 

@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, CreditCard, Mic2, Ticket, Handshake, Wallet,
   BarChart2, Settings, RefreshCw, Check, X, AlertTriangle, Play, Pause,
   ExternalLink, Search, Filter, Plus, Minus, ArrowLeft, ChevronRight,
-  ScrollText, Monitor, ChevronDown,
+  ScrollText, Monitor, ChevronDown, Trash2, ShieldOff, Clock,
 } from "lucide-react";
 
 /* ─── Types ───────────────────────────────────────────────── */
@@ -24,10 +24,11 @@ interface WithdrawalRequest {
   paidAt: string | null; user: { email: string };
 }
 interface AdminUser {
-  id: string; email: string; credits: number; plan: string; role: string;
+  id: string; clerkId: string; email: string; credits: number; plan: string; role: string;
   createdAt: string; stripeSubscriptionId: string | null;
   stripeCustomerId: string | null; planExpiresAt: string | null;
   billingInterval: string; creditsRenewedAt: string | null;
+  disabledUntil: string | null;
   _count: { generations: number };
 }
 interface StripeSubDetail {
@@ -67,7 +68,7 @@ type Section = "dashboard" | "users" | "subscriptions" | "engines" | "support" |
 
 interface UserSession {
   id: string; ip: string | null; browser: string | null; os: string | null;
-  device: string | null; createdAt: string;
+  device: string | null; country: string | null; city: string | null; createdAt: string;
 }
 
 interface AppLog {
@@ -508,7 +509,7 @@ function UserDetailModal({
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
                     <thead>
                       <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                        {["Fecha", "IP", "Navegador", "OS", "Dispositivo"].map((h) => (
+                        {["Fecha", "IP", "País", "Ciudad", "Navegador", "OS", "Dispositivo"].map((h) => (
                           <th key={h} style={{ padding: "0.5rem 0.75rem", textAlign: "left", color: "#555555", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
                         ))}
                       </tr>
@@ -518,6 +519,8 @@ function UserDetailModal({
                         <tr key={s.id} style={{ borderBottom: "1px solid #1a1a1a", background: i === 0 ? "rgba(255,255,255,0.02)" : "transparent" }}>
                           <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", whiteSpace: "nowrap" }}>{new Date(s.createdAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}</td>
                           <td style={{ padding: "0.6rem 0.75rem", color: "#aaaaaa", fontFamily: "monospace" }}>{s.ip ?? "—"}</td>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af" }}>{s.country ?? "—"}</td>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af" }}>{s.city ?? "—"}</td>
                           <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af" }}>{s.browser ?? "—"}</td>
                           <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af" }}>{s.os ?? "—"}</td>
                           <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af" }}>{s.device ?? "—"}</td>
@@ -691,6 +694,7 @@ function DashboardSection({
 /* ─── Section: Users ──────────────────────────────────────── */
 function UsersSection({
   users, onSelectUser, creditState, roleState, onCredits, onRole, search, onSearch,
+  onDeleteUser, onBanUser, onSuspendUser,
 }: {
   users: AdminUser[];
   onSelectUser: (id: string) => void;
@@ -700,9 +704,16 @@ function UsersSection({
   onRole: (e: React.FormEvent) => void;
   search: string;
   onSearch: (v: string) => void;
+  onDeleteUser: (id: string) => Promise<void>;
+  onBanUser: (id: string) => Promise<void>;
+  onSuspendUser: (id: string, until: string) => Promise<void>;
 }) {
   const [planFilter, setPlanFilter] = useState("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
+  const [suspendTarget, setSuspendTarget] = useState<AdminUser | null>(null);
+  const [suspendDate, setSuspendDate] = useState("");
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   function copyId(id: string, e: React.MouseEvent) {
     e.stopPropagation();
@@ -712,11 +723,30 @@ function UsersSection({
     });
   }
 
+  async function doDelete(u: AdminUser) {
+    setActionLoading(u.id + "_delete");
+    try { await onDeleteUser(u.id); } finally { setActionLoading(null); setConfirmDelete(null); }
+  }
+
+  async function doBan(u: AdminUser, e: React.MouseEvent) {
+    e.stopPropagation();
+    setActionLoading(u.id + "_ban");
+    try { await onBanUser(u.id); } finally { setActionLoading(null); }
+  }
+
+  async function doSuspend() {
+    if (!suspendTarget || !suspendDate) return;
+    setActionLoading(suspendTarget.id + "_suspend");
+    try { await onSuspendUser(suspendTarget.id, suspendDate); } finally { setActionLoading(null); setSuspendTarget(null); setSuspendDate(""); }
+  }
+
   const filtered = users.filter(u => {
     const matchSearch = u.email.toLowerCase().includes(search.toLowerCase()) || u.id.includes(search);
     const matchPlan = planFilter === "all" || u.plan === planFilter;
     return matchSearch && matchPlan;
   });
+
+  const isSuspended = (u: AdminUser) => !!u.disabledUntil && new Date(u.disabledUntil) > new Date();
 
   return (
     <div>
@@ -760,16 +790,47 @@ function UsersSection({
                       </button>
                     </div>
                   </td>
-                  <td style={{ padding: "10px 14px", color: "#e5e7eb" }}>{u.email}</td>
+                  <td style={{ padding: "10px 14px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span style={{ color: "#e5e7eb" }}>{u.email}</span>
+                      {isSuspended(u) && <span style={{ fontSize: "9px", fontWeight: 700, padding: "1px 5px", borderRadius: "4px", background: "rgba(234,179,8,0.15)", color: "#facc15", border: "1px solid rgba(234,179,8,0.3)" }}>SUSPENDIDO</span>}
+                    </div>
+                  </td>
                   <td style={{ padding: "10px 14px" }}><PlanBadge plan={u.plan} /></td>
                   <td style={{ padding: "10px 14px", color: "#aaaaaa", fontWeight: 600 }}>{u.credits.toLocaleString("es-ES")}</td>
                   <td style={{ padding: "10px 14px", color: "#9ca3af" }}>{u._count.generations}</td>
                   <td style={{ padding: "10px 14px" }}><Tag role={u.role} /></td>
                   <td style={{ padding: "10px 14px", color: "#555555", whiteSpace: "nowrap" }}>{new Date(u.createdAt).toLocaleDateString("es-ES")}</td>
                   <td style={{ padding: "10px 14px" }} onClick={e => e.stopPropagation()}>
-                    <button onClick={() => onSelectUser(u.id)} style={btn("#1a1a1a", { border: "1px solid rgba(255,255,255,0.08)", color: "#aaaaaa", padding: "0.25rem 0.6rem", fontSize: "0.7rem" })}>
-                      Ver
-                    </button>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <button onClick={() => onSelectUser(u.id)} style={btn("#1a1a1a", { border: "1px solid rgba(255,255,255,0.08)", color: "#aaaaaa", padding: "0.2rem 0.55rem", fontSize: "0.7rem" })}>
+                        Ver
+                      </button>
+                      <button
+                        onClick={e => { e.stopPropagation(); setSuspendTarget(u); setSuspendDate(""); }}
+                        title={isSuspended(u) ? `Suspendido hasta ${new Date(u.disabledUntil!).toLocaleDateString("es-ES")}` : "Suspender temporalmente"}
+                        style={{ background: "none", border: "1px solid rgba(234,179,8,0.25)", cursor: "pointer", padding: "4px 6px", borderRadius: "6px", color: isSuspended(u) ? "#facc15" : "#555555", display: "flex", alignItems: "center", transition: "all 0.15s" }}
+                        disabled={actionLoading === u.id + "_suspend"}
+                      >
+                        <Clock size={13} />
+                      </button>
+                      <button
+                        onClick={e => doBan(u, e)}
+                        title="Banear usuario en Clerk"
+                        style={{ background: "none", border: "1px solid rgba(251,146,60,0.25)", cursor: "pointer", padding: "4px 6px", borderRadius: "6px", color: "#555555", display: "flex", alignItems: "center", transition: "all 0.15s" }}
+                        disabled={actionLoading === u.id + "_ban"}
+                      >
+                        <ShieldOff size={13} />
+                      </button>
+                      <button
+                        onClick={e => { e.stopPropagation(); setConfirmDelete(u); }}
+                        title="Eliminar usuario"
+                        style={{ background: "none", border: "1px solid rgba(239,68,68,0.25)", cursor: "pointer", padding: "4px 6px", borderRadius: "6px", color: "#555555", display: "flex", alignItems: "center", transition: "all 0.15s" }}
+                        disabled={actionLoading === u.id + "_delete"}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -831,6 +892,75 @@ function UsersSection({
           </form>
         </div>
       </div>
+
+      {/* Delete confirmation modal */}
+      {confirmDelete && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", padding: "28px", width: "360px", display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ width: 36, height: 36, borderRadius: "10px", background: "rgba(239,68,68,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Trash2 size={16} color="#f87171" />
+              </div>
+              <div>
+                <p style={{ fontWeight: 700, fontSize: "15px", color: "#fff", margin: 0 }}>Eliminar usuario</p>
+                <p style={{ fontSize: "11px", color: "#555555", margin: 0 }}>Esta acción no se puede deshacer</p>
+              </div>
+            </div>
+            <p style={{ fontSize: "13px", color: "#aaaaaa", lineHeight: 1.5 }}>
+              ¿Eliminar permanentemente a <span style={{ color: "#fff", fontWeight: 600 }}>{confirmDelete.email}</span> de Clerk y la base de datos?
+            </p>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button onClick={() => setConfirmDelete(null)} style={btn("#1a1a1a", { flex: 1, border: "1px solid rgba(255,255,255,0.08)", color: "#888888" })}>Cancelar</button>
+              <button onClick={() => doDelete(confirmDelete)} disabled={actionLoading === confirmDelete.id + "_delete"} style={{ ...btn("#ef4444"), flex: 1, opacity: actionLoading === confirmDelete.id + "_delete" ? 0.6 : 1 }}>
+                {actionLoading === confirmDelete.id + "_delete" ? "Eliminando..." : "Eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Suspend modal */}
+      {suspendTarget && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", padding: "28px", width: "380px", display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ width: 36, height: 36, borderRadius: "10px", background: "rgba(234,179,8,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Clock size={16} color="#facc15" />
+              </div>
+              <div>
+                <p style={{ fontWeight: 700, fontSize: "15px", color: "#fff", margin: 0 }}>Suspender cuenta</p>
+                <p style={{ fontSize: "11px", color: "#555555", margin: 0 }}>{suspendTarget.email}</p>
+              </div>
+            </div>
+            {isSuspended(suspendTarget) && (
+              <p style={{ fontSize: "12px", color: "#facc15", background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.2)", borderRadius: "8px", padding: "8px 12px" }}>
+                Suspendido hasta {new Date(suspendTarget.disabledUntil!).toLocaleDateString("es-ES")}
+              </p>
+            )}
+            <div>
+              <label style={{ fontSize: "12px", color: "#888888", display: "block", marginBottom: "6px" }}>Suspender hasta:</label>
+              <input
+                type="date"
+                value={suspendDate}
+                min={new Date().toISOString().split("T")[0]}
+                onChange={e => setSuspendDate(e.target.value)}
+                style={{ ...input, colorScheme: "dark" }}
+              />
+            </div>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button onClick={() => { setSuspendTarget(null); setSuspendDate(""); }} style={btn("#1a1a1a", { flex: 1, border: "1px solid rgba(255,255,255,0.08)", color: "#888888" })}>Cancelar</button>
+              {isSuspended(suspendTarget) && (
+                <button onClick={async () => { setActionLoading(suspendTarget.id + "_suspend"); try { await onSuspendUser(suspendTarget.id, ""); } finally { setActionLoading(null); setSuspendTarget(null); } }} style={btn("#1a1a1a", { border: "1px solid rgba(255,255,255,0.12)", color: "#aaaaaa" })}>
+                  Quitar suspensión
+                </button>
+              )}
+              <button onClick={doSuspend} disabled={!suspendDate || actionLoading === suspendTarget.id + "_suspend"} style={{ ...btn("#eab308", { color: "#000" }), flex: 1, opacity: !suspendDate || actionLoading === suspendTarget.id + "_suspend" ? 0.6 : 1 }}>
+                {actionLoading === suspendTarget.id + "_suspend" ? "Guardando..." : "Suspender"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1604,6 +1734,35 @@ export default function AdminPage() {
     finally { setRoleLoading(false); }
   }
 
+  async function handleDeleteUser(userId: string) {
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error ?? "Error"); }
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      toast("Usuario eliminado correctamente");
+    } catch (err) { toast(err instanceof Error ? err.message : "Error al eliminar", false); }
+  }
+
+  async function handleBanUser(userId: string) {
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "ban" }) });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error ?? "Error"); }
+      toast("Usuario baneado en Clerk");
+    } catch (err) { toast(err instanceof Error ? err.message : "Error al banear", false); }
+  }
+
+  async function handleSuspendUser(userId: string, until: string) {
+    try {
+      const action = until ? "suspend" : "unsuspend";
+      const body: Record<string, string> = { action };
+      if (until) body.until = new Date(until).toISOString();
+      const res = await fetch(`/api/admin/users/${userId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error ?? "Error"); }
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, disabledUntil: until ? new Date(until).toISOString() : null } : u));
+      toast(until ? "Cuenta suspendida" : "Suspensión eliminada");
+    } catch (err) { toast(err instanceof Error ? err.message : "Error al suspender", false); }
+  }
+
   async function handleReply(ticketId: string, close: boolean) {
     setReplyLoading(true);
     try {
@@ -1713,6 +1872,9 @@ export default function AdminPage() {
             onRole={handleRole}
             search={search}
             onSearch={setSearch}
+            onDeleteUser={handleDeleteUser}
+            onBanUser={handleBanUser}
+            onSuspendUser={handleSuspendUser}
           />
         )}
         {activeSection === "subscriptions" && <SubscriptionsSection users={users} />}

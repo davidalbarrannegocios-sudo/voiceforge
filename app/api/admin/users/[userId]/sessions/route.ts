@@ -17,7 +17,7 @@ export async function GET(
     where: { userId },
     orderBy: { createdAt: "desc" },
     take: 50,
-    select: { id: true, ip: true, browser: true, os: true, device: true, createdAt: true },
+    select: { id: true, ip: true, browser: true, os: true, device: true, country: true, city: true, createdAt: true },
   });
 
   return NextResponse.json(sessions);
