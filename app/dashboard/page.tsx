@@ -2525,6 +2525,12 @@ function BillingTab({
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [showManage, setShowManage] = useState(false);
   const router = useRouter();
+  const [discount, setDiscount] = useState<{ percentage: number; label: string } | null>(null);
+  useEffect(() => {
+    const m = document.cookie.match(/(?:^|;\s*)affiliate_discount=([^;]*)/);
+    if (!m) return;
+    try { const d = JSON.parse(decodeURIComponent(m[1])); if (d?.percentage > 0) setDiscount(d); } catch {}
+  }, []);
 
   const badge = PLAN_BADGE[plan] ?? PLAN_BADGE.free;
 
@@ -2628,6 +2634,9 @@ function BillingTab({
           const monthlyPrice = billing === "annual" && p.price > 0
             ? Math.round(p.price * 0.83 * 10) / 10
             : p.price;
+          const effectiveMonthly = (discount && p.price > 0)
+            ? Math.round(monthlyPrice * (1 - discount.percentage / 100) * 10) / 10
+            : monthlyPrice;
           const borderColor = isCurrent ? (planBadge?.color ?? "#888888") : p.popular ? "#333333" : "#1a1a1a";
           const isDowngrade = plan !== "free" && p.key === "free";
 
@@ -2667,6 +2676,13 @@ function BillingTab({
                 {p.description}
               </p>
 
+              {/* Discount badge */}
+              {discount && p.price > 0 && (
+                <div style={{ display: "inline-block", marginBottom: "6px", fontSize: "10px", fontWeight: 700, letterSpacing: "0.04em", padding: "2px 8px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.3)" }}>
+                  {discount.label}
+                </div>
+              )}
+
               {/* Price */}
               <div style={{ marginBottom: "16px", minHeight: "58px" }}>
                 {p.price === 0 ? (
@@ -2676,26 +2692,30 @@ function BillingTab({
                   </>
                 ) : (
                   <>
-                    {billing === "annual" && (
+                    {(billing === "annual" || !!discount) && (
                       <p style={{ fontSize: "13px", color: "#444444", textDecoration: "line-through", marginBottom: "0px", lineHeight: 1 }}>
                         ${p.price}/mes
                       </p>
                     )}
                     <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
-                      <span style={{ fontSize: "32px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
-                        ${monthlyPrice}
+                      <span style={{ fontSize: "32px", fontWeight: 800, color: discount ? "#4ade80" : "#fff", lineHeight: 1 }}>
+                        ${effectiveMonthly}
                       </span>
                       <span style={{ fontSize: "12px", color: "#444444", marginLeft: "2px" }}>/mes</span>
                     </div>
                     {billing === "annual" ? (
                       <p style={{ fontSize: "11px", color: "#555555", marginTop: "3px" }}>
-                        ${Math.round(monthlyPrice * 12)} facturado anualmente
+                        ${Math.round(effectiveMonthly * 12)} facturado anualmente
+                      </p>
+                    ) : discount ? (
+                      <p style={{ fontSize: "11px", color: "#4ade80", marginTop: "3px" }}>
+                        {discount.percentage}% de descuento aplicado
                       </p>
                     ) : (
                       <p style={{ fontSize: "11px", color: "transparent", marginTop: "3px", userSelect: "none" }}>·</p>
                     )}
                     <p style={{ fontSize: "10px", color: "#444444", marginTop: "2px" }}>
-                      {costPer10k(monthlyPrice, p.characters)}
+                      {costPer10k(effectiveMonthly, p.characters)}
                     </p>
                   </>
                 )}
@@ -4706,6 +4726,12 @@ function TeamTab({
   const [invoicePm, setInvoicePm] = useState<{ brand: string; last4: string } | null>(null);
   const [invoicesLoading, setInvoicesLoading] = useState(false);
   const router = useRouter();
+  const [teamDiscount, setTeamDiscount] = useState<{ percentage: number; label: string } | null>(null);
+  useEffect(() => {
+    const m = document.cookie.match(/(?:^|;\s*)affiliate_discount=([^;]*)/);
+    if (!m) return;
+    try { const d = JSON.parse(decodeURIComponent(m[1])); if (d?.percentage > 0) setTeamDiscount(d); } catch {}
+  }, []);
 
   useEffect(() => {
     fetch("/api/team")
@@ -5182,6 +5208,9 @@ function TeamTab({
                 const monthlyPrice = billing === "annual" && p.price > 0
                   ? Math.round(p.price * 0.83 * 10) / 10
                   : p.price;
+                const effectiveMonthly = teamDiscount
+                  ? Math.round(monthlyPrice * (1 - teamDiscount.percentage / 100) * 10) / 10
+                  : monthlyPrice;
                 const borderColor = isCurrent ? (planBadge?.color ?? "#888888") : p.popular ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.1)";
 
                 return (
@@ -5218,16 +5247,26 @@ function TeamTab({
                     {/* Description */}
                     <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginBottom: "14px", lineHeight: 1.4 }}>{p.description}</p>
 
+                    {/* Discount badge */}
+                    {teamDiscount && (
+                      <div style={{ display: "inline-block", marginBottom: "6px", fontSize: "10px", fontWeight: 700, letterSpacing: "0.04em", padding: "2px 8px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.3)" }}>
+                        {teamDiscount.label}
+                      </div>
+                    )}
+
                     {/* Price */}
                     <div style={{ marginBottom: "14px" }}>
-                      {billing === "annual" && (
+                      {(billing === "annual" || !!teamDiscount) && (
                         <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.25)", textDecoration: "line-through", lineHeight: 1 }}>${p.price}/mes</p>
                       )}
                       <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
-                        <span style={{ fontSize: "28px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>${monthlyPrice}</span>
+                        <span style={{ fontSize: "28px", fontWeight: 800, color: teamDiscount ? "#4ade80" : "#fff", lineHeight: 1 }}>${effectiveMonthly}</span>
                         <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginLeft: "2px" }}>/mes</span>
                       </div>
-                      <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", marginTop: "2px" }}>{costPer10k(monthlyPrice, p.characters)}</p>
+                      {teamDiscount && (
+                        <p style={{ fontSize: "10px", color: "#4ade80", marginTop: "2px" }}>{teamDiscount.percentage}% de descuento aplicado</p>
+                      )}
+                      <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", marginTop: "2px" }}>{costPer10k(effectiveMonthly, p.characters)}</p>
                     </div>
 
                     {/* CTA */}
