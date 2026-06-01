@@ -86,7 +86,7 @@ function UserDetailModal({ user, onClose, onAction }: {
   onAction: (action: string, params?: Record<string, unknown>) => Promise<void>;
 }) {
   const [tab, setTab] = useState<"invitados" | "bonus">("invitados");
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://elitelabs.es";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.elitelabs.es";
   const link = user.referralCode ? `${appUrl}/?ref=${user.referralCode}` : "—";
 
   return (
@@ -365,7 +365,7 @@ export default function AdminAfiliados() {
   const [feedback, setFeedback] = useState<{ msg: string; ok: boolean } | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://elitelabs.es";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.elitelabs.es";
 
   const flash = (msg: string, ok = true) => {
     setFeedback({ msg, ok });

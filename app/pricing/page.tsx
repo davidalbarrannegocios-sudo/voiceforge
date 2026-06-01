@@ -162,23 +162,25 @@ function PricingContent() {
     }
   }, [isSignedIn, searchParams]);
 
-  // Set affiliate cookie + load discount (from ?ref= or existing cookie)
+  // Load discount — no auth required:
+  // If ?ref= in URL: call public /api/referral/check for immediate data (also sets httpOnly cookies)
+  // Otherwise: read client-readable affiliate_discount cookie set by AffiliateRefTracker
   useEffect(() => {
     const refCode = searchParams.get("ref");
     if (refCode) {
-      fetch("/api/set-affiliate-ref", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: refCode }),
-      })
+      fetch(`/api/referral/check?code=${encodeURIComponent(refCode)}`)
         .then(r => r.json())
-        .then(d => { if (d.discount?.active) setDiscount(d.discount); })
+        .then(d => { if (d.hasDiscount) setDiscount({ active: true, percent: d.percentage, label: d.label }); })
         .catch(() => {});
     } else {
-      fetch("/api/discount")
-        .then(r => r.json())
-        .then(d => { if (d.active) setDiscount({ active: true, percent: d.percent, label: d.label }); })
-        .catch(() => {});
+      // Read non-httpOnly cookie written by AffiliateRefTracker
+      const m = document.cookie.match(/(?:^|;\s*)affiliate_discount=([^;]*)/);
+      if (m) {
+        try {
+          const d = JSON.parse(decodeURIComponent(m[1]));
+          if (d.percentage > 0) setDiscount({ active: true, percent: d.percentage, label: d.label || "DESCUENTO" });
+        } catch {}
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

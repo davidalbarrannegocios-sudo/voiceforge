@@ -4270,7 +4270,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
 
   useEffect(() => { fetchReferral(); }, [fetchReferral]);
 
-  const referralLink = referralCode ? `https://elitelabs.es/?ref=${referralCode}` : "";
+  const referralLink = referralCode ? `https://www.elitelabs.es/?ref=${referralCode}` : "";
 
   async function handleCopy() {
     if (!referralLink) return;
