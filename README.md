@@ -202,6 +202,26 @@ voiceforge/
 
 ---
 
+## Antes de ejecutar scripts destructivos
+
+Cualquier script que haga `DELETE`, `deleteMany`, o modifique datos en masa debe ir precedido de un backup:
+
+```bash
+DATABASE_URL="..." DIRECT_URL="..." npx tsx scripts/backup-db.ts
+```
+
+El backup se guarda en `backups/YYYY-MM-DD_HH-mm-ss/` con un JSON por tabla. La carpeta está en `.gitignore` para no exponer datos de usuarios.
+
+**Scripts que requieren backup previo:**
+
+| Script | Riesgo |
+|--------|--------|
+| `scripts/ban-disposable-accounts.ts --execute` | Elimina usuarios y datos en cascada |
+| `scripts/recover-from-clerk.ts --execute` | Inserta en masa (idempotente, pero verifica primero) |
+| Cualquier SQL directo en Supabase Dashboard | Irreversible sin PITR |
+
+---
+
 ## Créditos
 
 - **Chatterbox TTS** — Modelo TTS open source (MIT) por Resemble AI
