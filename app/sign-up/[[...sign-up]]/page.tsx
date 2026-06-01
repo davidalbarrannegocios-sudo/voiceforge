@@ -8,6 +8,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import { isDisposableEmail } from "@/lib/disposable-email-domains";
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 48 48">
@@ -27,6 +28,7 @@ export default function SignUpPage() {
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"start" | "verify">("start");
   const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -39,9 +41,21 @@ export default function SignUpPage() {
     });
   }
 
+  function handleEmailBlur() {
+    if (email && isDisposableEmail(email)) {
+      setEmailError("Este tipo de email temporal no está permitido. Usa un email real.");
+    } else {
+      setEmailError("");
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!isLoaded) return;
+    if (isDisposableEmail(email)) {
+      setEmailError("Este tipo de email temporal no está permitido. Usa un email real.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -139,14 +153,16 @@ export default function SignUpPage() {
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(""); }}
+                    onBlur={handleEmailBlur}
                     placeholder="tu@email.com"
                     className={`${inputClass} pl-10`}
-                    style={inputStyle}
+                    style={{ ...inputStyle, borderColor: emailError ? "rgba(248,113,113,0.6)" : "rgba(255,255,255,0.10)" }}
                     required
                     autoComplete="email"
                   />
                 </div>
+                {emailError && <p className="text-red-400 text-sm">{emailError}</p>}
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -178,7 +194,7 @@ export default function SignUpPage() {
 
               <button
                 type="submit"
-                disabled={loading || !isLoaded}
+                disabled={loading || !isLoaded || !!emailError}
                 className="h-12 rounded-lg bg-white hover:bg-gray-200 disabled:opacity-50 text-black font-semibold text-sm transition-colors"
               >
                 {loading ? "Creando cuenta..." : "Crear cuenta"}

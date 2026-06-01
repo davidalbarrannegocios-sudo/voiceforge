@@ -2,8 +2,24 @@ import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { getEffectivePlan } from "@/lib/plan";
+import { isDisposableEmail } from "@/lib/disposable-email-domains";
+
+// In-memory rate limit: max 3 new account creations per IP per 10 minutes
+const newUserRateLimit = new Map<string, { count: number; resetAt: number }>();
+function checkRegistrationRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const WINDOW = 10 * 60 * 1000;
+  const entry = newUserRateLimit.get(ip);
+  if (!entry || now > entry.resetAt) {
+    newUserRateLimit.set(ip, { count: 1, resetAt: now + WINDOW });
+    return true;
+  }
+  if (entry.count >= 3) return false;
+  entry.count++;
+  return true;
+}
 
 function generateReferralCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -28,6 +44,28 @@ export async function GET() {
   let user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
 
   if (!user) {
+    // Validate email is not disposable
+    const email = clerkUser.emailAddresses[0]?.emailAddress ?? "";
+    if (isDisposableEmail(email)) {
+      console.warn(`[credits] Blocked disposable email on registration: ${email}`);
+      return NextResponse.json(
+        { error: "Los emails temporales no están permitidos. Por favor usa un email real." },
+        { status: 403 },
+      );
+    }
+
+    // Rate limit new registrations per IP
+    const headerStore = await headers();
+    const ip = headerStore.get("x-forwarded-for")?.split(",")[0]?.trim()
+      ?? headerStore.get("x-real-ip")
+      ?? "unknown";
+    if (!checkRegistrationRateLimit(ip)) {
+      return NextResponse.json(
+        { error: "Demasiados intentos de registro. Inténtalo de nuevo en 10 minutos." },
+        { status: 429 },
+      );
+    }
+
     const cookieStore = await cookies();
     const referralCookie = cookieStore.get("referralCode")?.value;
 
