@@ -87,13 +87,12 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
 
       {/* Dropdown */}
       <div
-        className={`absolute right-0 top-full mt-2 w-72 rounded-xl shadow-2xl z-[9999] overflow-hidden transition-all duration-200 ease-out ${
+        className={`glass-menu absolute right-0 top-full mt-2 w-72 z-[9999] overflow-hidden transition-all duration-200 ease-out ${
           open ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-2 pointer-events-none"
         }`}
-        style={{ background: "#111111", border: "1px solid #222222" }}
       >
           {/* User info + balance */}
-          <div className="p-4" style={{ borderBottom: "1px solid #222222" }}>
+          <div className="p-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
             {/* Avatar + name */}
             <div className="flex items-center gap-3 mb-3">
               {user?.imageUrl ? (
@@ -186,7 +185,7 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
           </div>
 
           {/* Sign out */}
-          <div className="p-2" style={{ borderTop: "1px solid #1e1e2e" }}>
+          <div className="p-2" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
             <button
               onClick={() => { setOpen(false); signOut({ redirectUrl: "/" }); router; }}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm w-full transition-colors"

@@ -605,7 +605,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                 {modelDropdownOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setModelDropdownOpen(false)} />
-                    <div className="absolute bottom-full left-0 mb-1 z-50 w-64 bg-[#0f0f0f] border border-white/10 rounded-xl shadow-2xl p-1.5 max-h-[320px] overflow-y-auto">
+                    <div className="glass-menu absolute bottom-full left-0 mb-1 z-50 w-64 p-1.5 max-h-[320px] overflow-y-auto">
                       {Object.entries(groupedImageModels).map(([group, models]) => (
                         <div key={group}>
                           <p className="text-[9px] text-white/25 uppercase tracking-widest px-2 py-1.5 mt-1">{group}</p>

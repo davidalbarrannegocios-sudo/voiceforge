@@ -1179,7 +1179,7 @@ function GenerateTab({
               </div>
 
               {tagsOpen && (
-                <div className="tags-panel" style={{ position: "absolute", top: "calc(100% + 4px)", left: "12px", zIndex: 50, background: "#111111", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", padding: "14px 16px", minWidth: "340px", maxWidth: "520px", boxShadow: "0 8px 32px rgba(0,0,0,0.5)", maxHeight: "60vh", overflowY: "auto" }}>
+                <div className="tags-panel glass-menu" style={{ position: "absolute", top: "calc(100% + 4px)", left: "12px", zIndex: 50, padding: "14px 16px", minWidth: "340px", maxWidth: "520px", maxHeight: "60vh", overflowY: "auto" }}>
                   {TAG_GROUPS.map((group, gi) => (
                     <div key={group.label} style={{ marginBottom: gi < TAG_GROUPS.length - 1 ? "12px" : "10px" }}>
                       <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#555555", marginBottom: "8px" }}>{group.label}</p>
@@ -1338,7 +1338,7 @@ function GenerateTab({
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", flexShrink: 0, transform: modelDropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
                   </button>
                   {modelDropdownOpen && (
-                    <div style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "4px", padding: "4px", background: "#111111", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
+                    <div className="glass-menu" style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "4px", padding: "4px" }}>
                       {([
                         { value: "speech-1.6", sub: "Nuestro modelo insignia",                    disabled: false },
                         { value: "speech-1.5", sub: "Heredado",                                    disabled: false },
@@ -1458,7 +1458,7 @@ function GenerateTab({
                       </div>
                     </button>
                     {m1OutDropOpen && (
-                      <div style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "2px", padding: "4px", background: "#111111", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
+                      <div className="glass-menu" style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "2px", padding: "4px" }}>
                         {([
                           { value: "mp3_44100_128", label: "MP3 44.1 kHz (128kbps)" },
                           { value: "mp3_44100_192", label: "MP3 44.1 kHz (192kbps)" },
@@ -2325,10 +2325,10 @@ function HistoryTab({ plan }: { plan: string }) {
                             {openMenuId === gen.id && (
                               <div
                                 onClick={(e) => e.stopPropagation()}
+                                className="glass-menu"
                                 style={{
                                   position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: 50,
-                                  background: "#111111", border: "1px solid #1a1a1a", borderRadius: 8,
-                                  padding: 4, minWidth: 120, boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+                                  padding: 4, minWidth: 120,
                                 }}
                               >
                                 <button

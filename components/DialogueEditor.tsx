@@ -340,7 +340,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                     }
                   </button>
                   {showLangPicker && (
-                    <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 50, background: '#111111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '4px', minWidth: '140px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+                    <div className="glass-menu" style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 50, padding: '4px', minWidth: '140px' }}>
                       {DIALOGUE_LANGUAGES.map(lang => (
                         <button key={lang.code}
                           onClick={() => { setShowLangPicker(false); translateLines(LANG_MAP[lang.code] ?? lang.code.toUpperCase()) }}
@@ -457,7 +457,8 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                         <div
                           ref={pickerRef}
                           onClick={e => e.stopPropagation()}
-                          style={{ position: 'absolute', left: 0, top: 'calc(100% + 6px)', zIndex: 100, background: '#111111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '6px', minWidth: '180px', boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}
+                          className="glass-menu"
+                          style={{ position: 'absolute', left: 0, top: 'calc(100% + 6px)', zIndex: 100, padding: '6px', minWidth: '180px' }}
                         >
                           {characters.map(c => (
                             <button key={c.name} onClick={() => changeLineChar(line.id, c.name)}
