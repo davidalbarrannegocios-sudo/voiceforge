@@ -1319,17 +1319,26 @@ export function VoiceBrowser({
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="w-[90vw] max-w-5xl flex flex-col relative"
+        className="w-[90vw] max-w-5xl relative"
         style={{
           height: "88vh",
-          background: "rgba(20, 20, 22, 0.55)",
-          backdropFilter: "blur(40px) saturate(180%) brightness(105%)",
-          WebkitBackdropFilter: "blur(40px) saturate(180%) brightness(105%)",
           border: "1px solid rgba(255, 255, 255, 0.07)",
           boxShadow: "0 25px 50px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 0.5px rgba(255,255,255,0.06)",
           borderRadius: "16px",
+          overflow: "hidden",
         }}
       >
+        {/* Blur background layer — separate from content so backdrop-filter
+            does NOT create a containing-block for position:fixed descendants */}
+        <div style={{
+          position: "absolute", inset: 0,
+          backdropFilter: "blur(40px) saturate(180%) brightness(105%)",
+          WebkitBackdropFilter: "blur(40px) saturate(180%) brightness(105%)",
+          background: "rgba(20, 20, 22, 0.55)",
+          pointerEvents: "none",
+        }} />
+        {/* Content — position:fixed inside here stays viewport-relative */}
+        <div className="flex flex-col" style={{ position: "relative", zIndex: 1, height: "100%" }}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
           <h2 className="text-base font-bold text-white">Seleccionar voz</h2>
@@ -1863,6 +1872,7 @@ export function VoiceBrowser({
             )
           )}
         </div>
+        </div>{/* end content wrapper */}
       </div>
     </div>
   );
