@@ -4691,6 +4691,7 @@ function TeamTab({
   const [deletingTeam, setDeletingTeam] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<TeamSubTab>("Miembros");
   const [searchQuery, setSearchQuery] = useState("");
+  const [inviteError, setInviteError] = useState<string | null>(null);
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [invoices, setInvoices] = useState<{ id: string; date: number; amount: number; currency: string; status: string | null; pdfUrl: string | null }[]>([]);
   const [invoicePm, setInvoicePm] = useState<{ brand: string; last4: string } | null>(null);
@@ -4755,8 +4756,8 @@ function TeamTab({
     }
   }
 
-  async function handleInvite(email: string) {
-    if (!email.trim()) return;
+  async function handleInvite(email: string): Promise<boolean> {
+    if (!email.trim()) return false;
     setInviting(true);
     try {
       const res = await fetch("/api/team/invite", {
@@ -4765,13 +4766,22 @@ function TeamTab({
         body: JSON.stringify({ email: email.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) { flash("error", data.error); return; }
+      if (!res.ok) { flash("error", data.error); return false; }
       setTeam((t) => t ? { ...t, members: [...t.members, data.member] } : t);
       setPercentages((p) => ({ ...p, [data.member.id]: 0 }));
       flash("success", "Miembro añadido al equipo");
+      return true;
     } finally {
       setInviting(false);
     }
+  }
+
+  async function handleInviteFromInput() {
+    const email = searchQuery.trim();
+    if (!email) { setInviteError("Introduce un email para invitar a un miembro"); return; }
+    setInviteError(null);
+    const ok = await handleInvite(email);
+    if (ok) setSearchQuery("");
   }
 
   async function handleRemove(memberId: string) {
@@ -4949,31 +4959,32 @@ function TeamTab({
         {/* ── Miembros tab ── */}
         {activeSubTab === "Miembros" && (
           <>
-            {/* Search + invite row */}
-            <div className="flex gap-3 items-center">
-              <div className="flex-1 relative">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" stroke="rgba(255,255,255,0.3)">
-                  <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Buscar por email o nombre..."
-                  className="w-full pl-9 pr-3 py-2 rounded-lg text-sm text-white focus:outline-none"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
-                />
+            {/* Search / invite row */}
+            <div className="space-y-1.5">
+              <div className="flex gap-3 items-center">
+                <div className="flex-1 relative">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" stroke="rgba(255,255,255,0.3)">
+                    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => { setSearchQuery(e.target.value); if (inviteError) setInviteError(null); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleInviteFromInput(); }}
+                    placeholder="Buscar miembro o escribir email para invitar..."
+                    className="w-full pl-9 pr-3 py-2 rounded-lg text-sm text-white focus:outline-none"
+                    style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${inviteError ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.1)"}` }}
+                  />
+                </div>
+                <button
+                  disabled={inviting}
+                  onClick={handleInviteFromInput}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-white text-black flex-shrink-0 transition-opacity hover:opacity-90 disabled:opacity-50"
+                >
+                  {inviting ? "Invitando..." : "Invitar miembro"}
+                </button>
               </div>
-              <button
-                disabled={inviting}
-                onClick={() => {
-                  const email = window.prompt("Email del miembro a invitar:");
-                  if (email?.trim()) handleInvite(email.trim());
-                }}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-white text-black flex-shrink-0 transition-opacity hover:opacity-90 disabled:opacity-50"
-              >
-                {inviting ? "Invitando..." : "Invitar miembro"}
-              </button>
+              {inviteError && <p className="text-xs text-red-400 pl-1">{inviteError}</p>}
             </div>
 
             {/* Members table */}
