@@ -1576,7 +1576,7 @@ function LogsSection() {
 }
 
 /* ─── NAV config ──────────────────────────────────────────── */
-const NAV_ITEMS_BASE: { key: Section; label: string; Icon: React.ElementType }[] = [
+const NAV_ITEMS_BASE: { key: Section; label: string; Icon: React.ElementType; href?: string }[] = [
   { key: "dashboard",     label: "Dashboard",      Icon: LayoutDashboard },
   { key: "users",         label: "Usuarios",        Icon: Users },
   { key: "subscriptions", label: "Suscripciones",   Icon: CreditCard },
