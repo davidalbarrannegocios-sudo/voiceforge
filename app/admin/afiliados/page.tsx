@@ -479,10 +479,10 @@ export default function AdminAfiliados() {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", background: "#0d0d0d" }}>
-                    {tab === "standard"
+                    {(tab === "standard"
                       ? ["Usuario", "Código / Enlace", "Invitados", "Conv.", "Créditos", "Gens.", "Plan", "Acciones"]
                       : ["Usuario", "Código", "Invitados / Conv.", "Pendiente", "Pagado total", "Estado", "Acciones"]
-                    }.map(h => <th key={h} style={s.th}>{h}</th>)}
+                    ).map(h => <th key={h} style={s.th}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
