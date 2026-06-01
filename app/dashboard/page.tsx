@@ -467,11 +467,10 @@ function HomeTab({
             <button
               key={card.id}
               onClick={() => setActiveTab(card.id as Tab)}
-              className="group relative overflow-hidden flex flex-col p-5 rounded-2xl border hover:border-white/20 text-left transition-all hover:-translate-y-0.5"
-              style={{ background: "#111111", borderColor: "#1e1e1e" }}
+              className="group relative overflow-hidden flex flex-col p-5 rounded-2xl border border-[#1e1e1e] hover:border-white/20 bg-[#111111] hover:bg-white text-left transition-all duration-200 hover:-translate-y-0.5"
             >
               <svg
-                className={`absolute top-0 right-0 w-36 h-36 opacity-15 group-hover:opacity-25 transition-opacity duration-300 wave-anim-${(i % 3) + 1}`}
+                className={`absolute top-0 right-0 w-36 h-36 opacity-15 group-hover:opacity-10 transition-opacity duration-300 wave-anim-${(i % 3) + 1}`}
                 style={{ animationDelay: `${-i * 2}s` }}
                 viewBox="0 0 160 160" fill="none"
               >
@@ -498,12 +497,11 @@ function HomeTab({
               </svg>
 
               <div className="relative z-10">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3 flex-shrink-0"
-                     style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  <Icon size={16} style={{ color: "#aaaaaa" }} />
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3 flex-shrink-0 bg-white/[0.08] border border-white/[0.08] group-hover:bg-black/10 group-hover:border-black/10 transition-colors duration-200">
+                  <Icon size={16} className="text-[#aaaaaa] group-hover:text-black transition-colors duration-200" />
                 </div>
-                <p className="text-sm font-semibold text-white mb-1">{card.title}</p>
-                <p className="text-xs leading-relaxed" style={{ color: "#555555" }}>{card.description}</p>
+                <p className="text-sm font-semibold text-white group-hover:text-black mb-1 transition-colors duration-200">{card.title}</p>
+                <p className="text-xs leading-relaxed text-[#555555] group-hover:text-black/50 transition-colors duration-200">{card.description}</p>
               </div>
             </button>
           )
