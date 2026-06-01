@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft, Copy, Check, RefreshCw, Edit2, Eye, Gift, Star,
   DollarSign, ChevronDown, ChevronUp, Search, X, Users, TrendingUp,
-  Link2, Zap,
+  Link2, Zap, Tag,
 } from "lucide-react";
 
 /* ─── Types ─────────────────────────────────────────────── */
@@ -17,6 +17,7 @@ interface AffiliateUser {
   id: string; email: string; plan: string; createdAt: string;
   referralCode: string | null; affiliateType: string;
   referralBalance: number; referralEarned: number;
+  hasDiscount: boolean; discountPercentage: number; discountLabel: string;
   inviteCount: number; conversionCount: number; creditsEarned: number;
   generationCount: number; referrals: ReferralEntry[];
 }
@@ -198,6 +199,13 @@ function UserDetailModal({ user, onClose, onAction }: {
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <BonusCreditsInline userId={user.id} onAction={onAction} />
               <CustomCodeInline userId={user.id} currentCode={user.referralCode} onAction={onAction} />
+              <DiscountInline
+                userId={user.id}
+                hasDiscount={user.hasDiscount}
+                discountPercentage={user.discountPercentage}
+                discountLabel={user.discountLabel}
+                onAction={onAction}
+              />
               {user.affiliateType === "cash" && user.referralBalance > 0 && (
                 <div style={{ ...s.card, padding: 16 }}>
                   <p style={{ color: "#9ca3af", fontSize: 13, marginBottom: 10 }}>
@@ -275,6 +283,73 @@ function CustomCodeInline({ userId, currentCode, onAction }: {
   );
 }
 
+function DiscountInline({ userId, hasDiscount, discountPercentage, discountLabel, onAction }: {
+  userId: string; hasDiscount: boolean; discountPercentage: number; discountLabel: string;
+  onAction: (a: string, p?: Record<string, unknown>) => Promise<void>;
+}) {
+  const [enabled, setEnabled] = useState(hasDiscount);
+  const [pct, setPct] = useState(String(discountPercentage));
+  const [label, setLabel] = useState(discountLabel);
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+
+  async function save() {
+    setLoading(true);
+    await onAction("set-discount", { userId, hasDiscount: enabled, discountPercentage: Number(pct), discountLabel: label });
+    setLoading(false); setDone(true); setTimeout(() => setDone(false), 2000);
+  }
+
+  return (
+    <div style={{ ...s.card, padding: 16 }}>
+      <p style={{ color: "#9ca3af", fontSize: 13, marginBottom: 12, fontWeight: 600 }}>🏷️ Descuento en enlace</p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {/* Toggle */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button
+            type="button"
+            onClick={() => setEnabled(v => !v)}
+            style={{
+              width: 40, height: 22, borderRadius: 11, border: "none", cursor: "pointer", flexShrink: 0,
+              background: enabled ? "#16a34a" : "#374151", transition: "background 0.15s", position: "relative",
+            }}
+          >
+            <span style={{
+              position: "absolute", top: 3, left: enabled ? 21 : 3,
+              width: 16, height: 16, borderRadius: "50%", background: "#fff",
+              transition: "left 0.15s", display: "block",
+            }} />
+          </button>
+          <span style={{ fontSize: 13, color: enabled ? "#4ade80" : "#555" }}>
+            {enabled ? "Descuento activo" : "Sin descuento"}
+          </span>
+        </div>
+
+        {enabled && (
+          <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <input
+                value={pct} onChange={e => setPct(e.target.value)}
+                style={{ ...s.input, width: 64 }} type="number" min="1" max="100"
+                placeholder="%"
+              />
+              <span style={{ color: "#555", fontSize: 13 }}>%</span>
+            </div>
+            <input
+              value={label} onChange={e => setLabel(e.target.value)}
+              style={{ ...s.input, flex: 1 }} placeholder="Etiqueta (ej: DESCUENTO ESPECIAL)"
+              maxLength={50}
+            />
+          </div>
+        )}
+
+        <button onClick={save} disabled={loading} style={s.btn("#1d4ed8", { opacity: loading ? 0.6 : 1 })}>
+          {done ? <Check size={12} color="#4ade80" /> : loading ? "..." : <><Tag size={12} /> Guardar</>}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Page ──────────────────────────────────────────── */
 export default function AdminAfiliados() {
   const router = useRouter();
@@ -325,7 +400,8 @@ export default function AdminAfiliados() {
         action === "custom-code" ? `Código: ${data.referralCode}` :
         action === "bonus-credits" ? `Créditos añadidos` :
         action === "set-type" ? `Tipo actualizado` :
-        action === "mark-paid" ? `Pago registrado` : "Hecho"));
+        action === "mark-paid" ? `Pago registrado` :
+        action === "set-discount" ? `Descuento actualizado` : "Hecho"));
       await load();
       if (detailUser?.id === userId) {
         // refresh detail user
@@ -571,6 +647,13 @@ function UserRow({ user, tab, idx, appUrl, isLoading, onDetail, onAction }: {
                 {user.referralCode}
               </code>
               <CopyBtn text={user.referralCode} />
+              {user.hasDiscount && (
+                <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 5px", borderRadius: 999,
+                  color: "#4ade80", background: "rgba(74,222,128,0.12)", border: "1px solid rgba(74,222,128,0.25)" }}
+                  title={`${user.discountLabel}: ${user.discountPercentage}%`}>
+                  {user.discountPercentage}%
+                </span>
+              )}
             </div>
             {refLink && tab === "standard" && (
               <div style={{ display: "flex", alignItems: "center", gap: 3 }}>

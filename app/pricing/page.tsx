@@ -144,12 +144,15 @@ export default function PricingPage() {
   );
 }
 
+type Discount = { active: boolean; percent: number; label: string };
+
 function PricingContent() {
   const { isSignedIn } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
+  const [discount, setDiscount] = useState<Discount | null>(null);
 
   useEffect(() => {
     const planKey = searchParams.get("plan");
@@ -158,6 +161,27 @@ function PricingContent() {
       if (found && !found.free) router.push(`/checkout/${planKey}?billing=${billing}`);
     }
   }, [isSignedIn, searchParams]);
+
+  // Set affiliate cookie + load discount (from ?ref= or existing cookie)
+  useEffect(() => {
+    const refCode = searchParams.get("ref");
+    if (refCode) {
+      fetch("/api/set-affiliate-ref", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: refCode }),
+      })
+        .then(r => r.json())
+        .then(d => { if (d.discount?.active) setDiscount(d.discount); })
+        .catch(() => {});
+    } else {
+      fetch("/api/discount")
+        .then(r => r.json())
+        .then(d => { if (d.active) setDiscount({ active: true, percent: d.percent, label: d.label }); })
+        .catch(() => {});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleSelect(plan: Plan) {
     if (plan.free) {
@@ -176,6 +200,15 @@ function PricingContent() {
   }
   function annualTotal(price: number) {
     return Math.round(annualMonthly(price) * 12);
+  }
+
+  function effectiveMonthly(price: number): number {
+    const base = billing === "annual" ? annualMonthly(price) : price;
+    if (!discount?.active) return base;
+    return Math.round(base * (1 - discount.percent / 100) * 10) / 10;
+  }
+  function effectiveAnnual(price: number): number {
+    return Math.round(effectiveMonthly(price) * 12);
   }
 
   function fmtChars(n: number) {
@@ -302,6 +335,19 @@ function PricingContent() {
                 {plan.description}
               </p>
 
+              {/* Discount badge */}
+              {discount?.active && !plan.free && (
+                <div style={{
+                  display: "inline-block", marginBottom: "8px",
+                  fontSize: "10px", fontWeight: 700, letterSpacing: "0.04em",
+                  padding: "3px 10px", borderRadius: "999px",
+                  background: "rgba(34,197,94,0.15)", color: "#4ade80",
+                  border: "1px solid rgba(34,197,94,0.3)",
+                }}>
+                  {discount.label}
+                </div>
+              )}
+
               {/* Price */}
               <div style={{ marginBottom: "16px", minHeight: "58px" }}>
                 {plan.free ? (
@@ -311,20 +357,26 @@ function PricingContent() {
                   </>
                 ) : (
                   <>
-                    {billing === "annual" && (
+                    {/* Original price crossed out when annual OR discount active */}
+                    {(billing === "annual" || discount?.active) && (
                       <p style={{ fontSize: "13px", color: "#444444", textDecoration: "line-through", marginBottom: "0px", lineHeight: 1 }}>
                         ${plan.price}/mes
                       </p>
                     )}
                     <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
-                      <span style={{ fontSize: "38px", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
-                        ${billing === "annual" ? annualMonthly(plan.price) : plan.price}
+                      <span style={{ fontSize: "38px", fontWeight: 800, lineHeight: 1,
+                        color: discount?.active ? "#4ade80" : "#fff" }}>
+                        ${effectiveMonthly(plan.price)}
                       </span>
                       <span style={{ fontSize: "12px", color: "#444444", marginLeft: "2px" }}>/mes</span>
                     </div>
                     {billing === "annual" ? (
                       <p style={{ fontSize: "11px", color: "#555555", marginTop: "3px" }}>
-                        ${annualTotal(plan.price)} facturado anualmente
+                        ${effectiveAnnual(plan.price)} facturado anualmente
+                      </p>
+                    ) : discount?.active ? (
+                      <p style={{ fontSize: "11px", color: "#4ade80", marginTop: "3px" }}>
+                        {discount.percent}% de descuento aplicado
                       </p>
                     ) : (
                       <p style={{ fontSize: "11px", color: "transparent", marginTop: "3px", userSelect: "none" }}>·</p>

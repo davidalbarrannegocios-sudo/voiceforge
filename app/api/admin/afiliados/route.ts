@@ -35,6 +35,9 @@ export async function GET() {
       affiliateType: true,
       referralBalance: true,
       referralEarned: true,
+      hasDiscount: true,
+      discountPercentage: true,
+      discountLabel: true,
       referralsGiven: {
         select: {
           id: true, status: true, rewardChars: true, createdAt: true,
@@ -56,6 +59,9 @@ export async function GET() {
     affiliateType: u.affiliateType,
     referralBalance: u.referralBalance,
     referralEarned: u.referralEarned,
+    hasDiscount: u.hasDiscount,
+    discountPercentage: u.discountPercentage,
+    discountLabel: u.discountLabel,
     inviteCount: u.referralsGiven.length,
     conversionCount: u.referralsGiven.filter(r => r.status !== "pending").length,
     creditsEarned: u.referralsGiven.reduce((acc, r) => acc + r.rewardChars, 0),
@@ -133,6 +139,20 @@ export async function POST(req: Request) {
       await prisma.user.update({
         where: { id: userId },
         data: { referralBalance: { decrement: amount } },
+      });
+      return NextResponse.json({ ok: true });
+    }
+    case "set-discount": {
+      const pct = Number(body.discountPercentage);
+      if (body.hasDiscount && (isNaN(pct) || pct < 1 || pct > 100))
+        return NextResponse.json({ error: "Porcentaje inválido (1-100)" }, { status: 400 });
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          hasDiscount: !!body.hasDiscount,
+          discountPercentage: body.hasDiscount ? pct : 10,
+          discountLabel: String(body.discountLabel || "DESCUENTO").slice(0, 50),
+        },
       });
       return NextResponse.json({ ok: true });
     }
