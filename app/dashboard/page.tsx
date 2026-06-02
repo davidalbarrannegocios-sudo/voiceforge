@@ -435,12 +435,19 @@ function HomeTab({
     }).catch(() => setLoading(false))
   }, [])
 
-  const PRODUCT_CARDS = [
-    { id: 'generate',   title: 'Texto a Voz',         description: 'Convierte texto en voz natural al instante',            Icon: Type },
-    { id: 'dialogue',   title: 'Texto a Diálogo',      description: 'Genera audios con múltiples voces y personajes',        Icon: MessageSquare },
-    { id: 'transcribe', title: 'Audio a Texto',         description: 'Transcribe cualquier audio a texto al instante',        Icon: FileAudio },
-    { id: 'translate',   title: 'Traducción de Audio',   description: 'Traduce tus audios a otros idiomas automáticamente',  Icon: Globe },
-    { id: 'imagevideo',  title: 'Imagen y Video',        description: 'Genera imágenes y vídeos con IA',                      Icon: ImageIcon },
+  const LARGE_CARDS = [
+    { id: 'generate',   title: 'Texto a Voz',   description: 'Convierte texto en voz natural al instante' },
+    { id: 'imagevideo', title: 'Imagen y Video', description: 'Genera imágenes y vídeos con IA' },
+    { id: 'voices',     title: 'Clonar Voz',     description: 'Clona y personaliza voces únicas con IA' },
+  ]
+
+  const SMALL_CARDS: { id: Tab; title: string; Icon: React.ElementType }[] = [
+    { id: 'translate',  title: 'Traducción de Audio', Icon: Globe },
+    { id: 'dialogue',   title: 'Texto a Diálogo',     Icon: MessageSquare },
+    { id: 'history',    title: 'Historial',            Icon: Clock },
+    { id: 'transcribe', title: 'Audio a Texto',        Icon: FileAudio },
+    { id: 'billing',    title: 'Facturación',          Icon: CreditCard },
+    { id: 'billing',    title: 'Mi Cuenta',            Icon: User },
   ]
 
   return (
@@ -459,19 +466,19 @@ function HomeTab({
         </p>
       </div>
 
-      {/* Cards de productos — estilo ElevenLabs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {PRODUCT_CARDS.map((card, i) => (
+      {/* Fila superior — 3 cards grandes */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {LARGE_CARDS.map((card) => (
           <button
             key={card.id}
             onClick={() => setActiveTab(card.id as Tab)}
-            className="group bg-white/5 border border-white/10 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:bg-white/[0.08] hover:border-white/20 hover:scale-[1.02] text-left"
+            className="group bg-white/5 border border-white/10 rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:bg-white/[0.08] hover:border-white/20 hover:scale-[1.02] text-left"
           >
             {/* Zona visual */}
-            <div className="h-44 relative overflow-hidden flex items-center justify-center p-5 bg-white/[0.02]">
+            <div className="h-36 relative overflow-hidden flex items-center justify-center p-5 bg-white/[0.02]">
 
-              {/* Texto a Voz — editor de texto + barra de audio */}
-              {i === 0 && (
+              {/* Texto a Voz — editor + barra de audio */}
+              {card.id === 'generate' && (
                 <div className="w-full flex flex-col gap-3">
                   <div className="flex flex-col gap-1.5">
                     <div className="h-[5px] bg-white/20 rounded-full w-full" />
@@ -486,97 +493,22 @@ function HomeTab({
                     </div>
                     <div className="flex items-end gap-[2px] justify-center">
                       {[4,7,5,9,6,11,8,5,10,7,4,8,6,9,5,7,4,6,9,5].map((h, j) => (
-                        <div
-                          key={j}
-                          className={`w-[2px] rounded-full origin-bottom card-eq-v-${(j % 8) + 1} group-hover:opacity-90 transition-opacity`}
-                          style={{ height: `${h}px`, background: 'linear-gradient(to top, rgba(139,92,246,0.3), rgba(99,102,241,0.65))' }}
-                        />
+                        <div key={j} className={`w-[2px] rounded-full origin-bottom card-eq-v-${(j % 8) + 1}`}
+                             style={{ height: `${h}px`, background: 'linear-gradient(to top, rgba(139,92,246,0.3), rgba(99,102,241,0.65))' }} />
                       ))}
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Texto a Diálogo — burbujas de chat */}
-              {i === 1 && (
-                <div className="w-full flex flex-col gap-2.5">
-                  <div className="card-bubble-1 flex items-end gap-2">
-                    <div className="w-6 h-6 rounded-full flex-shrink-0 bg-blue-500/35" />
-                    <div className="bg-white/10 rounded-xl rounded-bl-none px-3 py-2">
-                      <div className="h-[5px] bg-white/30 rounded-full w-20" />
-                    </div>
-                  </div>
-                  <div className="card-bubble-2 flex items-end gap-2 justify-end">
-                    <div className="bg-white/10 rounded-xl rounded-br-none px-3 py-2">
-                      <div className="h-[5px] bg-white/30 rounded-full w-24" />
-                    </div>
-                    <div className="w-6 h-6 rounded-full flex-shrink-0 bg-emerald-500/35" />
-                  </div>
-                  <div className="card-bubble-3 flex items-end gap-2">
-                    <div className="w-6 h-6 rounded-full flex-shrink-0 bg-orange-500/35" />
-                    <div className="bg-white/10 rounded-xl rounded-bl-none px-3 py-2">
-                      <div className="h-[5px] bg-white/30 rounded-full w-14" />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Audio a Texto — ecualizador → líneas de texto */}
-              {i === 2 && (
-                <div className="w-full flex items-center gap-4">
-                  <div className="flex items-end gap-[3px] flex-shrink-0" style={{ height: '40px' }}>
-                    {[8,14,10,18,12,16,9,13].map((h, j) => (
-                      <div
-                        key={j}
-                        className={`w-[3px] rounded-full origin-bottom card-eq-v-${j + 1} bg-white/50`}
-                        style={{ height: `${h}px` }}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-white/25 text-base flex-shrink-0">→</span>
-                  <div className="flex-1 flex flex-col gap-2">
-                    <div className="h-[5px] bg-white/20 rounded-full w-full" />
-                    <div className="h-[5px] bg-white/15 rounded-full w-4/5" />
-                    <div className="h-[5px] bg-white/20 rounded-full w-3/5" />
-                  </div>
-                </div>
-              )}
-
-              {/* Traducción de Audio — ES → curva animada → EN/FR/DE */}
-              {i === 3 && (
-                <div className="w-full flex items-center gap-2">
-                  <div className="flex-shrink-0">
-                    <div className="w-9 h-9 rounded-full border border-white/15 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.07)' }}>
-                      <span className="text-[11px] font-bold text-white/70">ES</span>
-                    </div>
-                  </div>
-                  <div className="flex-1 relative" style={{ height: '32px' }}>
-                    <svg className="w-full h-full" viewBox="0 0 80 32" fill="none" preserveAspectRatio="none">
-                      <path d="M4 16 Q40 5 76 16" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none" />
-                      <path d="M4 16 Q40 27 76 16" stroke="rgba(255,255,255,0.08)" strokeWidth="1" fill="none" />
-                      <circle r="3" fill="rgba(255,255,255,0.6)">
-                        <animateMotion dur="2.2s" repeatCount="indefinite" path="M4 16 Q40 5 76 16" />
-                      </circle>
-                    </svg>
-                  </div>
-                  <div className="flex flex-col gap-1 flex-shrink-0">
-                    {['EN','FR','DE'].map((lang) => (
-                      <div key={lang} className="px-2 py-[3px] rounded border border-white/10" style={{ background: 'rgba(255,255,255,0.07)' }}>
-                        <span className="text-[9px] font-semibold text-white/50 leading-none">{lang}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Imagen y Video — prompt + grid de thumbnails */}
-              {i === 4 && (
+              {card.id === 'imagevideo' && (
                 <div className="w-full flex flex-col gap-2">
                   <div className="border border-white/10 rounded-lg px-3 py-1.5 flex items-center gap-2" style={{ background: 'rgba(255,255,255,0.05)' }}>
                     <div className="w-1.5 h-1.5 rounded-full bg-white/30 flex-shrink-0" />
                     <div className="h-[5px] bg-white/15 rounded-full flex-1" />
                   </div>
-                  <div className="grid grid-cols-2 gap-1.5" style={{ height: '104px' }}>
+                  <div className="grid grid-cols-2 gap-1.5" style={{ height: '68px' }}>
                     {[
                       { base: 'from-violet-500/25 to-blue-600/20',   over: 'from-violet-400/40 to-indigo-500/30', cls: 'card-grad-p-1' },
                       { base: 'from-sky-500/25 to-cyan-500/20',      over: 'from-blue-400/40 to-sky-500/30',      cls: 'card-grad-p-2' },
@@ -591,13 +523,51 @@ function HomeTab({
                   </div>
                 </div>
               )}
+
+              {/* Clonar Voz — avatar circular + forma de onda */}
+              {card.id === 'voices' && (
+                <div className="w-full flex flex-col items-center justify-center gap-3">
+                  <div className="relative flex items-center justify-center">
+                    <div className="absolute w-[68px] h-[68px] rounded-full border border-white/[0.07]" />
+                    <div className="absolute w-[52px] h-[52px] rounded-full border border-white/[0.10]" />
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center border border-white/15"
+                         style={{ background: 'linear-gradient(135deg, rgba(244,63,94,0.25), rgba(236,72,153,0.15))' }}>
+                      <Mic size={16} className="text-white/60" />
+                    </div>
+                  </div>
+                  <div className="flex items-end gap-[3px]" style={{ height: '22px' }}>
+                    {[5,9,13,10,7,12,8,6,11,9,6,13,8,5,10].map((h, j) => (
+                      <div key={j} className={`w-[2px] rounded-full bg-white/35 origin-bottom card-eq-v-${(j % 8) + 1}`}
+                           style={{ height: `${h}px` }} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Zona info */}
             <div className="px-4 py-3.5 border-t border-white/5">
-              <p className="text-sm font-medium text-white">{card.title}</p>
-              <p className="text-xs text-white/40 mt-0.5 leading-relaxed">{card.description}</p>
+              <p className="text-base font-semibold text-white">{card.title}</p>
+              <p className="text-sm text-white/40 mt-0.5">{card.description}</p>
             </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Fila inferior — 6 cards pequeñas */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {SMALL_CARDS.map((card, j) => (
+          <button
+            key={j}
+            onClick={() => setActiveTab(card.id)}
+            className="group flex items-center gap-3 px-4 py-4 bg-white/5 border border-white/10 rounded-xl cursor-pointer transition-all duration-200 hover:bg-white/10 hover:border-white/20 text-left"
+          >
+            <div className="w-8 h-8 rounded-lg bg-white/10 group-hover:bg-white/15 flex items-center justify-center flex-shrink-0 transition-colors duration-200">
+              <card.Icon size={16} className="text-white/60" />
+            </div>
+            <span className="text-white/80 text-sm font-medium group-hover:text-white transition-colors duration-200 leading-tight">
+              {card.title}
+            </span>
           </button>
         ))}
       </div>
