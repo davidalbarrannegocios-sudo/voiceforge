@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import { Search, ChevronDown } from "lucide-react";
+import { Search, ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { generateVoiceGradient } from "@/lib/voice-gradient";
 import { DashboardSidebar } from "@/app/dashboard/DashboardSidebar";
 
@@ -94,34 +94,47 @@ const LANGUAGES = [
   { value: "all", label: "Todos" },
 ];
 
-const TAGS: { label: string; value: string }[] = [
-  { label: "Masculino",    value: "male"        },
-  { label: "Femenino",     value: "female"      },
-  { label: "Neutral",      value: "neutral"     },
-  { label: "Joven",        value: "young"       },
-  { label: "Mediana Edad", value: "middle-aged" },
-  { label: "Narración",    value: "narration"   },
-  { label: "Documental",   value: "documentary" },
-  { label: "Dramático",    value: "dramatic"    },
-  { label: "Profesional",  value: "professional"},
-  { label: "Suave",        value: "soft"        },
-  { label: "Enérgico",     value: "energetic"   },
-  { label: "Misterioso",   value: "mystery"     },
+const FILTER_GROUPS = [
+  {
+    label: "GÉNERO",
+    tags: ["Masculino", "Femenino", "Neutral"],
+  },
+  {
+    label: "EDAD",
+    tags: ["Joven", "Mediana Edad", "Mayor"],
+  },
+  {
+    label: "CASO DE USO",
+    tags: ["Narración", "Conversacional", "Voz del Personaje", "Redes Sociales", "Educativo", "Publicidad", "Entretenimiento", "Documental"],
+  },
+  {
+    label: "CALIDAD DE VOZ",
+    tags: ["Profundo", "Suave", "Dramático", "Profesional", "Enérgico", "Misterioso", "Cálido"],
+  },
 ];
 
 const TAG_SEARCH: Record<string, string> = {
-  "male":         "male",
-  "female":       "female",
-  "neutral":      "neutral",
-  "young":        "young",
-  "middle-aged":  "middle",
-  "narration":    "narrat",
-  "documentary":  "document",
-  "dramatic":     "dramat",
-  "professional": "profes",
-  "soft":         "soft",
-  "energetic":    "energet",
-  "mystery":      "mysteri",
+  "Masculino":          "male",
+  "Femenino":           "female",
+  "Neutral":            "neutral",
+  "Joven":              "young",
+  "Mediana Edad":       "middle",
+  "Mayor":              "old",
+  "Narración":          "narrat",
+  "Conversacional":     "convers",
+  "Voz del Personaje":  "character",
+  "Redes Sociales":     "social",
+  "Educativo":          "educat",
+  "Publicidad":         "advertis",
+  "Entretenimiento":    "entertain",
+  "Documental":         "document",
+  "Profundo":           "deep",
+  "Suave":              "soft",
+  "Dramático":          "dramat",
+  "Profesional":        "profes",
+  "Enérgico":           "energet",
+  "Misterioso":         "mysteri",
+  "Cálido":             "warm",
 };
 
 const FLOATING_WORDS = [
@@ -149,7 +162,8 @@ export default function VoicesClient() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [language, setLanguage] = useState("es");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState<string | null>(null);
   const [langOpen, setLangOpen] = useState(false);
@@ -182,7 +196,7 @@ export default function VoicesClient() {
       .finally(() => setLoading(false));
   }, [language]);
 
-  /* Client-side filter whenever search or tags change */
+  /* Client-side filter whenever search or activeFilters change */
   useEffect(() => {
     let result = allVoices;
 
@@ -195,7 +209,7 @@ export default function VoicesClient() {
       );
     }
 
-    if (selectedTags.length > 0) {
+    if (activeFilters.length > 0) {
       result = result.filter((v) => {
         const allText = [
           ...(v.tags ?? []),
@@ -204,30 +218,37 @@ export default function VoicesClient() {
         ]
           .join(" ")
           .toLowerCase();
-        return selectedTags.some((uiTag) => {
-          const term = TAG_SEARCH[uiTag] ?? uiTag.toLowerCase();
+        return activeFilters.some((label) => {
+          const term = TAG_SEARCH[label] ?? label.toLowerCase();
           return allText.includes(term);
         });
       });
     }
 
     setFilteredVoices(result);
-  }, [allVoices, search, selectedTags]);
+  }, [allVoices, search, activeFilters]);
 
-  function toggleTag(value: string) {
-    setSelectedTags((prev) =>
-      prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value]
+  function toggleFilter(label: string) {
+    setActiveFilters((prev) =>
+      prev.includes(label) ? prev.filter((f) => f !== label) : [...prev, label]
     );
   }
 
-  /* Audio preview — use samples from voice data, fallback to preview API */
+  function removeFilter(label: string) {
+    setActiveFilters((prev) => prev.filter((f) => f !== label));
+  }
+
+  function clearFilters() {
+    setActiveFilters([]);
+  }
+
+  /* Audio preview */
   async function playPreview(voice: FishVoice) {
     const id = voice._id;
 
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     if (playingId === id) { setPlayingId(null); return; }
 
-    // Try sample URL directly from API response first
     const directUrl = voice.samples?.[0]?.audio;
 
     if (directUrl) {
@@ -240,7 +261,6 @@ export default function VoicesClient() {
       return;
     }
 
-    // Fallback: fetch via server proxy
     setPreviewLoading(id);
     try {
       const res = await fetch(`/api/public-voices/preview?id=${id}`);
@@ -266,7 +286,6 @@ export default function VoicesClient() {
   }
 
   const showSidebar = isLoaded && isSignedIn;
-  const stickyTop = showSidebar ? "top-0" : "top-16";
   const heroPadding = showSidebar ? "pt-10" : "pt-36";
   const activeLangLabel = LANGUAGES.find((l) => l.value === language)?.label ?? "Español";
 
@@ -274,6 +293,7 @@ export default function VoicesClient() {
     <>
       <style>{`
         @keyframes floatWord { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-18px); } }
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
       `}</style>
 
       <div className="flex" style={{ minHeight: "100vh", background: "#000000", color: "#ffffff" }}>
@@ -329,7 +349,7 @@ export default function VoicesClient() {
                 Más de 200 voces listas para tu próximo proyecto
               </p>
 
-              {/* Search + language */}
+              {/* Search + language + filters */}
               <div className="flex gap-3 max-w-2xl mx-auto">
                 <div className="flex-1 relative">
                   <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
@@ -361,43 +381,49 @@ export default function VoicesClient() {
                     </div>
                   )}
                 </div>
+                {/* Filters button */}
+                <button
+                  onClick={() => setShowFilters(true)}
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm transition-all flex-shrink-0"
+                  style={{
+                    background: activeFilters.length > 0 ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.07)",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    color: activeFilters.length > 0 ? "#ffffff" : "rgba(255,255,255,0.7)",
+                  }}
+                >
+                  <SlidersHorizontal size={15} />
+                  <span className="hidden sm:inline">Filtros</span>
+                  {activeFilters.length > 0 && (
+                    <span className="flex items-center justify-center text-black font-bold rounded-full" style={{ background: "#ffffff", width: 18, height: 18, fontSize: 10 }}>
+                      {activeFilters.length}
+                    </span>
+                  )}
+                </button>
               </div>
+
+              {/* Active filter chips */}
+              {activeFilters.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap justify-center mt-3">
+                  {activeFilters.map((f) => (
+                    <span
+                      key={f}
+                      className="flex items-center gap-1 rounded-full px-3 py-1 text-xs text-white"
+                      style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.15)" }}
+                    >
+                      {f}
+                      <X size={11} className="cursor-pointer opacity-60 hover:opacity-100" onClick={() => removeFilter(f)} />
+                    </span>
+                  ))}
+                  <button onClick={clearFilters} className="text-xs transition-colors" style={{ color: "rgba(255,255,255,0.35)" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.35)")}
+                  >
+                    Limpiar todo
+                  </button>
+                </div>
+              )}
             </div>
           </section>
-
-          {/* ── Tag pills ──────────────────────────────────────── */}
-          <div className={`sticky ${stickyTop} z-40 border-b overflow-x-auto`} style={{ background: "rgba(0,0,0,0.95)", backdropFilter: "blur(10px)", borderColor: "#1a1a1a" }}>
-            <div className="flex items-center gap-2 px-4 md:px-8 py-3" style={{ width: "max-content", minWidth: "100%" }}>
-              <button
-                onClick={() => setSelectedTags([])}
-                className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                style={{
-                  background: selectedTags.length === 0 ? "#ffffff" : "rgba(255,255,255,0.07)",
-                  color: selectedTags.length === 0 ? "#000000" : "rgba(255,255,255,0.6)",
-                  border: selectedTags.length === 0 ? "none" : "1px solid rgba(255,255,255,0.1)",
-                }}
-              >
-                Todos
-              </button>
-              {TAGS.map((tag) => {
-                const active = selectedTags.includes(tag.value);
-                return (
-                  <button
-                    key={tag.value}
-                    onClick={() => toggleTag(tag.value)}
-                    className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                    style={{
-                      background: active ? "#ffffff" : "rgba(255,255,255,0.07)",
-                      color: active ? "#000000" : "rgba(255,255,255,0.6)",
-                      border: active ? "none" : "1px solid rgba(255,255,255,0.1)",
-                    }}
-                  >
-                    {tag.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
 
           {/* ── Main content ───────────────────────────────────── */}
           <main className="px-4 md:px-8 py-10 max-w-screen-2xl mx-auto">
@@ -463,6 +489,93 @@ export default function VoicesClient() {
           </footer>
         </div>
       </div>
+
+      {/* ── Filter drawer ────────────────────────────────────────── */}
+      {showFilters && (
+        <div
+          className="fixed inset-0 z-50"
+          style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+          onClick={() => setShowFilters(false)}
+        >
+          <div
+            className="absolute right-0 top-0 h-full overflow-y-auto"
+            style={{ width: 320, background: "#111111", borderLeft: "1px solid rgba(255,255,255,0.08)", animation: "slideInRight 0.2s ease-out" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drawer header */}
+            <div className="flex items-center justify-between p-6 border-b" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+              <span className="text-white font-semibold text-lg">Filtros</span>
+              <div className="flex items-center gap-3">
+                {activeFilters.length > 0 && (
+                  <button
+                    onClick={clearFilters}
+                    className="text-sm transition-colors"
+                    style={{ color: "rgba(255,255,255,0.4)" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#ffffff")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.4)")}
+                  >
+                    Restablecer
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowFilters(false)}
+                  style={{ color: "rgba(255,255,255,0.4)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#ffffff")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.4)")}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Filter groups */}
+            <div className="p-6 space-y-7">
+              {FILTER_GROUPS.map((group) => (
+                <div key={group.label}>
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em" }}>
+                    {group.label}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {group.tags.map((tag) => {
+                      const isActive = activeFilters.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          onClick={() => toggleFilter(tag)}
+                          className="px-3 py-1.5 rounded-xl text-sm transition-all"
+                          style={{
+                            background: isActive ? "#ffffff" : "transparent",
+                            color: isActive ? "#000000" : "rgba(255,255,255,0.6)",
+                            border: isActive ? "1px solid #ffffff" : "1px solid rgba(255,255,255,0.18)",
+                            fontWeight: isActive ? 500 : 400,
+                          }}
+                          onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.borderColor = "rgba(255,255,255,0.4)"; e.currentTarget.style.color = "#ffffff"; } }}
+                          onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; } }}
+                        >
+                          {tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Drawer footer */}
+            {activeFilters.length > 0 && (
+              <div className="sticky bottom-0 p-4 border-t" style={{ background: "#111111", borderColor: "rgba(255,255,255,0.08)" }}>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="w-full py-3 rounded-xl text-sm font-semibold text-black"
+                  style={{ background: "#ffffff" }}
+                >
+                  Ver {filteredVoices.length} voces
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
