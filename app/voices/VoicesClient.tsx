@@ -90,6 +90,7 @@ const LANGUAGES = [
   { value: "zh", label: "Chino",     flag: "🇨🇳" },
   { value: "ko", label: "Coreano",   flag: "🇰🇷" },
   { value: "ar", label: "Árabe",     flag: "🇸🇦" },
+  { value: "it", label: "Italiano",  flag: "🇮🇹" },
 ];
 
 const FILTER_GROUPS = [
@@ -171,9 +172,10 @@ export default function VoicesClient() {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState<string | null>(null);
   const [langOpen, setLangOpen] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const langRef = useRef<HTMLDivElement>(null);
+  const langButtonRef = useRef<HTMLButtonElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const hasMoreRef = useRef(hasMore);
   const loadingMoreRef = useRef(loadingMore);
@@ -185,13 +187,21 @@ export default function VoicesClient() {
 
   useEffect(() => {
     function handle(e: MouseEvent) {
-      if (langRef.current && !langRef.current.contains(e.target as Node)) {
+      if (langButtonRef.current && !langButtonRef.current.contains(e.target as Node)) {
         setLangOpen(false);
       }
     }
     document.addEventListener("mousedown", handle);
     return () => document.removeEventListener("mousedown", handle);
   }, []);
+
+  function openLang() {
+    if (langButtonRef.current) {
+      const rect = langButtonRef.current.getBoundingClientRect();
+      setDropdownPos({ top: rect.bottom + 8, left: rect.left });
+    }
+    setLangOpen((v) => !v);
+  }
 
   /* Fetch a single page and append (or reset) allVoices */
   const loadVoices = useCallback(async (pageNum: number, reset: boolean) => {
@@ -414,33 +424,35 @@ export default function VoicesClient() {
                     style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
                   />
                 </div>
-                <div ref={langRef} className="relative flex-shrink-0">
-                  <button
-                    onClick={() => setLangOpen((v) => !v)}
-                    className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm text-white hover:bg-white/10 transition-all"
-                    style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
+                <button
+                  ref={langButtonRef}
+                  onClick={openLang}
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm text-white hover:bg-white/10 transition-all flex-shrink-0"
+                  style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
+                >
+                  <span className="text-base leading-none">{activeLang.flag}</span>
+                  <span className="hidden sm:inline">{activeLang.label}</span>
+                  <ChevronDown size={14} className="text-white/40" style={{ transform: langOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+                </button>
+                {langOpen && (
+                  <div
+                    className="glass-menu py-2 min-w-[190px]"
+                    style={{ position: "fixed", top: dropdownPos.top, left: dropdownPos.left, zIndex: 9999 }}
                   >
-                    <span className="text-base leading-none">{activeLang.flag}</span>
-                    <span className="hidden sm:inline">{activeLang.label}</span>
-                    <ChevronDown size={14} className="text-white/40" style={{ transform: langOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
-                  </button>
-                  {langOpen && (
-                    <div className="glass-menu absolute top-full mt-2 right-0 z-[9999] min-w-[180px] py-2 overflow-hidden">
-                      {LANGUAGES.map((l) => (
-                        <button
-                          key={l.value}
-                          onClick={() => { setLanguage(l.value); setLangOpen(false); }}
-                          className="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-white/10 transition-colors"
-                          style={{ color: language === l.value ? "#ffffff" : "rgba(255,255,255,0.6)" }}
-                        >
-                          <span className="text-base leading-none">{l.flag}</span>
-                          <span className="flex-1 text-left">{l.label}</span>
-                          {language === l.value && <Check size={14} className="text-white" />}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    {LANGUAGES.map((l) => (
+                      <button
+                        key={l.value}
+                        onClick={() => { setLanguage(l.value); setLangOpen(false); }}
+                        className="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-white/10 transition-colors"
+                        style={{ color: language === l.value ? "#ffffff" : "rgba(255,255,255,0.6)" }}
+                      >
+                        <span className="text-base leading-none">{l.flag}</span>
+                        <span className="flex-1 text-left">{l.label}</span>
+                        {language === l.value && <Check size={14} className="text-white" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {/* Filters button */}
                 <button
                   onClick={() => setShowFilters(true)}
