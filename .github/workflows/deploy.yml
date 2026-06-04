@@ -1,0 +1,24 @@
+name: Deploy to Hetzner
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 167.233.53.68
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/elitelabs
+            git pull origin main
+            npm ci --production=false
+            npx prisma generate
+            npm run build
+            pm2 restart elitelabs
+            echo "Deploy completado $(date)"

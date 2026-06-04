@@ -30,7 +30,8 @@ export function DashboardSidebar() {
   const [showProductMenu, setShowProductMenu] = useState(false);
 
   const isMiCuenta = pathname === "/dashboard/mi-cuenta";
-  const activeTab: Tab | null = isMiCuenta
+  const isDiscover = pathname === "/voices" || pathname === "/descubrir";
+  const activeTab: Tab | null = (isMiCuenta || isDiscover)
     ? null
     : ((searchParams.get("tab") as Tab | null) ?? "home");
 
@@ -242,14 +243,16 @@ export function DashboardSidebar() {
                           fontSize: "13px",
                           fontWeight: 500,
                           textDecoration: "none",
-                          color: "#555555",
+                          background: isDiscover ? "rgba(255,255,255,0.08)" : "transparent",
+                          color: isDiscover ? "#ffffff" : "#555555",
                           transition: "background 0.15s",
                         }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#d1d5db"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#555555"; }}
+                        onMouseEnter={(e) => { if (!isDiscover) { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#d1d5db"; } }}
+                        onMouseLeave={(e) => { if (!isDiscover) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#555555"; } }}
                       >
-                        <Compass size={15} style={{ color: "#444444", flexShrink: 0 }} />
+                        <Compass size={15} style={{ color: isDiscover ? "#ffffff" : "#444444", flexShrink: 0 }} />
                         <span style={{ flex: 1 }}>Descubrir</span>
+                        {isDiscover && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
                       </Link>
                     )}
                   </>
