@@ -2670,12 +2670,12 @@ function BillingTab({
           ) : null}
         </div>
         {plan === "lifetime" ? (
-          <a
+          <Link
             href="/checkout/lifetime"
             style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid rgba(245,158,11,0.4)", background: "rgba(245,158,11,0.08)", color: "#f59e0b", fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", textDecoration: "none" }}
           >
             Renovar créditos ($340) →
-          </a>
+          </Link>
         ) : plan !== "free" ? (
           <button
             onClick={() => setShowManage(true)}
