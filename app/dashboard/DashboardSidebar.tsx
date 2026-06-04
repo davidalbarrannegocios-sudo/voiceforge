@@ -7,7 +7,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Home, Mic2, Type, FileAudio, Globe, Clock,
   CreditCard, Gift, Zap, Settings, Users, MessageSquare, ChevronsUpDown,
-  Image as ImageIcon,
+  Image as ImageIcon, Compass,
 } from "lucide-react";
 import { useLang } from "./LanguageContext";
 
@@ -199,33 +199,60 @@ export function DashboardSidebar() {
               </p>
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              {section.items.map(({ key, label, Icon }) => {
+              {section.items.map(({ key, label, Icon }, itemIdx) => {
                 const isActive = activeTab === key;
                 return (
-                  <button
-                    key={key}
-                    onClick={() => router.push(`/dashboard?tab=${key}`)}
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      fontSize: "13px",
-                      fontWeight: 500,
-                      textAlign: "left",
-                      border: "none",
-                      cursor: "pointer",
-                      transition: "background 0.15s",
-                      background: isActive ? "rgba(255,255,255,0.08)" : "transparent",
-                      color: isActive ? "#ffffff" : "#555555",
-                    }}
-                  >
-                    <Icon size={15} style={{ color: isActive ? "#ffffff" : "#444444", flexShrink: 0 }} />
-                    <span style={{ flex: 1 }}>{label}</span>
-                    {isActive && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
-                  </button>
+                  <>
+                    <button
+                      key={key}
+                      onClick={() => router.push(`/dashboard?tab=${key}`)}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        padding: "8px 12px",
+                        borderRadius: "8px",
+                        fontSize: "13px",
+                        fontWeight: 500,
+                        textAlign: "left",
+                        border: "none",
+                        cursor: "pointer",
+                        transition: "background 0.15s",
+                        background: isActive ? "rgba(255,255,255,0.08)" : "transparent",
+                        color: isActive ? "#ffffff" : "#555555",
+                      }}
+                      onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#d1d5db"; } }}
+                      onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#555555"; } }}
+                    >
+                      <Icon size={15} style={{ color: isActive ? "#ffffff" : "#444444", flexShrink: 0 }} />
+                      <span style={{ flex: 1 }}>{label}</span>
+                      {isActive && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
+                    </button>
+                    {si === 0 && itemIdx === 0 && (
+                      <Link
+                        key="discover"
+                        href="/voices"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          padding: "8px 12px",
+                          borderRadius: "8px",
+                          fontSize: "13px",
+                          fontWeight: 500,
+                          textDecoration: "none",
+                          color: "#555555",
+                          transition: "background 0.15s",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#d1d5db"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#555555"; }}
+                      >
+                        <Compass size={15} style={{ color: "#444444", flexShrink: 0 }} />
+                        <span style={{ flex: 1 }}>Descubrir</span>
+                      </Link>
+                    )}
+                  </>
                 );
               })}
             </div>
