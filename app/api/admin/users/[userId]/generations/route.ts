@@ -20,13 +20,7 @@ export async function GET(
     });
     if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
-    const [
-      generations,
-      ttsSumResult,
-      dialogueSumResult,
-      asrSumResult,
-      translationSumResult,
-    ] = await Promise.all([
+    const [generations, creditsAgg] = await Promise.all([
       prisma.generation.findMany({
         where: { userId },
         orderBy: { createdAt: "desc" },
@@ -44,44 +38,20 @@ export async function GET(
         },
       }),
       prisma.generation.aggregate({
-        where: {
-          userId,
-          OR: [
-            { voiceName: null },
-            { voiceName: { not: { startsWith: "Diálogo (" } } },
-          ],
-        },
+        where: { userId, creditsUsed: { gt: 0 } },
         _sum: { creditsUsed: true },
-      }),
-      prisma.generation.aggregate({
-        where: { userId, voiceName: { startsWith: "Diálogo (" } },
-        _sum: { creditsUsed: true },
-      }),
-      prisma.transcriptionTask.aggregate({
-        where: { userId },
-        _sum: { creditsUsed: true },
-      }),
-      prisma.translationTask.aggregate({
-        where: { userId },
-        _sum: { creditsUsed: true },
+        _count: { id: true },
+        _avg: { creditsUsed: true },
       }),
     ]);
 
-    const tts = ttsSumResult._sum.creditsUsed ?? 0;
-    const dialogue = dialogueSumResult._sum.creditsUsed ?? 0;
-    const asr = asrSumResult._sum.creditsUsed ?? 0;
-    const translation = translationSumResult._sum.creditsUsed ?? 0;
-
-    const creditsByType = {
-      tts,
-      dialogue,
-      asr,
-      translation,
-      image: 0,
-      total: tts + dialogue + asr + translation,
+    const creditsStats = {
+      total: creditsAgg._sum.creditsUsed ?? 0,
+      count: creditsAgg._count.id ?? 0,
+      avg: Math.round(creditsAgg._avg.creditsUsed ?? 0),
     };
 
-    return NextResponse.json({ user, generations, creditsByType });
+    return NextResponse.json({ user, generations, creditsStats });
   } catch (e) {
     console.error("[admin/users/generations]", e);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
