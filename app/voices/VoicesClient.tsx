@@ -55,17 +55,15 @@ function langFlag(code: string): string {
   return LANG_FLAG[code.toLowerCase()] ?? code.toLowerCase();
 }
 
-/* ── VoiceAvatar (matches VoiceBrowser) ───────────────────────── */
+/* ── VoiceAvatar ─────────────────────────────────────────────── */
 function VoiceAvatar({ id, name, coverImage }: { id: string; name: string; coverImage?: string | null }) {
   const [imgFailed, setImgFailed] = useState(false);
-  const showImage = !!coverImage && !imgFailed;
-  const proxied = coverImage ? `/api/voice-image?url=${encodeURIComponent(coverImage)}` : "";
 
-  if (showImage) {
+  if (coverImage && !imgFailed) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={proxied}
+        src={coverImage}
         alt=""
         className="flex-shrink-0"
         style={{ width: 64, height: 64, borderRadius: 8, objectFit: "cover" }}
@@ -75,9 +73,13 @@ function VoiceAvatar({ id, name, coverImage }: { id: string; name: string; cover
   }
   return (
     <div
-      className="flex-shrink-0"
+      className="flex-shrink-0 flex items-center justify-center"
       style={{ width: 64, height: 64, borderRadius: 8, background: generateVoiceGradient(id) }}
-    />
+    >
+      <span style={{ color: "#ffffff", fontWeight: 700, fontSize: 24 }}>
+        {name.charAt(0).toUpperCase()}
+      </span>
+    </div>
   );
 }
 
