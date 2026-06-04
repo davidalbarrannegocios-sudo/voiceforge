@@ -20,24 +20,62 @@ export async function GET(
     });
     if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
-    const generations = await prisma.generation.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        status: true,
-        text: true,
-        voiceName: true,
-        audioUrl: true,
-        creditsUsed: true,
-        durationSeconds: true,
-        error: true,
-        refunded: true,
-        createdAt: true,
-      },
-    });
+    const [
+      generations,
+      ttsSumResult,
+      dialogueSumResult,
+      asrSumResult,
+      translationSumResult,
+    ] = await Promise.all([
+      prisma.generation.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          status: true,
+          text: true,
+          voiceName: true,
+          audioUrl: true,
+          creditsUsed: true,
+          durationSeconds: true,
+          error: true,
+          refunded: true,
+          createdAt: true,
+        },
+      }),
+      prisma.generation.aggregate({
+        where: { userId, NOT: { voiceName: { startsWith: "Diálogo (" } } },
+        _sum: { creditsUsed: true },
+      }),
+      prisma.generation.aggregate({
+        where: { userId, voiceName: { startsWith: "Diálogo (" } },
+        _sum: { creditsUsed: true },
+      }),
+      prisma.transcriptionTask.aggregate({
+        where: { userId },
+        _sum: { creditsUsed: true },
+      }),
+      prisma.translationTask.aggregate({
+        where: { userId },
+        _sum: { creditsUsed: true },
+      }),
+    ]);
 
-    return NextResponse.json({ user, generations });
+    const tts = ttsSumResult._sum.creditsUsed ?? 0;
+    const dialogue = dialogueSumResult._sum.creditsUsed ?? 0;
+    const asr = asrSumResult._sum.creditsUsed ?? 0;
+    const translation = translationSumResult._sum.creditsUsed ?? 0;
+
+    const creditsByType = {
+      tts,
+      dialogue,
+      asr,
+      translation,
+      image: 0,
+      total: tts + dialogue + asr + translation,
+    };
+
+    return NextResponse.json({ user, generations, creditsByType });
   } catch (e) {
     console.error("[admin/users/generations]", e);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });

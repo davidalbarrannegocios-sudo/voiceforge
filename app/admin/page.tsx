@@ -54,9 +54,13 @@ interface Generation {
   audioUrl: string | null; creditsUsed: number; durationSeconds: number | null;
   error: string | null; refunded: boolean; createdAt: string;
 }
+interface CreditsByType {
+  tts: number; dialogue: number; asr: number; translation: number; image: number; total: number;
+}
 interface UserDetail {
   user: { id: string; email: string; credits: number; plan: string; role: string; createdAt: string };
   generations: Generation[];
+  creditsByType?: CreditsByType;
 }
 interface Payment {
   id: string; stripeSessionId: string; paymentIntentId: string | null;
@@ -360,6 +364,36 @@ function UserDetailModal({
                 </div>
               ))}
             </div>
+            {detail.creditsByType && (
+              <div style={{ marginBottom: "1.5rem" }}>
+                <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#555555", marginBottom: "0.75rem" }}>Créditos consumidos por tipo</p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem" }}>
+                  {[
+                    { label: "Texto a Voz",     value: detail.creditsByType.tts         },
+                    { label: "Texto a Diálogo", value: detail.creditsByType.dialogue    },
+                    { label: "Traducción Audio", value: detail.creditsByType.translation },
+                    { label: "Audio a Texto",   value: detail.creditsByType.asr         },
+                    { label: "Imagen y Video",  value: detail.creditsByType.image       },
+                    { label: "Total gastado",   value: detail.creditsByType.total       },
+                  ].map(({ label, value }, i) => (
+                    <div
+                      key={label}
+                      style={{
+                        background: "rgba(255,255,255,0.05)",
+                        borderRadius: "0.5rem",
+                        padding: "0.75rem",
+                        border: i === 5 ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(255,255,255,0.1)",
+                      }}
+                    >
+                      <p style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.4)", marginBottom: "0.25rem" }}>{label}</p>
+                      <p style={{ color: "#ffffff", fontWeight: i === 5 ? 700 : 600, fontSize: "1.125rem" }}>
+                        {value.toLocaleString("es-ES")}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div style={{ marginBottom: "1.5rem", padding: "1rem", borderRadius: "0.75rem", background: "#000000", border: "1px solid rgba(255,255,255,0.08)" }}>
               <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#555555", marginBottom: "0.75rem" }}>Estado Stripe</p>
               {stripeSubLoading ? (
