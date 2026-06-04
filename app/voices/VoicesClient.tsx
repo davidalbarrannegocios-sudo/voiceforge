@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -109,6 +109,21 @@ const TAGS: { label: string; value: string }[] = [
   { label: "Misterioso",   value: "mystery"     },
 ];
 
+const TAG_SEARCH: Record<string, string> = {
+  "male":         "male",
+  "female":       "female",
+  "neutral":      "neutral",
+  "young":        "young",
+  "middle-aged":  "middle",
+  "narration":    "narrat",
+  "documentary":  "document",
+  "dramatic":     "dramat",
+  "professional": "profes",
+  "soft":         "soft",
+  "energetic":    "energet",
+  "mystery":      "mysteri",
+};
+
 const FLOATING_WORDS = [
   { text: "Hola",      size: 28, x: 62, y: 15, opacity: 0.18, delay: 0   },
   { text: "Hello",     size: 22, x: 72, y: 40, opacity: 0.12, delay: 1.2 },
@@ -129,11 +144,9 @@ export default function VoicesClient() {
   const { isSignedIn, isLoaded } = useUser();
   const router = useRouter();
 
-  const [voices, setVoices] = useState<FishVoice[]>([]);
+  const [allVoices, setAllVoices] = useState<FishVoice[]>([]);
+  const [filteredVoices, setFilteredVoices] = useState<FishVoice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const [search, setSearch] = useState("");
   const [language, setLanguage] = useState("es");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -142,7 +155,6 @@ export default function VoicesClient() {
   const [langOpen, setLangOpen] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const langRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -155,47 +167,57 @@ export default function VoicesClient() {
     return () => document.removeEventListener("mousedown", handle);
   }, []);
 
-  /* Fetch voices */
-  const fetchVoices = useCallback(
-    async (p: number, append: boolean) => {
-      if (append) setLoadingMore(true);
-      else setLoading(true);
-
-      const params = new URLSearchParams({ page_size: "48", page: String(p), language });
-      if (search) params.set("search", search);
-      selectedTags.forEach((t) => params.append("tag", t));
-
-      try {
-        const res = await fetch(`/api/public-voices?${params}`);
-        const data = await res.json();
+  /* Load all voices when language changes */
+  useEffect(() => {
+    setLoading(true);
+    const params = new URLSearchParams({ page_size: "200", language });
+    fetch(`/api/public-voices?${params}`)
+      .then((r) => r.json())
+      .then((data) => {
         const items: FishVoice[] = data.items ?? [];
-        if (append) setVoices((prev) => [...prev, ...items]);
-        else setVoices(items);
-        setHasMore(items.length === 48);
-      } catch { /* silent */ }
-      finally { setLoading(false); setLoadingMore(false); }
-    },
-    [language, search, selectedTags]
-  );
+        setAllVoices(items);
+        setFilteredVoices(items);
+      })
+      .catch(() => { setAllVoices([]); setFilteredVoices([]); })
+      .finally(() => setLoading(false));
+  }, [language]);
 
-  useEffect(() => { setPage(1); fetchVoices(1, false); }, [fetchVoices]);
+  /* Client-side filter whenever search or tags change */
+  useEffect(() => {
+    let result = allVoices;
 
-  function handleSearchChange(val: string) {
-    setSearch(val);
-    if (searchTimer.current) clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => setPage(1), 400);
-  }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (v) =>
+          v.title?.toLowerCase().includes(q) ||
+          v.description?.toLowerCase().includes(q)
+      );
+    }
+
+    if (selectedTags.length > 0) {
+      result = result.filter((v) => {
+        const allText = [
+          ...(v.tags ?? []),
+          v.title ?? "",
+          v.description ?? "",
+        ]
+          .join(" ")
+          .toLowerCase();
+        return selectedTags.some((uiTag) => {
+          const term = TAG_SEARCH[uiTag] ?? uiTag.toLowerCase();
+          return allText.includes(term);
+        });
+      });
+    }
+
+    setFilteredVoices(result);
+  }, [allVoices, search, selectedTags]);
 
   function toggleTag(value: string) {
     setSelectedTags((prev) =>
       prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value]
     );
-  }
-
-  function handleLoadMore() {
-    const next = page + 1;
-    setPage(next);
-    fetchVoices(next, true);
   }
 
   /* Audio preview — use samples from voice data, fallback to preview API */
@@ -315,7 +337,7 @@ export default function VoicesClient() {
                     type="text"
                     placeholder="Buscar voces..."
                     value={search}
-                    onChange={(e) => handleSearchChange(e.target.value)}
+                    onChange={(e) => setSearch(e.target.value)}
                     className="w-full pl-11 pr-4 py-3 rounded-xl text-sm text-white placeholder-white/30 outline-none"
                     style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
                   />
@@ -381,7 +403,7 @@ export default function VoicesClient() {
           <main className="px-4 md:px-8 py-10 max-w-screen-2xl mx-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Tendencias principales</h2>
-              {voices.length > 0 && <span className="text-xs text-white/20">{voices.length} voces</span>}
+              {filteredVoices.length > 0 && <span className="text-xs text-white/20">{filteredVoices.length} voces</span>}
             </div>
 
             {/* Skeleton */}
@@ -401,15 +423,15 @@ export default function VoicesClient() {
               </div>
             )}
 
-            {!loading && voices.length === 0 && (
+            {!loading && filteredVoices.length === 0 && (
               <div className="text-center py-20">
                 <p className="text-white/30 text-sm">No se encontraron voces para esta búsqueda.</p>
               </div>
             )}
 
-            {!loading && voices.length > 0 && (
+            {!loading && filteredVoices.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {voices.map((voice) => (
+                {filteredVoices.map((voice) => (
                   <VoiceCard
                     key={voice._id}
                     voice={voice}
@@ -419,14 +441,6 @@ export default function VoicesClient() {
                     onUse={() => handleUseVoice(voice._id)}
                   />
                 ))}
-              </div>
-            )}
-
-            {!loading && hasMore && voices.length > 0 && (
-              <div className="flex justify-center mt-10">
-                <button onClick={handleLoadMore} disabled={loadingMore} className="px-8 py-3 rounded-xl text-sm font-semibold transition-all" style={{ background: loadingMore ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.07)", color: loadingMore ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.8)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                  {loadingMore ? "Cargando..." : "Cargar más voces"}
-                </button>
               </div>
             )}
           </main>
