@@ -27,7 +27,7 @@ export async function GET(req: Request) {
   const pageSize = searchParams.get("page_size") ?? "5";
   const page = searchParams.get("page") ?? "1";
   const search = searchParams.get("search") ?? "";
-  const tag = searchParams.get("tag") ?? "";
+  const tags = searchParams.getAll("tag"); // support multiple tag params
 
   const params = new URLSearchParams({
     page_size: pageSize,
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
   });
   if (language !== "all") params.set("language", language);
   if (search) params.set("title", search);
-  if (tag) params.set("tag", tag);
+  tags.forEach((t) => params.append("tag", t));
 
   const res = await fetch(`https://api.fish.audio/model?${params}`, {
     headers: { Authorization: `Bearer ${apiKey}` },

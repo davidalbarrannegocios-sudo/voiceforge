@@ -14,6 +14,7 @@ const isPublicRoute = createRouteMatcher([
   "/r/(.*)",
   "/api/webhooks/stripe",
   "/api/public-voices(.*)",
+  "/api/voice-image",
   "/api/demo-voice",
   "/api/v1/(.*)",
   "/api/referral/check",
