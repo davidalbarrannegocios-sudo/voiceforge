@@ -413,7 +413,7 @@ export default function VoicesClient() {
               </p>
 
               {/* Search + language + filters */}
-              <div className="flex gap-3 max-w-2xl mx-auto">
+              <div className="flex items-center gap-3 w-full max-w-3xl mx-auto">
                 <div className="flex-1 relative">
                   <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
                   <input
@@ -422,14 +422,27 @@ export default function VoicesClient() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full pl-11 pr-4 py-3 rounded-xl text-sm text-white placeholder-white/30 outline-none"
-                    style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
+                    style={{
+                      background: "rgba(40,40,45,0.55)",
+                      backdropFilter: "blur(40px) saturate(180%) brightness(105%)",
+                      WebkitBackdropFilter: "blur(40px) saturate(180%) brightness(105%)",
+                      border: "1px solid rgba(255,255,255,0.07)",
+                      boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)",
+                    }}
                   />
                 </div>
                 <button
                   ref={langButtonRef}
                   onClick={openLang}
-                  className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm text-white hover:bg-white/10 transition-all flex-shrink-0"
-                  style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
+                  className="flex items-center gap-2 px-4 py-3 text-sm text-white hover:bg-white/10 transition-all flex-shrink-0"
+                  style={{
+                    background: "rgba(40,40,45,0.55)",
+                    backdropFilter: "blur(40px) saturate(180%) brightness(105%)",
+                    WebkitBackdropFilter: "blur(40px) saturate(180%) brightness(105%)",
+                    border: "1px solid rgba(255,255,255,0.07)",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)",
+                    borderRadius: 12,
+                  }}
                 >
                   <span className="text-base leading-none">{activeLang.flag}</span>
                   <span className="hidden sm:inline">{activeLang.label}</span>
@@ -457,10 +470,14 @@ export default function VoicesClient() {
                 {/* Filters button */}
                 <button
                   onClick={() => setShowFilters(true)}
-                  className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm transition-all flex-shrink-0"
+                  className="flex items-center gap-2 px-4 py-3 text-sm transition-all flex-shrink-0"
                   style={{
-                    background: activeFilters.length > 0 ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.07)",
-                    border: "1px solid rgba(255,255,255,0.12)",
+                    background: activeFilters.length > 0 ? "rgba(255,255,255,0.12)" : "rgba(40,40,45,0.55)",
+                    backdropFilter: "blur(40px) saturate(180%) brightness(105%)",
+                    WebkitBackdropFilter: "blur(40px) saturate(180%) brightness(105%)",
+                    border: "1px solid rgba(255,255,255,0.07)",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)",
+                    borderRadius: 12,
                     color: activeFilters.length > 0 ? "#ffffff" : "rgba(255,255,255,0.7)",
                   }}
                 >
