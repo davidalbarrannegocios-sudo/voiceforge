@@ -20,38 +20,64 @@ export async function GET(
     });
     if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
-    const [generations, creditsAgg] = await Promise.all([
-      prisma.generation.findMany({
-        where: { userId },
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          status: true,
-          text: true,
-          voiceName: true,
-          audioUrl: true,
-          creditsUsed: true,
-          durationSeconds: true,
-          error: true,
-          refunded: true,
-          createdAt: true,
-        },
-      }),
-      prisma.generation.aggregate({
-        where: { userId, creditsUsed: { gt: 0 } },
-        _sum: { creditsUsed: true },
-        _count: { id: true },
-        _avg: { creditsUsed: true },
-      }),
-    ]);
+    const [generations, ttsCredits, transcriptionCredits, translationCredits, imageCredits] =
+      await Promise.all([
+        prisma.generation.findMany({
+          where: { userId },
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            status: true,
+            text: true,
+            voiceName: true,
+            audioUrl: true,
+            creditsUsed: true,
+            durationSeconds: true,
+            error: true,
+            refunded: true,
+            createdAt: true,
+          },
+        }),
+        prisma.generation.aggregate({
+          where: { userId, creditsUsed: { gt: 0 } },
+          _sum: { creditsUsed: true },
+          _count: { id: true },
+        }),
+        prisma.transcriptionTask.aggregate({
+          where: { userId },
+          _sum: { creditsUsed: true },
+          _count: { id: true },
+        }),
+        prisma.translationTask.aggregate({
+          where: { userId },
+          _sum: { creditsUsed: true },
+          _count: { id: true },
+        }),
+        prisma.sharedImage.aggregate({
+          where: { userId },
+          _sum: { creditsUsed: true },
+          _count: { id: true },
+        }),
+      ]);
 
-    const creditsStats = {
-      total: creditsAgg._sum.creditsUsed ?? 0,
-      count: creditsAgg._count.id ?? 0,
-      avg: Math.round(creditsAgg._avg.creditsUsed ?? 0),
+    const tts          = ttsCredits._sum.creditsUsed ?? 0;
+    const transcription = transcriptionCredits._sum.creditsUsed ?? 0;
+    const translation  = translationCredits._sum.creditsUsed ?? 0;
+    const images       = imageCredits._sum.creditsUsed ?? 0;
+
+    const creditsByType = {
+      tts,
+      ttsCount:            ttsCredits._count.id ?? 0,
+      transcription,
+      transcriptionCount:  transcriptionCredits._count.id ?? 0,
+      translation,
+      translationCount:    translationCredits._count.id ?? 0,
+      images,
+      imagesCount:         imageCredits._count.id ?? 0,
+      total: tts + transcription + translation + images,
     };
 
-    return NextResponse.json({ user, generations, creditsStats });
+    return NextResponse.json({ user, generations, creditsByType });
   } catch (e) {
     console.error("[admin/users/generations]", e);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });

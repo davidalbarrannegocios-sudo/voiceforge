@@ -54,13 +54,17 @@ interface Generation {
   audioUrl: string | null; creditsUsed: number; durationSeconds: number | null;
   error: string | null; refunded: boolean; createdAt: string;
 }
-interface CreditsStats {
-  total: number; count: number; avg: number;
+interface CreditsByType {
+  tts: number; ttsCount: number;
+  transcription: number; transcriptionCount: number;
+  translation: number; translationCount: number;
+  images: number; imagesCount: number;
+  total: number;
 }
 interface UserDetail {
   user: { id: string; email: string; credits: number; plan: string; role: string; createdAt: string };
   generations: Generation[];
-  creditsStats?: CreditsStats;
+  creditsByType?: CreditsByType;
 }
 interface Payment {
   id: string; stripeSessionId: string; paymentIntentId: string | null;
@@ -364,30 +368,26 @@ function UserDetailModal({
                 </div>
               ))}
             </div>
-            {detail.creditsStats && (
+            {detail.creditsByType && (
               <div style={{ marginBottom: "1.5rem" }}>
-                <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#555555", marginBottom: "0.75rem" }}>Créditos consumidos</p>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem" }}>
+                <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#555555", marginBottom: "0.75rem" }}>Créditos consumidos por tipo</p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0.75rem", marginBottom: "0.75rem" }}>
                   {[
-                    { label: "Créditos gastados",       value: detail.creditsStats.total },
-                    { label: "Generaciones reales",      value: detail.creditsStats.count },
-                    { label: "Promedio por generación",  value: detail.creditsStats.avg   },
-                  ].map(({ label, value }, i) => (
-                    <div
-                      key={label}
-                      style={{
-                        background: "rgba(255,255,255,0.05)",
-                        borderRadius: "0.5rem",
-                        padding: "0.75rem",
-                        border: i === 0 ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(255,255,255,0.1)",
-                      }}
-                    >
-                      <p style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.4)", marginBottom: "0.25rem" }}>{label}</p>
-                      <p style={{ color: "#ffffff", fontWeight: i === 0 ? 700 : 600, fontSize: "1.125rem" }}>
-                        {value.toLocaleString("es-ES")}
-                      </p>
+                    { label: "Texto a Voz",    credits: detail.creditsByType.tts,           count: detail.creditsByType.ttsCount,           unit: "generaciones" },
+                    { label: "Audio a Texto",  credits: detail.creditsByType.transcription,  count: detail.creditsByType.transcriptionCount, unit: "tareas" },
+                    { label: "Traducción",     credits: detail.creditsByType.translation,    count: detail.creditsByType.translationCount,   unit: "tareas" },
+                    { label: "Imágenes/Vídeo", credits: detail.creditsByType.images,         count: detail.creditsByType.imagesCount,        unit: "guardadas" },
+                  ].map(({ label, credits, count, unit }) => (
+                    <div key={label} style={{ background: "rgba(255,255,255,0.04)", borderRadius: "0.5rem", padding: "0.75rem", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      <p style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.25rem" }}>{label}</p>
+                      <p style={{ color: "#ffffff", fontWeight: 600, fontSize: "1rem", marginBottom: "0.1rem" }}>{credits.toLocaleString("es-ES")} cr</p>
+                      <p style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.25)" }}>{count} {unit}</p>
                     </div>
                   ))}
+                </div>
+                <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: "0.5rem", padding: "0.75rem", border: "1px solid rgba(255,255,255,0.2)" }}>
+                  <p style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.4)", marginBottom: "0.25rem" }}>Total gastado</p>
+                  <p style={{ color: "#ffffff", fontWeight: 700, fontSize: "1.25rem" }}>{detail.creditsByType.total.toLocaleString("es-ES")}</p>
                 </div>
               </div>
             )}

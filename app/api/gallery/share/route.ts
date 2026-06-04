@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } })
   if (!dbUser) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-  const { imageBase64, videoUrl, prompt, model, aspectRatio, type } = await req.json()
+  const { imageBase64, videoUrl, prompt, model, aspectRatio, type, creditsUsed = 0 } = await req.json()
   if (!prompt) return NextResponse.json({ error: 'Missing data' }, { status: 400 })
 
   let buffer: Buffer
@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
       r2Key,
       imageUrl: mediaUrl,
       type: mediaType,
+      creditsUsed,
     },
   })
 
