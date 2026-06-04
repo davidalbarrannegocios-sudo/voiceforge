@@ -627,6 +627,7 @@ function HomeTab({
                   </p>
                   {gen.audioUrl && (
                     <a href={gen.audioUrl} download
+                       target="_blank" rel="noopener noreferrer"
                        className="text-xs transition-colors"
                        style={{ color: "#555555" }}
                        onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
@@ -2349,6 +2350,8 @@ function HistoryTab({ plan }: { plan: string }) {
                             <a
                               href={gen.audioUrl}
                               download
+                              target="_blank"
+                              rel="noopener noreferrer"
                               style={{
                                 display: "flex", alignItems: "center", justifyContent: "center",
                                 width: 26, height: 26, borderRadius: "50%",
@@ -3491,6 +3494,8 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 <a
                   href={result.audioUrl}
                   download={`traduccion-${result.targetLanguageName.toLowerCase()}.mp3`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/30 hover:text-white transition-colors flex-shrink-0"
                   title="Descargar"
                 >
@@ -3663,6 +3668,8 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                         <a
                           href={task.audioUrl}
                           download={`${task.fileName?.replace(/\.[^/.]+$/, '') ?? 'traduccion'}-${task.targetLanguage}.mp3`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/40 hover:text-white transition-colors"
                           onClick={e => e.stopPropagation()}
                         >

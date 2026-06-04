@@ -100,6 +100,8 @@ export function AudioPlayer({
         <a
           href={src}
           download={filename}
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-105"
           style={{ background: "#1a1a2e", border: "1px solid #2a2a3e", color: "#aaaaaa" }}
           aria-label="Descargar audio"

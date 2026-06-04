@@ -436,6 +436,8 @@ export default function AudioHistoryList({
                               <a
                                 href={gen.audioUrl!}
                                 download={`audio-${gen.id}.mp3`}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 style={{ display: "flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "9999px", background: "rgba(255,255,255,0.08)", fontSize: "11px", fontWeight: 500, color: "#e2e8f0", textDecoration: "none", flexShrink: 0 }}
                               >
                                 <Download size={10} />

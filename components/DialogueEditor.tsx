@@ -690,6 +690,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                       </div>
                     </div>
                     <a href={audioUrl} download={`dialogo.${outputFormat}`}
+                      target="_blank" rel="noopener noreferrer"
                       style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', fontSize: '13px', color: '#9ca3af', textDecoration: 'none' }}
                       onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLAnchorElement).style.color = '#fff' }}
                       onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLAnchorElement).style.color = '#9ca3af' }}
@@ -706,7 +707,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                             <span style={{ fontSize: '11px', color: '#6b7280', flex: 1 }}>
                               {new Date(entry.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} · {entry.format.toUpperCase()}
                             </span>
-                            <a href={entry.url} download={`dialogo-${i + 2}.${entry.format}`} style={{ color: '#4b5563', textDecoration: 'none' }}
+                            <a href={entry.url} download={`dialogo-${i + 2}.${entry.format}`} target="_blank" rel="noopener noreferrer" style={{ color: '#4b5563', textDecoration: 'none' }}
                               onMouseEnter={e => ((e.currentTarget as HTMLAnchorElement).style.color = '#9ca3af')}
                               onMouseLeave={e => ((e.currentTarget as HTMLAnchorElement).style.color = '#4b5563')}
                             >
