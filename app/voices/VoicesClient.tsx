@@ -332,15 +332,13 @@ export default function VoicesClient() {
 
           {/* ── Hero ─────────────────────────────────────────── */}
           <section className={`relative overflow-hidden ${heroPadding} pb-14 px-4`} style={{ borderBottom: "1px solid #1a1a1a" }}>
-            {!showSidebar && (
-              <div className="absolute inset-0 pointer-events-none" aria-hidden>
-                {FLOATING_WORDS.map((w, i) => (
-                  <span key={i} style={{ position: "absolute", left: `${w.x}%`, top: `${w.y}%`, fontSize: w.size, opacity: w.opacity, fontWeight: 700, color: "#ffffff", animation: `floatWord ${5 + i * 0.4}s ease-in-out ${w.delay}s infinite`, userSelect: "none" }}>
-                    {w.text}
-                  </span>
-                ))}
-              </div>
-            )}
+            <div className="absolute inset-0 pointer-events-none" aria-hidden>
+              {FLOATING_WORDS.map((w, i) => (
+                <span key={i} style={{ position: "absolute", left: `${w.x}%`, top: `${w.y}%`, fontSize: w.size, opacity: w.opacity, fontWeight: 700, color: "#ffffff", animation: `floatWord ${5 + i * 0.4}s ease-in-out ${w.delay}s infinite`, userSelect: "none" }}>
+                  {w.text}
+                </span>
+              ))}
+            </div>
             <div className="relative max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight mb-3">
                 Descubre las voces de IA más realistas
