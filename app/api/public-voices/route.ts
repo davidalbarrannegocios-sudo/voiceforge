@@ -34,7 +34,7 @@ export async function GET(req: Request) {
     page_number: page,
     sort_by: "task_count",
   });
-  if (language !== "all") params.set("language", language);
+  if (language) params.set("language", language);
   if (search) params.set("title", search);
   tags.forEach((t) => params.append("tag", t));
 

@@ -81,16 +81,17 @@ function VoiceAvatar({ id, name, coverImage }: { id: string; name: string; cover
 
 /* ── Constants ───────────────────────────────────────────────── */
 const LANGUAGES = [
-  { value: "es", label: "Español",   flag: "🇪🇸" },
-  { value: "en", label: "Inglés",    flag: "🇺🇸" },
-  { value: "ja", label: "Japonés",   flag: "🇯🇵" },
-  { value: "fr", label: "Francés",   flag: "🇫🇷" },
-  { value: "de", label: "Alemán",    flag: "🇩🇪" },
-  { value: "pt", label: "Portugués", flag: "🇧🇷" },
-  { value: "zh", label: "Chino",     flag: "🇨🇳" },
-  { value: "ko", label: "Coreano",   flag: "🇰🇷" },
-  { value: "ar", label: "Árabe",     flag: "🇸🇦" },
-  { value: "it", label: "Italiano",  flag: "🇮🇹" },
+  { value: "",   label: "Todos los idiomas", flag: "🌍" },
+  { value: "es", label: "Español",           flag: "🇪🇸" },
+  { value: "en", label: "Inglés",            flag: "🇺🇸" },
+  { value: "ja", label: "Japonés",           flag: "🇯🇵" },
+  { value: "fr", label: "Francés",           flag: "🇫🇷" },
+  { value: "de", label: "Alemán",            flag: "🇩🇪" },
+  { value: "pt", label: "Portugués",         flag: "🇧🇷" },
+  { value: "zh", label: "Chino",             flag: "🇨🇳" },
+  { value: "ko", label: "Coreano",           flag: "🇰🇷" },
+  { value: "ar", label: "Árabe",             flag: "🇸🇦" },
+  { value: "it", label: "Italiano",          flag: "🇮🇹" },
 ];
 
 const FILTER_GROUPS = [
@@ -166,7 +167,7 @@ export default function VoicesClient() {
   const [total, setTotal] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [search, setSearch] = useState("");
-  const [language, setLanguage] = useState("es");
+  const [language, setLanguage] = useState("");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -408,7 +409,7 @@ export default function VoicesClient() {
                 Descubre las voces de IA más realistas
               </h1>
               <p className="text-white/50 text-base md:text-lg mb-10">
-                Más de 200 voces listas para tu próximo proyecto
+                Más de 2 millones de voces listas para tu próximo proyecto
               </p>
 
               {/* Search + language + filters */}
