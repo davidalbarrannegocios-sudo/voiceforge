@@ -343,6 +343,46 @@ export async function POST(req: Request) {
   if (event.type === "payment_intent.succeeded") {
     const pi = event.data.object as Stripe.PaymentIntent;
 
+    // ── Lifetime plan (one-time purchase or renewal) ─────────
+    if (pi.metadata?.type === "lifetime") {
+      const userId = pi.metadata.userId;
+      if (!userId) return NextResponse.json({ received: true });
+
+      // Idempotency: skip if already processed this payment
+      const existing = await prisma.purchase.findUnique({ where: { stripeSessionId: pi.id } });
+      if (existing) return NextResponse.json({ received: true });
+
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) return NextResponse.json({ received: true });
+
+      const isRenewal = user.plan === "lifetime";
+
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: userId },
+          data: {
+            plan: "lifetime",
+            planExpiresAt: null,
+            stripeSubscriptionId: null,
+            billingInterval: "lifetime",
+            creditsRenewedAt: new Date(),
+            credits: isRenewal ? { increment: 20_000_000 } : 20_000_000,
+          },
+        }),
+        prisma.purchase.create({
+          data: {
+            userId,
+            stripeSessionId: pi.id,
+            creditsPurchased: 20_000_000,
+            amountCents: 34_000,
+          },
+        }),
+      ]);
+
+      log("info", "stripe-webhook", isRenewal ? "lifetime renewal" : "lifetime purchase", { userId }, userId);
+      return NextResponse.json({ received: true });
+    }
+
     // ── API wallet recharge ──────────────────────────────────
     if (pi.metadata?.type === "api_recharge") {
       const { userId, bytes, euros } = pi.metadata;

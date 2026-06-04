@@ -6,6 +6,7 @@ export const PLAN_CREDITS: Record<string, number> = {
   pro:        500_000,
   elite:      1_000_000,
   enterprise: 5_000_000,
+  lifetime:   20_000_000,
 };
 
 // -1 = unlimited
@@ -15,6 +16,7 @@ export const PLAN_VOICE_SLOTS: Record<string, number> = {
   pro:        10,
   elite:      20,
   enterprise: -1,
+  lifetime:   -1,
 };
 
 export const PLANS = {

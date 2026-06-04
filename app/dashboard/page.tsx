@@ -2551,6 +2551,7 @@ const PLAN_BADGE: Record<string, { label: string; color: string; bg: string }> =
   pro:        { label: "Pro",        color: "#aaaaaa", bg: "rgba(255,255,255,0.08)"  },
   elite:      { label: "Elite",      color: "#fbbf24", bg: "rgba(251,191,36,0.12)"  },
   enterprise: { label: "Enterprise", color: "#34d399", bg: "rgba(52,211,153,0.12)"  },
+  lifetime:   { label: "LIFETIME ♾",  color: "#f59e0b", bg: "rgba(245,158,11,0.15)" },
 };
 
 function costPer10k(price: number, characters: number): string {
@@ -2625,7 +2626,7 @@ function BillingTab({
       </div>
 
       {/* ── Info banner ── */}
-      <div style={{ borderRadius: "12px", border: "1px solid #1a1a1a", background: "#111111", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "28px" }}>
+      <div style={{ borderRadius: "12px", border: plan === "lifetime" ? "1px solid rgba(245,158,11,0.25)" : "1px solid #1a1a1a", background: plan === "lifetime" ? "rgba(245,158,11,0.04)" : "#111111", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "28px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "24px", flexWrap: "wrap" }}>
           <div>
             <p style={{ fontSize: "11px", color: "#444444", marginBottom: "3px" }}>Caracteres disponibles</p>
@@ -2636,7 +2637,17 @@ function BillingTab({
               )}
             </p>
           </div>
-          {renewalDateLabel && (
+          {plan === "lifetime" ? (
+            <>
+              <div style={{ width: "1px", height: "32px", background: "rgba(245,158,11,0.2)", flexShrink: 0 }} />
+              <div>
+                <p style={{ fontSize: "11px", color: "#444444", marginBottom: "3px" }}>Tipo de plan</p>
+                <p style={{ fontSize: "14px", fontWeight: 600, color: "#f59e0b", display: "flex", alignItems: "center", gap: "6px" }}>
+                  ♾ Vitalicio · Pago único · Sin caducidad
+                </p>
+              </div>
+            </>
+          ) : renewalDateLabel ? (
             <>
               <div style={{ width: "1px", height: "32px", background: "#1a1a1a", flexShrink: 0 }} />
               <div>
@@ -2656,20 +2667,27 @@ function BillingTab({
                 </p>
               </div>
             </>
-          )}
+          ) : null}
         </div>
-        {plan !== "free" && (
+        {plan === "lifetime" ? (
+          <a
+            href="/checkout/lifetime"
+            style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid rgba(245,158,11,0.4)", background: "rgba(245,158,11,0.08)", color: "#f59e0b", fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", textDecoration: "none" }}
+          >
+            Renovar créditos ($340) →
+          </a>
+        ) : plan !== "free" ? (
           <button
             onClick={() => setShowManage(true)}
             style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #222222", background: "transparent", color: "#d1d5db", fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
           >
             Gestionar suscripción →
           </button>
-        )}
+        ) : null}
       </div>
 
       {/* ── Monthly / Annual toggle ── */}
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px" }}>
+      {plan === "lifetime" ? null : <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px" }}>
         <div style={{ position: "relative", display: "inline-grid", gridTemplateColumns: "1fr 1fr", background: "#111111", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "3px" }}>
           {/* Sliding pill */}
           <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#1a1a1a", borderRadius: "7px", pointerEvents: "none", transition: "transform 0.2s ease", transform: `translateX(${billing === "annual" ? "100%" : "0%"})` }} />
@@ -2689,10 +2707,34 @@ function BillingTab({
             </span>
           </button>
         </div>
-      </div>
+      </div>}
 
-      {/* ── Plan cards (5 in a row) ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 w-full">
+      {/* ── Lifetime: feature summary instead of plan grid ── */}
+      {plan === "lifetime" && (
+        <div style={{ borderRadius: 12, border: "1px solid rgba(245,158,11,0.2)", background: "rgba(245,158,11,0.04)", padding: "20px 24px" }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: "#f59e0b", marginBottom: 14, letterSpacing: "0.05em" }}>
+            ♾ PLAN ELITE VITALICIO · ACCESO COMPLETO
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 24px" }}>
+            {[
+              "20.000.000 créditos por pago",
+              "Voces clonadas ilimitadas",
+              "Texto a Voz · Diálogo · Traducción",
+              "Transcripción · Imagen · Vídeo",
+              "Los créditos no caducan",
+              "Soporte prioritario de por vida",
+            ].map((f) => (
+              <div key={f} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#f59e0b", flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: "#d1d5db" }}>{f}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Plan cards (5 in a row) — hidden for lifetime ── */}
+      {plan !== "lifetime" && <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 w-full">
         {BILLING_PLANS.map((p) => {
           const isCurrent = plan === p.key;
           const planBadge = PLAN_BADGE[p.key];
@@ -2860,7 +2902,7 @@ function BillingTab({
             </div>
           );
         })}
-      </div>
+      </div>}
 
       {/* ── Extra credits section ── */}
       <div id="creditos-extra" style={{ marginTop: "44px", marginBottom: "20px" }}>
