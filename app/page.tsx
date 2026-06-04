@@ -385,6 +385,7 @@ export default function LandingPage() {
             </div>
 
             <Link href="/pricing" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg">Precios</Link>
+            <Link href="/voices" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg">Voces</Link>
           </nav>
 
           {/* Right: hamburger (mobile) + auth */}
@@ -485,6 +486,7 @@ export default function LandingPage() {
               </div>
             )}
             <Link href="/pricing" onClick={() => setMobileNavOpen(false)} className="block px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors border-t" style={{ borderColor: "#1a1a1a" }}>Precios</Link>
+            <Link href="/voices" onClick={() => setMobileNavOpen(false)} className="block px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors border-t" style={{ borderColor: "#1a1a1a" }}>Voces</Link>
           </div>
         )}
       </header>
