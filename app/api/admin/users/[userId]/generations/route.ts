@@ -44,7 +44,13 @@ export async function GET(
         },
       }),
       prisma.generation.aggregate({
-        where: { userId, NOT: { voiceName: { startsWith: "Diálogo (" } } },
+        where: {
+          userId,
+          OR: [
+            { voiceName: null },
+            { voiceName: { not: { startsWith: "Diálogo (" } } },
+          ],
+        },
         _sum: { creditsUsed: true },
       }),
       prisma.generation.aggregate({
