@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import { Search, ChevronDown, SlidersHorizontal, X } from "lucide-react";
+import { Search, ChevronDown, SlidersHorizontal, X, Check } from "lucide-react";
 import { generateVoiceGradient } from "@/lib/voice-gradient";
 import { DashboardSidebar } from "@/app/dashboard/DashboardSidebar";
 
@@ -73,25 +73,23 @@ function VoiceAvatar({ id, name, coverImage }: { id: string; name: string; cover
   }
   return (
     <div
-      className="flex-shrink-0 flex items-center justify-center"
+      className="flex-shrink-0"
       style={{ width: 64, height: 64, borderRadius: 8, background: generateVoiceGradient(id) }}
-    >
-      <span style={{ color: "#ffffff", fontWeight: 700, fontSize: 24 }}>
-        {name.charAt(0).toUpperCase()}
-      </span>
-    </div>
+    />
   );
 }
 
 /* ── Constants ───────────────────────────────────────────────── */
 const LANGUAGES = [
-  { value: "es", label: "Español" },
-  { value: "en", label: "Inglés" },
-  { value: "ja", label: "Japonés" },
-  { value: "fr", label: "Francés" },
-  { value: "de", label: "Alemán" },
-  { value: "pt", label: "Portugués" },
-  { value: "all", label: "Todos" },
+  { value: "es", label: "Español",   flag: "🇪🇸" },
+  { value: "en", label: "Inglés",    flag: "🇺🇸" },
+  { value: "ja", label: "Japonés",   flag: "🇯🇵" },
+  { value: "fr", label: "Francés",   flag: "🇫🇷" },
+  { value: "de", label: "Alemán",    flag: "🇩🇪" },
+  { value: "pt", label: "Portugués", flag: "🇧🇷" },
+  { value: "zh", label: "Chino",     flag: "🇨🇳" },
+  { value: "ko", label: "Coreano",   flag: "🇰🇷" },
+  { value: "ar", label: "Árabe",     flag: "🇸🇦" },
 ];
 
 const FILTER_GROUPS = [
@@ -343,7 +341,7 @@ export default function VoicesClient() {
 
   const showSidebar = isLoaded && isSignedIn;
   const heroPadding = showSidebar ? "pt-10" : "pt-36";
-  const activeLangLabel = LANGUAGES.find((l) => l.value === language)?.label ?? "Español";
+  const activeLang = LANGUAGES.find((l) => l.value === language) ?? LANGUAGES[0];
 
   return (
     <>
@@ -419,17 +417,25 @@ export default function VoicesClient() {
                 <div ref={langRef} className="relative flex-shrink-0">
                   <button
                     onClick={() => setLangOpen((v) => !v)}
-                    className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm text-white/80 hover:text-white transition-colors"
+                    className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm text-white hover:bg-white/10 transition-all"
                     style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
                   >
-                    {activeLangLabel}
-                    <ChevronDown size={14} style={{ transform: langOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+                    <span className="text-base leading-none">{activeLang.flag}</span>
+                    <span className="hidden sm:inline">{activeLang.label}</span>
+                    <ChevronDown size={14} className="text-white/40" style={{ transform: langOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
                   </button>
                   {langOpen && (
-                    <div className="absolute top-full mt-1 right-0 rounded-xl overflow-hidden z-20" style={{ background: "#0f0f0f", border: "1px solid rgba(255,255,255,0.12)", minWidth: "160px", boxShadow: "0 16px 40px rgba(0,0,0,0.8)" }}>
+                    <div className="glass-menu absolute top-full mt-2 right-0 z-[9999] min-w-[180px] py-2 overflow-hidden">
                       {LANGUAGES.map((l) => (
-                        <button key={l.value} onClick={() => { setLanguage(l.value); setLangOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm transition-colors" style={{ color: language === l.value ? "#ffffff" : "rgba(255,255,255,0.5)", background: language === l.value ? "rgba(255,255,255,0.08)" : "transparent" }}>
-                          {l.label}
+                        <button
+                          key={l.value}
+                          onClick={() => { setLanguage(l.value); setLangOpen(false); }}
+                          className="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-white/10 transition-colors"
+                          style={{ color: language === l.value ? "#ffffff" : "rgba(255,255,255,0.6)" }}
+                        >
+                          <span className="text-base leading-none">{l.flag}</span>
+                          <span className="flex-1 text-left">{l.label}</span>
+                          {language === l.value && <Check size={14} className="text-white" />}
                         </button>
                       ))}
                     </div>
