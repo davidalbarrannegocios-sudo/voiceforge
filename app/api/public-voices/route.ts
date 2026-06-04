@@ -50,5 +50,10 @@ export async function GET(req: Request) {
     data.items = (data.items as FishItem[]).map(normalizeCoverImage);
   }
 
+  const total: number = typeof data.total === "number" ? data.total : 0;
+  const pageNum = parseInt(page, 10);
+  const pageSizeNum = parseInt(pageSize, 10);
+  data.hasMore = pageNum * pageSizeNum < total;
+
   return NextResponse.json(data);
 }

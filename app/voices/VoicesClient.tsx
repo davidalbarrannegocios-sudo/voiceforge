@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -152,6 +152,8 @@ const PILL_STYLE = {
   border: "1px solid rgba(255,255,255,0.07)",
 };
 
+const PAGE_SIZE = 48;
+
 /* ── Main component ──────────────────────────────────────────── */
 export default function VoicesClient() {
   const { isSignedIn, isLoaded } = useUser();
@@ -160,6 +162,10 @@ export default function VoicesClient() {
   const [allVoices, setAllVoices] = useState<FishVoice[]>([]);
   const [filteredVoices, setFilteredVoices] = useState<FishVoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const [search, setSearch] = useState("");
   const [language, setLanguage] = useState("es");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
@@ -170,6 +176,14 @@ export default function VoicesClient() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const langRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const hasMoreRef = useRef(hasMore);
+  const loadingMoreRef = useRef(loadingMore);
+  const pageRef = useRef(page);
+
+  useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
+  useEffect(() => { loadingMoreRef.current = loadingMore; }, [loadingMore]);
+  useEffect(() => { pageRef.current = page; }, [page]);
 
   useEffect(() => {
     function handle(e: MouseEvent) {
@@ -181,22 +195,64 @@ export default function VoicesClient() {
     return () => document.removeEventListener("mousedown", handle);
   }, []);
 
-  /* Load all voices when language changes */
-  useEffect(() => {
-    setLoading(true);
-    const params = new URLSearchParams({ page_size: "200", language });
-    fetch(`/api/public-voices?${params}`)
-      .then((r) => r.json())
-      .then((data) => {
-        const items: FishVoice[] = data.items ?? [];
+  /* Fetch a single page and append (or reset) allVoices */
+  const loadVoices = useCallback(async (pageNum: number, reset: boolean) => {
+    if (reset) {
+      setLoading(true);
+    } else {
+      if (loadingMoreRef.current || !hasMoreRef.current) return;
+      setLoadingMore(true);
+    }
+
+    try {
+      const params = new URLSearchParams({ page_size: String(PAGE_SIZE), page: String(pageNum), language });
+      const res = await fetch(`/api/public-voices?${params}`);
+      const data = await res.json();
+      const items: FishVoice[] = data.items ?? [];
+      const totalCount: number = data.total ?? 0;
+      const more: boolean = data.hasMore ?? false;
+
+      if (reset) {
         setAllVoices(items);
-        setFilteredVoices(items);
-      })
-      .catch(() => { setAllVoices([]); setFilteredVoices([]); })
-      .finally(() => setLoading(false));
+      } else {
+        setAllVoices((prev) => [...prev, ...items]);
+      }
+      setPage(pageNum);
+      setTotal(totalCount);
+      setHasMore(more);
+    } catch {
+      if (reset) { setAllVoices([]); setHasMore(false); }
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
   }, [language]);
 
-  /* Client-side filter whenever search or activeFilters change */
+  /* Reset and reload when language changes */
+  useEffect(() => {
+    setAllVoices([]);
+    setPage(1);
+    setHasMore(true);
+    setTotal(0);
+    loadVoices(1, true);
+  }, [loadVoices]);
+
+  /* IntersectionObserver — trigger next page when sentinel enters view */
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreRef.current && !loadingMoreRef.current) {
+          loadVoices(pageRef.current + 1, false);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const el = loadMoreRef.current;
+    if (el) observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadVoices]);
+
+  /* Client-side filter on already-loaded voices */
   useEffect(() => {
     let result = allVoices;
 
@@ -427,7 +483,16 @@ export default function VoicesClient() {
           <main className="px-4 md:px-8 py-10 max-w-screen-2xl mx-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Tendencias principales</h2>
-              {filteredVoices.length > 0 && <span className="text-xs text-white/20">{filteredVoices.length} voces</span>}
+              <div className="flex flex-col items-end gap-1">
+                {total > 0 && (
+                  <span className="text-xs text-white/20">
+                    {(activeFilters.length > 0 || search.trim()) ? `${filteredVoices.length} de ` : ""}{allVoices.length.toLocaleString("es-ES")} / {total.toLocaleString("es-ES")} voces
+                  </span>
+                )}
+                {(activeFilters.length > 0 || search.trim()) && allVoices.length < total && (
+                  <span className="text-xs text-white/20">Desplázate para cargar más</span>
+                )}
+              </div>
             </div>
 
             {/* Skeleton */}
@@ -467,6 +532,21 @@ export default function VoicesClient() {
                 ))}
               </div>
             )}
+
+            {/* ── Infinite scroll sentinel ─────────────────────── */}
+            <div ref={loadMoreRef} className="w-full py-10 flex justify-center">
+              {loadingMore && (
+                <div className="flex items-center gap-3" style={{ color: "rgba(255,255,255,0.3)" }}>
+                  <div className="w-4 h-4 rounded-full border-2 animate-spin" style={{ borderColor: "rgba(255,255,255,0.15)", borderTopColor: "rgba(255,255,255,0.5)" }} />
+                  <span className="text-sm">Cargando más voces...</span>
+                </div>
+              )}
+              {!loadingMore && !hasMore && allVoices.length > 0 && (
+                <p className="text-sm" style={{ color: "rgba(255,255,255,0.2)" }}>
+                  {allVoices.length.toLocaleString("es-ES")} voces cargadas
+                </p>
+              )}
+            </div>
           </main>
 
           {/* ── Footer ─────────────────────────────────────────── */}
