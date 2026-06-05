@@ -155,6 +155,7 @@ function PricingContent() {
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
   const [discount, setDiscount] = useState<Discount | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
 
   useEffect(() => {
     const planKey = searchParams.get("plan");
@@ -163,6 +164,15 @@ function PricingContent() {
       if (found && !found.free) router.push(`/checkout/${planKey}?billing=${billing}`);
     }
   }, [isSignedIn, searchParams]);
+
+  useEffect(() => {
+    if (isSignedIn) {
+      fetch("/api/credits")
+        .then((r) => r.json())
+        .then((d) => { if (d.plan) setCurrentPlan(d.plan); })
+        .catch(() => {});
+    }
+  }, [isSignedIn]);
 
   // Load discount — no auth required:
   // If ?ref= in URL: call public /api/referral/check for immediate data (also sets httpOnly cookies)
@@ -322,12 +332,17 @@ function PricingContent() {
               {/* Name + badge */}
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "6px", marginBottom: "4px" }}>
                 <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{plan.name}</span>
-                {plan.popular && (
+                {currentPlan === plan.key && (
+                  <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(245,158,11,0.45)", color: "#f59e0b", background: "rgba(245,158,11,0.1)", whiteSpace: "nowrap", flexShrink: 0 }}>
+                    PLAN ACTUAL
+                  </span>
+                )}
+                {plan.popular && currentPlan !== plan.key && (
                   <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.2)", color: "#ffffff", background: "rgba(255,255,255,0.05)", whiteSpace: "nowrap", flexShrink: 0 }}>
                     {t.pricing.popular}
                   </span>
                 )}
-                {plan.key === "enterprise" && (
+                {plan.key === "enterprise" && currentPlan !== plan.key && (
                   <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(16,185,129,0.45)", color: "#6ee7b7", background: "rgba(16,185,129,0.05)", whiteSpace: "nowrap", flexShrink: 0 }}>
                     {t.pricing.teams}
                   </span>
@@ -446,6 +461,51 @@ function PricingContent() {
             </div>
           ))}
         </div>
+
+        {/* Lifetime plan banner — only shown when user has lifetime */}
+        {currentPlan === "lifetime" && (
+          <div style={{
+            marginBottom: "40px",
+            borderRadius: "16px",
+            border: "1px solid rgba(245,158,11,0.35)",
+            background: "linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(245,158,11,0.04) 100%)",
+            padding: "28px 32px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "24px",
+          }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+                <span style={{ fontSize: "20px" }}>♾</span>
+                <span style={{ fontSize: "17px", fontWeight: 800, color: "#f59e0b" }}>Elite Vitalicio</span>
+                <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(245,158,11,0.45)", color: "#f59e0b", background: "rgba(245,158,11,0.1)" }}>
+                  PLAN ACTUAL
+                </span>
+              </div>
+              <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", margin: 0 }}>
+                Acceso de por vida · 20.000.000 caracteres/mes · Sin renovaciones
+              </p>
+            </div>
+            <a
+              href="/checkout/lifetime"
+              style={{
+                padding: "10px 20px",
+                borderRadius: "10px",
+                border: "1px solid rgba(245,158,11,0.4)",
+                background: "rgba(245,158,11,0.12)",
+                color: "#f59e0b",
+                fontSize: "13px",
+                fontWeight: 700,
+                textDecoration: "none",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+              }}
+            >
+              Renovar créditos ($340)
+            </a>
+          </div>
+        )}
 
         {/* Competitor comparison */}
         <div style={{ marginBottom: "56px" }}>

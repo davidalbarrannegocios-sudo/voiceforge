@@ -243,7 +243,9 @@ export default function MiCuentaPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", gap: "16px" }}>
               <div>
                 <p style={{ margin: "0 0 4px", fontWeight: 500, color: "#fff", fontSize: "14px" }}>{t.account.currentPlan}</p>
-                <p style={{ margin: 0, color: "#6b7280", fontSize: "13px", textTransform: "capitalize" }}>{plan ?? "..."}</p>
+                <p style={{ margin: 0, fontSize: "13px", textTransform: plan === "lifetime" ? "none" : "capitalize", color: plan === "lifetime" ? "#f59e0b" : "#6b7280", fontWeight: plan === "lifetime" ? 600 : 400 }}>
+                  {plan === "lifetime" ? "Elite Vitalicio ♾" : (plan ?? "...")}
+                </p>
               </div>
               <Link
                 href="/dashboard?tab=billing"

@@ -349,7 +349,7 @@ export function DashboardSidebar() {
       )}
 
       {/* Upgrade button */}
-      {plan !== "enterprise" && (
+      {plan !== "enterprise" && plan !== "lifetime" && (
         <div style={{ padding: "0 12px 16px", flexShrink: 0 }}>
           <button
             onClick={() => router.push("/dashboard?tab=billing")}
@@ -380,6 +380,25 @@ export function DashboardSidebar() {
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
+        </div>
+      )}
+
+      {/* Lifetime badge */}
+      {plan === "lifetime" && (
+        <div style={{ padding: "0 12px 16px", flexShrink: 0 }}>
+          <div style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "10px 14px",
+            borderRadius: "10px",
+            border: "1px solid rgba(245,158,11,0.3)",
+            background: "rgba(245,158,11,0.08)",
+          }}>
+            <span style={{ fontSize: "16px", lineHeight: 1 }}>♾</span>
+            <span style={{ fontSize: "12px", fontWeight: 700, color: "#f59e0b", letterSpacing: "0.05em" }}>LIFETIME</span>
+          </div>
         </div>
       )}
     </aside>
