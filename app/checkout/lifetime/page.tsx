@@ -180,19 +180,19 @@ function LifetimeCheckout() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#000000", display: "flex" }}>
+    <div style={{ display: "flex", height: "100vh", background: "#000000", overflow: "hidden" }}>
 
       {/* ── LEFT — Form ── */}
-      <div style={{ flex: "0 0 55%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "60px 48px", minHeight: "100vh" }}>
-        <div style={{ width: "100%", maxWidth: "420px" }}>
+      <div style={{ flex: "0 0 55%", height: "100vh", overflowY: "auto", padding: "48px 56px", display: "flex", flexDirection: "column", gap: "32px" }}>
 
-          <button
-            onClick={() => router.push("/dashboard?tab=billing")}
-            style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "none", border: "none", color: "#666666", cursor: "pointer", fontSize: "13px", padding: 0, marginBottom: "32px" }}
-          >
-            <ArrowLeft size={14} /> Volver
-          </button>
+        <button
+          onClick={() => router.push("/dashboard?tab=billing")}
+          style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "none", border: "none", color: "#555555", cursor: "pointer", fontSize: "13px", padding: 0 }}
+        >
+          <ArrowLeft size={14} /> Volver
+        </button>
 
+        <div style={{ maxWidth: "420px", width: "100%" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px" }}>
             <Lock size={14} style={{ color: "#444444" }} />
             <span style={{ fontSize: "12px", color: "#444444" }}>Pago seguro con Stripe</span>
@@ -212,7 +212,7 @@ function LifetimeCheckout() {
       </div>
 
       {/* ── RIGHT — Summary ── */}
-      <div style={{ flex: "0 0 45%", background: "#0a0a0a", display: "flex", flexDirection: "column", justifyContent: "center", padding: "60px 48px", borderLeft: "1px solid rgba(255,255,255,0.06)", minHeight: "100vh" }}>
+      <div style={{ flex: "0 0 45%", height: "100vh", overflowY: "auto", background: "#0a0a0a", borderLeft: "1px solid #1a1a1a", padding: "48px 40px", display: "flex", flexDirection: "column" }}>
         <div style={{ maxWidth: "340px" }}>
           <p style={{ fontSize: "11px", fontWeight: 700, color: "#444444", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "24px" }}>Resumen del pedido</p>
 
