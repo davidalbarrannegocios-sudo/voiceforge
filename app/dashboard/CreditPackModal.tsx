@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { X, Zap } from "lucide-react";
+import { useLang } from "./LanguageContext";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -40,6 +41,7 @@ function CreditPaymentForm({
   paymentIntentId: string;
   onSuccess: (credits: number) => void;
 }) {
+  const { t } = useLang();
   const stripe = useStripe();
   const elements = useElements();
   const [name, setName] = useState("");
@@ -106,7 +108,7 @@ function CreditPaymentForm({
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       <div>
         <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "#6b7280", marginBottom: "6px" }}>
-          Nombre completo
+          {t.billing.fullName}
         </label>
         <input
           type="text"
@@ -123,7 +125,7 @@ function CreditPaymentForm({
 
       <div>
         <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "#6b7280", marginBottom: "6px" }}>
-          Método de pago
+          {t.billing.paymentMethodLabel}
         </label>
         <PaymentElement options={{ layout: "tabs" }} />
       </div>
@@ -152,7 +154,7 @@ function CreditPaymentForm({
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            Procesando...
+            {t.billing.processing}
           </>
         ) : (
           `Pagar $${price}`
@@ -160,7 +162,7 @@ function CreditPaymentForm({
       </button>
 
       <p style={{ textAlign: "center", fontSize: "11px", color: "#2e2e48" }}>
-        Pago único · Créditos válidos 3 meses
+        {t.billing.extraCreditsDesc}
       </p>
     </form>
   );
@@ -176,6 +178,7 @@ export function CreditPackModal({
   onClose: () => void;
   onSuccess: (credits: number) => void;
 }) {
+  const { t } = useLang();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [packInfo, setPackInfo] = useState<{ credits: number; price: number; label: string } | null>(null);
@@ -254,7 +257,7 @@ export function CreditPackModal({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              <p style={{ fontSize: "13px", color: "#3a3a52" }}>Preparando formulario de pago...</p>
+              <p style={{ fontSize: "13px", color: "#3a3a52" }}>{t.billing.preparingPayment}</p>
             </div>
           ) : (
             <Elements stripe={stripePromise} options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}>

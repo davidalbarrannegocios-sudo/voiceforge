@@ -16,7 +16,7 @@ import { VoiceBrowser, SelectedVoice, VoiceAvatar, getGender, formatCount } from
 import { AudioPlayer } from "./AudioPlayer";
 import { SupportModal } from "./SupportModal";
 import { ManageBillingPanel } from "./BillingModal";
-import { useLang } from "./LanguageContext";
+import { useLang, type Translations } from "./LanguageContext";
 import AudioHistoryList from "@/components/AudioHistoryList";
 import { CustomSelect } from "@/components/CustomSelect";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
@@ -84,7 +84,7 @@ function Sidebar({
     { key: "referral", label: t.nav.referrals, Icon: Gift },
   ];
   if (plan === "enterprise") {
-    platformItems.unshift({ key: "team", label: "Equipo", Icon: Users });
+    platformItems.unshift({ key: "team", label: t.nav.team, Icon: Users });
   }
 
   const sections: NavSection[] = [
@@ -98,7 +98,7 @@ function Sidebar({
       label: t.nav.products,
       items: [
         { key: "generate",   label: t.nav.generate,   Icon: Type },
-        { key: "dialogue",   label: "Texto a Diálogo", Icon: MessageSquare },
+        { key: "dialogue",   label: t.nav.textToDialogue, Icon: MessageSquare },
         { key: "transcribe", label: t.nav.transcribe,  Icon: FileAudio },
         { key: "translate",  label: t.nav.translate,   Icon: Globe },
         { key: "history",    label: t.nav.history,     Icon: Clock },
@@ -420,6 +420,7 @@ function HomeTab({
   credits: number | null;
   setActiveTab: (t: Tab) => void;
 }) {
+  const { t } = useLang();
   const [recentGenerations, setRecentGenerations] = useState<RecentGeneration[]>([])
   const [clonedVoices, setClonedVoices] = useState<ClonedVoiceItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -436,18 +437,18 @@ function HomeTab({
   }, [])
 
   const LARGE_CARDS = [
-    { id: 'generate',   title: 'Texto a Voz',   description: 'Convierte texto en voz natural al instante' },
-    { id: 'imagevideo', title: 'Imagen y Video', description: 'Genera imágenes y vídeos con IA' },
-    { id: 'voices',     title: 'Clonar Voz',     description: 'Clona y personaliza voces únicas con IA' },
+    { id: 'generate',   title: t.home.cardGenerate,    description: t.home.cardGenerateDesc },
+    { id: 'imagevideo', title: t.home.cardImageVideo,   description: t.home.cardImageVideoDesc },
+    { id: 'voices',     title: t.home.cardCloneVoice,   description: t.home.cardCloneVoiceDesc },
   ]
 
   const SMALL_CARDS: { id: Tab; title: string; Icon: React.ElementType }[] = [
-    { id: 'translate',  title: 'Traducción de Audio', Icon: Globe },
-    { id: 'dialogue',   title: 'Texto a Diálogo',     Icon: MessageSquare },
-    { id: 'history',    title: 'Historial',            Icon: Clock },
-    { id: 'transcribe', title: 'Audio a Texto',        Icon: FileAudio },
-    { id: 'billing',    title: 'Facturación',          Icon: CreditCard },
-    { id: 'billing',    title: 'Mi Cuenta',            Icon: User },
+    { id: 'translate',  title: t.nav.translate,         Icon: Globe },
+    { id: 'dialogue',   title: t.nav.textToDialogue,    Icon: MessageSquare },
+    { id: 'history',    title: t.nav.history,           Icon: Clock },
+    { id: 'transcribe', title: t.nav.transcribe,        Icon: FileAudio },
+    { id: 'billing',    title: t.nav.billing,           Icon: CreditCard },
+    { id: 'billing',    title: t.nav.account,           Icon: User },
   ]
 
   return (
@@ -456,13 +457,13 @@ function HomeTab({
       {/* Saludo */}
       <div>
         <h1 className="text-2xl font-bold text-white">
-          Hola, {user?.firstName ?? 'Usuario'}
+          {t.home.greeting} {user?.firstName ?? t.home.defaultName}
         </h1>
         <p className="text-sm mt-1" style={{ color: "#555555" }}>
           <span style={{ color: "#aaaaaa", fontWeight: 600 }}>
             {credits !== null ? credits.toLocaleString('es-ES') : '—'}
           </span>{' '}
-          caracteres disponibles
+          {t.home.available}
         </p>
       </div>
 
@@ -575,13 +576,13 @@ function HomeTab({
       {/* Últimas generaciones */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-white">Historia de la generación</h2>
+          <h2 className="text-sm font-semibold text-white">{t.home.recentGen}</h2>
           <button onClick={() => setActiveTab('history')}
                   className="text-xs transition-colors"
                   style={{ color: "#555555" }}
                   onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
                   onMouseLeave={e => (e.currentTarget.style.color = "#555555")}>
-            Ver todo →
+            {t.home.viewAll}
           </button>
         </div>
 
@@ -594,13 +595,13 @@ function HomeTab({
         ) : recentGenerations.length === 0 ? (
           <div className="text-center py-8 text-sm rounded-xl"
                style={{ color: "#444444", border: "1px dashed #222222" }}>
-            Aún no tienes generaciones.{' '}
+            {t.home.noGenerationsYet}{' '}
             <button onClick={() => setActiveTab('generate')}
                     className="underline transition-colors"
                     style={{ color: "#666666" }}
                     onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
                     onMouseLeave={e => (e.currentTarget.style.color = "#666666")}>
-              Crear primera →
+              {t.home.createFirst}
             </button>
           </div>
         ) : (
@@ -615,7 +616,7 @@ function HomeTab({
                      style={{ background: generateVoiceGradient(gen.voiceId ?? gen.id) }} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate" style={{ color: "#cccccc" }}>
-                    {gen.voiceName ?? 'Voz'}
+                    {gen.voiceName ?? t.generate.voiceLabel}
                   </p>
                   <p className="text-xs truncate" style={{ color: "#444444" }}>
                     {gen.text?.slice(0, 70)}{(gen.text?.length ?? 0) > 70 ? '…' : ''}
@@ -645,13 +646,13 @@ function HomeTab({
       {/* Últimas voces clonadas */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-white">Mis voces clonadas</h2>
+          <h2 className="text-sm font-semibold text-white">{t.home.myClonedVoices}</h2>
           <button onClick={() => setActiveTab('voices')}
                   className="text-xs transition-colors"
                   style={{ color: "#555555" }}
                   onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
                   onMouseLeave={e => (e.currentTarget.style.color = "#555555")}>
-            Ver todo →
+            {t.home.viewAll}
           </button>
         </div>
 
@@ -664,13 +665,13 @@ function HomeTab({
         ) : clonedVoices.length === 0 ? (
           <div className="text-center py-8 text-sm rounded-xl"
                style={{ color: "#444444", border: "1px dashed #222222" }}>
-            No tienes voces clonadas.{' '}
+            {t.home.noClonedVoicesYet}{' '}
             <button onClick={() => setActiveTab('voices')}
                     className="underline transition-colors"
                     style={{ color: "#666666" }}
                     onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
                     onMouseLeave={e => (e.currentTarget.style.color = "#666666")}>
-              Clonar voz →
+              {t.home.cloneVoiceLink}
             </button>
           </div>
         ) : (
@@ -1639,6 +1640,7 @@ const CLONE_LANGUAGE_OPTIONS = CLONE_LANGUAGES.map((l) => ({
 }));
 
 function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () => void }) {
+  const { t } = useLang();
   const [file, setFile] = useState<File | null>(null);
   const [fileDuration, setFileDuration] = useState<number | null>(null);
   const [voiceName, setVoiceName] = useState("");
@@ -1700,7 +1702,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
       <div className="w-full max-w-md rounded-2xl p-6" style={{ background: "#111111", border: "1px solid #222222" }}>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-white">Clonar nueva voz</h2>
+          <h2 className="text-lg font-bold text-white">{t.voices.cloneNew}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">×</button>
         </div>
 
@@ -1726,8 +1728,8 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
               <div className="flex justify-center mb-3">
                 <Mic size={32} style={{ color: "#888888" }} />
               </div>
-              <p className="text-sm text-gray-400 mb-1">Arrastra tu audio aquí o haz clic</p>
-              <p className="text-xs text-gray-600">Solo MP3 · Ideal: 10-30 segundos</p>
+              <p className="text-sm text-gray-400 mb-1">{t.voices.dragAudio}</p>
+              <p className="text-xs text-gray-600">{t.voices.audioFormats}</p>
             </div>
           )}
         </div>
@@ -1737,12 +1739,12 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
         )}
 
         <div className="mb-4">
-          <label className="text-sm font-medium text-gray-300 mb-2 block">Nombre de la voz</label>
+          <label className="text-sm font-medium text-gray-300 mb-2 block">{t.voices.voiceName}</label>
           <input
             type="text"
             value={voiceName}
             onChange={(e) => setVoiceName(e.target.value)}
-            placeholder="Ej: Mi voz, Narrador masculino..."
+            placeholder={t.voices.voiceNamePlaceholder}
             className="w-full rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-white/20"
             style={{ background: "#000000", border: "1px solid #222222" }}
           />
@@ -1751,24 +1753,24 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
         {/* Language + Gender row */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
-            <label className="text-sm font-medium text-gray-300 mb-2 block">Idioma</label>
+            <label className="text-sm font-medium text-gray-300 mb-2 block">{t.voices.language}</label>
             <CustomSelect options={CLONE_LANGUAGE_OPTIONS} value={language} onChange={setLanguage} />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-300 mb-2 block">Género</label>
+            <label className="text-sm font-medium text-gray-300 mb-2 block">{t.voices.gender}</label>
             <div style={{ position: "relative", display: "grid", gridTemplateColumns: "1fr 1fr", background: "#000000", border: "1px solid #222222", borderRadius: "8px", padding: "3px" }}>
               <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#1a1a1a", borderRadius: "5px", pointerEvents: "none", transition: "transform 0.2s ease", transform: `translateX(${gender === "feminine" ? "100%" : "0%"})` }} />
-              <button type="button" onClick={() => setGender("masculine")} style={{ position: "relative", zIndex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 600, background: "transparent", border: "none", cursor: "pointer", color: gender === "masculine" ? "#e5e7eb" : "#444444", transition: "color 0.2s ease" }}>♂ Masc.</button>
-              <button type="button" onClick={() => setGender("feminine")} style={{ position: "relative", zIndex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 600, background: "transparent", border: "none", cursor: "pointer", color: gender === "feminine" ? "#e5e7eb" : "#444444", transition: "color 0.2s ease" }}>♀ Fem.</button>
+              <button type="button" onClick={() => setGender("masculine")} style={{ position: "relative", zIndex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 600, background: "transparent", border: "none", cursor: "pointer", color: gender === "masculine" ? "#e5e7eb" : "#444444", transition: "color 0.2s ease" }}>{t.voices.masculine}</button>
+              <button type="button" onClick={() => setGender("feminine")} style={{ position: "relative", zIndex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 600, background: "transparent", border: "none", cursor: "pointer", color: gender === "feminine" ? "#e5e7eb" : "#444444", transition: "color 0.2s ease" }}>{t.voices.feminine}</button>
             </div>
           </div>
         </div>
 
-        <p className="text-xs text-gray-500 mb-4">La clonación es gratuita</p>
+        <p className="text-xs text-gray-500 mb-4">{t.voices.cloneIsFree}</p>
 
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors" style={{ background: "#1a1a1a", border: "1px solid #222222" }}>
-            Cancelar
+            {t.voices.cancel}
           </button>
           <button
             onClick={handleClone}
@@ -1782,7 +1784,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
             )}
-            {loading ? "Clonando..." : "Clonar voz"}
+            {loading ? t.voices.cloning : t.voices.cloneNew}
           </button>
         </div>
       </div>
@@ -1986,6 +1988,7 @@ function VoicesTab({
   onUseVoice: (voice: SelectedVoice) => void;
   plan: string;
 }) {
+  const { t } = useLang();
   const [showModal, setShowModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [previewState, setPreviewState] = useState<Record<string, "idle" | "loading" | "playing">>({});
@@ -2076,7 +2079,7 @@ function VoicesTab({
           style={{ background: "#ffffff" }}
         >
           <span className="text-base leading-none">+</span>
-          Clonar nueva voz
+          {t.voices.cloneNew}
         </button>
       </div>
 
@@ -2084,8 +2087,8 @@ function VoicesTab({
       {cloned.length === 0 ? (
         <div className="text-center py-20" style={{ color: "#888888" }}>
           <Mic size={40} className="mx-auto mb-3 opacity-30" />
-          <p className="font-medium mb-1">No tienes voces clonadas</p>
-          <p className="text-sm opacity-60">Clona una voz con 10 segundos de audio</p>
+          <p className="font-medium mb-1">{t.voices.noClonedVoices}</p>
+          <p className="text-sm opacity-60">{t.voices.cloneHint}</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16" style={{ color: "#888888" }}>
@@ -2127,6 +2130,7 @@ interface HistoryGen {
 }
 
 function HistoryTab({ plan }: { plan: string }) {
+  const { t } = useLang();
   const [gens, setGens] = useState<HistoryGen[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -2232,7 +2236,7 @@ function HistoryTab({ plan }: { plan: string }) {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar en historial..."
+            placeholder={t.history.searchPlaceholder}
             style={{
               width: "100%", paddingLeft: 36, paddingRight: 12, paddingTop: 9, paddingBottom: 9,
               background: "#111111", border: "1px solid #1a1a1a", borderRadius: 8,
@@ -2459,13 +2463,13 @@ function HistoryTab({ plan }: { plan: string }) {
               padding: "5px 12px", borderRadius: 6, fontSize: 12, cursor: page >= totalPages ? "not-allowed" : "pointer",
               background: "#111111", border: "1px solid #1a1a1a", color: page >= totalPages ? "#444444" : "#9ca3af",
             }}
-          >Siguiente</button>
+          >{t.history.nextPage.replace(' →', '')} →</button>
         </div>
       )}
 
       {total > 0 && (
         <p style={{ fontSize: 11, color: "#444444", textAlign: "center", paddingTop: 8, flexShrink: 0 }}>
-          {total} generaci{total !== 1 ? "ones" : "ón"} en total
+          {total === 1 ? t.history.totalGeneration : t.history.totalGenerations.replace('{n}', String(total))}
         </p>
       )}
     </div>
@@ -2475,88 +2479,6 @@ function HistoryTab({ plan }: { plan: string }) {
 const VOICE_SLOT_LIMITS: Record<string, number> = { free: 1, starter: 3, pro: 10, elite: 20, enterprise: Infinity };
 
 /* ─── Billing Tab ────────────────────────────────────────── */
-const BILLING_PLANS = [
-  {
-    key: "free",
-    name: "Free",
-    description: "Para explorar la plataforma",
-    price: 0,
-    characters: 10_000,
-    popular: false,
-    features: [
-      "10.000 caracteres al registrarte",
-      "Voz aleatoria (sin selección)",
-      "2 transcripciones/traducciones",
-      "Sin clonación de voz",
-      "Audios disponibles 72 horas",
-    ],
-  },
-  {
-    key: "starter",
-    name: "Starter",
-    description: "Para creadores que están empezando",
-    price: 7,
-    characters: 200_000,
-    popular: false,
-    features: [
-      "200.000 caracteres/mes (x2 con EliteLabs 2)",
-      "Selección de voz completa",
-      "Transcripciones y traducciones ilimitadas",
-      "3 voces clonadas",
-      "Audios disponibles 14 días",
-    ],
-  },
-  {
-    key: "pro",
-    name: "Pro",
-    description: "La mejor opción para creadores activos",
-    price: 13,
-    characters: 500_000,
-    popular: true,
-    features: [
-      "500.000 caracteres/mes (x2 con EliteLabs 2)",
-      "Selección de voz completa",
-      "Transcripciones y traducciones ilimitadas",
-      "10 voces clonadas",
-      "Generación prioritaria",
-      "Audios disponibles 30 días",
-    ],
-  },
-  {
-    key: "elite",
-    name: "Elite",
-    description: "Máximo rendimiento sin límites",
-    price: 25,
-    characters: 1_000_000,
-    popular: false,
-    features: [
-      "1.000.000 caracteres/mes (x2 con EliteLabs 2)",
-      "Selección de voz completa",
-      "Transcripciones y traducciones ilimitadas",
-      "20 voces clonadas",
-      "Prioridad máxima",
-      "Soporte preferente",
-      "Audios disponibles 30 días",
-    ],
-  },
-  {
-    key: "enterprise",
-    name: "Enterprise",
-    description: "Para profesionales y equipos",
-    price: 110,
-    characters: 5_000_000,
-    popular: false,
-    features: [
-      "5.000.000 caracteres/mes (x2 con EliteLabs 2)",
-      "Voces clonadas ilimitadas",
-      "Transcripciones y traducciones ilimitadas",
-      "Traducción de audio +10%",
-      "Generación prioritaria",
-      "Soporte preferente",
-      "Audios disponibles 90 días",
-    ],
-  },
-];
 
 const PLAN_BADGE: Record<string, { label: string; color: string; bg: string }> = {
   free:       { label: "Gratis",     color: "#6b7280", bg: "rgba(107,114,128,0.12)" },
@@ -2569,6 +2491,36 @@ const PLAN_BADGE: Record<string, { label: string; color: string; bg: string }> =
 
 function costPer10k(price: number, characters: number): string {
   return `$${((price / characters) * 10_000).toFixed(2)}/10k`;
+}
+
+function getBillingPlans(t: Translations) {
+  return [
+    {
+      key: "free", name: "Free", description: t.billing.planDescFree,
+      price: 0, characters: 10_000, popular: false,
+      features: [t.billing.feat10k, t.billing.featRandomVoice, t.billing.feat2Transcriptions, t.billing.featNoClone, t.billing.featAudio72h],
+    },
+    {
+      key: "starter", name: "Starter", description: t.billing.planDescStarter,
+      price: 7, characters: 200_000, popular: false,
+      features: [t.billing.featCharsX2.replace('{n}', '200.000'), t.billing.featFullVoice, t.billing.featUnlimitedTrans, t.billing.feat3Clones, t.billing.featAudio14d],
+    },
+    {
+      key: "pro", name: "Pro", description: t.billing.planDescPro,
+      price: 13, characters: 500_000, popular: true,
+      features: [t.billing.featCharsX2.replace('{n}', '500.000'), t.billing.featFullVoice, t.billing.featUnlimitedTrans, t.billing.feat10Clones, t.billing.featPriorityGen, t.billing.featAudio30d],
+    },
+    {
+      key: "elite", name: "Elite", description: t.billing.planDescElite,
+      price: 25, characters: 1_000_000, popular: false,
+      features: [t.billing.featCharsX2.replace('{n}', '1.000.000'), t.billing.featFullVoice, t.billing.featUnlimitedTrans, t.billing.feat20Clones, t.billing.featTopPriority, t.billing.featSupport, t.billing.featAudio30d],
+    },
+    {
+      key: "enterprise", name: "Enterprise", description: t.billing.planDescEnterprise,
+      price: 110, characters: 5_000_000, popular: false,
+      features: [t.billing.featCharsX2.replace('{n}', '5.000.000'), t.billing.featUnlimitedClones, t.billing.featUnlimitedTrans, t.billing.featAudioTrans, t.billing.featPriorityGen, t.billing.featSupport, t.billing.featAudio90d],
+    },
+  ];
 }
 
 function FeatureTick() {
@@ -2601,6 +2553,8 @@ function BillingTab({
   daysUntilRenewal: number | null;
   onRefresh: () => void;
 }) {
+  const { t } = useLang();
+  const BILLING_PLANS = getBillingPlans(t);
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [showManage, setShowManage] = useState(false);
   const router = useRouter();
@@ -2708,13 +2662,13 @@ function BillingTab({
             onClick={() => setBilling("monthly")}
             style={{ position: "relative", zIndex: 1, padding: "7px 22px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, background: "transparent", color: billing === "monthly" ? "#e5e7eb" : "#444444", transition: "color 0.2s ease" }}
           >
-            Mensual
+            {t.billing.monthly}
           </button>
           <button
             onClick={() => setBilling("annual")}
             style={{ position: "relative", zIndex: 1, padding: "7px 22px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, background: "transparent", color: billing === "annual" ? "#e5e7eb" : "#444444", display: "flex", alignItems: "center", justifyContent: "center", gap: "7px", transition: "color 0.2s ease" }}
           >
-            Anual
+            {t.billing.annual}
             <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e", letterSpacing: "0.03em" }}>
               −17%
             </span>
@@ -2858,14 +2812,14 @@ function BillingTab({
                 }
               >
                 {isCurrent
-                  ? "Plan actual"
+                  ? t.billing.currentPlanBtn
                   : isDowngrade
-                  ? "Cambiar a Free"
+                  ? t.billing.changeToFree
                   : plan !== "free"
-                  ? `Cambiar a ${p.name}`
+                  ? `${t.billing.changeTo} ${p.name}`
                   : p.key === "free"
-                  ? "Plan actual"
-                  : "Suscribirse"}
+                  ? t.billing.currentPlanBtn
+                  : t.billing.subscribe}
               </button>
 
               {/* Divider */}
@@ -2894,13 +2848,13 @@ function BillingTab({
                 <div style={{ marginTop: "14px", background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "8px", padding: "10px" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
                     <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 700, color: "#fff" }}>
-                      <Users size={12} style={{ color: "#fff", flexShrink: 0 }} /> Seats
+                      <Users size={12} style={{ color: "#fff", flexShrink: 0 }} /> {t.billing.seats}
                     </span>
                     <span style={{ fontSize: "11px", color: "#555555", textDecoration: "line-through" }}>$5/seat/mes</span>
                   </div>
                   <div style={{ textAlign: "center" }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: "6px", padding: "3px 8px", fontSize: "11px", fontWeight: 700, color: "#4ade80" }}>
-                      EliteLabs lo patrocina · GRATIS
+                      {t.billing.sponsoredFree}
                     </span>
                   </div>
                 </div>
@@ -2909,7 +2863,7 @@ function BillingTab({
               {/* Card footer — character count */}
               <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                 <p style={{ fontSize: "14px", fontWeight: 500, color: "rgba(255,255,255,0.60)", textAlign: "center" }}>
-                  {p.characters.toLocaleString("es-ES")} caracteres/mes
+                  {p.characters.toLocaleString("es-ES")} {t.billing.charsMonth}
                 </p>
               </div>
             </div>
@@ -2919,8 +2873,8 @@ function BillingTab({
 
       {/* ── Extra credits section ── */}
       <div id="creditos-extra" style={{ marginTop: "44px", marginBottom: "20px" }}>
-        <p style={{ fontSize: "16px", fontWeight: 700, color: "#e5e7eb", marginBottom: "4px" }}>Créditos extra</p>
-        <p style={{ fontSize: "13px", color: "#444444" }}>Compra caracteres adicionales · Válidos 3 meses · Pago único</p>
+        <p style={{ fontSize: "16px", fontWeight: 700, color: "#e5e7eb", marginBottom: "4px" }}>{t.billing.extraCredits}</p>
+        <p style={{ fontSize: "13px", color: "#444444" }}>{t.billing.extraCreditsDesc}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 w-full">
@@ -2958,14 +2912,14 @@ function BillingTab({
             </div>
 
             {/* Validity */}
-            <p style={{ fontSize: "11px", color: "#444444", flex: 1, marginBottom: "16px" }}>Válidos 3 meses</p>
+            <p style={{ fontSize: "11px", color: "#444444", flex: 1, marginBottom: "16px" }}>{t.billing.validMonths}</p>
 
             {/* CTA */}
             <button
               onClick={() => router.push(`/checkout/credits-${pack.key}?type=credits`)}
               style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #333333", cursor: "pointer", background: "#1a1a1a", color: "#e5e7eb", fontSize: "13px", fontWeight: 600 }}
             >
-              Comprar →
+              {t.billing.buyBtn}
             </button>
           </div>
         ))}
@@ -3051,6 +3005,13 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
   selectedVoice: SelectedVoice | null;
   onVoiceChange: (v: SelectedVoice | null) => void;
 }) {
+  const { t } = useLang();
+  const TRANSLATE_LANG_LABELS: Record<string, string> = {
+    en: t.translate.langEn, zh: t.translate.langZh, de: t.translate.langDe,
+    ja: t.translate.langJa, fr: t.translate.langFr, es: t.translate.langEs,
+    ko: t.translate.langKo, ar: t.translate.langAr, ru: t.translate.langRu,
+    pt: t.translate.langPt,
+  };
   const [innerTab, setInnerTab] = useState<"convert" | "history">("convert");
 
   // Convert state
@@ -3211,10 +3172,10 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
       }
 
       // ── Paso 2: traducir (servidor descarga de R2 internamente) ──
-      setStepLabel("Transcribiendo audio...");
+      setStepLabel(t.translate.stepTranscribing);
       stepTimers.current = [
-        setTimeout(() => setStepLabel("Traduciendo texto..."), 9000),
-        setTimeout(() => setStepLabel("Generando audio traducido..."), 18000),
+        setTimeout(() => setStepLabel(t.translate.stepTranslating), 9000),
+        setTimeout(() => setStepLabel(t.translate.stepGenerating), 18000),
       ];
 
       const res = await fetch("/api/translate", {
@@ -3250,39 +3211,39 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
       {/* ── Header ── */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-xl font-bold text-white">Traducción de Audio</h1>
+          <h1 className="text-xl font-bold text-white">{t.translate.title}</h1>
           <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.05em", padding: "2px 8px", borderRadius: "9999px", background: "rgba(139,92,246,0.15)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.3)" }}>
             PREVIEW
           </span>
         </div>
         <p className="text-sm" style={{ color: "#888888" }}>
-          Transforma tu audio a cualquier idioma manteniendo tu voz original
+          {t.translate.subtitle}
         </p>
 
         {plan === "free" && (
           isFreeExhausted ? (
             <div className="mt-4 p-4 rounded-xl flex items-center justify-between gap-4" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-              <p className="text-sm" style={{ color: "#f87171" }}>Has agotado tus usos gratuitos. Actualiza tu plan para continuar.</p>
-              <button onClick={onBilling} style={{ padding: "6px 14px", borderRadius: "8px", background: "#ffffff", color: "#000000", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0 }}>Ver planes</button>
+              <p className="text-sm" style={{ color: "#f87171" }}>{t.translate.freeLimitExhausted}</p>
+              <button onClick={onBilling} style={{ padding: "6px 14px", borderRadius: "8px", background: "#ffffff", color: "#000000", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0 }}>{t.translate.seePlans}</button>
             </div>
           ) : (
             <div className="mt-4 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <p className="text-xs" style={{ color: "#4a6fa8" }}>Plan gratuito · <strong style={{ color: "#aaaaaa" }}>{freeRemaining} de {FREE_LIMIT} usos restantes</strong> · Suscríbete para uso ilimitado</p>
+              <p className="text-xs" style={{ color: "#4a6fa8" }}>{t.translate.freeRemaining.replace('{used}', String(FREE_LIMIT - freeRemaining)).replace('{total}', String(FREE_LIMIT))}</p>
             </div>
           )
         )}
 
         {/* Inner tabs */}
         <div className="flex mt-5" style={{ borderBottom: "1px solid #222222" }}>
-          {(["convert", "history"] as const).map((t) => (
+          {(["convert", "history"] as const).map((tab) => (
             <button
-              key={t}
-              onClick={() => setInnerTab(t)}
+              key={tab}
+              onClick={() => setInnerTab(tab)}
               className="relative pb-3 px-1 mr-6 text-sm font-medium transition-colors"
-              style={{ color: innerTab === t ? "#fff" : "#888888", background: "none", border: "none", cursor: "pointer" }}
+              style={{ color: innerTab === tab ? "#fff" : "#888888", background: "none", border: "none", cursor: "pointer" }}
             >
-              {t === "convert" ? "Convertir" : "Historial"}
-              {innerTab === t && (
+              {tab === "convert" ? t.translate.convertTab : t.translate.historyTab}
+              {innerTab === tab && (
                 <span style={{ position: "absolute", bottom: -1, left: 0, right: 0, height: "2px", background: "#ffffff", borderRadius: "2px 2px 0 0" }} />
               )}
             </button>
@@ -3306,12 +3267,12 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             <div className="relative p-8 text-center">
               {dragging && (
                 <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.3)", borderRadius: "inherit", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <p className="text-gray-300 font-medium">Suelta el archivo aquí</p>
+                  <p className="text-gray-300 font-medium">{t.translate.dropHere}</p>
                 </div>
               )}
-              <h3 className="text-base font-semibold text-white mb-1">Subir audio fuente</h3>
-              <p className="text-sm mb-1" style={{ color: "#9ca3af" }}>Sube el audio que quieres traducir</p>
-              <p className="text-xs mb-6" style={{ color: "#666666" }}>MP3, WAV, M4A · MAX 50MB</p>
+              <h3 className="text-base font-semibold text-white mb-1">{t.translate.uploadTitle}</h3>
+              <p className="text-sm mb-1" style={{ color: "#9ca3af" }}>{t.translate.uploadDesc}</p>
+              <p className="text-xs mb-6" style={{ color: "#666666" }}>{t.translate.uploadFormats}</p>
 
               {file ? (
                 <div className="flex items-center gap-3 rounded-xl px-4 py-3 mx-auto max-w-sm" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
@@ -3337,7 +3298,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                     className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all hover:bg-white/10"
                     style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#d1d5db" }}
                   >
-                    <Upload size={14} /> Elegir archivo
+                    <Upload size={14} /> {t.translate.chooseFile}
                   </button>
                   <button
                     onClick={toggleRecording}
@@ -3350,7 +3311,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                   >
                     {recording
                       ? <><Square size={12} style={{ fill: "#f87171" }} /> {fmtSec(recordingTime)}</>
-                      : <><Mic size={14} /> Grabar</>
+                      : <><Mic size={14} /> {t.translate.record}</>
                     }
                   </button>
                 </div>
@@ -3361,7 +3322,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 
           {/* Language selector */}
           <div>
-            <p className="text-sm font-semibold text-white mb-3">Idioma de destino</p>
+            <p className="text-sm font-semibold text-white mb-3">{t.translate.targetLang}</p>
             <div className="grid grid-cols-5 gap-2">
               {TRANSLATE_LANGS.map((lang) => (
                 <button
@@ -3375,7 +3336,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                   }
                 >
                   <span className={`fi fi-${lang.fi}`} style={{ width: "24px", height: "18px", display: "inline-block", borderRadius: "3px", flexShrink: 0 }} />
-                  {lang.label}
+                  {TRANSLATE_LANG_LABELS[lang.code] ?? lang.label}
                 </button>
               ))}
             </div>
@@ -3383,16 +3344,16 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 
           {/* Voice section */}
           <div>
-            <p className="text-sm font-semibold text-white mb-3">Voz para el audio traducido</p>
+            <p className="text-sm font-semibold text-white mb-3">{t.translate.voiceForAudio}</p>
             <div className="flex p-1 rounded-xl gap-1 mb-3" style={{ background: "#111111", border: "1px solid #222222" }}>
-              {(["model", "reference"] as const).map((t) => (
+              {(["model", "reference"] as const).map((subTab) => (
                 <button
-                  key={t}
-                  onClick={() => setVoiceSubTab(t)}
+                  key={subTab}
+                  onClick={() => setVoiceSubTab(subTab)}
                   className="flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all"
-                  style={{ background: voiceSubTab === t ? "#1a1a1a" : "transparent", color: voiceSubTab === t ? "#e5e7eb" : "#6b7280", border: "none", cursor: "pointer" }}
+                  style={{ background: voiceSubTab === subTab ? "#1a1a1a" : "transparent", color: voiceSubTab === subTab ? "#e5e7eb" : "#6b7280", border: "none", cursor: "pointer" }}
                 >
-                  {t === "model" ? "Seleccionar modelo" : "Subir referencia"}
+                  {subTab === "model" ? t.translate.selectModel : t.translate.uploadReference}
                 </button>
               ))}
             </div>
@@ -3407,8 +3368,8 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                   <Mic size={13} style={{ color: "#aaaaaa" }} />
                 </div>
                 <div className="flex-1 text-left min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{selectedVoice?.name ?? "Voz por defecto"}</p>
-                  <p className="text-xs" style={{ color: "#888888" }}>{selectedVoice?.isCloned ? "Voz clonada" : "Sistema"}</p>
+                  <p className="text-sm font-medium text-white truncate">{selectedVoice?.name ?? t.translate.defaultVoice}</p>
+                  <p className="text-xs" style={{ color: "#888888" }}>{selectedVoice?.isCloned ? t.generate.clonedVoice : t.generate.systemVoice}</p>
                 </div>
                 <span className="text-xs flex-shrink-0" style={{ color: "#888888" }}>→</span>
               </button>
@@ -3432,8 +3393,8 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                     style={{ background: "#111111", border: "1px dashed #222222" }}
                   >
                     <Mic2 size={20} style={{ color: "#666666" }} />
-                    <p className="text-sm" style={{ color: "#888888" }}>Sube un audio de referencia de voz</p>
-                    <p className="text-xs" style={{ color: "#666666" }}>MP3, WAV, M4A</p>
+                    <p className="text-sm" style={{ color: "#888888" }}>{t.translate.uploadVoiceRef}</p>
+                    <p className="text-xs" style={{ color: "#666666" }}>{t.translate.refFormats}</p>
                   </div>
                 )}
                 <input ref={refInputRef} type="file" className="hidden" accept=".mp3,.wav,.m4a,audio/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) setReferenceFile(f); e.target.value = ""; }} />
@@ -3444,11 +3405,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           {/* Cost note */}
           <div className="flex items-start gap-3 px-4 py-3 rounded-xl text-xs leading-relaxed" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#888888" }}>
             <span className="flex-shrink-0 mt-0.5" style={{ color: "#ffffff" }}>ℹ</span>
-            <span>
-              Se aplica un incremento del{" "}
-              <span className="font-semibold" style={{ color: "#aaaaaa" }}>{plan === "enterprise" ? "10%" : "20%"}</span>{" "}
-              sobre el coste estándar para cubrir los costes de transcripción y traducción automática.
-            </span>
+            <span>{t.translate.costNote.replace('{pct}', plan === "enterprise" ? "10%" : "20%")}</span>
           </div>
 
           {error && (
@@ -3471,14 +3428,14 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  {stepLabel ?? "Iniciando..."}
+                  {stepLabel ?? t.translate.starting}
                 </>
               ) : (
-                <><Globe size={15} /> Iniciar traducción</>
+                <><Globe size={15} /> {t.translate.startTranslation}</>
               )}
             </button>
             <p className="text-xs text-center" style={{ color: "rgba(255,255,255,0.25)" }}>
-              Los audios se eliminan automáticamente en {TRANSLATE_RETENTION[plan] ?? 3} días · Descárgalos una vez generados
+              {t.translate.autoDelete.replace('{n}', String(TRANSLATE_RETENTION[plan] ?? 3))}
             </p>
           </div>
 
@@ -3590,7 +3547,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
               <input
                 value={historySearch}
                 onChange={(e) => setHistorySearch(e.target.value)}
-                placeholder="Buscar traducciones..."
+                placeholder={t.translate.searchPlaceholder}
                 className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-white/20"
                 style={{ background: "#111111", border: "1px solid #222222", color: "#e5e7eb" }}
               />
@@ -3774,6 +3731,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
   transcriptionUsed: number;
   onBilling: () => void;
 }) {
+  const { t } = useLang();
   const [tasks, setTasks] = useState<TTask[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
   const [search, setSearch] = useState("");
@@ -3904,26 +3862,26 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
       {/* Header */}
       <div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: "#fff", margin: 0 }}>Audio a Texto</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: "#fff", margin: 0 }}>{t.transcribe.title}</h2>
           <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", padding: "2px 7px", borderRadius: 4, background: "rgba(255,255,255,0.08)", color: "#bbbbbb", border: "1px solid rgba(255,255,255,0.15)" }}>
             BETA
           </span>
         </div>
         <p style={{ fontSize: 13, color: "#6b7280", margin: 0 }}>
-          Transcribe audio y vídeo a texto usando reconocimiento de voz de alta precisión.
+          {t.transcribe.subtitle}
         </p>
       </div>
 
       {/* Free plan banner */}
       {plan === "free" && (isFreeExhausted ? (
         <div style={{ padding: "12px 16px", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-          <p style={{ fontSize: 13, color: "#f87171", margin: 0 }}>Has agotado tus usos gratuitos. Actualiza tu plan para continuar.</p>
-          <button onClick={onBilling} style={{ padding: "5px 12px", borderRadius: 7, background: "#ffffff", color: "#000000", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0 }}>Ver planes</button>
+          <p style={{ fontSize: 13, color: "#f87171", margin: 0 }}>{t.transcribe.freeLimitExhausted}</p>
+          <button onClick={onBilling} style={{ padding: "5px 12px", borderRadius: 7, background: "#ffffff", color: "#000000", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0 }}>{t.transcribe.seePlans}</button>
         </div>
       ) : (
         <div style={{ padding: "8px 14px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
           <p style={{ fontSize: 12, color: "#4a6fa8", margin: 0 }}>
-            Plan gratuito · <strong style={{ color: "#aaaaaa" }}>{Math.max(0, FREE_LIMIT - transcriptionUsed)} de {FREE_LIMIT} usos restantes</strong> · Suscríbete para uso ilimitado
+            {t.transcribe.freeRemaining.replace('{remaining}', String(Math.max(0, FREE_LIMIT - transcriptionUsed))).replace('{total}', String(FREE_LIMIT))}
           </p>
         </div>
       ))}
@@ -3936,7 +3894,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nombre de archivo..."
+            placeholder={t.transcribe.searchPlaceholder}
             style={{ width: "100%", paddingLeft: 36, paddingRight: 12, paddingTop: 9, paddingBottom: 9, background: "#111111", border: "1px solid #1a1a1a", borderRadius: 8, color: "#d1d5db", fontSize: 13, outline: "none", boxSizing: "border-box" }}
           />
         </div>
@@ -3944,7 +3902,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
           onClick={() => { if (!isFreeExhausted) setShowCreate(true); else onBilling(); }}
           style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 8, background: "#ffffff", color: "#000000", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0, boxShadow: "0 2px 10px rgba(255,255,255,0.08)" }}
         >
-          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> Crear tarea
+          {t.transcribe.createTask}
         </button>
         <button onClick={fetchTasks} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 8, background: "#111111", border: "1px solid #1a1a1a", color: "#9ca3af", cursor: "pointer", flexShrink: 0 }} title="Actualizar">
           <RefreshCw size={14} />
@@ -3956,12 +3914,12 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid #1a1a1a" }}>
-              <th style={thStyle}>Archivo</th>
-              <th style={thStyle}>Actualizado</th>
-              <th style={thStyle}>Estado</th>
-              <th style={thStyle}>Créditos</th>
-              <th style={thStyle}>Hablantes</th>
-              <th style={thStyle}>Acción</th>
+              <th style={thStyle}>{t.transcribe.colFile}</th>
+              <th style={thStyle}>{t.transcribe.colUpdated}</th>
+              <th style={thStyle}>{t.transcribe.colStatus}</th>
+              <th style={thStyle}>{t.transcribe.colCredits}</th>
+              <th style={thStyle}>{t.transcribe.colSpeakers}</th>
+              <th style={thStyle}>{t.transcribe.colAction}</th>
             </tr>
           </thead>
           <tbody>
@@ -3979,8 +3937,8 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
               <tr>
                 <td colSpan={6} style={{ ...tdStyle, textAlign: "center", padding: "48px 16px", color: "#444444" }}>
                   <FileAudio size={32} style={{ margin: "0 auto 10px", color: "#222222" }} />
-                  <p style={{ margin: 0, fontWeight: 500, color: "#666666" }}>{search ? "Sin resultados" : "No hay tareas aún"}</p>
-                  {!search && <p style={{ margin: "4px 0 0", fontSize: 12 }}>Haz click en &ldquo;Crear tarea&rdquo; para transcribir tu primer audio</p>}
+                  <p style={{ margin: 0, fontWeight: 500, color: "#666666" }}>{search ? t.transcribe.noResults : t.transcribe.noTasks}</p>
+                  {!search && <p style={{ margin: "4px 0 0", fontSize: 12 }}>{t.transcribe.noTasksHint}</p>}
                 </td>
               </tr>
             ) : (
@@ -3988,10 +3946,10 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                 const isRemoving = removingId === task.id;
                 const rowBg = idx % 2 === 0 ? "transparent" : "rgba(255,255,255,0.015)";
                 const statusBadge = task.status === "completed"
-                  ? { label: "Completado", bg: "rgba(74,222,128,0.12)", color: "#4ade80", border: "rgba(74,222,128,0.25)" }
+                  ? { label: t.transcribe.statusCompleted, bg: "rgba(74,222,128,0.12)", color: "#4ade80", border: "rgba(74,222,128,0.25)" }
                   : task.status === "processing"
-                  ? { label: "Procesando", bg: "rgba(251,191,36,0.12)", color: "#fbbf24", border: "rgba(251,191,36,0.25)" }
-                  : { label: "Error", bg: "rgba(239,68,68,0.12)", color: "#f87171", border: "rgba(239,68,68,0.25)" };
+                  ? { label: t.transcribe.statusProcessing, bg: "rgba(251,191,36,0.12)", color: "#fbbf24", border: "rgba(251,191,36,0.25)" }
+                  : { label: t.transcribe.statusError, bg: "rgba(239,68,68,0.12)", color: "#f87171", border: "rgba(239,68,68,0.25)" };
 
                 return (
                   <tr
@@ -4039,7 +3997,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                             onClick={() => setViewerTask(task)}
                             style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 6, fontSize: 12, fontWeight: 500, background: "rgba(255,255,255,0.06)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}
                           >
-                            <Type size={11} /> Abrir visor
+                            <Type size={11} /> {t.transcribe.openViewer}
                           </button>
                         )}
                         {task.status === "error" && (
@@ -4053,7 +4011,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                           style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 6, background: "transparent", border: "none", color: "#444444", cursor: "pointer" }}
                           onMouseEnter={(e) => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.background = "rgba(239,68,68,0.1)"; }}
                           onMouseLeave={(e) => { e.currentTarget.style.color = "#444444"; e.currentTarget.style.background = "transparent"; }}
-                          title="Eliminar"
+                          title={t.transcribe.deleteTitle}
                         >
                           <Trash2 size={13} />
                         </button>
@@ -4077,8 +4035,8 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
             {/* Modal header */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: "1px solid #1a1a1a" }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#fff" }}>Crear tarea de transcripción</h3>
-                <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6b7280" }}>El audio se procesará y el resultado quedará guardado</p>
+                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#fff" }}>{t.transcribe.createTaskTitle}</h3>
+                <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6b7280" }}>{t.transcribe.modalSubtitle}</p>
               </div>
               <button onClick={() => { setShowCreate(false); setFile(null); setCreateError(null); }} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", padding: 4 }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -4102,28 +4060,28 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                     <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b7280" }}>
                       {(file.size / 1024 / 1024).toFixed(2)} MB
                       {fileDuration !== null && ` · ${fmtDur(fileDuration)}`}
-                      {" · "}<button onClick={(ev) => { ev.stopPropagation(); setFile(null); setFileDuration(null); }} style={{ background: "none", border: "none", color: "#ffffff", cursor: "pointer", fontSize: 12, padding: 0 }}>Cambiar</button>
+                      {" · "}<button onClick={(ev) => { ev.stopPropagation(); setFile(null); setFileDuration(null); }} style={{ background: "none", border: "none", color: "#ffffff", cursor: "pointer", fontSize: 12, padding: 0 }}>{t.transcribe.changeFile}</button>
                     </p>
                   </div>
                 ) : (
                   <>
                     <FileAudio size={28} style={{ color: "#444444", margin: "0 auto 10px" }} />
-                    <p style={{ margin: 0, fontSize: 14, color: "#9ca3af" }}>Arrastra tu archivo aquí o haz clic para elegir</p>
-                    <p style={{ margin: "6px 0 0", fontSize: 12, color: "#444444" }}>MP3, WAV, M4A, FLAC, MP4, MOV, WEBM</p>
+                    <p style={{ margin: 0, fontSize: 14, color: "#9ca3af" }}>{t.transcribe.dropZoneHint}</p>
+                    <p style={{ margin: "6px 0 0", fontSize: 12, color: "#444444" }}>{t.transcribe.dropZoneFormats}</p>
                   </>
                 )}
               </div>
 
               {/* Speakers */}
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#9ca3af", marginBottom: 6 }}>Número de hablantes</label>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#9ca3af", marginBottom: 6 }}>{t.transcribe.speakersLabel}</label>
                 <CustomSelect
                   options={[
-                    { value: "auto", label: "Automático (detección por IA)" },
-                    { value: "1", label: "1 hablante" },
-                    { value: "2", label: "2 hablantes" },
-                    { value: "3", label: "3 hablantes" },
-                    { value: "4+", label: "4+ hablantes" },
+                    { value: "auto", label: t.transcribe.speakerAuto },
+                    { value: "1", label: t.transcribe.speaker1 },
+                    { value: "2", label: t.transcribe.speaker2 },
+                    { value: "3", label: t.transcribe.speaker3 },
+                    { value: "4+", label: t.transcribe.speaker4 },
                   ]}
                   value={speakers}
                   onChange={setSpeakers}
@@ -4134,8 +4092,8 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
               <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 12px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
                 <span style={{ color: "#ffffff", fontSize: 13, flexShrink: 0, marginTop: 1 }}>ℹ</span>
                 <p style={{ margin: 0, fontSize: 12, color: "#6b7280", lineHeight: 1.5 }}>
-                  Los créditos se calculan según los caracteres transcritos, al mismo precio que la generación de audio.
-                  {fileDuration !== null && ` Duración estimada: ${fmtDur(fileDuration)}.`}
+                  {t.transcribe.infoNote}
+                  {fileDuration !== null && t.transcribe.infoNoteDuration.replace('{dur}', fmtDur(fileDuration))}
                 </p>
               </div>
 
@@ -4148,7 +4106,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
               {/* Actions */}
               <div style={{ display: "flex", gap: 10 }}>
                 <button onClick={() => { setShowCreate(false); setFile(null); setCreateError(null); }} style={{ flex: 1, padding: "10px", borderRadius: 8, background: "transparent", border: "1px solid #1a1a1a", color: "#9ca3af", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
-                  Cancelar
+                  {t.transcribe.cancelBtn}
                 </button>
                 <button
                   onClick={handleCreate}
@@ -4156,9 +4114,9 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                   style={{ flex: 2, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px", borderRadius: 8, background: "#ffffff", color: "#000000", fontSize: 13, fontWeight: 600, border: "none", cursor: !file || creating ? "not-allowed" : "pointer", opacity: !file || creating ? 0.6 : 1, boxShadow: !file || creating ? "none" : "0 2px 10px rgba(255,255,255,0.08)" }}
                 >
                   {creating ? (
-                    <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg> Transcribiendo...</>
+                    <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg> {t.transcribe.transcribing}</>
                   ) : (
-                    <><FileAudio size={14} /> Crear tarea</>
+                    <><FileAudio size={14} /> {t.transcribe.createTaskBtn}</>
                   )}
                 </button>
               </div>
@@ -4203,13 +4161,13 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                 onClick={() => { if (!viewerTask.transcriptionText) return; navigator.clipboard.writeText(viewerTask.transcriptionText); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
                 style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: copied ? "rgba(74,222,128,0.15)" : "#111111", color: copied ? "#4ade80" : "#aaaaaa", border: `1px solid ${copied ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.15)"}`, cursor: "pointer" }}
               >
-                <Copy size={12} />{copied ? "¡Copiado!" : "Copiar texto"}
+                <Copy size={12} />{copied ? t.transcribe.copied : t.transcribe.copyText}
               </button>
               <button
                 onClick={() => handleDownload(viewerTask)}
                 style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: "#111111", color: "#9ca3af", border: "1px solid #1a1a1a", cursor: "pointer" }}
               >
-                <Download size={12} /> Descargar .txt
+                <Download size={12} /> {t.transcribe.downloadTxt}
               </button>
             </div>
           </div>
@@ -4376,6 +4334,7 @@ function WithdrawModal({ balance, onClose, onSuccess }: { balance: number; onClo
 }
 
 function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
+  const { t } = useLang();
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referrals, setReferrals] = useState<ReferralEntry[]>([]);
   const [referralBalance, setReferralBalance] = useState(0);
@@ -4437,7 +4396,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
         setRedeemMsg({ ok: false, text: data.error ?? "Error al canjear" });
       } else {
         const plan = REDEEM_PLANS.find(p => p.key === selectedPlan);
-        setRedeemMsg({ ok: true, text: `¡${plan?.chars.toLocaleString("es-ES")} caracteres añadidos!` });
+        setRedeemMsg({ ok: true, text: `¡${plan?.chars.toLocaleString()} caracteres añadidos!` });
         onClaimed();
         fetchReferral();
         setTimeout(() => setRedeemMsg(null), 5000);
@@ -4502,7 +4461,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
           balance={referralBalance}
           onClose={() => setShowWithdrawModal(false)}
           onSuccess={() => {
-            setWithdrawMsg("¡Solicitud de retiro enviada! Te contactaremos pronto.");
+            setWithdrawMsg(t.referral.withdrawalSuccess);
             fetchReferral();
             setTimeout(() => setWithdrawMsg(null), 6000);
           }}
@@ -4831,6 +4790,8 @@ function TeamTab({
   nextRenewalDate?: string | null;
   onNavigateToBilling?: () => void;
 }) {
+  const { t } = useLang();
+  const BILLING_PLANS = getBillingPlans(t);
   const [team, setTeam] = useState<TeamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [teamName, setTeamName] = useState("");
@@ -5569,6 +5530,7 @@ export default function DashboardPage() {
   const [nextRenewalDate, setNextRenewalDate] = useState<string | null>(null);
   const [daysUntilRenewal, setDaysUntilRenewal] = useState<number | null>(null);
   const { t: tt, toggle: toggleLang } = useLang();
+  const BILLING_PLANS = getBillingPlans(tt);
 
   const fetchCredits = useCallback(async () => {
     const res = await fetch("/api/credits");
@@ -5662,15 +5624,15 @@ export default function DashboardPage() {
           const TAB_META: Record<Tab, { title: string; Icon: React.ElementType }> = {
             home:       { title: tt.tabs.home,        Icon: Home },
             generate:   { title: tt.tabs.generate,    Icon: Type },
-            dialogue:   { title: "Texto a Diálogo",   Icon: MessageSquare },
+            dialogue:   { title: tt.nav.textToDialogue, Icon: MessageSquare },
             transcribe: { title: tt.tabs.transcribe,  Icon: FileAudio },
             translate:  { title: tt.tabs.translate,   Icon: Globe },
             history:    { title: tt.tabs.history,     Icon: Clock },
             billing:    { title: tt.tabs.billing,     Icon: CreditCard },
             voices:     { title: tt.tabs.voices,      Icon: Mic2 },
             referral:   { title: tt.tabs.referral,    Icon: Gift },
-            team:       { title: "Equipo",             Icon: Users },
-            imagevideo: { title: "Imagen y Video",     Icon: ImageIcon },
+            team:       { title: tt.nav.team,          Icon: Users },
+            imagevideo: { title: tt.nav.imageVideo,    Icon: ImageIcon },
           };
           const { title, Icon } = TAB_META[activeTab] ?? { title: "", Icon: Home };
           return (

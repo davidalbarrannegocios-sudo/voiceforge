@@ -5,6 +5,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { X } from "lucide-react";
 import { PLANS, type PlanKey } from "@/lib/stripe";
+import { useLang } from "./LanguageContext";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -66,6 +67,7 @@ function SubscriptionForm({
   billing: "monthly" | "annual";
   onSuccess: () => void;
 }) {
+  const { t } = useLang();
   const stripe = useStripe();
   const elements = useElements();
   const formRef = useRef<HTMLFormElement>(null);
@@ -174,7 +176,7 @@ function SubscriptionForm({
         {/* Name field */}
         <div>
           <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "#6b7280", marginBottom: "6px" }}>
-            Nombre completo
+            {t.billing.fullName}
           </label>
           <input
             type="text"
@@ -195,7 +197,7 @@ function SubscriptionForm({
         {/* Stripe PaymentElement */}
         <div>
           <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "#6b7280", marginBottom: "6px" }}>
-            Método de pago
+            {t.billing.paymentMethodLabel}
           </label>
           <PaymentElement options={{ layout: "tabs" }} />
         </div>
@@ -276,7 +278,7 @@ function SubscriptionForm({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Procesando...
+                {t.billing.processing}
               </>
             ) : billing === "annual" ? (
               `Suscribirse — $${annualTotal}/año`
@@ -303,6 +305,7 @@ export function PaymentModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const { t } = useLang();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -375,7 +378,7 @@ export function PaymentModal({
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            <p style={{ fontSize: "13px", color: "#555555" }}>Preparando formulario de pago...</p>
+            <p style={{ fontSize: "13px", color: "#555555" }}>{t.billing.preparingPayment}</p>
           </div>
         ) : (
           <Elements

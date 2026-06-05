@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Image as ImageIcon, Video, Sparkles, Upload, X, ChevronDown, Lock, Download, Share2, Check, Globe } from 'lucide-react'
+import { useLang } from '@/app/dashboard/LanguageContext'
 
 type Mode = 'image' | 'video'
 type AspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4'
@@ -67,6 +68,7 @@ interface Props {
 }
 
 export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryUpdate }: Props) {
+  const { t } = useLang()
   const [mode, setMode] = useState<Mode>('image')
   const [prompt, setPrompt] = useState('')
   const [negativePrompt, setNegativePrompt] = useState('')
@@ -351,12 +353,12 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
       })
       if (res.ok) {
         setSharedIds(prev => new Set(prev).add(shareKey))
-        showToast(item.type === 'video' ? '¡Vídeo compartido en la galería!' : '¡Imagen compartida en la galería!', 'success')
+        showToast(item.type === 'video' ? t.imagevideo.videoShared : t.imagevideo.imageShared, 'success')
       } else {
-        showToast('Error al compartir', 'error')
+        showToast(t.imagevideo.shareError, 'error')
       }
     } catch {
-      showToast('Error al compartir', 'error')
+      showToast(t.imagevideo.shareError, 'error')
     }
   }
 
@@ -383,7 +385,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                   rightView === 'history' ? 'bg-white/10 text-white' : 'text-white/30 hover:text-white/60'
                 }`}
               >
-                Historial
+                {t.imagevideo.historyTab}
               </button>
               <button
                 onClick={() => { setRightView('explore'); fetchGallery() }}
@@ -391,7 +393,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                   rightView === 'explore' ? 'bg-white/10 text-white' : 'text-white/30 hover:text-white/60'
                 }`}
               >
-                Explorar
+                {t.imagevideo.exploreTab}
               </button>
             </div>
 
@@ -400,7 +402,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                       d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.07 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
-              <span>Las imágenes no se guardan al cerrar la página</span>
+              <span>{t.imagevideo.notSaved}</span>
             </div>
           </div>
 
@@ -436,7 +438,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                       <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/[0.08] flex items-center justify-center mb-3">
                         <Sparkles className="w-6 h-6 text-white/20" />
                       </div>
-                      <p className="text-sm text-white/25">Escribe un prompt para generar</p>
+                      <p className="text-sm text-white/25">{t.imagevideo.writePrompt}</p>
                       <p className="text-xs text-white/[0.12] mt-1">FLUX.2 · FLUX 1.1 Pro · Kontext · Grok Imagine</p>
                     </div>
                   )
@@ -535,8 +537,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                 </div>
               ) : galleryImages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <p className="text-white/20 text-sm">La galería está vacía</p>
-                  <p className="text-white/10 text-xs mt-1">Genera y comparte para aparecer aquí</p>
+                  <p className="text-white/20 text-sm">{t.imagevideo.galleryEmpty}</p>
+                  <p className="text-white/10 text-xs mt-1">{t.imagevideo.galleryEmptyHint}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-4 gap-2 pt-2">
@@ -660,7 +662,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
 
               {/* Count */}
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-white/30">Cantidad</span>
+                <span className="text-[11px] text-white/30">{t.imagevideo.quantity}</span>
                 <div className="flex gap-0.5">
                   {[1, 2, 4, 8].map(n => (
                     <button
@@ -683,7 +685,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
               {/* Image reference */}
               <label className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.08] border border-white/10 text-[11px] text-white/40 cursor-pointer transition-all">
                 <Upload className="w-3 h-3" />
-                {imageRefs.length > 0 ? `${imageRefs.length} ref` : 'Referencia'}
+                {imageRefs.length > 0 ? `${imageRefs.length} ref` : t.imagevideo.reference}
                 <input type="file" accept="image/*" className="hidden"
                        onChange={e => { const f = e.target.files?.[0]; if (f) setImageRefs(prev => [...prev, f]) }} />
               </label>
@@ -703,7 +705,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
 
               {/* Credits indicator */}
               <div className={`ml-auto text-[11px] ${canAfford ? 'text-white/25' : 'text-red-400'}`}>
-                {creditsNeeded.toLocaleString()} cr · {credits.toLocaleString()} disponibles
+                {creditsNeeded.toLocaleString()} cr · {credits.toLocaleString()} {t.imagevideo.available}
               </div>
             </div>
           )}
@@ -715,7 +717,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
 
               <div className="h-4 w-px bg-white/10" />
 
-              <span className="text-[11px] text-white/30">Duración</span>
+              <span className="text-[11px] text-white/30">{t.imagevideo.duration}</span>
               {[5, 10].map(d => (
                 <button
                   key={d}
@@ -743,7 +745,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
               ))}
 
               <div className={`ml-auto text-[11px] ${canAfford ? 'text-white/25' : 'text-red-400'}`}>
-                {creditsNeeded.toLocaleString()} cr · {credits.toLocaleString()} disponibles
+                {creditsNeeded.toLocaleString()} cr · {credits.toLocaleString()} {t.imagevideo.available}
               </div>
             </div>
           )}
@@ -793,8 +795,8 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleGenerate() }
                 }}
                 placeholder={mode === 'image'
-                  ? 'Describe la imagen que quieres generar...'
-                  : 'Describe el vídeo que quieres generar...'}
+                  ? t.imagevideo.imagePlaceholder
+                  : t.imagevideo.videoPlaceholder}
                 rows={2}
                 className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/25 outline-none resize-none"
               />
@@ -814,7 +816,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
               className="px-5 py-3 bg-white text-black text-sm font-semibold rounded-2xl hover:bg-white/90 transition-all self-end disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2 flex-shrink-0"
             >
               <Sparkles className="w-4 h-4" />
-              {isGenerating ? 'Generando...' : 'Generar'}
+              {isGenerating ? t.imagevideo.generating : t.imagevideo.generate}
             </button>
           </div>
 
@@ -853,7 +855,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
             </button>
 
             <div>
-              <p className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Prompt</p>
+              <p className="text-[10px] text-white/30 uppercase tracking-wider mb-1">{t.imagevideo.prompt}</p>
               <p className="text-xs text-white/70 leading-relaxed">{modalImage.prompt}</p>
             </div>
 
@@ -875,7 +877,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                         d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                Recrear
+                {t.imagevideo.recreate}
               </button>
 
               <button
@@ -886,7 +888,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                         d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
-                Crear vídeo
+                {t.imagevideo.createVideo}
               </button>
 
               <button
@@ -897,7 +899,7 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                 className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] text-sm text-white/70 hover:text-white transition-all text-left"
               >
                 <Share2 className="w-4 h-4 flex-shrink-0" />
-                Compartir en galería
+                {t.imagevideo.shareGallery}
               </button>
 
               <a
@@ -906,14 +908,14 @@ export function ImageVideoEditor({ credits, onCreditsUpdate, history, onHistoryU
                 className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white text-black text-sm font-medium hover:bg-white/90 transition-all"
               >
                 <Download className="w-4 h-4 flex-shrink-0" />
-                Descargar
+                {t.imagevideo.download}
               </a>
             </div>
 
             {/* Batch thumbnails */}
             {modalImage.allImages.length > 1 && (
               <div>
-                <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2">En este batch</p>
+                <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2">{t.imagevideo.batchLabel}</p>
                 <div className="grid grid-cols-4 gap-1">
                   {modalImage.allImages.map((img, i) => (
                     <button

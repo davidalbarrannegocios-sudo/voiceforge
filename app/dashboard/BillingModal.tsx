@@ -5,6 +5,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { ChevronLeft, Download, ExternalLink, Plus, Star, Trash2 } from "lucide-react";
 import { CustomSelect } from "@/components/CustomSelect";
+import { useLang } from "./LanguageContext";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -76,6 +77,7 @@ interface Subscription {
 type Tab = "suscripcion" | "metodos" | "facturas";
 
 function AddCardForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
+  const { t } = useLang();
   const stripe = useStripe();
   const elements = useElements();
   const [saving, setSaving] = useState(false);
@@ -88,7 +90,7 @@ function AddCardForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel:
     setError(null);
     try {
       const res = await fetch("/api/billing/setup-intent", { method: "POST" });
-      if (!res.ok) throw new Error("Error al preparar el formulario");
+      if (!res.ok) throw new Error(t.billing.errorPrepare);
       const { clientSecret } = await res.json();
 
       const cardElement = elements.getElement(CardElement);
@@ -104,7 +106,7 @@ function AddCardForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel:
         onSuccess();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido");
+      setError(err instanceof Error ? err.message : t.billing.errorUnknown);
     } finally {
       setSaving(false);
     }
@@ -143,7 +145,7 @@ function AddCardForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel:
             opacity: saving || !stripe ? 0.7 : 1,
           }}
         >
-          {saving ? "Guardando..." : "Guardar tarjeta"}
+          {saving ? t.billing.savingCard : t.billing.saveCard}
         </button>
         <button
           type="button"
@@ -154,7 +156,7 @@ function AddCardForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel:
             color: "#9ca3af", fontSize: "13px", cursor: "pointer",
           }}
         >
-          Cancelar
+          {t.billing.back}
         </button>
       </div>
     </form>
@@ -162,6 +164,7 @@ function AddCardForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel:
 }
 
 export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () => void }) {
+  const { t } = useLang();
   const [tab, setTab] = useState<Tab>("suscripcion");
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -255,9 +258,9 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
     : "";
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: "suscripcion", label: "Suscripción" },
-    { key: "metodos", label: "Métodos de pago" },
-    { key: "facturas", label: "Facturas" },
+    { key: "suscripcion", label: t.billing.tabSubscription },
+    { key: "metodos",     label: t.billing.tabPaymentMethods },
+    { key: "facturas",    label: t.billing.tabInvoices },
   ];
 
   return (
@@ -273,12 +276,12 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
         }}
       >
         <ChevronLeft size={15} />
-        Volver
+        {t.billing.backBtn}
       </button>
 
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "24px" }}>
         <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#fff", margin: 0 }}>
-          Gestionar suscripción
+          {t.billing.manageTitle}
         </h2>
       </div>
 
@@ -303,7 +306,7 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
       </div>
 
       {loading ? (
-        <div style={{ color: "#555555", padding: "40px 0", textAlign: "center" }}>Cargando...</div>
+        <div style={{ color: "#555555", padding: "40px 0", textAlign: "center" }}>{t.billing.loadingLabel}</div>
       ) : (
         <>
           {/* ── Suscripción ── */}
@@ -315,7 +318,7 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: periodEndLabel ? "16px" : "0" }}>
                   <div>
-                    <p style={{ fontSize: "11px", color: "#555555", marginBottom: "4px" }}>Plan actual</p>
+                    <p style={{ fontSize: "11px", color: "#555555", marginBottom: "4px" }}>{t.billing.currentPlan}</p>
                     <p style={{ fontSize: "20px", fontWeight: 700, color: "#fff", textTransform: "capitalize" }}>
                       {plan}
                     </p>
@@ -328,13 +331,13 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
                     color: subscription?.cancelAtPeriodEnd ? "#ef4444" : "#22c55e",
                     marginTop: "2px",
                   }}>
-                    {subscription?.cancelAtPeriodEnd ? "Cancela pronto" : "Activa"}
+                    {subscription?.cancelAtPeriodEnd ? t.billing.soonToCancel : t.billing.activeStatus}
                   </span>
                 </div>
                 {periodEndLabel && (
                   <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: "14px" }}>
                     <p style={{ fontSize: "12px", color: "#6b7280", margin: 0 }}>
-                      {subscription?.cancelAtPeriodEnd ? "Acceso hasta" : "Próxima renovación"}
+                      {subscription?.cancelAtPeriodEnd ? t.billing.accessUntil : t.billing.nextRenewal}
                       {": "}
                       <strong style={{ color: "#d1d5db" }}>{periodEndLabel}</strong>
                     </p>
@@ -348,9 +351,7 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
                   borderRadius: "12px", padding: "18px 20px",
                 }}>
                   <p style={{ fontSize: "13px", color: "#9ca3af", marginBottom: "14px", lineHeight: 1.6 }}>
-                    Tu suscripción se cancelará el{" "}
-                    <strong style={{ color: "#fff" }}>{periodEndLabel}</strong>.
-                    Hasta entonces conservas acceso completo.
+                    {t.billing.cancelSoonMsg.replace("{date}", periodEndLabel)}
                   </p>
                   <button
                     onClick={handleReactivate}
@@ -364,7 +365,7 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
                       opacity: cancelling ? 0.7 : 1,
                     }}
                   >
-                    {cancelling ? "Procesando..." : "Reactivar suscripción"}
+                    {cancelling ? t.billing.processing : t.billing.reactivateSub}
                   </button>
                 </div>
               ) : !showCancelForm ? (
@@ -376,7 +377,7 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
                     textDecoration: "underline", textUnderlineOffset: "3px",
                   }}
                 >
-                  Cancelar suscripción
+                  {t.billing.cancelSub}
                 </button>
               ) : (
                 <div style={{
@@ -384,22 +385,22 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
                   borderRadius: "12px", padding: "20px",
                 }}>
                   <p style={{ fontSize: "14px", fontWeight: 700, color: "#fca5a5", marginBottom: "4px" }}>
-                    ¿Por qué cancelas?
+                    {t.billing.cancelWhyTitle}
                   </p>
                   <p style={{ fontSize: "12px", color: "#6b7280", marginBottom: "16px", lineHeight: 1.5 }}>
-                    Tu acceso se mantiene activo hasta el {periodEndLabel}.
+                    {t.billing.cancelAccessUntil.replace("{date}", periodEndLabel)}
                   </p>
                   <CustomSelect
                     value={cancelReason}
                     onChange={setCancelReason}
-                    placeholder="Selecciona un motivo..."
+                    placeholder={t.billing.cancelReasonSelect}
                     style={{ marginBottom: "14px" }}
                     options={[
-                      { value: "price",     label: "El precio es muy alto" },
-                      { value: "features",  label: "Me faltan funciones" },
-                      { value: "usage",     label: "No lo uso suficiente" },
-                      { value: "switching", label: "Me cambio a otro servicio" },
-                      { value: "other",     label: "Otro motivo" },
+                      { value: "price",     label: t.billing.cancelReasonPrice },
+                      { value: "features",  label: t.billing.cancelReasonFeatures },
+                      { value: "usage",     label: t.billing.cancelReasonUsage },
+                      { value: "switching", label: t.billing.cancelReasonSwitching },
+                      { value: "other",     label: t.billing.cancelReasonOther },
                     ]}
                   />
                   <div style={{ display: "flex", gap: "8px" }}>
@@ -416,7 +417,7 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
                         transition: "background 0.2s, color 0.2s",
                       }}
                     >
-                      {cancelling ? "Procesando..." : "Confirmar cancelación"}
+                      {cancelling ? t.billing.processing : t.billing.confirmCancel}
                     </button>
                     <button
                       onClick={() => { setShowCancelForm(false); setCancelReason(""); }}
@@ -426,7 +427,7 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
                         color: "#9ca3af", fontSize: "13px", cursor: "pointer",
                       }}
                     >
-                      Volver
+                      {t.billing.back}
                     </button>
                   </div>
                 </div>
@@ -439,7 +440,7 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
             <div style={{ width: "100%" }}>
               {paymentMethods.length === 0 && !showAddCard && (
                 <p style={{ color: "#555555", fontSize: "13px", marginBottom: "20px" }}>
-                  No hay métodos de pago registrados.
+                  {t.billing.noPaymentMethods}
                 </p>
               )}
 
@@ -460,10 +461,10 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
                         {pm.brand} ···· {pm.last4}
                       </p>
                       <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#555555" }}>
-                        Vence {String(pm.expMonth).padStart(2, "0")}/{pm.expYear}
+                        {t.billing.cardExpires} {String(pm.expMonth).padStart(2, "0")}/{pm.expYear}
                         {pm.isDefault && (
                           <span style={{ marginLeft: "8px", color: "#22c55e", fontWeight: 600 }}>
-                            · Predeterminada
+                            · {t.billing.cardDefault}
                           </span>
                         )}
                       </p>
@@ -473,7 +474,7 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
                         <button
                           onClick={() => handleSetDefault(pm.id)}
                           disabled={actionLoading === pm.id}
-                          title="Establecer como predeterminada"
+                          title={t.billing.setDefault}
                           style={{
                             padding: "6px 8px", borderRadius: "6px",
                             border: "1px solid #222222", background: "transparent",
@@ -488,7 +489,7 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
                       <button
                         onClick={() => handleDeletePM(pm.id)}
                         disabled={actionLoading === pm.id}
-                        title="Eliminar tarjeta"
+                        title={t.billing.deleteCard}
                         style={{
                           padding: "6px 8px", borderRadius: "6px",
                           border: "1px solid rgba(239,68,68,0.2)", background: "transparent",
@@ -515,7 +516,7 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
                   }}
                 >
                   <Plus size={14} />
-                  Añadir tarjeta
+                  {t.billing.addCard}
                 </button>
               ) : (
                 <div style={{
@@ -523,7 +524,7 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
                   borderRadius: "12px", padding: "20px",
                 }}>
                   <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "16px" }}>
-                    Nueva tarjeta
+                    {t.billing.newCard}
                   </p>
                   <Elements stripe={stripePromise}>
                     <AddCardForm
@@ -545,14 +546,14 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
             <div>
               {invoices.length === 0 ? (
                 <p style={{ color: "#555555", fontSize: "13px", textAlign: "center", padding: "32px 0" }}>
-                  No hay facturas disponibles.
+                  {t.billing.noInvoices}
                 </p>
               ) : (
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "380px" }}>
                     <thead>
                       <tr style={{ borderBottom: "1px solid #1a1a1a" }}>
-                        {["Fecha", "Importe", "Estado", ""].map((h) => (
+                        {[t.billing.invDate, t.billing.invAmount, t.billing.invStatus, ""].map((h) => (
                           <th
                             key={h}
                             style={{
@@ -584,7 +585,7 @@ export function ManageBillingPanel({ plan, onBack }: { plan: string; onBack: () 
                               background: inv.status === "paid" ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)",
                               color: inv.status === "paid" ? "#22c55e" : "#ef4444",
                             }}>
-                              {inv.status === "paid" ? "Pagada" : inv.status ?? "—"}
+                              {inv.status === "paid" ? t.billing.invPaid : inv.status ?? "—"}
                             </span>
                           </td>
                           <td style={{ padding: "12px 10px", textAlign: "right" }}>

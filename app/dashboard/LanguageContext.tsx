@@ -40,6 +40,13 @@ export interface Translations {
   voicesPage: { [key: string]: string };
   sidebar: { [key: string]: string };
   history: { [key: string]: string };
+  translate: { [key: string]: string };
+  transcribe: { [key: string]: string };
+  dialogue: { [key: string]: string };
+  imagevideo: { [key: string]: string };
+  referral: { [key: string]: string };
+  affiliate: { [key: string]: string };
+  support: { [key: string]: string };
   [key: string]: Record<string, string>;
 }
 

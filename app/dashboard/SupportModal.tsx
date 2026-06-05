@@ -3,35 +3,21 @@
 import { useState, useEffect, useCallback } from "react";
 import { X, HelpCircle, Send, ChevronLeft, MessageSquare, ChevronDown } from "lucide-react";
 import { CustomSelect } from "@/components/CustomSelect";
-
-const FAQS = [
-  {
-    q: "¿Cómo funcionan los caracteres?",
-    a: "Los caracteres se descuentan según el texto generado. 1 carácter = 1 letra o símbolo.",
-  },
-  {
-    q: "¿Puedo cancelar mi suscripción?",
-    a: "Sí, puedes cancelar en cualquier momento desde Facturación → Gestionar suscripción.",
-  },
-  {
-    q: "El audio no se generó correctamente",
-    a: "Si hubo un error, los créditos se devuelven automáticamente. Si no fue así, contacta con soporte indicando el ID del audio.",
-  },
-  {
-    q: "¿Cuándo se renuevan mis caracteres?",
-    a: "Los caracteres se renuevan cada mes en la fecha de tu suscripción.",
-  },
-  {
-    q: "No puedo acceder a mi cuenta",
-    a: "Intenta restablecer tu contraseña. Si el problema persiste, contacta con soporte.",
-  },
-];
+import { useLang } from "./LanguageContext";
 
 function FaqAccordion() {
+  const { t } = useLang();
   const [open, setOpen] = useState<number | null>(null);
+  const FAQS = [
+    { q: t.support.faqQ0, a: t.support.faqA0 },
+    { q: t.support.faqQ1, a: t.support.faqA1 },
+    { q: t.support.faqQ2, a: t.support.faqA2 },
+    { q: t.support.faqQ3, a: t.support.faqA3 },
+    { q: t.support.faqQ4, a: t.support.faqA4 },
+  ];
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginBottom: "16px" }}>
-      <p style={{ fontSize: "11px", fontWeight: 700, color: "#3a3a52", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px" }}>Preguntas frecuentes</p>
+      <p style={{ fontSize: "11px", fontWeight: 700, color: "#3a3a52", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px" }}>{t.support.faqTitle}</p>
       {FAQS.map((faq, i) => (
         <div key={i} style={{ borderRadius: "10px", border: "1px solid #1e1e2e", background: "#0d0d17", overflow: "hidden" }}>
           <button
@@ -55,13 +41,6 @@ function FaqAccordion() {
   );
 }
 
-const TICKET_TYPES = [
-  { value: "general",   label: "Ayuda general" },
-  { value: "technical", label: "Problema técnico" },
-  { value: "billing",   label: "Problema de facturación" },
-  { value: "refund",    label: "Solicitar reembolso" },
-  { value: "other",     label: "Otro" },
-];
 
 interface SupportTicket {
   id: string;
@@ -75,6 +54,14 @@ interface SupportTicket {
 type View = "menu" | "new" | "list";
 
 export function SupportModal({ onClose }: { onClose: () => void }) {
+  const { t } = useLang();
+  const TICKET_TYPES = [
+    { value: "general",   label: t.support.typeGeneral },
+    { value: "technical", label: t.support.typeTechnical },
+    { value: "billing",   label: t.support.typeBilling },
+    { value: "refund",    label: t.support.typeRefund },
+    { value: "other",     label: t.support.typeOther },
+  ];
   const [view, setView] = useState<View>("menu");
   const [type, setType] = useState("general");
   const [description, setDescription] = useState("");
@@ -115,7 +102,7 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
       setSuccess(true);
       setDescription("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al enviar");
+      setError(err instanceof Error ? err.message : t.support.errorSend);
     } finally {
       setLoading(false);
     }
@@ -146,7 +133,7 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
             )}
             <HelpCircle size={15} style={{ color: "#aaaaaa" }} />
             <span style={{ fontSize: "15px", fontWeight: 700, color: "#000000" }}>
-              {view === "menu" ? "Soporte" : view === "new" ? "Nuevo ticket" : "Mis tickets"}
+              {view === "menu" ? t.support.title : view === "new" ? t.support.newTicket : t.support.myTickets}
             </span>
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#3a3a52", padding: "2px" }}>
@@ -161,16 +148,16 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               <FaqAccordion />
               <div style={{ height: "1px", background: "#1a1a28", marginBottom: "2px" }} />
-              <p style={{ fontSize: "13px", color: "#4a4a65", marginBottom: "4px" }}>¿En qué podemos ayudarte?</p>
+              <p style={{ fontSize: "13px", color: "#4a4a65", marginBottom: "4px" }}>{t.support.howCanHelp}</p>
               <button
                 onClick={() => { setView("new"); setSuccess(false); }}
                 style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid #2a2a3e", background: "#12121a", cursor: "pointer", textAlign: "left" }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#e5e7eb", fontSize: "14px", fontWeight: 500 }}>
                   <Send size={14} style={{ color: "#aaaaaa", flexShrink: 0 }} />
-                  Crear nuevo ticket
+                  {t.support.createTicket}
                 </div>
-                <p style={{ fontSize: "12px", color: "#4a4a65", marginTop: "4px", marginLeft: "24px" }}>Contacta con nuestro equipo</p>
+                <p style={{ fontSize: "12px", color: "#4a4a65", marginTop: "4px", marginLeft: "24px" }}>{t.support.createTicketDesc}</p>
               </button>
               <button
                 onClick={() => setView("list")}
@@ -178,9 +165,9 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#e5e7eb", fontSize: "14px", fontWeight: 500 }}>
                   <MessageSquare size={14} style={{ color: "#aaaaaa", flexShrink: 0 }} />
-                  Ver mis tickets
+                  {t.support.viewTickets}
                 </div>
-                <p style={{ fontSize: "12px", color: "#4a4a65", marginTop: "4px", marginLeft: "24px" }}>Consulta el estado de tus solicitudes</p>
+                <p style={{ fontSize: "12px", color: "#4a4a65", marginTop: "4px", marginLeft: "24px" }}>{t.support.viewTicketsDesc}</p>
               </button>
             </div>
           )}
@@ -192,19 +179,19 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
                 <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
                   <Send size={20} style={{ color: "#4ade80" }} />
                 </div>
-                <p style={{ fontSize: "15px", fontWeight: 700, color: "#000000", marginBottom: "8px" }}>¡Ticket enviado!</p>
-                <p style={{ fontSize: "13px", color: "#4a4a65" }}>Te responderemos lo antes posible.</p>
+                <p style={{ fontSize: "15px", fontWeight: 700, color: "#000000", marginBottom: "8px" }}>{t.support.ticketSent}</p>
+                <p style={{ fontSize: "13px", color: "#4a4a65" }}>{t.support.ticketSentDesc}</p>
                 <button
                   onClick={goBack}
                   style={{ marginTop: "20px", padding: "10px 24px", borderRadius: "10px", border: "none", background: "#ffffff", color: "#000000", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}
                 >
-                  Volver
+                  {t.support.backBtn}
                 </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "#6b7280", marginBottom: "6px" }}>Tipo de solicitud</label>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "#6b7280", marginBottom: "6px" }}>{t.support.typeLabel}</label>
                   <CustomSelect
                     options={TICKET_TYPES.map((t) => ({ value: t.value, label: t.label }))}
                     value={type}
@@ -213,11 +200,11 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
                   />
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "#6b7280", marginBottom: "6px" }}>Descripción</label>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "#6b7280", marginBottom: "6px" }}>{t.support.description}</label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Describe tu problema o pregunta con el mayor detalle posible..."
+                    placeholder={t.support.descPlaceholder}
                     rows={5}
                     style={{ width: "100%", padding: "10px 12px", borderRadius: "10px", background: "#0a0a0f", border: "1px solid #2a2a3e", color: "#e5e7eb", fontSize: "14px", outline: "none", resize: "vertical", boxSizing: "border-box" }}
                   />
@@ -233,7 +220,7 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
                   style={{ padding: "12px", borderRadius: "10px", border: "none", background: "#ffffff", color: "#000000", fontSize: "14px", fontWeight: 600, cursor: loading || !description.trim() ? "not-allowed" : "pointer", opacity: loading || !description.trim() ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
                 >
                   <Send size={13} />
-                  {loading ? "Enviando..." : "Enviar solicitud"}
+                  {loading ? t.support.sending : t.support.send}
                 </button>
               </form>
             )
@@ -242,15 +229,15 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
           {/* ── Ticket list ── */}
           {view === "list" && (
             ticketsLoading ? (
-              <div style={{ padding: "32px 0", textAlign: "center", color: "#4a4a65", fontSize: "13px" }}>Cargando tickets...</div>
+              <div style={{ padding: "32px 0", textAlign: "center", color: "#4a4a65", fontSize: "13px" }}>{t.support.loadingTickets}</div>
             ) : tickets.length === 0 ? (
               <div style={{ padding: "32px 0", textAlign: "center" }}>
-                <p style={{ color: "#4a4a65", fontSize: "13px" }}>No tienes tickets abiertos.</p>
+                <p style={{ color: "#4a4a65", fontSize: "13px" }}>{t.support.noTickets}</p>
                 <button
                   onClick={() => setView("new")}
                   style={{ marginTop: "12px", padding: "8px 20px", borderRadius: "8px", border: "1px solid #2a2a3e", background: "transparent", color: "#aaaaaa", fontSize: "13px", cursor: "pointer" }}
                 >
-                  Crear uno ahora
+                  {t.support.createNow}
                 </button>
               </div>
             ) : (
@@ -268,7 +255,7 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
                         color: ticket.status === "closed" ? "#6b7280" : "#aaaaaa",
                         border: `1px solid ${ticket.status === "closed" ? "#2a2a3e" : "rgba(255,255,255,0.12)"}`,
                       }}>
-                        {ticket.status === "closed" ? "CERRADO" : "ABIERTO"}
+                        {ticket.status === "closed" ? t.support.ticketClosed : t.support.ticketOpen}
                       </span>
                     </div>
                     <p style={{ fontSize: "13px", color: "#6b7280", lineHeight: 1.5 }}>
@@ -276,7 +263,7 @@ export function SupportModal({ onClose }: { onClose: () => void }) {
                     </p>
                     {ticket.adminReply && (
                       <div style={{ padding: "10px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", marginTop: "10px" }}>
-                        <p style={{ fontSize: "10px", fontWeight: 700, color: "#aaaaaa", marginBottom: "4px", letterSpacing: "0.05em" }}>RESPUESTA DEL EQUIPO</p>
+                        <p style={{ fontSize: "10px", fontWeight: 700, color: "#aaaaaa", marginBottom: "4px", letterSpacing: "0.05em" }}>{t.support.teamResponse}</p>
                         <p style={{ fontSize: "13px", color: "#aaaaaa", lineHeight: 1.5 }}>{ticket.adminReply}</p>
                       </div>
                     )}

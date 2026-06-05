@@ -5,6 +5,7 @@ import {
   Play, Pause, Download, Loader2, X, Upload, Plus, Music2, GripVertical, Mic, ChevronDown,
 } from 'lucide-react'
 import { VoiceBrowser, SelectedVoice } from '@/app/dashboard/VoiceBrowser'
+import { useLang } from '@/app/dashboard/LanguageContext'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -74,6 +75,7 @@ interface Props {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, language }: Props) {
+  const { t } = useLang()
 
   const [lines, setLines] = useState<DialogueLine[]>(() => [
     { id: uid(), characterName: 'Narrador', text: 'Era una noche oscura y tormentosa.' },
@@ -151,7 +153,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
     setAudioUrl(null)
     setError(null)
     const uniqueChars = new Set(parsed.map(p => p.characterName)).size
-    showToast(`${parsed.length} línea${parsed.length !== 1 ? 's' : ''} detectada${parsed.length !== 1 ? 's' : ''}, ${uniqueChars} personaje${uniqueChars !== 1 ? 's' : ''} encontrado${uniqueChars !== 1 ? 's' : ''}`)
+    showToast(t.dialogue.linesFound.replace('{n}', String(parsed.length)).replace('{m}', String(uniqueChars)))
   }
 
   function handlePasteText(raw: string) {
@@ -301,7 +303,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
       setGenerationHistory(prev => [{ url: data.audioUrl, format: outputFormat, createdAt: Date.now() }, ...prev].slice(0, 5))
     } catch {
       clearInterval(interval)
-      setError('Error de red al generar el diálogo')
+      setError(t.dialogue.networkError)
     } finally { setIsGenerating(false) }
   }
 
@@ -324,7 +326,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
       >
         {/* Top bar — full width, no scroll */}
         <div className="flex items-center gap-2 flex-shrink-0 border-b border-white/[0.06]" style={{ padding: '10px 16px' }}>
-              <span style={{ fontSize: '14px', fontWeight: 500, color: '#ffffff' }}>Guión</span>
+              <span style={{ fontSize: '14px', fontWeight: 500, color: '#ffffff' }}>{t.dialogue.script}</span>
               <div style={{ flex: 1 }} />
 
               {/* Translate */}
@@ -335,8 +337,8 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                     style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 500, background: showLangPicker ? 'rgba(255,255,255,0.08)' : 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#9ca3af', cursor: 'pointer' }}
                   >
                     {isTranslating
-                      ? <><Loader2 style={{ width: '11px', height: '11px', animation: 'spin 1s linear infinite' }} /> Traduciendo</>
-                      : <>Traducir <ChevronDown style={{ width: '11px', height: '11px' }} /></>
+                      ? <><Loader2 style={{ width: '11px', height: '11px', animation: 'spin 1s linear infinite' }} /> {t.dialogue.translating}</>
+                      : <>{t.dialogue.translate} <ChevronDown style={{ width: '11px', height: '11px' }} /></>
                     }
                   </button>
                   {showLangPicker && (
@@ -357,7 +359,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
               {/* Import */}
               <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/[0.08] border border-white/10 text-xs text-white/50 cursor-pointer transition-all">
                 <Upload className="w-3.5 h-3.5" />
-                Importar
+                {t.dialogue.import}
                 <input type="file" accept=".txt,.pdf,.doc,.docx" className="hidden"
                   onChange={async e => { const f = e.target.files?.[0]; if (f) await handleImport(f); e.target.value = '' }}
                 />
@@ -369,7 +371,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                 style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 500, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#9ca3af', cursor: 'pointer' }}
                 onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)')}
                 onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
-              >Ejemplo</button>
+              >{t.dialogue.example}</button>
 
               {/* Limpiar */}
               {lines.some(l => l.text.trim()) && (
@@ -377,7 +379,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                   onClick={() => { setLines([{ id: uid(), characterName: lines[0]?.characterName ?? 'Narrador', text: '' }]); setAudioUrl(null); setError(null) }}
                   style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#6b7280', cursor: 'pointer' }}
                 >
-                  <X style={{ width: '13px', height: '13px' }} /> Limpiar
+                  <X style={{ width: '13px', height: '13px' }} /> {t.dialogue.clear}
                 </button>
               )}
         </div>
@@ -392,7 +394,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
             {allLinesEmpty && (
               <div className="flex-shrink-0 px-4 pt-3">
                 <textarea
-                  placeholder={"Pega tu guión aquí o escribe línea a línea...\nFormato: (Personaje) Texto de la línea"}
+                  placeholder={t.dialogue.scriptPlaceholder}
                   rows={3}
                   onPaste={e => { e.preventDefault(); const t = e.clipboardData.getData('text'); if (t.trim()) handlePasteText(t) }}
                   onKeyDown={e => {
@@ -481,7 +483,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                                 if (e.key === 'Enter' && newCharInput.trim()) changeLineChar(line.id, newCharInput.trim())
                                 if (e.key === 'Escape') { setNewCharInput(''); setPickerLineId(null) }
                               }}
-                              placeholder="Nuevo personaje..."
+                              placeholder={t.dialogue.newCharPlaceholder}
                               style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', padding: '5px 8px', fontSize: '12px', color: '#e2e8f0', outline: 'none', marginBottom: '4px' }}
                             />
                             <button
@@ -490,7 +492,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = '#9ca3af' }}
                               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6b7280' }}
                             >
-                              <Plus style={{ width: '12px', height: '12px' }} /> Nuevo personaje
+                              <Plus style={{ width: '12px', height: '12px' }} /> {t.dialogue.newChar}
                             </button>
                           </div>
                         </div>
@@ -519,7 +521,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                           e.preventDefault(); handlePasteText(text)
                         }
                       }}
-                      placeholder="Escribe el texto..."
+                      placeholder={t.dialogue.lineInputPlaceholder}
                       style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: '14px', color: 'rgba(255,255,255,0.85)', minWidth: 0 }}
                       className="placeholder:text-white/20"
                     />
@@ -545,15 +547,15 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                 onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
                 onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.25)')}
               >
-                <Plus style={{ width: '14px', height: '14px' }} /> Añadir línea
+                <Plus style={{ width: '14px', height: '14px' }} /> {t.dialogue.addLine.replace('+ ', '')}
               </button>
             </div>
 
             {/* Bottom status bar */}
             <div className="flex-shrink-0 flex items-center gap-3 px-4 border-t border-white/[0.06]" style={{ padding: '10px 16px' }}>
               <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>
-                {lines.length} {lines.length === 1 ? 'línea' : 'líneas'}
-                {totalChars > 0 && <span style={{ marginLeft: '8px', color: 'rgba(255,255,255,0.2)' }}>· {totalChars.toLocaleString('es-ES')} créditos</span>}
+                {lines.length} {lines.length === 1 ? t.dialogue.lineSingular : t.dialogue.linePlural}
+                {totalChars > 0 && <span style={{ marginLeft: '8px', color: 'rgba(255,255,255,0.2)' }}>· {totalChars.toLocaleString('es-ES')} {t.generate.credits}</span>}
               </span>
               {isGenerating && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, maxWidth: '200px' }}>
@@ -572,7 +574,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
 
               {/* PERSONAJES */}
               <div>
-                <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6b7280', marginBottom: '10px' }}>Personajes</p>
+                <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6b7280', marginBottom: '10px' }}>{t.dialogue.characters}</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {characters.map(char => (
                     <div key={char.name} style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
@@ -582,7 +584,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p style={{ fontSize: '13px', fontWeight: 500, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{char.name}</p>
-                          <p style={{ fontSize: '11px', color: '#4b5563' }}>{lines.filter(l => l.characterName === char.name).length} líneas</p>
+                          <p style={{ fontSize: '11px', color: '#4b5563' }}>{lines.filter(l => l.characterName === char.name).length} {t.dialogue.linePlural}</p>
                         </div>
                       </div>
                       <button
@@ -593,7 +595,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                       >
                         <Mic style={{ width: '13px', height: '13px', color: '#6b7280', flexShrink: 0 }} />
                         <span style={{ fontSize: '12px', color: char.voiceId ? '#9ca3af' : '#4b5563', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                          {char.voiceId ? char.voiceName : 'Asignar voz →'}
+                          {char.voiceId ? char.voiceName : t.dialogue.assignVoice}
                         </span>
                         {char.voiceId && (
                           <button onClick={e => { e.stopPropagation(); updateChar(char.name, { voiceId: '', voiceName: '' }) }}
@@ -610,19 +612,19 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                 </div>
                 {!hasAllVoices && characters.length > 0 && (
                   <p style={{ fontSize: '11px', color: '#d97706', marginTop: '10px', padding: '8px 12px', background: 'rgba(251,191,36,0.06)', borderRadius: '8px', border: '1px solid rgba(251,191,36,0.15)' }}>
-                    Asigna una voz a cada personaje para generar
+                    {t.dialogue.assignVoiceHint}
                   </p>
                 )}
               </div>
 
               {/* CONFIGURACIÓN DE AUDIO */}
               <div>
-                <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6b7280', marginBottom: '10px' }}>Configuración de Audio</p>
+                <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6b7280', marginBottom: '10px' }}>{t.dialogue.audioConfig}</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', background: '#111111', borderRadius: '10px', height: '40px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#888888' }}>Pausa entre líneas</span>
+                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#888888' }}>{t.dialogue.pauseBetween}</span>
                     <select value={pauseBetweenLines} onChange={e => setPauseBetweenLines(Number(e.target.value))} style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '12px', color: '#9ca3af', cursor: 'pointer' }}>
-                      <option value={0} style={{ background: '#111' }}>Sin pausa</option>
+                      <option value={0} style={{ background: '#111' }}>{t.dialogue.noPause}</option>
                       <option value={300} style={{ background: '#111' }}>0.3s</option>
                       <option value={500} style={{ background: '#111' }}>0.5s</option>
                       <option value={1000} style={{ background: '#111' }}>1s</option>
@@ -631,7 +633,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                     </select>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', background: '#111111', borderRadius: '10px', height: '40px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#888888' }}>Formato</span>
+                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#888888' }}>{t.dialogue.format}</span>
                     <div style={{ position: 'relative', display: 'flex', background: '#000000', borderRadius: '6px', padding: '2px' }}>
                       <div style={{ position: 'absolute', top: '2px', bottom: '2px', left: '2px', width: 'calc(50% - 2px)', background: '#222222', borderRadius: '4px', transform: outputFormat === 'mp3' ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 200ms ease-out' }} />
                       <button onClick={() => setOutputFormat('mp3')} style={{ position: 'relative', zIndex: 10, padding: '2px 10px', fontSize: '11px', fontWeight: 500, color: outputFormat === 'mp3' ? '#fff' : '#6b7280', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 200ms ease-out' }}>MP3</button>
@@ -639,15 +641,15 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', background: credits < totalChars && totalChars > 0 ? 'rgba(239,68,68,0.08)' : '#111111', border: credits < totalChars && totalChars > 0 ? '1px solid rgba(239,68,68,0.2)' : '1px solid transparent', borderRadius: '10px', height: '40px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#888888' }}>Créditos</span>
-                    <span style={{ fontSize: '12px', color: credits < totalChars && totalChars > 0 ? '#f87171' : '#6b7280' }}>{credits.toLocaleString()} disponibles</span>
+                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#888888' }}>{t.dialogue.credits}</span>
+                    <span style={{ fontSize: '12px', color: credits < totalChars && totalChars > 0 ? '#f87171' : '#6b7280' }}>{credits.toLocaleString()} {t.dialogue.creditsAvailable}</span>
                   </div>
                 </div>
               </div>
 
               {/* AUDIO */}
               <div>
-                <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6b7280', marginBottom: '10px' }}>Audio</p>
+                <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6b7280', marginBottom: '10px' }}>{t.dialogue.audio}</p>
                 {error && (
                   <div style={{ marginBottom: '10px', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}>{error}</div>
                 )}
@@ -656,13 +658,13 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                     <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Music2 style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.15)' }} />
                     </div>
-                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>El audio aparecerá aquí</p>
+                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>{t.dialogue.audioHere}</p>
                   </div>
                 ) : isGenerating ? (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '28px 0', gap: '12px', background: '#111111', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px' }}>
                     <Loader2 style={{ width: '24px', height: '24px', color: 'rgba(255,255,255,0.3)', animation: 'spin 1s linear infinite' }} />
                     <div>
-                      <p style={{ fontSize: '12px', color: '#6b7280' }}>Generando diálogo...</p>
+                      <p style={{ fontSize: '12px', color: '#6b7280' }}>{t.dialogue.generating}</p>
                       <p style={{ fontSize: '11px', color: '#374151', marginTop: '4px' }}>{generationProgress}%</p>
                     </div>
                   </div>
@@ -696,11 +698,11 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                       onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLAnchorElement).style.color = '#9ca3af' }}
                     >
                       <Download style={{ width: '14px', height: '14px' }} />
-                      Descargar {outputFormat.toUpperCase()}
+                      {t.dialogue.download} {outputFormat.toUpperCase()}
                     </a>
                     {generationHistory.length > 1 && (
                       <div>
-                        <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4b5563', marginBottom: '6px' }}>Anteriores</p>
+                        <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4b5563', marginBottom: '6px' }}>{t.dialogue.previous}</p>
                         {generationHistory.slice(1).map((entry, i) => (
                           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', background: '#111111', borderRadius: '8px', marginBottom: '4px' }}>
                             <Music2 style={{ width: '13px', height: '13px', color: '#4b5563', flexShrink: 0 }} />
@@ -730,8 +732,8 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
                 style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, color: '#000000', border: 'none', cursor: !canGenerate || isGenerating ? 'not-allowed' : 'pointer', background: '#ffffff', boxShadow: !canGenerate || isGenerating ? 'none' : '0 4px 15px rgba(255,255,255,0.1)', opacity: !canGenerate || isGenerating ? 0.5 : 1 }}
               >
                 {isGenerating
-                  ? <><Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> Generando...</>
-                  : <><Play style={{ width: '14px', height: '14px' }} /> Generar diálogo</>
+                  ? <><Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> {t.dialogue.generating}</>
+                  : <><Play style={{ width: '14px', height: '14px' }} /> {t.dialogue.generateBtn}</>
                 }
               </button>
             </div>
@@ -753,7 +755,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
           <div className="relative w-full max-w-4xl max-h-[85vh] overflow-hidden bg-[#0a0a0a] border border-white/10 rounded-2xl flex flex-col">
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] flex-shrink-0">
               <div>
-                <h3 className="text-sm font-semibold text-white">Seleccionar voz</h3>
+                <h3 className="text-sm font-semibold text-white">{t.dialogue.selectVoice}</h3>
                 <p className="text-xs text-white/40 mt-0.5">
                   Para: <span style={{ color: characters.find(c => c.name === selectingVoiceFor)?.color }}>{selectingVoiceFor}</span>
                 </p>
@@ -783,8 +785,8 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div className="relative bg-[#111] border border-white/10 rounded-2xl px-8 py-6 flex flex-col items-center gap-3 shadow-2xl">
             <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-            <p className="text-sm text-white/70 font-medium">Importando archivo...</p>
-            <p className="text-xs text-white/30">Extrayendo texto</p>
+            <p className="text-sm text-white/70 font-medium">{t.dialogue.importingFile}</p>
+            <p className="text-xs text-white/30">{t.dialogue.extractingText}</p>
           </div>
         </div>
       )}
