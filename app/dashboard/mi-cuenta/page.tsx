@@ -137,7 +137,7 @@ export default function MiCuentaPage() {
   }
 
   return (
-    <div style={{ padding: "40px 32px", minWidth: 0, maxWidth: "860px" }}>
+    <div style={{ padding: "40px 32px", minWidth: 0 }}>
         {/* Header */}
         <div style={{ marginBottom: "32px" }}>
           <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>{t.account.title}</h1>
