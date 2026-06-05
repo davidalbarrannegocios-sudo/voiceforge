@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 /* ─── Types ───────────────────────────────────────────────── */
-const PLAN_PRICE: Record<string, number> = { free: 0, starter: 7, pro: 13, elite: 25, enterprise: 110 };
+const PLAN_PRICE: Record<string, number> = { free: 0, starter: 7, pro: 13, elite: 25, enterprise: 110, lifetime: 0 };
 
 interface AffiliateApplication {
   id: string; name: string; email: string; platform: string;
@@ -200,7 +200,7 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
 
 function PlanBadge({ plan }: { plan: string }) {
   const colors: Record<string, string> = {
-    free: "#555555", starter: "#3b82f6", pro: "#8b5cf6", elite: "#f59e0b", enterprise: "#10b981",
+    free: "#555555", starter: "#3b82f6", pro: "#8b5cf6", elite: "#f59e0b", enterprise: "#10b981", lifetime: "#f59e0b",
   };
   const c = colors[plan] ?? "#555555";
   return (
@@ -429,7 +429,7 @@ function UserDetailModal({
               </p>
               <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
                 <CustomSelect
-                  options={["free", "starter", "pro", "elite", "enterprise"].map((p) => ({ value: p, label: p }))}
+                  options={["free", "starter", "pro", "elite", "enterprise", "lifetime"].map((p) => ({ value: p, label: p }))}
                   value={planValue} onChange={setPlanValue} style={{ minWidth: "160px" }}
                 />
                 <button onClick={handleAssignPlan} disabled={planLoading || !planValue || planValue === detail.user.plan} style={btn("#ffffff", { opacity: planLoading || planValue === detail.user.plan ? 0.5 : 1 })}>
@@ -788,7 +788,7 @@ function UsersSection({
           <input style={{ ...input, paddingLeft: "32px" }} placeholder="Buscar por email o ID..." value={search} onChange={e => onSearch(e.target.value)} />
         </div>
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-          {["all", "free", "starter", "pro", "elite", "enterprise"].map(p => (
+          {["all", "free", "starter", "pro", "elite", "enterprise", "lifetime"].map(p => (
             <button key={p} onClick={() => setPlanFilter(p)} style={{ padding: "5px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: 600, border: `1px solid ${planFilter === p ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.08)"}`, background: planFilter === p ? "rgba(255,255,255,0.1)" : "transparent", color: planFilter === p ? "#fff" : "#555555", cursor: "pointer" }}>
               {p === "all" ? "Todos" : p}
             </button>
@@ -1380,7 +1380,7 @@ function WithdrawalsSection({
 function AnalyticsSection({ users, stats }: { users: AdminUser[]; stats: Stats | null }) {
   const planCounts: Record<string, number> = {};
   for (const u of users) { planCounts[u.plan] = (planCounts[u.plan] ?? 0) + 1; }
-  const plans = ["free", "starter", "pro", "elite", "enterprise"];
+  const plans = ["free", "starter", "pro", "elite", "enterprise", "lifetime"];
   const planData = plans.map(p => ({ label: p, value: planCounts[p] ?? 0 }));
   const maxPlan = Math.max(...planData.map(d => d.value), 1);
 

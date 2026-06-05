@@ -5,7 +5,7 @@ import { PLAN_CREDITS } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 
-const VALID_PLANS = ["free", "starter", "pro", "elite", "enterprise"];
+const VALID_PLANS = ["free", "starter", "pro", "elite", "enterprise", "lifetime"];
 
 export async function POST(
   req: Request,
