@@ -345,8 +345,8 @@ function Sidebar({
         </div>
       )}
 
-      {/* Upgrade button — hidden for enterprise */}
-      {plan !== "enterprise" && (
+      {/* Upgrade button — hidden for enterprise and lifetime */}
+      {plan !== "enterprise" && plan !== "lifetime" && (
         <div style={{ padding: collapsed && desktop ? "0 8px 0" : "0 12px 0", flexShrink: 0 }}>
           <button
             onClick={() => { setActiveTab("billing"); onClose?.(); }}
@@ -2476,7 +2476,7 @@ function HistoryTab({ plan }: { plan: string }) {
   );
 }
 /* ─── Plan limits (mirrored from lib/stripe.ts for client use) ── */
-const VOICE_SLOT_LIMITS: Record<string, number> = { free: 1, starter: 3, pro: 10, elite: 20, enterprise: Infinity };
+const VOICE_SLOT_LIMITS: Record<string, number> = { free: 1, starter: 3, pro: 10, elite: 20, enterprise: Infinity, lifetime: Infinity };
 
 /* ─── Billing Tab ────────────────────────────────────────── */
 
