@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { Users } from "lucide-react";
+import { useLang } from "@/app/dashboard/LanguageContext";
 
 type Plan = {
   key: string;
@@ -150,6 +151,7 @@ function PricingContent() {
   const { isSignedIn } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLang();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
   const [discount, setDiscount] = useState<Discount | null>(null);
@@ -257,7 +259,7 @@ function PricingContent() {
             <span style={{ fontWeight: 700, fontSize: "15px", color: "#fff" }}>Elite Labs</span>
           </Link>
           <Link href={isSignedIn ? "/dashboard" : "/"} style={{ fontSize: "13px", color: "#555555", textDecoration: "none" }}>
-            {isSignedIn ? "← Dashboard" : "← Inicio"}
+            {isSignedIn ? t.pricing.backDashboard : t.pricing.backHome}
           </Link>
         </div>
       </header>
@@ -267,10 +269,10 @@ function PricingContent() {
         {/* Hero */}
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
           <h1 style={{ fontSize: "40px", fontWeight: 800, color: "#fff", marginBottom: "10px", lineHeight: 1.1 }}>
-            Elige tu plan
+            {t.pricing.title}
           </h1>
           <p style={{ fontSize: "15px", color: "#555555" }}>
-            Cancela cuando quieras · Los caracteres se renuevan cada período
+            {t.pricing.subtitle}
           </p>
         </div>
 
@@ -289,13 +291,13 @@ function PricingContent() {
               onClick={() => setBilling("monthly")}
               style={{ position: "relative", zIndex: 1, padding: "8px 28px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: 600, background: "transparent", color: billing === "monthly" ? "#000000" : "#666666", transition: "color 0.2s ease" }}
             >
-              Mensual
+              {t.billing.monthly}
             </button>
             <button
               onClick={() => setBilling("annual")}
               style={{ position: "relative", zIndex: 1, padding: "8px 28px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: 600, background: "transparent", color: billing === "annual" ? "#000000" : "#666666", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "color 0.2s ease" }}
             >
-              Anual
+              {t.billing.annual}
               <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e", whiteSpace: "nowrap" }}>−17%</span>
             </button>
           </div>
@@ -322,12 +324,12 @@ function PricingContent() {
                 <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{plan.name}</span>
                 {plan.popular && (
                   <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.2)", color: "#ffffff", background: "rgba(255,255,255,0.05)", whiteSpace: "nowrap", flexShrink: 0 }}>
-                    Popular
+                    {t.pricing.popular}
                   </span>
                 )}
                 {plan.key === "enterprise" && (
                   <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(16,185,129,0.45)", color: "#6ee7b7", background: "rgba(16,185,129,0.05)", whiteSpace: "nowrap", flexShrink: 0 }}>
-                    Equipos
+                    {t.pricing.teams}
                   </span>
                 )}
               </div>
@@ -354,7 +356,7 @@ function PricingContent() {
               <div style={{ marginBottom: "16px", minHeight: "58px" }}>
                 {plan.free ? (
                   <>
-                    <span style={{ fontSize: "38px", fontWeight: 800, color: "#fff", lineHeight: 1, display: "block" }}>Gratis</span>
+                    <span style={{ fontSize: "38px", fontWeight: 800, color: "#fff", lineHeight: 1, display: "block" }}>{t.pricing.freePrice}</span>
                     <p style={{ fontSize: "11px", color: "transparent", marginTop: "4px", userSelect: "none" }}>·</p>
                   </>
                 ) : (
@@ -370,15 +372,15 @@ function PricingContent() {
                         color: discount?.active ? "#4ade80" : "#fff" }}>
                         ${effectiveMonthly(plan.price)}
                       </span>
-                      <span style={{ fontSize: "12px", color: "#444444", marginLeft: "2px" }}>/mes</span>
+                      <span style={{ fontSize: "12px", color: "#444444", marginLeft: "2px" }}>{t.pricing.perMonth}</span>
                     </div>
                     {billing === "annual" ? (
                       <p style={{ fontSize: "11px", color: "#555555", marginTop: "3px" }}>
-                        ${effectiveAnnual(plan.price)} facturado anualmente
+                        ${effectiveAnnual(plan.price)} {t.pricing.billedAnnually}
                       </p>
                     ) : discount?.active ? (
                       <p style={{ fontSize: "11px", color: "#4ade80", marginTop: "3px" }}>
-                        {discount.percent}% de descuento aplicado
+                        {discount.percent}{t.pricing.discountApplied}
                       </p>
                     ) : (
                       <p style={{ fontSize: "11px", color: "transparent", marginTop: "3px", userSelect: "none" }}>·</p>
@@ -429,7 +431,7 @@ function PricingContent() {
                   </div>
                   <div style={{ textAlign: "center" }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: "6px", padding: "3px 8px", fontSize: "11px", fontWeight: 700, color: "#4ade80" }}>
-                      EliteLabs lo patrocina · GRATIS
+                      {t.pricing.enterpriseSponsored}
                     </span>
                   </div>
                 </div>
@@ -438,7 +440,7 @@ function PricingContent() {
               {/* Card footer — character count */}
               <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                 <p style={{ fontSize: "14px", fontWeight: 500, color: "rgba(255,255,255,0.60)", textAlign: "center" }}>
-                  {fmtChars(plan.characters)} caracteres/mes
+                  {fmtChars(plan.characters)} {t.pricing.charsPerMonth}
                 </p>
               </div>
             </div>
@@ -448,17 +450,17 @@ function PricingContent() {
         {/* Competitor comparison */}
         <div style={{ marginBottom: "56px" }}>
           <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "4px", textAlign: "center" }}>
-            Comparativa con la competencia
+            {t.pricing.comparison}
           </h2>
           <p style={{ fontSize: "13px", color: "#444444", textAlign: "center", marginBottom: "20px" }}>
-            Caracteres incluidos por precio mensual similar
+            {t.pricing.comparisonSubtitle}
           </p>
           <div style={{ borderRadius: "12px", border: "1px solid rgba(255,255,255,0.10)", overflow: "hidden" }}>
             <table style={{ width: "100%", fontSize: "13px", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#111111" }}>
                   <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "#555555", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    Plataforma
+                    {t.pricing.platform}
                   </th>
                   {["~$7/mes", "~$13/mes", "~$25/mes", "~$110/mes"].map((col) => (
                     <th key={col} style={{ padding: "12px 10px", fontWeight: 600, color: "#555555", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
@@ -490,23 +492,23 @@ function PricingContent() {
             </table>
           </div>
           <p style={{ marginTop: "12px", textAlign: "center", fontSize: "13px" }}>
-            <span style={{ color: "#ffffff", fontWeight: 600 }}>Hasta 6× más caracteres que la competencia al mismo precio.</span>
+            <span style={{ color: "#ffffff", fontWeight: 600 }}>{t.pricing.upTo6x}</span>
             {" "}
-            <span style={{ color: "#444444", fontWeight: 400 }}>Sin límite por generación.</span>
+            <span style={{ color: "#444444", fontWeight: 400 }}>{t.pricing.noLimit}</span>
           </p>
         </div>
 
         {/* FAQ */}
         <div>
           <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "20px", textAlign: "center" }}>
-            Preguntas frecuentes
+            {t.pricing.faq}
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {[
-              { q: "¿Puedo cancelar en cualquier momento?", a: "Sí. Puedes cancelar desde el portal de facturación. Seguirás teniendo acceso hasta el final del período pagado." },
-              { q: "¿Qué pasa con mis caracteres al final del mes?", a: "Los caracteres no utilizados no se acumulan. Cada mes se renuevan al total de tu plan." },
-              { q: "¿Puedo cambiar de plan?", a: "Sí, puedes hacer upgrade o downgrade en cualquier momento desde el portal de facturación." },
-              { q: "¿Qué formatos acepta la clonación?", a: "WAV, MP3 y M4A. Recomendamos entre 10 y 30 segundos de audio limpio sin ruido." },
+              { q: t.pricing.cancelAnytimeQ, a: t.pricing.cancelAnytimeA },
+              { q: t.pricing.charsExpireQ,   a: t.pricing.charsExpireA },
+              { q: t.pricing.changePlanQ,    a: t.pricing.changePlanA },
+              { q: t.pricing.cloneFormatsQ,  a: t.pricing.cloneFormatsA },
             ].map((faq) => (
               <div key={faq.q} style={{ padding: "14px 18px", borderRadius: "10px", border: "1px solid #1a1a1a", background: "#0a0a0a" }}>
                 <p style={{ fontWeight: 600, color: "#e5e7eb", marginBottom: "3px", fontSize: "13px" }}>{faq.q}</p>

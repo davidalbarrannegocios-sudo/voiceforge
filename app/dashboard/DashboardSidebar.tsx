@@ -251,7 +251,7 @@ export function DashboardSidebar() {
                         onMouseLeave={(e) => { if (!isDiscover) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#555555"; } }}
                       >
                         <Compass size={15} style={{ color: isDiscover ? "#ffffff" : "#444444", flexShrink: 0 }} />
-                        <span style={{ flex: 1 }}>Descubrir</span>
+                        <span style={{ flex: 1 }}>{t.nav.discover}</span>
                         {isDiscover && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
                       </Link>
                     )}

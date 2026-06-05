@@ -14,7 +14,8 @@
     "characters": "Caracteres",
     "buy": "+ Comprar",
     "upgradePlan": "Melhorar plano",
-    "signOut": "Sair"
+    "signOut": "Sair",
+    "discover": "Descobrir"
   },
   "tabs": {
     "home": "Início",
@@ -169,5 +170,51 @@
     "createAccount": "Criar conta",
     "noAccount": "Não tem conta? Cadastre-se grátis",
     "haveAccount": "Já tem conta? Entrar"
+  },
+  "pricing": {
+    "title": "Escolha o seu plano",
+    "subtitle": "Cancele a qualquer momento · Os caracteres renovam a cada período",
+    "popular": "Popular",
+    "teams": "Equipas",
+    "freePrice": "Grátis",
+    "subscribe": "Assinar",
+    "startFree": "Começar grátis",
+    "backDashboard": "← Painel",
+    "backHome": "← Início",
+    "charsPerMonth": "caracteres/mês",
+    "perMonth": "/mês",
+    "billedAnnually": "faturado anualmente",
+    "discountApplied": "% de desconto aplicado",
+    "comparison": "Comparação com a concorrência",
+    "comparisonSubtitle": "Caracteres incluídos a um preço mensal semelhante",
+    "platform": "Plataforma",
+    "upTo6x": "Até 6× mais caracteres que a concorrência ao mesmo preço.",
+    "noLimit": "Sem limite por geração.",
+    "faq": "Perguntas frequentes",
+    "enterpriseSponsored": "Patrocinado pela EliteLabs · GRATUITO",
+    "cancelAnytimeQ": "Posso cancelar a qualquer momento?",
+    "cancelAnytimeA": "Sim. Pode cancelar a partir do portal de faturação. Manterá o acesso até ao fim do período pago.",
+    "charsExpireQ": "O que acontece com os meus caracteres no final do mês?",
+    "charsExpireA": "Os caracteres não utilizados não se acumulam. Cada mês são renovados para o total do seu plano.",
+    "changePlanQ": "Posso mudar de plano?",
+    "changePlanA": "Sim, pode fazer upgrade ou downgrade a qualquer momento a partir do portal de faturação.",
+    "cloneFormatsQ": "Que formatos aceita a clonagem de voz?",
+    "cloneFormatsA": "WAV, MP3 e M4A. Recomendamos entre 10 e 30 segundos de áudio limpo sem ruído.",
+    "viewResults": "Ver {count} vozes"
+  },
+  "voicesPage": {
+    "heroTitle": "Descubra as vozes de IA mais realistas",
+    "heroSubtitle": "Mais de 2 milhões de vozes prontas para o seu próximo projeto",
+    "searchPlaceholder": "Pesquisar vozes...",
+    "allLanguages": "Todos os idiomas",
+    "filtersBtn": "Filtros",
+    "voicesLoaded": "vozes carregadas",
+    "loadingMore": "Carregando mais vozes...",
+    "noResults": "Nenhuma voz encontrada para esta pesquisa.",
+    "trending": "Principais tendências",
+    "clearAll": "Limpar tudo",
+    "scrollMore": "Role para carregar mais",
+    "reset": "Repor",
+    "viewVoices": "Ver {count} vozes"
   }
 }

@@ -14,7 +14,8 @@
     "characters": "Zeichen",
     "buy": "+ Kaufen",
     "upgradePlan": "Plan upgraden",
-    "signOut": "Abmelden"
+    "signOut": "Abmelden",
+    "discover": "Entdecken"
   },
   "tabs": {
     "home": "Startseite",
@@ -169,5 +170,51 @@
     "createAccount": "Konto erstellen",
     "noAccount": "Kein Konto? Kostenlos registrieren",
     "haveAccount": "Bereits ein Konto? Anmelden"
+  },
+  "pricing": {
+    "title": "Wählen Sie Ihren Plan",
+    "subtitle": "Jederzeit kündbar · Zeichen werden jede Periode erneuert",
+    "popular": "Beliebt",
+    "teams": "Teams",
+    "freePrice": "Kostenlos",
+    "subscribe": "Abonnieren",
+    "startFree": "Kostenlos starten",
+    "backDashboard": "← Dashboard",
+    "backHome": "← Startseite",
+    "charsPerMonth": "Zeichen/Monat",
+    "perMonth": "/Monat",
+    "billedAnnually": "jährlich abgerechnet",
+    "discountApplied": "% Rabatt angewendet",
+    "comparison": "Konkurrenzvergleich",
+    "comparisonSubtitle": "Enthaltene Zeichen bei ähnlichem Monatspreis",
+    "platform": "Plattform",
+    "upTo6x": "Bis zu 6× mehr Zeichen als die Konkurrenz zum gleichen Preis.",
+    "noLimit": "Kein Limit pro Generierung.",
+    "faq": "Häufig gestellte Fragen",
+    "enterpriseSponsored": "Von EliteLabs gesponsert · KOSTENLOS",
+    "cancelAnytimeQ": "Kann ich jederzeit kündigen?",
+    "cancelAnytimeA": "Ja. Sie können über das Abrechnungsportal kündigen. Sie behalten den Zugriff bis zum Ende des bezahlten Zeitraums.",
+    "charsExpireQ": "Was passiert mit meinen Zeichen am Monatsende?",
+    "charsExpireA": "Nicht verwendete Zeichen werden nicht übertragen. Jeden Monat werden sie auf das Gesamtvolumen Ihres Plans zurückgesetzt.",
+    "changePlanQ": "Kann ich meinen Plan wechseln?",
+    "changePlanA": "Ja, Sie können jederzeit über das Abrechnungsportal upgraden oder downgraden.",
+    "cloneFormatsQ": "Welche Formate akzeptiert das Stimmklonen?",
+    "cloneFormatsA": "WAV, MP3 und M4A. Wir empfehlen 10 bis 30 Sekunden sauberes Audio ohne Rauschen.",
+    "viewResults": "{count} Stimmen ansehen"
+  },
+  "voicesPage": {
+    "heroTitle": "Entdecken Sie die realistischsten KI-Stimmen",
+    "heroSubtitle": "Über 2 Millionen Stimmen für Ihr nächstes Projekt bereit",
+    "searchPlaceholder": "Stimmen suchen...",
+    "allLanguages": "Alle Sprachen",
+    "filtersBtn": "Filter",
+    "voicesLoaded": "Stimmen geladen",
+    "loadingMore": "Weitere Stimmen werden geladen...",
+    "noResults": "Keine Stimmen für diese Suche gefunden.",
+    "trending": "Top-Trends",
+    "clearAll": "Alle löschen",
+    "scrollMore": "Scrollen Sie für mehr",
+    "reset": "Zurücksetzen",
+    "viewVoices": "{count} Stimmen ansehen"
   }
 }

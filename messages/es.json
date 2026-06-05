@@ -14,7 +14,8 @@
     "characters": "Caracteres",
     "buy": "+ Comprar",
     "upgradePlan": "Mejorar plan",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "discover": "Descubrir"
   },
   "tabs": {
     "home": "Inicio",
@@ -169,5 +170,51 @@
     "createAccount": "Crear cuenta",
     "noAccount": "¿No tienes cuenta? Regístrate gratis",
     "haveAccount": "¿Ya tienes cuenta? Inicia sesión"
+  },
+  "pricing": {
+    "title": "Elige tu plan",
+    "subtitle": "Cancela cuando quieras · Los caracteres se renuevan cada período",
+    "popular": "Popular",
+    "teams": "Equipos",
+    "freePrice": "Gratis",
+    "subscribe": "Suscribirse",
+    "startFree": "Empezar gratis",
+    "backDashboard": "← Dashboard",
+    "backHome": "← Inicio",
+    "charsPerMonth": "caracteres/mes",
+    "perMonth": "/mes",
+    "billedAnnually": "facturado anualmente",
+    "discountApplied": "% de descuento aplicado",
+    "comparison": "Comparativa con la competencia",
+    "comparisonSubtitle": "Caracteres incluidos por precio mensual similar",
+    "platform": "Plataforma",
+    "upTo6x": "Hasta 6× más caracteres que la competencia al mismo precio.",
+    "noLimit": "Sin límite por generación.",
+    "faq": "Preguntas frecuentes",
+    "enterpriseSponsored": "EliteLabs lo patrocina · GRATIS",
+    "cancelAnytimeQ": "¿Puedo cancelar en cualquier momento?",
+    "cancelAnytimeA": "Sí. Puedes cancelar desde el portal de facturación. Seguirás teniendo acceso hasta el final del período pagado.",
+    "charsExpireQ": "¿Qué pasa con mis caracteres al final del mes?",
+    "charsExpireA": "Los caracteres no utilizados no se acumulan. Cada mes se renuevan al total de tu plan.",
+    "changePlanQ": "¿Puedo cambiar de plan?",
+    "changePlanA": "Sí, puedes hacer upgrade o downgrade en cualquier momento desde el portal de facturación.",
+    "cloneFormatsQ": "¿Qué formatos acepta la clonación?",
+    "cloneFormatsA": "WAV, MP3 y M4A. Recomendamos entre 10 y 30 segundos de audio limpio sin ruido.",
+    "viewResults": "Ver {count} voces"
+  },
+  "voicesPage": {
+    "heroTitle": "Descubre las voces de IA más realistas",
+    "heroSubtitle": "Más de 2 millones de voces listas para tu próximo proyecto",
+    "searchPlaceholder": "Buscar voces...",
+    "allLanguages": "Todos los idiomas",
+    "filtersBtn": "Filtros",
+    "voicesLoaded": "voces cargadas",
+    "loadingMore": "Cargando más voces...",
+    "noResults": "No se encontraron voces para esta búsqueda.",
+    "trending": "Tendencias principales",
+    "clearAll": "Limpiar todo",
+    "scrollMore": "Desplázate para cargar más",
+    "reset": "Restablecer",
+    "viewVoices": "Ver {count} voces"
   }
 }

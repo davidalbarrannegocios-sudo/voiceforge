@@ -14,7 +14,8 @@
     "characters": "Caractères",
     "buy": "+ Acheter",
     "upgradePlan": "Améliorer le plan",
-    "signOut": "Se déconnecter"
+    "signOut": "Se déconnecter",
+    "discover": "Découvrir"
   },
   "tabs": {
     "home": "Accueil",
@@ -169,5 +170,51 @@
     "createAccount": "Créer un compte",
     "noAccount": "Pas de compte ? Inscrivez-vous gratuitement",
     "haveAccount": "Vous avez déjà un compte ? Connectez-vous"
+  },
+  "pricing": {
+    "title": "Choisissez votre plan",
+    "subtitle": "Annulez à tout moment · Les caractères sont renouvelés chaque période",
+    "popular": "Populaire",
+    "teams": "Équipes",
+    "freePrice": "Gratuit",
+    "subscribe": "S'abonner",
+    "startFree": "Commencer gratuitement",
+    "backDashboard": "← Tableau de bord",
+    "backHome": "← Accueil",
+    "charsPerMonth": "caractères/mois",
+    "perMonth": "/mois",
+    "billedAnnually": "facturé annuellement",
+    "discountApplied": "% de réduction appliquée",
+    "comparison": "Comparaison avec la concurrence",
+    "comparisonSubtitle": "Caractères inclus pour un prix mensuel similaire",
+    "platform": "Plateforme",
+    "upTo6x": "Jusqu'à 6× plus de caractères que la concurrence au même prix.",
+    "noLimit": "Sans limite par génération.",
+    "faq": "Foire aux questions",
+    "enterpriseSponsored": "Parrainé par EliteLabs · GRATUIT",
+    "cancelAnytimeQ": "Puis-je annuler à tout moment ?",
+    "cancelAnytimeA": "Oui. Vous pouvez annuler depuis le portail de facturation. Vous conserverez l'accès jusqu'à la fin de la période payée.",
+    "charsExpireQ": "Que se passe-t-il avec mes caractères à la fin du mois ?",
+    "charsExpireA": "Les caractères non utilisés ne s'accumulent pas. Chaque mois, ils sont réinitialisés au total de votre plan.",
+    "changePlanQ": "Puis-je changer de plan ?",
+    "changePlanA": "Oui, vous pouvez upgrader ou downgrader à tout moment depuis le portail de facturation.",
+    "cloneFormatsQ": "Quels formats le clonage vocal accepte-t-il ?",
+    "cloneFormatsA": "WAV, MP3 et M4A. Nous recommandons entre 10 et 30 secondes d'audio clair sans bruit.",
+    "viewResults": "Voir {count} voix"
+  },
+  "voicesPage": {
+    "heroTitle": "Découvrez les voix IA les plus réalistes",
+    "heroSubtitle": "Plus de 2 millions de voix prêtes pour votre prochain projet",
+    "searchPlaceholder": "Rechercher des voix...",
+    "allLanguages": "Toutes les langues",
+    "filtersBtn": "Filtres",
+    "voicesLoaded": "voix chargées",
+    "loadingMore": "Chargement de voix supplémentaires...",
+    "noResults": "Aucune voix trouvée pour cette recherche.",
+    "trending": "Tendances principales",
+    "clearAll": "Tout effacer",
+    "scrollMore": "Faites défiler pour charger plus",
+    "reset": "Réinitialiser",
+    "viewVoices": "Voir {count} voix"
   }
 }

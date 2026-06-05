@@ -8,6 +8,7 @@ import { useUser } from "@clerk/nextjs";
 import { Search, ChevronDown, SlidersHorizontal, X, Check } from "lucide-react";
 import { generateVoiceGradient } from "@/lib/voice-gradient";
 import { DashboardSidebar } from "@/app/dashboard/DashboardSidebar";
+import { useLang } from "@/app/dashboard/LanguageContext";
 
 /* ── Types ────────────────────────────────────────────────────── */
 interface FishVoice {
@@ -158,6 +159,7 @@ const PAGE_SIZE = 48;
 export default function VoicesClient() {
   const { isSignedIn, isLoaded } = useUser();
   const router = useRouter();
+  const { t } = useLang();
 
   const [allVoices, setAllVoices] = useState<FishVoice[]>([]);
   const [filteredVoices, setFilteredVoices] = useState<FishVoice[]>([]);
@@ -384,12 +386,12 @@ export default function VoicesClient() {
                   <span className="font-bold text-white text-base">Elite Labs</span>
                 </Link>
                 <nav className="hidden md:flex items-center gap-1">
-                  <Link href="/pricing" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg">Precios</Link>
-                  <Link href="/voices" className="text-sm font-semibold text-white px-3 py-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.08)" }}>Voces</Link>
+                  <Link href="/pricing" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg">{t.landing.pricing}</Link>
+                  <Link href="/voices" className="text-sm font-semibold text-white px-3 py-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.08)" }}>{t.voices.explore}</Link>
                 </nav>
                 <div className="flex items-center gap-3">
-                  <Link href="/sign-in" className="text-sm text-gray-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-transparent hover:border-white/10 hidden sm:block">Iniciar sesión</Link>
-                  <Link href="/sign-up" className="text-sm font-semibold text-black px-4 py-2 rounded-lg" style={{ background: "#ffffff" }}>Empezar gratis</Link>
+                  <Link href="/sign-in" className="text-sm text-gray-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-transparent hover:border-white/10 hidden sm:block">{t.landing.signIn}</Link>
+                  <Link href="/sign-up" className="text-sm font-semibold text-black px-4 py-2 rounded-lg" style={{ background: "#ffffff" }}>{t.landing.startFree}</Link>
                 </div>
               </div>
             </header>
@@ -406,10 +408,10 @@ export default function VoicesClient() {
             </div>
             <div className="relative max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight mb-3">
-                Descubre las voces de IA más realistas
+                {t.voicesPage.heroTitle}
               </h1>
               <p className="text-white/50 text-base md:text-lg mb-10">
-                Más de 2 millones de voces listas para tu próximo proyecto
+                {t.voicesPage.heroSubtitle}
               </p>
 
               {/* Search + language + filters */}
@@ -418,7 +420,7 @@ export default function VoicesClient() {
                   <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
                   <input
                     type="text"
-                    placeholder="Buscar voces..."
+                    placeholder={t.voicesPage.searchPlaceholder}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full pl-11 pr-4 py-3 rounded-xl text-sm text-white placeholder-white/30 outline-none"
@@ -482,7 +484,7 @@ export default function VoicesClient() {
                   }}
                 >
                   <SlidersHorizontal size={15} />
-                  <span className="hidden sm:inline">Filtros</span>
+                  <span className="hidden sm:inline">{t.voicesPage.filtersBtn}</span>
                   {activeFilters.length > 0 && (
                     <span className="flex items-center justify-center text-black font-bold rounded-full" style={{ background: "#ffffff", width: 18, height: 18, fontSize: 10 }}>
                       {activeFilters.length}
@@ -508,7 +510,7 @@ export default function VoicesClient() {
                     onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}
                     onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.35)")}
                   >
-                    Limpiar todo
+                    {t.voicesPage.clearAll}
                   </button>
                 </div>
               )}
@@ -518,7 +520,7 @@ export default function VoicesClient() {
           {/* ── Main content ───────────────────────────────────── */}
           <main className="px-4 md:px-8 py-10 max-w-screen-2xl mx-auto">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Tendencias principales</h2>
+              <h2 className="text-xs font-semibold text-white/40 uppercase tracking-wider">{t.voicesPage.trending}</h2>
               <div className="flex flex-col items-end gap-1">
                 {total > 0 && (
                   <span className="text-xs text-white/20">
@@ -526,7 +528,7 @@ export default function VoicesClient() {
                   </span>
                 )}
                 {(activeFilters.length > 0 || search.trim()) && allVoices.length < total && (
-                  <span className="text-xs text-white/20">Desplázate para cargar más</span>
+                  <span className="text-xs text-white/20">{t.voicesPage.scrollMore}</span>
                 )}
               </div>
             </div>
@@ -550,7 +552,7 @@ export default function VoicesClient() {
 
             {!loading && filteredVoices.length === 0 && (
               <div className="text-center py-20">
-                <p className="text-white/30 text-sm">No se encontraron voces para esta búsqueda.</p>
+                <p className="text-white/30 text-sm">{t.voicesPage.noResults}</p>
               </div>
             )}
 
@@ -574,12 +576,12 @@ export default function VoicesClient() {
               {loadingMore && (
                 <div className="flex items-center gap-3" style={{ color: "rgba(255,255,255,0.3)" }}>
                   <div className="w-4 h-4 rounded-full border-2 animate-spin" style={{ borderColor: "rgba(255,255,255,0.15)", borderTopColor: "rgba(255,255,255,0.5)" }} />
-                  <span className="text-sm">Cargando más voces...</span>
+                  <span className="text-sm">{t.voicesPage.loadingMore}</span>
                 </div>
               )}
               {!loadingMore && !hasMore && allVoices.length > 0 && (
                 <p className="text-sm" style={{ color: "rgba(255,255,255,0.2)" }}>
-                  {allVoices.length.toLocaleString("es-ES")} voces cargadas
+                  {allVoices.length.toLocaleString("es-ES")} {t.voicesPage.voicesLoaded}
                 </p>
               )}
             </div>
@@ -618,7 +620,7 @@ export default function VoicesClient() {
           >
             {/* Drawer header */}
             <div className="flex items-center justify-between p-6 border-b" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-              <span className="text-white font-semibold text-lg">Filtros</span>
+              <span className="text-white font-semibold text-lg">{t.voicesPage.filtersBtn}</span>
               <div className="flex items-center gap-3">
                 {activeFilters.length > 0 && (
                   <button
@@ -628,7 +630,7 @@ export default function VoicesClient() {
                     onMouseEnter={(e) => (e.currentTarget.style.color = "#ffffff")}
                     onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.4)")}
                   >
-                    Restablecer
+                    {t.voicesPage.reset}
                   </button>
                 )}
                 <button
@@ -683,7 +685,7 @@ export default function VoicesClient() {
                   className="w-full py-3 rounded-xl text-sm font-semibold text-black"
                   style={{ background: "#ffffff" }}
                 >
-                  Ver {filteredVoices.length} voces
+                  {t.voicesPage.viewVoices.replace("{count}", String(filteredVoices.length))}
                 </button>
               </div>
             )}

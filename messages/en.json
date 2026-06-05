@@ -14,7 +14,8 @@
     "characters": "Characters",
     "buy": "+ Buy",
     "upgradePlan": "Upgrade plan",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "discover": "Discover"
   },
   "tabs": {
     "home": "Home",
@@ -169,5 +170,51 @@
     "createAccount": "Create account",
     "noAccount": "Don't have an account? Sign up free",
     "haveAccount": "Already have an account? Sign in"
+  },
+  "pricing": {
+    "title": "Choose your plan",
+    "subtitle": "Cancel anytime · Characters renew each period",
+    "popular": "Popular",
+    "teams": "Teams",
+    "freePrice": "Free",
+    "subscribe": "Subscribe",
+    "startFree": "Start free",
+    "backDashboard": "← Dashboard",
+    "backHome": "← Home",
+    "charsPerMonth": "characters/month",
+    "perMonth": "/mo",
+    "billedAnnually": "billed annually",
+    "discountApplied": "% discount applied",
+    "comparison": "Competitor comparison",
+    "comparisonSubtitle": "Characters included at a similar monthly price",
+    "platform": "Platform",
+    "upTo6x": "Up to 6× more characters than competitors at the same price.",
+    "noLimit": "No per-generation limit.",
+    "faq": "Frequently asked questions",
+    "enterpriseSponsored": "Sponsored by EliteLabs · FREE",
+    "cancelAnytimeQ": "Can I cancel at any time?",
+    "cancelAnytimeA": "Yes. You can cancel from the billing portal. You will retain access until the end of the paid period.",
+    "charsExpireQ": "What happens to my characters at the end of the month?",
+    "charsExpireA": "Unused characters do not accumulate. Each month they reset to your plan total.",
+    "changePlanQ": "Can I change my plan?",
+    "changePlanA": "Yes, you can upgrade or downgrade at any time from the billing portal.",
+    "cloneFormatsQ": "What formats does voice cloning accept?",
+    "cloneFormatsA": "WAV, MP3 and M4A. We recommend 10 to 30 seconds of clean audio without noise.",
+    "viewResults": "View {count} voices"
+  },
+  "voicesPage": {
+    "heroTitle": "Discover the most realistic AI voices",
+    "heroSubtitle": "Over 2 million voices ready for your next project",
+    "searchPlaceholder": "Search voices...",
+    "allLanguages": "All languages",
+    "filtersBtn": "Filters",
+    "voicesLoaded": "voices loaded",
+    "loadingMore": "Loading more voices...",
+    "noResults": "No voices found for this search.",
+    "trending": "Top trending",
+    "clearAll": "Clear all",
+    "scrollMore": "Scroll to load more",
+    "reset": "Reset",
+    "viewVoices": "View {count} voices"
   }
 }
