@@ -35,7 +35,6 @@ export async function POST() {
     currency: "usd",
     customer: customerId,
     description: "Elite Vitalicio — 20.000.000 créditos sin caducidad",
-    payment_method_types: ["card"],
     metadata: {
       type: "lifetime",
       userId: user.id,
