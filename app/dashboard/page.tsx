@@ -21,7 +21,7 @@ import AudioHistoryList from "@/components/AudioHistoryList";
 import { CustomSelect } from "@/components/CustomSelect";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 import { generateVoiceGradient } from "@/lib/voice-gradient";
-import { TaggedTextEditor } from "@/components/TaggedTextEditor";
+import { TaggedTextEditor, cleanPastedText } from "@/components/TaggedTextEditor";
 import { NoCreditsModal } from "@/components/NoCreditsModal";
 
 /* ─── Types ──────────────────────────────────────────────── */
@@ -1299,10 +1299,23 @@ function GenerateTab({
               </div>
             )}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px" }}>
-              <span style={{ fontSize: "13px", color: "#6b7280" }}>
-                {text.length.toLocaleString("es-ES")} {t.generate.characters}
-                {text.length > 0 && <span style={{ marginLeft: "6px", fontSize: "11px", color: "#444444" }}>· {displayCost.toLocaleString("es-ES")} {t.generate.credits}</span>}
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ fontSize: "13px", color: "#6b7280" }}>
+                  {text.length.toLocaleString("es-ES")} {t.generate.characters}
+                  {text.length > 0 && <span style={{ marginLeft: "6px", fontSize: "11px", color: "#444444" }}>· {displayCost.toLocaleString("es-ES")} {t.generate.credits}</span>}
+                </span>
+                {text.length > 0 && (
+                  <button
+                    onClick={() => setText(cleanPastedText(text))}
+                    style={{ fontSize: "11px", color: "#444444", background: "none", border: "none", cursor: "pointer", padding: "0", whiteSpace: "nowrap", transition: "color 0.15s" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = "#aaaaaa"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = "#444444"; }}
+                    title="Elimina saltos de línea incorrectos dentro de frases"
+                  >
+                    Limpiar formato
+                  </button>
+                )}
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 {plan !== "free" && (
                   <button

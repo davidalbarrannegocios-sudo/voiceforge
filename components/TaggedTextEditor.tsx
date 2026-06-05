@@ -2,6 +2,14 @@
 
 import { useRef, useCallback, useEffect } from 'react'
 
+export function cleanPastedText(text: string): string {
+  return text
+    .replace(/([^.!?:\n])\n([^\n])/g, '$1 $2')
+    .replace(/ +/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 interface Props {
   value: string
   onChange: (val: string) => void
@@ -101,6 +109,13 @@ export function TaggedTextEditor({ value, onChange, isS2, placeholder, disabled 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onChange, isS2])
 
+  const handlePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    const raw = e.clipboardData.getData('text')
+    const cleaned = cleanPastedText(raw)
+    document.execCommand('insertText', false, cleaned)
+  }, [])
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault()
@@ -117,6 +132,7 @@ export function TaggedTextEditor({ value, onChange, isS2, placeholder, disabled 
       data-placeholder={placeholder ?? 'Escribe o pega tu texto aquí...'}
       onInput={handleInput}
       onKeyDown={handleKeyDown}
+      onPaste={handlePaste}
       onCompositionStart={() => { isComposing.current = true }}
       onCompositionEnd={() => { isComposing.current = false; handleInput() }}
       style={{
