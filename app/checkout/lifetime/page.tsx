@@ -168,7 +168,9 @@ function LifetimeForm({ isRenewal, email }: { isRenewal: boolean; email: string 
       <PaymentElement
         options={{
           layout: "tabs",
+          paymentMethodOrder: ["card"],
           fields: { billingDetails: { name: "never", email: "never" } },
+          wallets: { applePay: "never", googlePay: "never" },
           terms: { card: "never" },
         }}
       />
