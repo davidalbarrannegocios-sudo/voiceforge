@@ -61,7 +61,7 @@ export function DashboardSidebar() {
     { key: "referral", label: t.nav.referrals, Icon: Gift },
   ];
   if (plan === "enterprise") {
-    platformItems.unshift({ key: "team", label: "Equipo", Icon: Users });
+    platformItems.unshift({ key: "team", label: t.nav.team, Icon: Users });
   }
 
   const sections = [
@@ -75,8 +75,8 @@ export function DashboardSidebar() {
       label: t.nav.products,
       items: [
         { key: "generate" as Tab, label: t.nav.generate, Icon: Type },
-        { key: "dialogue" as Tab, label: "Texto a Diálogo", Icon: MessageSquare },
-        { key: "imagevideo" as Tab, label: "Imagen y Video", Icon: ImageIcon },
+        { key: "dialogue" as Tab, label: t.nav.textToDialogue, Icon: MessageSquare },
+        { key: "imagevideo" as Tab, label: t.nav.imageVideo, Icon: ImageIcon },
         { key: "transcribe" as Tab, label: t.nav.transcribe, Icon: FileAudio },
         { key: "translate" as Tab, label: t.nav.translate, Icon: Globe },
         { key: "history" as Tab, label: t.nav.history, Icon: Clock },
@@ -292,16 +292,16 @@ export function DashboardSidebar() {
       {memberInfo && (
         <div style={{ borderTop: "1px solid #1a1a1a", padding: "12px 20px 16px" }}>
           <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#444444", marginBottom: "8px" }}>
-            Equipo
+            {t.sidebar.team}
           </p>
           {leaveConfirm ? (
             <div style={{ background: "#110a0a", border: "1px solid #3a1a1a", borderRadius: "10px", padding: "10px 12px" }}>
               <p style={{ fontSize: "11px", color: "#fca5a5", marginBottom: "8px", lineHeight: 1.4 }}>
-                ¿Salir del equipo <strong>{memberInfo.teamName}</strong>? Perderás{" "}
+                {t.sidebar.leaveQuestion} <strong>{memberInfo.teamName}</strong>{t.sidebar.leaveLosing}{" "}
                 {memberInfo.creditsLastDistributed > 0
-                  ? <strong>{memberInfo.creditsLastDistributed.toLocaleString("es-ES")} créditos</strong>
-                  : "los créditos asignados"}{" "}
-                que se devolverán al administrador.
+                  ? <strong>{memberInfo.creditsLastDistributed.toLocaleString()} {t.generate.credits}</strong>
+                  : t.sidebar.creditsAssigned}{" "}
+                {t.sidebar.leaveReturn}
               </p>
               <div style={{ display: "flex", gap: "6px" }}>
                 <button
@@ -309,14 +309,14 @@ export function DashboardSidebar() {
                   disabled={leaving}
                   style={{ flex: 1, padding: "5px 0", borderRadius: "7px", border: "1px solid #333333", background: "transparent", color: "#666666", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
                 >
-                  Cancelar
+                  {t.account.cancel}
                 </button>
                 <button
                   onClick={handleLeave}
                   disabled={leaving}
                   style={{ flex: 1, padding: "5px 0", borderRadius: "7px", border: "none", background: "#ef4444", color: "#fff", fontSize: "11px", fontWeight: 600, cursor: "pointer", opacity: leaving ? 0.6 : 1 }}
                 >
-                  {leaving ? "..." : "Salir"}
+                  {leaving ? "..." : t.sidebar.leave}
                 </button>
               </div>
             </div>
@@ -331,7 +331,7 @@ export function DashboardSidebar() {
                     {memberInfo.teamName}
                   </p>
                   <p style={{ fontSize: "11px", color: "#555555", marginTop: "1px" }}>
-                    Miembro · {(memberInfo.percentage > 0 ? Math.floor(5_000_000 * memberInfo.percentage / 100) : memberInfo.creditsLastDistributed).toLocaleString("es-ES")} car.
+                    {t.sidebar.member} · {(memberInfo.percentage > 0 ? Math.floor(5_000_000 * memberInfo.percentage / 100) : memberInfo.creditsLastDistributed).toLocaleString()} {t.sidebar.charAbbr}
                   </p>
                 </div>
               </div>
@@ -341,7 +341,7 @@ export function DashboardSidebar() {
                 onMouseEnter={(e) => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.borderColor = "#4a1a1a"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = "#7a3a3a"; e.currentTarget.style.borderColor = "#2a1a1a"; }}
               >
-                Salir del equipo
+                {t.sidebar.leaveTeam}
               </button>
             </>
           )}

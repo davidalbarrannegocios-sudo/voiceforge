@@ -8,6 +8,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { useLang } from "@/app/dashboard/LanguageContext";
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 48 48">
@@ -21,6 +22,7 @@ const GoogleIcon = () => (
 export default function SignInPage() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const router = useRouter();
+  const { t } = useLang();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
@@ -49,13 +51,12 @@ export default function SignInPage() {
         await setActive({ session: result.createdSessionId });
         router.push("/dashboard");
       } else if (result.status === "needs_first_factor") {
-        // email code strategy
         await signIn.prepareFirstFactor({ strategy: "email_code", emailAddressId: result.supportedFirstFactors?.find(f => f.strategy === "email_code")?.emailAddressId ?? "" });
         setStep("code");
       }
     } catch (err: unknown) {
       const clerkErr = err as { errors?: { message: string }[] };
-      setError(clerkErr.errors?.[0]?.message ?? "Error al iniciar sesión");
+      setError(clerkErr.errors?.[0]?.message ?? t.auth.loginError);
     } finally {
       setLoading(false);
     }
@@ -74,7 +75,7 @@ export default function SignInPage() {
       }
     } catch (err: unknown) {
       const clerkErr = err as { errors?: { message: string }[] };
-      setError(clerkErr.errors?.[0]?.message ?? "Código incorrecto");
+      setError(clerkErr.errors?.[0]?.message ?? t.auth.incorrectCode);
     } finally {
       setLoading(false);
     }
@@ -93,15 +94,15 @@ export default function SignInPage() {
       <div className="w-full max-w-sm">
         {step === "credentials" ? (
           <>
-            <h1 className="text-white text-3xl font-bold mb-1">Bienvenido de nuevo</h1>
-            <p className="text-gray-400 text-sm mb-8">Inicia sesión en tu cuenta</p>
+            <h1 className="text-white text-3xl font-bold mb-1">{t.auth.welcome}</h1>
+            <p className="text-gray-400 text-sm mb-8">{t.auth.signInSubtitle}</p>
 
             <button
               onClick={handleGoogle}
               className="w-full h-12 flex items-center justify-center gap-3 rounded-lg border border-white/20 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-colors mb-6"
             >
               <GoogleIcon />
-              Continuar con Google
+              {t.auth.continueWithGoogle}
             </button>
 
             <div className="flex items-center gap-3 mb-6">
@@ -112,7 +113,7 @@ export default function SignInPage() {
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-gray-300 text-sm font-medium">Correo electrónico</label>
+                <label className="text-gray-300 text-sm font-medium">{t.auth.emailLabel}</label>
                 <div className="relative">
                   <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                   <input
@@ -129,7 +130,7 @@ export default function SignInPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-gray-300 text-sm font-medium">Contraseña</label>
+                <label className="text-gray-300 text-sm font-medium">{t.auth.password}</label>
                 <div className="relative">
                   <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                   <input
@@ -159,20 +160,20 @@ export default function SignInPage() {
                 disabled={loading || !isLoaded}
                 className="h-12 rounded-lg bg-white hover:bg-gray-200 disabled:opacity-50 text-black font-semibold text-sm transition-colors"
               >
-                {loading ? "Iniciando sesión..." : "Iniciar sesión"}
+                {loading ? t.auth.signingIn : t.auth.signIn}
               </button>
             </form>
           </>
         ) : (
           <>
-            <h1 className="text-white text-3xl font-bold mb-1">Revisa tu correo</h1>
+            <h1 className="text-white text-3xl font-bold mb-1">{t.auth.checkEmail}</h1>
             <p className="text-gray-400 text-sm mb-8">
-              Hemos enviado un código de verificación a <span className="text-white">{email}</span>
+              {t.auth.codeSentTo} <span className="text-white">{email}</span>
             </p>
 
             <form onSubmit={handleVerifyCode} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-gray-300 text-sm font-medium">Código de verificación</label>
+                <label className="text-gray-300 text-sm font-medium">{t.auth.verificationCode}</label>
                 <input
                   type="text"
                   value={code}
@@ -193,7 +194,7 @@ export default function SignInPage() {
                 disabled={loading}
                 className="h-12 rounded-lg bg-white hover:bg-gray-200 disabled:opacity-50 text-black font-semibold text-sm transition-colors"
               >
-                {loading ? "Verificando..." : "Verificar"}
+                {loading ? t.auth.verifying : t.auth.verify}
               </button>
 
               <button
@@ -201,16 +202,16 @@ export default function SignInPage() {
                 onClick={() => { setStep("credentials"); setError(""); }}
                 className="text-gray-500 text-sm hover:text-gray-300 transition-colors bg-transparent border-none cursor-pointer"
               >
-                ← Volver
+                {t.auth.back}
               </button>
             </form>
           </>
         )}
 
         <p className="text-center text-gray-400 text-sm mt-8">
-          ¿No tienes cuenta?{" "}
+          {t.auth.noAccountText}{" "}
           <Link href="/sign-up" className="text-gray-300 hover:text-gray-300">
-            Regístrate gratis
+            {t.auth.signUpFree}
           </Link>
         </p>
       </div>

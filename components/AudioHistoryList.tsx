@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Clock, Trash2, Play, Pause, Download, RefreshCw, FileText, Copy, Check } from "lucide-react";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
+import { useLang } from "@/app/dashboard/LanguageContext";
 
 interface PendingJob {
   jobId: string;
@@ -33,21 +34,35 @@ interface DateGroup {
   items: Generation[];
 }
 
-function formatExpiry(expiresAt: string | null): { label: string; expired: boolean } | null {
+interface ExpiryLabels {
+  expired: string;
+  inDay: string;
+  inDays: string;
+  inHours: string;
+}
+
+function formatExpiry(expiresAt: string | null, labels: ExpiryLabels): { label: string; expired: boolean } | null {
   if (!expiresAt) return null;
   const diffMs = new Date(expiresAt).getTime() - Date.now();
-  if (diffMs <= 0) return { label: "Audio expirado", expired: true };
+  if (diffMs <= 0) return { label: labels.expired, expired: true };
   const h = Math.floor(diffMs / (1000 * 60 * 60));
   const d = Math.floor(h / 24);
-  if (d >= 1) return { label: `Expira en ${d} día${d === 1 ? "" : "s"}`, expired: false };
-  return { label: `Expira en ${h}h`, expired: false };
+  if (d >= 1) return { label: d === 1 ? labels.inDay : labels.inDays.replace("{d}", String(d)), expired: false };
+  return { label: labels.inHours.replace("{h}", String(h)), expired: false };
 }
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 }
 
-function groupByDate(items: Generation[]): DateGroup[] {
+interface DateLabels {
+  today: string;
+  yesterday: string;
+  daysAgo: string;
+  locale: string;
+}
+
+function groupByDate(items: Generation[], labels: DateLabels): DateGroup[] {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -57,10 +72,10 @@ function groupByDate(items: Generation[]): DateGroup[] {
     const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
     const diffDays = Math.round((today.getTime() - day.getTime()) / 86400000);
     let label: string;
-    if (diffDays === 0) label = "Hoy";
-    else if (diffDays === 1) label = "Ayer";
-    else if (diffDays <= 6) label = `Hace ${diffDays} días`;
-    else label = day.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+    if (diffDays === 0) label = labels.today;
+    else if (diffDays === 1) label = labels.yesterday;
+    else if (diffDays <= 6) label = labels.daysAgo.replace("{n}", String(diffDays));
+    else label = day.toLocaleDateString(labels.locale, { day: "numeric", month: "short" });
 
     if (!map.has(label)) map.set(label, []);
     map.get(label)!.push(g);
@@ -76,6 +91,10 @@ function fmtMSS(s: number) {
 
 const HISTORY_EVENT = "audio-history-changed";
 
+const LANG_LOCALE: Record<string, string> = {
+  es: "es-ES", en: "en-US", fr: "fr-FR", de: "de-DE", pt: "pt-BR",
+};
+
 export default function AudioHistoryList({
   plan = "free",
   compact = false,
@@ -83,6 +102,23 @@ export default function AudioHistoryList({
   plan?: string;
   compact?: boolean;
 }) {
+  const { t, lang } = useLang();
+  const locale = LANG_LOCALE[lang] ?? "es-ES";
+
+  const expiryLabels: ExpiryLabels = {
+    expired: t.history.audioExpired,
+    inDay: t.history.expiresInDay,
+    inDays: t.history.expiresInDays,
+    inHours: t.history.expiresInHours,
+  };
+
+  const dateLabels: DateLabels = {
+    today: t.history.today,
+    yesterday: t.history.yesterday,
+    daysAgo: t.history.daysAgo,
+    locale,
+  };
+
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -130,7 +166,7 @@ export default function AudioHistoryList({
           delete pendingIntervals.current[job.jobId];
           removePendingFromStorage(job.jobId);
           setPendingJobs((prev) =>
-            prev.map((j) => j.jobId === job.jobId ? { ...j, errorMsg: data.errorMsg ?? "Error al generar" } : j)
+            prev.map((j) => j.jobId === job.jobId ? { ...j, errorMsg: data.errorMsg ?? t.history.generateError } : j)
           );
         }
       } catch { /* network error — keep polling */ }
@@ -250,9 +286,9 @@ export default function AudioHistoryList({
         setSelected((prev) => { const s = new Set(prev); succeeded.forEach((id) => s.delete(id)); return s; });
         window.dispatchEvent(new CustomEvent(HISTORY_EVENT));
       }, 320);
-      showToast(succeeded.length === 1 ? "Narración eliminada" : `${succeeded.length} narraciones eliminadas`);
+      showToast(succeeded.length === 1 ? t.history.deleted : t.history.deletedMany.replace("{n}", String(succeeded.length)));
     }
-    if (failed > 0) showToast(`${failed} error${failed > 1 ? "es" : ""} al eliminar`, false);
+    if (failed > 0) showToast(`${failed} ${t.history.generateError}`, false);
     setDeletingIds((prev) => { const s = new Set(prev); ids.forEach((id) => s.delete(id)); return s; });
     setConfirmId(null);
   }
@@ -286,7 +322,7 @@ export default function AudioHistoryList({
 
   /* ── Compact (panel derecho TTS) ─────────────────────────── */
   if (compact) {
-    const groups = groupByDate(generations);
+    const groups = groupByDate(generations, dateLabels);
 
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -325,21 +361,21 @@ export default function AudioHistoryList({
         ) : generations.length === 0 ? (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#6b7280", gap: "8px" }}>
             <Clock size={28} />
-            <p style={{ fontSize: "12px" }}>No hay generaciones aún</p>
+            <p style={{ fontSize: "12px" }}>{t.history.noGenerations}</p>
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {/* Pending job cards */}
             {pendingJobs.length > 0 && (
               <div>
-                <p style={{ fontSize: "11px", color: "#6b7280", marginBottom: "6px", fontWeight: 500 }}>En proceso</p>
+                <p style={{ fontSize: "11px", color: "#6b7280", marginBottom: "6px", fontWeight: 500 }}>{t.history.inProcess}</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                   {pendingJobs.map((job) => (
                     <div key={job.jobId} style={{ borderRadius: "12px", background: "rgba(255,255,255,0.04)", padding: "10px 10px 8px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                         <VoiceAvatarGenerative seed={job.voiceId} size={24} className="flex-shrink-0" />
                         <span style={{ fontSize: "12px", fontWeight: 500, color: "#e2e8f0", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{job.voiceName}</span>
-                        <span style={{ fontSize: "11px", color: "#6b7280", flexShrink: 0 }}>{new Date(job.createdAt).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}</span>
+                        <span style={{ fontSize: "11px", color: "#6b7280", flexShrink: 0 }}>{new Date(job.createdAt).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}</span>
                       </div>
                       <p style={{ fontSize: "11px", color: "#9ca3af", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "8px", paddingLeft: "32px" }}>
                         {job.text}
@@ -356,7 +392,7 @@ export default function AudioHistoryList({
                                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25" />
                                 <path fill="currentColor" fillOpacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                               </svg>
-                              Generando audio...
+                              {t.history.generatingAudio}
                             </span>
                             <div style={{ height: "2px", borderRadius: "9999px", background: "rgba(255,255,255,0.06)", marginTop: "6px", overflow: "hidden" }}>
                               <div className="animate-pulse" style={{ height: "100%", width: "60%", borderRadius: "9999px", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent)" }} />
@@ -377,7 +413,7 @@ export default function AudioHistoryList({
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                   {group.items.map((gen) => {
-                    const expiry = formatExpiry(gen.expiresAt ?? null);
+                    const expiry = formatExpiry(gen.expiresAt ?? null, expiryLabels);
                     const isProcessing = gen.status === "processing";
                     const isStale = isProcessing && (Date.now() - new Date(gen.createdAt).getTime()) > 10 * 60 * 1000;
                     const isError = gen.status === "error" || isStale;
@@ -386,7 +422,7 @@ export default function AudioHistoryList({
                     const isDeleting = deletingIds.has(gen.id);
                     const isConfirming = confirmId === gen.id;
                     const isPlaying = playingId === gen.id;
-                    const vName = gen.voiceName ?? "Voz";
+                    const vName = gen.voiceName ?? t.history.voiceDefault;
 
                     return (
                       <div
@@ -413,14 +449,14 @@ export default function AudioHistoryList({
                                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25" />
                                 <path fill="currentColor" fillOpacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                               </svg>
-                              Generando...
+                              {t.history.generating}
                             </span>
                           ) : isError ? (
                             <span style={{ fontSize: "10px", color: "#f87171" }} title={gen.error ?? undefined}>
-                              {isStale ? "Tiempo agotado" : (gen.error ? gen.error.slice(0, 60) : "Error al generar")}
+                              {isStale ? t.history.timeout : (gen.error ? gen.error.slice(0, 60) : t.history.generateError)}
                             </span>
                           ) : isExpired ? (
-                            <span style={{ fontSize: "10px", color: "#4b4b6a" }}>Expirado</span>
+                            <span style={{ fontSize: "10px", color: "#4b4b6a" }}>{t.history.expired}</span>
                           ) : (
                             <>
                               <button
@@ -441,7 +477,7 @@ export default function AudioHistoryList({
                                 style={{ display: "flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "9999px", background: "rgba(255,255,255,0.08)", fontSize: "11px", fontWeight: 500, color: "#e2e8f0", textDecoration: "none", flexShrink: 0 }}
                               >
                                 <Download size={10} />
-                                Descargar
+                                {t.voices.download}
                               </a>
                             </>
                           )}
@@ -474,7 +510,7 @@ export default function AudioHistoryList({
                                     onClick={() => setCleanedIds((prev) => { const s = new Set(prev); if (s.has(gen.id)) s.delete(gen.id); else s.add(gen.id); return s; })}
                                     style={{ display: "flex", alignItems: "center", gap: "4px", padding: "2px 8px", borderRadius: "9999px", background: "rgba(255,255,255,0.05)", border: "none", cursor: "pointer", fontSize: "11px", color: "rgba(255,255,255,0.5)" }}
                                   >
-                                    {cleanedIds.has(gen.id) ? "Con etiquetas" : "Sin etiquetas"}
+                                    {cleanedIds.has(gen.id) ? t.history.withTags : t.history.withoutTags}
                                   </button>
                                 )}
                                 <button
@@ -505,12 +541,12 @@ export default function AudioHistoryList({
                         {/* Inline confirm */}
                         {isConfirming && (
                           <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "6px", paddingLeft: "32px" }}>
-                            <span style={{ fontSize: "11px", color: "#f87171", flex: 1 }}>¿Eliminar?</span>
+                            <span style={{ fontSize: "11px", color: "#f87171", flex: 1 }}>{t.history.confirmDelete}</span>
                             <button onClick={() => setConfirmId(null)} style={{ fontSize: "11px", color: "#6b7280", background: "none", border: "1px solid #222222", borderRadius: "6px", padding: "2px 8px", cursor: "pointer" }}>
-                              No
+                              {t.history.confirmNo}
                             </button>
                             <button onClick={() => handleDelete([gen.id])} disabled={isDeleting} style={{ fontSize: "11px", color: "#f87171", background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "6px", padding: "2px 8px", cursor: "pointer", opacity: isDeleting ? 0.5 : 1 }}>
-                              {isDeleting ? "..." : "Sí"}
+                              {isDeleting ? "..." : t.history.confirmYes}
                             </button>
                           </div>
                         )}
@@ -540,17 +576,17 @@ export default function AudioHistoryList({
       {!compact && plan === "free" && (
         <div className="mb-5 p-3 rounded-xl flex items-start gap-3 text-sm" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", color: "#fbbf24" }}>
           <span style={{ flexShrink: 0, marginTop: "1px" }}>⚠️</span>
-          <span>Tus audios expiran a las <strong>72 horas</strong>. Suscríbete para guardarlos hasta 30 días.</span>
+          <span>{t.history.freeExpiryBefore} <strong>{t.history.freeExpiryHours}</strong>{t.history.freeExpiryAfter}</span>
         </div>
       )}
 
       {selected.size > 0 && (
         <div className="mb-4 px-4 py-2.5 rounded-xl flex items-center justify-between gap-3" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}>
-          <span className="text-sm" style={{ color: "#f87171" }}>{selected.size} seleccionada{selected.size > 1 ? "s" : ""}</span>
+          <span className="text-sm" style={{ color: "#f87171" }}>{selected.size} {selected.size === 1 ? t.history.selectedSingle : t.history.selectedPlural}</span>
           <div className="flex items-center gap-2">
-            <button onClick={() => setSelected(new Set())} className="text-xs px-3 py-1.5 rounded-lg" style={{ color: "#6b7280", background: "transparent", border: "1px solid #222222" }}>Cancelar</button>
+            <button onClick={() => setSelected(new Set())} className="text-xs px-3 py-1.5 rounded-lg" style={{ color: "#6b7280", background: "transparent", border: "1px solid #222222" }}>{t.history.cancel}</button>
             <button onClick={() => handleDelete([...selected])} disabled={deletingIds.size > 0} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-semibold disabled:opacity-50" style={{ background: "rgba(239,68,68,0.2)", color: "#f87171", border: "1px solid rgba(239,68,68,0.35)" }}>
-              <Trash2 size={11} /> Eliminar seleccionadas ({selected.size})
+              <Trash2 size={11} /> {t.history.deleteSelected} ({selected.size})
             </button>
           </div>
         </div>
@@ -563,13 +599,13 @@ export default function AudioHistoryList({
       ) : generations.length === 0 ? (
         <div className="text-center py-16" style={{ color: "#8888a8" }}>
           <div className="flex justify-center mb-3"><Clock size={40} style={{ color: "#8888a8" }} /></div>
-          <p className="font-medium">No hay generaciones aún</p>
+          <p className="font-medium">{t.history.noGenerations}</p>
         </div>
       ) : (
         <>
           <div className="flex items-center gap-2 mb-2 px-1">
             <input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(selectableIds))} className="rounded" style={{ accentColor: "#ffffff", width: "14px", height: "14px", cursor: "pointer" }} />
-            <span className="text-xs" style={{ color: "#555555" }}>Seleccionar todo</span>
+            <span className="text-xs" style={{ color: "#555555" }}>{t.history.selectAll}</span>
           </div>
 
           {/* Pending job cards — full mode */}
@@ -594,7 +630,7 @@ export default function AudioHistoryList({
                                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25" />
                                 <path fill="currentColor" fillOpacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                               </svg>
-                              Generando audio...
+                              {t.history.generatingAudio}
                             </span>
                             <div className="mt-1.5 overflow-hidden rounded-full" style={{ height: "2px", background: "rgba(255,255,255,0.06)" }}>
                               <div className="animate-pulse h-full rounded-full" style={{ width: "60%", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)" }} />
@@ -611,7 +647,7 @@ export default function AudioHistoryList({
 
           <div className="space-y-3">
             {generations.map((gen) => {
-              const expiry = formatExpiry(gen.expiresAt ?? null);
+              const expiry = formatExpiry(gen.expiresAt ?? null, expiryLabels);
               const isProcessing = gen.status === "processing";
               const isStale = isProcessing && (Date.now() - new Date(gen.createdAt).getTime()) > 10 * 60 * 1000;
               const isError = gen.status === "error" || isStale;
@@ -628,9 +664,9 @@ export default function AudioHistoryList({
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm truncate ${isExpired ? "text-gray-600" : "text-gray-300"}`}>{gen.text}</p>
                       <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 flex-wrap">
-                        <span>{new Date(gen.createdAt).toLocaleDateString("es-ES")}</span>
+                        <span>{new Date(gen.createdAt).toLocaleDateString(locale)}</span>
                         <span>·</span>
-                        <span>{gen.creditsUsed.toLocaleString("es-ES")} chars</span>
+                        <span>{gen.creditsUsed.toLocaleString(locale)} chars</span>
                         {gen.durationSeconds != null && <><span>·</span><span>{gen.durationSeconds.toFixed(1)}s</span></>}
                         {expiry && <><span>·</span><span style={{ color: expiry.expired ? "#6b7280" : expiry.label.includes("h") ? "#f59e0b" : "#555555" }}>{expiry.label}</span></>}
                       </div>
@@ -642,14 +678,14 @@ export default function AudioHistoryList({
                             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25" />
                             <path fill="currentColor" fillOpacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                           </svg>
-                          Generando...
+                          {t.history.generating}
                         </span>
                       ) : isError ? (
                         <span className="px-2 py-1 rounded-lg text-xs font-medium" style={{ background: "rgba(239,68,68,0.08)", color: "#f87171", border: "1px solid rgba(239,68,68,0.2)" }}>
-                          {isStale ? "Tiempo agotado" : "Error"}
+                          {isStale ? t.history.timeout : t.history.generateError}
                         </span>
                       ) : isExpired ? (
-                        <span className="px-2 py-1 rounded-lg text-xs font-medium" style={{ background: "#111111", color: "#555555", border: "1px solid #222222" }}>Audio expirado</span>
+                        <span className="px-2 py-1 rounded-lg text-xs font-medium" style={{ background: "#111111", color: "#555555", border: "1px solid #222222" }}>{t.history.audioExpired}</span>
                       ) : (
                         <button onClick={() => handlePlayToggle(gen)} className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium" style={{ background: playingId === gen.id ? "rgba(255,255,255,0.12)" : "#1a1a1a", color: playingId === gen.id ? "#ffffff" : "#888888", border: `1px solid ${playingId === gen.id ? "rgba(255,255,255,0.4)" : "#222222"}`, transition: "all 0.15s" }}>
                           {playingId === gen.id ? (
@@ -666,10 +702,10 @@ export default function AudioHistoryList({
                   </div>
                   {isConfirming && (
                     <div className="px-3 pb-3 flex items-center gap-2">
-                      <span className="text-xs flex-1" style={{ color: "#f87171" }}>¿Eliminar?</span>
-                      <button onClick={() => setConfirmId(null)} className="text-xs px-2 py-1 rounded-lg" style={{ color: "#6b7280", background: "transparent", border: "1px solid #222222" }}>Cancelar</button>
+                      <span className="text-xs flex-1" style={{ color: "#f87171" }}>{t.history.confirmDelete}</span>
+                      <button onClick={() => setConfirmId(null)} className="text-xs px-2 py-1 rounded-lg" style={{ color: "#6b7280", background: "transparent", border: "1px solid #222222" }}>{t.history.cancel}</button>
                       <button onClick={() => handleDelete([gen.id])} disabled={isDeleting} className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg font-semibold disabled:opacity-50" style={{ background: "rgba(239,68,68,0.2)", color: "#f87171", border: "1px solid rgba(239,68,68,0.35)" }}>
-                        {isDeleting ? "..." : <><Trash2 size={10} /> Eliminar</>}
+                        {isDeleting ? "..." : <><Trash2 size={10} /> {t.history.delete}</>}
                       </button>
                     </div>
                   )}
@@ -680,9 +716,9 @@ export default function AudioHistoryList({
 
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 mt-6">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40" style={{ background: "#1a1a1a", color: "#d1d5db", border: "1px solid #222222" }}>← Anterior</button>
-              <span className="text-sm text-gray-500">Página {page} de {totalPages}</span>
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40" style={{ background: "#1a1a1a", color: "#d1d5db", border: "1px solid #222222" }}>Siguiente →</button>
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40" style={{ background: "#1a1a1a", color: "#d1d5db", border: "1px solid #222222" }}>{t.history.prevPage}</button>
+              <span className="text-sm text-gray-500">{t.history.pageOf.replace("{n}", String(page)).replace("{total}", String(totalPages))}</span>
+              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40" style={{ background: "#1a1a1a", color: "#d1d5db", border: "1px solid #222222" }}>{t.history.nextPage}</button>
             </div>
           )}
         </>

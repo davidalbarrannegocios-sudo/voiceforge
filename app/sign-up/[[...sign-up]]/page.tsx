@@ -9,6 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { isDisposableEmail } from "@/lib/disposable-email-domains";
+import { useLang } from "@/app/dashboard/LanguageContext";
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 48 48">
@@ -22,6 +23,7 @@ const GoogleIcon = () => (
 export default function SignUpPage() {
   const { signUp, setActive, isLoaded } = useSignUp();
   const router = useRouter();
+  const { t } = useLang();
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,7 +45,7 @@ export default function SignUpPage() {
 
   function handleEmailBlur() {
     if (email && isDisposableEmail(email)) {
-      setEmailError("Este tipo de email temporal no está permitido. Usa un email real.");
+      setEmailError(t.auth.disposableEmail);
     } else {
       setEmailError("");
     }
@@ -53,7 +55,7 @@ export default function SignUpPage() {
     e.preventDefault();
     if (!isLoaded) return;
     if (isDisposableEmail(email)) {
-      setEmailError("Este tipo de email temporal no está permitido. Usa un email real.");
+      setEmailError(t.auth.disposableEmail);
       return;
     }
     setLoading(true);
@@ -64,7 +66,7 @@ export default function SignUpPage() {
       setStep("verify");
     } catch (err: unknown) {
       const clerkErr = err as { errors?: { message: string }[] };
-      setError(clerkErr.errors?.[0]?.message ?? "Error al crear la cuenta");
+      setError(clerkErr.errors?.[0]?.message ?? t.auth.createError);
     } finally {
       setLoading(false);
     }
@@ -83,7 +85,7 @@ export default function SignUpPage() {
       }
     } catch (err: unknown) {
       const clerkErr = err as { errors?: { message: string }[] };
-      setError(clerkErr.errors?.[0]?.message ?? "Código incorrecto");
+      setError(clerkErr.errors?.[0]?.message ?? t.auth.incorrectCode);
     } finally {
       setLoading(false);
     }
@@ -111,15 +113,15 @@ export default function SignUpPage() {
       <div className="w-full max-w-sm">
         {step === "start" ? (
           <>
-            <h1 className="text-white text-3xl font-bold mb-1">Crea tu cuenta</h1>
-            <p className="text-gray-400 text-sm mb-8">Empieza gratis con 10.000 caracteres al mes</p>
+            <h1 className="text-white text-3xl font-bold mb-1">{t.auth.createAccountTitle}</h1>
+            <p className="text-gray-400 text-sm mb-8">{t.auth.startFreeSubtitle}</p>
 
             <button
               onClick={handleGoogle}
               className="w-full h-12 flex items-center justify-center gap-3 rounded-lg border border-white/20 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-colors mb-6"
             >
               <GoogleIcon />
-              Continuar con Google
+              {t.auth.continueWithGoogle}
             </button>
 
             <div className="flex items-center gap-3 mb-6">
@@ -130,14 +132,14 @@ export default function SignUpPage() {
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-gray-300 text-sm font-medium">Nombre</label>
+                <label className="text-gray-300 text-sm font-medium">{t.auth.nameLabel}</label>
                 <div className="relative">
                   <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                   <input
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Tu nombre"
+                    placeholder={t.auth.namePlaceholder}
                     className={`${inputClass} pl-10`}
                     style={inputStyle}
                     required
@@ -147,7 +149,7 @@ export default function SignUpPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-gray-300 text-sm font-medium">Correo electrónico</label>
+                <label className="text-gray-300 text-sm font-medium">{t.auth.emailLabel}</label>
                 <div className="relative">
                   <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                   <input
@@ -166,14 +168,14 @@ export default function SignUpPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-gray-300 text-sm font-medium">Contraseña</label>
+                <label className="text-gray-300 text-sm font-medium">{t.auth.password}</label>
                 <div className="relative">
                   <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Mínimo 8 caracteres"
+                    placeholder={t.auth.passwordPlaceholder}
                     className={`${inputClass} pl-10 pr-12`}
                     style={inputStyle}
                     required
@@ -197,20 +199,20 @@ export default function SignUpPage() {
                 disabled={loading || !isLoaded || !!emailError}
                 className="h-12 rounded-lg bg-white hover:bg-gray-200 disabled:opacity-50 text-black font-semibold text-sm transition-colors"
               >
-                {loading ? "Creando cuenta..." : "Crear cuenta"}
+                {loading ? t.auth.creatingAccount : t.auth.createAccount}
               </button>
             </form>
           </>
         ) : (
           <>
-            <h1 className="text-white text-3xl font-bold mb-1">Verifica tu correo</h1>
+            <h1 className="text-white text-3xl font-bold mb-1">{t.auth.verifyEmail}</h1>
             <p className="text-gray-400 text-sm mb-8">
-              Hemos enviado un código a <span className="text-white">{email}</span>
+              {t.auth.codeSentVerify} <span className="text-white">{email}</span>
             </p>
 
             <form onSubmit={handleVerifyCode} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-gray-300 text-sm font-medium">Código de verificación</label>
+                <label className="text-gray-300 text-sm font-medium">{t.auth.verificationCode}</label>
                 <input
                   type="text"
                   value={code}
@@ -231,7 +233,7 @@ export default function SignUpPage() {
                 disabled={loading}
                 className="h-12 rounded-lg bg-white hover:bg-gray-200 disabled:opacity-50 text-black font-semibold text-sm transition-colors"
               >
-                {loading ? "Verificando..." : "Verificar email"}
+                {loading ? t.auth.verifying : t.auth.verifyEmailBtn}
               </button>
             </form>
 
@@ -240,22 +242,22 @@ export default function SignUpPage() {
                 onClick={() => { setStep("start"); setError(""); }}
                 className="text-gray-500 text-sm hover:text-gray-300 transition-colors bg-transparent border-none cursor-pointer"
               >
-                ← Volver
+                {t.auth.back}
               </button>
               <button
                 onClick={handleResend}
                 className="text-gray-300 text-sm hover:text-gray-300 transition-colors bg-transparent border-none cursor-pointer"
               >
-                Reenviar código
+                {t.auth.resendCode}
               </button>
             </div>
           </>
         )}
 
         <p className="text-center text-gray-400 text-sm mt-8">
-          ¿Ya tienes cuenta?{" "}
+          {t.auth.haveAccountText}{" "}
           <Link href="/sign-in" className="text-gray-300 hover:text-gray-300">
-            Inicia sesión
+            {t.auth.signInLink}
           </Link>
         </p>
       </div>

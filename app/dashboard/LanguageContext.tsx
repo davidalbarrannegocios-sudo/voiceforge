@@ -38,6 +38,8 @@ export interface Translations {
   auth: { [key: string]: string };
   pricing: { [key: string]: string };
   voicesPage: { [key: string]: string };
+  sidebar: { [key: string]: string };
+  history: { [key: string]: string };
   [key: string]: Record<string, string>;
 }
 
