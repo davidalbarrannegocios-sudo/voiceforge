@@ -176,12 +176,12 @@ function LifetimeCheckout() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#000000", display: "flex" }}>
+    <div style={{ height: "100vh", overflow: "hidden", background: "#000000", display: "flex" }}>
 
-      {/* ── LEFT — Product info ── */}
+      {/* ── LEFT — Product info (no scroll) ── */}
       <div style={{
-        flex: "0 0 52%", display: "flex", flexDirection: "column", justifyContent: "center",
-        padding: "56px 64px", borderRight: "1px solid #111",
+        flex: "0 0 52%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center",
+        padding: "56px 64px", borderRight: "1px solid #111", overflow: "hidden",
       }}>
         <a href="/dashboard" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#555", fontSize: 13, textDecoration: "none", marginBottom: 40 }}>
           <ArrowLeft size={14} /> Volver al dashboard
@@ -228,10 +228,11 @@ function LifetimeCheckout() {
         </div>
       </div>
 
-      {/* ── RIGHT — Payment form ── */}
+      {/* ── RIGHT — Payment form (scroll only here) ── */}
       <div style={{
-        flex: 1, display: "flex", flexDirection: "column", justifyContent: "center",
+        flex: 1, height: "100%", overflowY: "auto",
         padding: "56px 64px", background: "#050505",
+        display: "flex", flexDirection: "column", justifyContent: "center",
       }}>
         <div style={{ maxWidth: 420, width: "100%" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 28 }}>
