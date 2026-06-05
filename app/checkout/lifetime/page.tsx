@@ -13,8 +13,6 @@ import {
 import { ArrowLeft, Lock, Infinity, Zap, Mic, Globe } from "lucide-react";
 import Image from "next/image";
 
-const LIFETIME_CLERK_ID = "cmpveay6i000syjqiz4xy6izg";
-
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 const ELEMENTS_APPEARANCE = {
@@ -144,7 +142,7 @@ function LifetimeCheckout() {
 
   useEffect(() => {
     if (!isLoaded) return;
-    if (!user || user.id !== LIFETIME_CLERK_ID) {
+    if (!user) {
       router.replace("/dashboard");
       return;
     }

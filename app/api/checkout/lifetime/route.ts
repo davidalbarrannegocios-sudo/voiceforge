@@ -5,17 +5,18 @@ import { getStripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 
-const LIFETIME_CLERK_ID = "cmpveay6i000syjqiz4xy6izg";
 const LIFETIME_AMOUNT_CENTS = 34_000; // $340.00
 
 export async function POST() {
   const clerkUser = await currentUser();
-  if (!clerkUser || clerkUser.id !== LIFETIME_CLERK_ID) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  }
+  if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
   if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
+
+  if (user.plan !== "lifetime") {
+    return NextResponse.json({ error: "Solo disponible para usuarios con plan Lifetime" }, { status: 403 });
+  }
 
   const stripe = getStripe();
 

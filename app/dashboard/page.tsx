@@ -5591,6 +5591,14 @@ export default function DashboardPage() {
   const successPlan     = searchParams.get("plan");
   const creditsBought   = searchParams.get("creditsBought");
   const planChanged     = searchParams.get("planChanged");
+  const lifetimeSuccess = searchParams.get("lifetime");
+
+  useEffect(() => {
+    if (lifetimeSuccess === "success") {
+      const t = setTimeout(() => fetchCredits(), 2500);
+      return () => clearTimeout(t);
+    }
+  }, [lifetimeSuccess, fetchCredits]);
 
   function handleUseVoice(voice: SelectedVoice) {
     setSelectedVoice(voice);
@@ -5723,6 +5731,14 @@ export default function DashboardPage() {
                 <Check size={18} className="text-green-400 flex-shrink-0" />
                 <p className="text-green-400 font-medium text-sm">
                   ¡Recarga exitosa! Se han añadido <strong>{parseInt(creditsBought).toLocaleString("es-ES")}</strong> créditos extra a tu cuenta.
+                </p>
+              </div>
+            )}
+            {lifetimeSuccess === "success" && (
+              <div className="mb-6 p-4 rounded-xl flex items-center gap-3" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.35)" }}>
+                <Check size={18} style={{ color: "#f59e0b", flexShrink: 0 }} />
+                <p style={{ color: "#f59e0b", fontWeight: 600, fontSize: "14px", margin: 0 }}>
+                  ✦ ¡Pago completado! Se han añadido <strong>20.000.000 créditos</strong> a tu cuenta.
                 </p>
               </div>
             )}
