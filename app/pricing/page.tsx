@@ -487,7 +487,7 @@ function PricingContent() {
                 Acceso de por vida · 20.000.000 caracteres/mes · Sin renovaciones
               </p>
             </div>
-            <a
+            <Link
               href="/checkout/lifetime"
               style={{
                 padding: "10px 20px",
@@ -503,7 +503,7 @@ function PricingContent() {
               }}
             >
               Renovar créditos ($340)
-            </a>
+            </Link>
           </div>
         )}
 
