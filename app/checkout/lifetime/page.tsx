@@ -36,11 +36,6 @@ const ELEMENTS_APPEARANCE = {
     ".Tab:hover": { backgroundColor: "#111111" },
     ".TabLabel": { color: "#e5e7eb" },
     ".Block": { border: "1px solid #222222", backgroundColor: "#0a0a0a" },
-    // Hide Stripe Link section (all known class names across Stripe versions)
-    ".LinkOptInSection": { display: "none" },
-    ".p-LinkOptInSection": { display: "none" },
-    ".p-LinkSeparator": { display: "none" },
-    ".p-SavedPaymentMethodsSection": { display: "none" },
   },
 };
 
@@ -173,9 +168,7 @@ function LifetimeForm({ isRenewal, email }: { isRenewal: boolean; email: string 
       <PaymentElement
         options={{
           layout: "tabs",
-          paymentMethodOrder: ["card"],
           fields: { billingDetails: { name: "never", email: "never" } },
-          wallets: { applePay: "never", googlePay: "never" },
           terms: { card: "never" },
         }}
       />

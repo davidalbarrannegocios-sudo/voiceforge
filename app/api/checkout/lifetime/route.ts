@@ -35,8 +35,7 @@ export async function POST() {
     currency: "usd",
     customer: customerId,
     description: "Elite Vitalicio — 20.000.000 créditos sin caducidad",
-    // Explicit list excludes Stripe Link (which is only available via automatic_payment_methods)
-    payment_method_types: ["card"],
+    automatic_payment_methods: { enabled: true },
     metadata: {
       type: "lifetime",
       userId: user.id,
