@@ -20,5 +20,7 @@ jobs:
             npm ci --production=false
             npx prisma generate
             npm run build
-            pm2 restart elitelabs
+            cp -r .next/static .next/standalone/.next/static
+            cp -r public .next/standalone/public
+            pm2 restart elitelabs --update-env
             echo "Deploy completado $(date)"
