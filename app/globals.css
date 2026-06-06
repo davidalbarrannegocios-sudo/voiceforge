@@ -372,6 +372,16 @@ input[type="range"]::-moz-range-thumb {
   border-radius: 10px !important;
 }
 
+.cl-userButtonAvatarBox img,
+.cl-userButtonAvatarBox > *,
+.cl-avatarBox img,
+.cl-avatarBox > *,
+[data-localization-key] .cl-avatarBox,
+.cl-userButtonAvatarImage,
+.cl-avatarImage {
+  border-radius: 10px !important;
+}
+
 .cl-userButtonTrigger,
 .cl-userButtonTrigger:focus,
 .cl-userButtonTrigger[data-color] {
