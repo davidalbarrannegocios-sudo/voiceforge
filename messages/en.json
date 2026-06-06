@@ -18,7 +18,29 @@
     "discover": "Discover",
     "team": "Team",
     "textToDialogue": "Text to Dialogue",
-    "imageVideo": "Image & Video"
+    "imageVideo": "Image & Video",
+    "tts": "Text to Speech",
+    "ttsDesc": "Generate clean voice from scripts",
+    "stt": "Speech to Text",
+    "sttDesc": "Transcribe audio to text with precision",
+    "voiceClone": "Voice Cloning",
+    "voiceCloneDesc": "Create a replica of your voice",
+    "dialogue": "Text to Dialogue",
+    "dialogueDesc": "Convert scripts into dialogues with voices",
+    "imageVideoDesc": "Generate images and videos with AI",
+    "gallery": "Gallery",
+    "galleryDesc": "Images created by the community",
+    "company": "Company",
+    "about": "About us",
+    "aboutDesc": "Meet our team and mission",
+    "blog": "Blog",
+    "blogDesc": "Articles about AI and voice synthesis",
+    "support": "Support",
+    "supportDesc": "Help and contact",
+    "pricing": "Pricing",
+    "voices": "Voices",
+    "dashboard": "Dashboard",
+    "signIn": "Sign in"
   },
   "tabs": {
     "home": "Home",
@@ -391,7 +413,14 @@
     "changePlanA": "Yes, you can upgrade or downgrade at any time from the billing portal.",
     "cloneFormatsQ": "What formats does voice cloning accept?",
     "cloneFormatsA": "WAV, MP3 and M4A. We recommend 10 to 30 seconds of clean audio without noise.",
-    "viewResults": "View {count} voices"
+    "viewResults": "View {count} voices",
+    "currentPlan": "CURRENT PLAN",
+    "annualSavings": "Save ${n}/year",
+    "upTo8x": "Up to 8× more characters than ElevenLabs at the same price.",
+    "discountLabel": "DISCOUNT",
+    "lifetimeName": "Elite Lifetime",
+    "lifetimeDesc": "Lifetime access · 20,000,000 chars/month · No renewals",
+    "lifetimeRenew": "Renew credits ($340)"
   },
   "voicesPage": {
     "heroTitle": "Discover the most realistic AI voices",
@@ -665,5 +694,75 @@
     "ticketClosed": "CLOSED",
     "teamResponse": "TEAM RESPONSE",
     "errorSend": "Error sending"
+  },
+  "hero": {
+    "title": "Generate. Clone. Dominate.",
+    "subtitle": "Voice cloning, voice library, narrations and much more",
+    "tab1": "Text to speech",
+    "tab2": "Voice cloning",
+    "tab3": "Speech to text",
+    "voiceCount": "2,000,000+ voices ↗",
+    "generatePlay": "Generate and play",
+    "poweredBy": "Powered by Elite Labs E2 Pro",
+    "startFree": "START FREE TODAY",
+    "goToDashboard": "Go to Dashboard →",
+    "exclusiveTitle": "Member-exclusive feature",
+    "exclusiveDesc": "Create a free account to access this feature",
+    "startFreeArrow": "Start free →",
+    "generating": "Generating...",
+    "demoPlaceholder": "Enter your own text",
+    "demoText": "Hello, I am a voice generated with artificial intelligence by Elite Labs. The quality is exceptional and the result sounds completely natural."
+  },
+  "features": {
+    "title": "For every use case",
+    "subtitle": "Generate professional audio for any project",
+    "useCase1": "Video narration",
+    "useCase2": "Audiobooks",
+    "useCase3": "YouTube content",
+    "desc": "Create professional-quality AI voices for videos, audiobooks and characters",
+    "bullet1": "Professional video voiceovers in seconds",
+    "bullet2": "Audiobook narration with natural voice",
+    "bullet3": "Unique and immersive character voices",
+    "goToDashboard": "Go to Dashboard →",
+    "startFree": "Start free →",
+    "playing": "Pause",
+    "listen": "Listen",
+    "reproduce": "Play",
+    "generating": "Generating...",
+    "demoScript": "Welcome to this podcast episode. Today we are going to talk about the future of artificial intelligence and how it is changing the world.",
+    "demoLanguage": "English"
+  },
+  "stats": {
+    "voices": "Available voices",
+    "voicesDesc": "Access a massive library of public voices or create your own with instant cloning."
+  },
+  "faq": {
+    "title": "Frequently asked questions",
+    "q1": "What is Elite Labs and how does it work?",
+    "a1": "Elite Labs is an AI voice synthesis platform that converts text to professional-quality audio. We use advanced artificial intelligence models to generate natural voices in over 80 languages.",
+    "q2": "How does voice cloning work?",
+    "a2": "You only need 10 seconds of clean audio. Our AI analyzes the unique characteristics of the voice — timbre, cadence, intonation — and creates a personalized model you can use in all your generations.",
+    "q3": "Do characters have an expiry date?",
+    "a3": "No. The characters you purchase are yours forever. No subscriptions or expiry. Pay once and use them whenever you want.",
+    "q4": "How many languages can I generate audio in?",
+    "a4": "Elite Labs supports over 80 languages and dialects through its public voice library: Spanish, English, French, German, Portuguese, Chinese, Japanese and many more.",
+    "q5": "What quality is the generated audio?",
+    "a5": "Audio is generated in high-quality MP3 format, ideal for videos, podcasts, audiobooks and professional content. The quality is comparable to a professional studio narrator."
+  },
+  "cta": {
+    "title": "Start converting text to audio today!",
+    "subtitle": "No credit card required. Explore voices for free.",
+    "goToDashboard": "Go to Dashboard →",
+    "startFree": "Start free →"
+  },
+  "footer": {
+    "tagline": "Professional-quality AI voice synthesis.",
+    "product": "Product",
+    "company": "Company",
+    "legal": "Legal",
+    "privacy": "Privacy policy",
+    "terms": "Terms of use",
+    "contact": "Contact",
+    "copyright": "© 2026 Elite Tube LLC. All rights reserved."
   }
 }

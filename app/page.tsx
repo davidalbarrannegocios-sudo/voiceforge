@@ -9,6 +9,7 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { ChevronDown, Check } from "lucide-react";
 import { AudioPlayer } from "./dashboard/AudioPlayer";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
+import { useLang } from "@/app/dashboard/LanguageContext";
 
 /* ─── Types ─────────────────────────────────────────────────── */
 
@@ -18,80 +19,12 @@ interface DemoVoice {
   cover_image?: string;
 }
 
-const USE_CASES = [
-  {
-    title: "Narración de vídeo",
-    tags: ["Expresivo", "Dinámico", "Profesional"],
-    bg: "linear-gradient(135deg,#1a0535 0%,#2d1b69 60%,#1e0a3c 100%)",
-    accent: "#aaaaaa",
-  },
-  {
-    title: "Audiolibros",
-    tags: ["Profesional", "Calmado", "Articulado"],
-    bg: "linear-gradient(135deg,#030b1a 0%,#0c2461 60%,#0a1628 100%)",
-    accent: "#bbbbbb",
-  },
-  {
-    title: "Contenido YouTube",
-    tags: ["Natural", "Versátil", "Multiidioma"],
-    bg: "linear-gradient(135deg,#1a0318 0%,#6b0f4e 60%,#2d0a22 100%)",
-    accent: "#f472b6",
-  },
-];
-
-const FEATURES = [
-  "Locuciones de vídeo profesionales en segundos",
-  "Narración de audiolibros con voz natural",
-  "Voces de personajes únicos e inmersivos",
-];
-
 const STAT_AVATARS = [
   { color: "#aaaaaa", initials: "AL" },
   { color: "#aaaaaa", initials: "MR" },
   { color: "#EC4899", initials: "JG" },
   { color: "#14B8A6", initials: "PC" },
   { color: "#F97316", initials: "SL" },
-];
-
-const FAQ_ITEMS = [
-  {
-    q: "¿Qué es Elite Labs y cómo funciona?",
-    a: "Elite Labs es una plataforma de síntesis de voz con IA que convierte texto en audio de calidad profesional. Usamos modelos de inteligencia artificial avanzados para generar voces naturales en más de 80 idiomas.",
-  },
-  {
-    q: "¿Cómo funciona la clonación de voz?",
-    a: "Solo necesitas 10 segundos de audio limpio. Nuestra IA analiza las características únicas de la voz —timbre, cadencia, entonación— y crea un modelo personalizado que puedes usar en todas tus generaciones.",
-  },
-  {
-    q: "¿Los caracteres tienen fecha de caducidad?",
-    a: "No. Los caracteres que compras son tuyos para siempre. Sin suscripciones ni caducidad. Paga una vez y úsalos cuando quieras.",
-  },
-  {
-    q: "¿En cuántos idiomas puedo generar audio?",
-    a: "Elite Labs soporta más de 80 idiomas y dialectos a través de su biblioteca de voces públicas: español, inglés, francés, alemán, portugués, chino, japonés y muchos más.",
-  },
-  {
-    q: "¿Qué calidad tiene el audio generado?",
-    a: "El audio se genera en formato MP3 de alta calidad, ideal para vídeos, podcasts, audiolibros y contenido profesional. La calidad es comparable a la de un locutor profesional de estudio.",
-  },
-];
-
-/* ─── Mega menu products ─────────────────────────────────────── */
-const NAV_PRODUCTS_LEFT = [
-  { title: "Texto a Voz",      desc: "Genera voz limpia a partir de guiones",   href: "/dashboard" },
-  { title: "Voz a Texto",      desc: "Transcribe audio a texto con precisión",  href: "/dashboard" },
-  { title: "Clonación de voz", desc: "Crea una réplica de tu voz",              href: "/dashboard" },
-];
-const NAV_PRODUCTS_RIGHT = [
-  { title: "Texto a Diálogo", desc: "Convierte guiones en diálogos con voces", href: "/dashboard" },
-  { title: "Imagen y Video",  desc: "Genera imágenes y vídeos con IA",         href: "/dashboard" },
-  { title: "Galería",         desc: "Imágenes creadas por la comunidad",        href: "/gallery" },
-];
-
-const NAV_EMPRESA = [
-  { title: "Sobre nosotros", desc: "Conoce nuestro equipo y misión",      href: "/about" },
-  { title: "Blog",           desc: "Artículos sobre IA y síntesis de voz", href: "/blog" },
-  { title: "Soporte",        desc: "Ayuda y contacto",                     href: "/support" },
 ];
 
 /* ─── Waveform bars (use-case cards) ────────────────────────── */
@@ -112,7 +45,7 @@ function PlayIcon() {
 }
 
 function FaqItem({ item, open, onToggle, onOpen, onClose }: {
-  item: typeof FAQ_ITEMS[0];
+  item: { q: string; a: string };
   open: boolean;
   onToggle: () => void;
   onOpen: () => void;
@@ -160,6 +93,7 @@ function FaqItem({ item, open, onToggle, onOpen, onClose }: {
 
 export default function LandingPage() {
   const { isSignedIn, isLoaded } = useUser();
+  const { t, lang } = useLang();
   const [activeNav, setActiveNav] = useState<"products" | "empresa" | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
@@ -171,13 +105,68 @@ export default function LandingPage() {
   const [demoAudioUrl, setDemoAudioUrl] = useState<string | null>(null);
   const [demoLoading, setDemoLoading] = useState(false);
   const [demoTab, setDemoTab] = useState<"tts" | "clone" | "stt">("tts");
-  const [demoText, setDemoText] = useState("Hola, soy una voz generada con inteligencia artificial por Elite Labs. La calidad es excepcional y el resultado suena completamente natural.");
+  const [demoText, setDemoText] = useState(t.hero.demoText);
+
+  // Reset demo text when language changes
+  useEffect(() => {
+    setDemoText(t.hero.demoText);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang]);
 
   // Features card state
   const [featuresAudioUrl, setFeaturesAudioUrl] = useState<string | null>(null);
   const [featuresLoading, setFeaturesLoading] = useState(false);
   const [featuresPlaying, setFeaturesPlaying] = useState(false);
   const featuresAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  /* ── Translated data arrays ─────────────────────────────────── */
+  const USE_CASES = [
+    {
+      title: t.features.useCase1,
+      tags: ["Expresivo", "Dinámico", "Profesional"],
+      bg: "linear-gradient(135deg,#1a0535 0%,#2d1b69 60%,#1e0a3c 100%)",
+      accent: "#aaaaaa",
+    },
+    {
+      title: t.features.useCase2,
+      tags: ["Profesional", "Calmado", "Articulado"],
+      bg: "linear-gradient(135deg,#030b1a 0%,#0c2461 60%,#0a1628 100%)",
+      accent: "#bbbbbb",
+    },
+    {
+      title: t.features.useCase3,
+      tags: ["Natural", "Versátil", "Multiidioma"],
+      bg: "linear-gradient(135deg,#1a0318 0%,#6b0f4e 60%,#2d0a22 100%)",
+      accent: "#f472b6",
+    },
+  ];
+
+  const FEATURES = [t.features.bullet1, t.features.bullet2, t.features.bullet3];
+
+  const FAQ_ITEMS = [
+    { q: t.faq.q1, a: t.faq.a1 },
+    { q: t.faq.q2, a: t.faq.a2 },
+    { q: t.faq.q3, a: t.faq.a3 },
+    { q: t.faq.q4, a: t.faq.a4 },
+    { q: t.faq.q5, a: t.faq.a5 },
+  ];
+
+  const NAV_PRODUCTS_LEFT = [
+    { title: t.nav.tts,       desc: t.nav.ttsDesc,       href: "/dashboard" },
+    { title: t.nav.stt,       desc: t.nav.sttDesc,       href: "/dashboard" },
+    { title: t.nav.voiceClone,desc: t.nav.voiceCloneDesc, href: "/dashboard" },
+  ];
+  const NAV_PRODUCTS_RIGHT = [
+    { title: t.nav.dialogue,  desc: t.nav.dialogueDesc,  href: "/dashboard" },
+    { title: t.nav.imageVideo,desc: t.nav.imageVideoDesc, href: "/dashboard" },
+    { title: t.nav.gallery,   desc: t.nav.galleryDesc,   href: "/gallery" },
+  ];
+
+  const NAV_EMPRESA = [
+    { title: t.nav.about,   desc: t.nav.aboutDesc,   href: "/about" },
+    { title: t.nav.blog,    desc: t.nav.blogDesc,    href: "/blog" },
+    { title: t.nav.support, desc: t.nav.supportDesc, href: "/support" },
+  ];
 
   function openNav(which: "products" | "empresa") {
     if (navCloseTimer.current) clearTimeout(navCloseTimer.current);
@@ -223,7 +212,6 @@ export default function LandingPage() {
     const voiceId = demoVoices[0]?._id;
     if (!voiceId) return;
 
-    // Toggle pause/play if audio already loaded
     if (featuresAudioRef.current && featuresAudioUrl) {
       if (featuresPlaying) {
         featuresAudioRef.current.pause();
@@ -271,7 +259,7 @@ export default function LandingPage() {
 
           {/* Center links — desktop */}
           <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
-            {/* Productos — mega menu */}
+            {/* Products — mega menu */}
             <div
               className="relative"
               onMouseEnter={() => openNav("products")}
@@ -281,11 +269,10 @@ export default function LandingPage() {
                 onClick={() => setActiveNav(activeNav === "products" ? null : "products")}
                 className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg"
               >
-                Productos
+                {t.nav.products}
                 <ChevronDown size={13} style={{ transition: "transform 0.15s ease", transform: activeNav === "products" ? "rotate(180deg)" : "none" }} />
               </button>
 
-              {/* Dropdown */}
               <div
                 style={{
                   position: "absolute",
@@ -337,7 +324,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Empresa — mega menu */}
+            {/* Company — mega menu */}
             <div
               className="relative"
               onMouseEnter={() => openNav("empresa")}
@@ -347,7 +334,7 @@ export default function LandingPage() {
                 onClick={() => setActiveNav(activeNav === "empresa" ? null : "empresa")}
                 className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg"
               >
-                Empresa
+                {t.nav.company}
                 <ChevronDown size={13} style={{ transition: "transform 0.15s ease", transform: activeNav === "empresa" ? "rotate(180deg)" : "none" }} />
               </button>
 
@@ -370,7 +357,7 @@ export default function LandingPage() {
                   zIndex: 60,
                 }}
               >
-                <p style={{ fontSize: "10px", fontWeight: 700, color: "#444444", textTransform: "uppercase", letterSpacing: "0.1em", padding: "4px 12px 6px" }}>Empresa</p>
+                <p style={{ fontSize: "10px", fontWeight: 700, color: "#444444", textTransform: "uppercase", letterSpacing: "0.1em", padding: "4px 12px 6px" }}>{t.nav.company}</p>
                 {NAV_EMPRESA.map((item) => (
                   <Link
                     key={item.title}
@@ -385,8 +372,8 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <Link href="/pricing" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg">Precios</Link>
-            <Link href="/voices" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg">Voces</Link>
+            <Link href="/pricing" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg">{t.nav.pricing}</Link>
+            <Link href="/voices" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg">{t.nav.voices}</Link>
           </nav>
 
           {/* Right: hamburger (mobile) + auth */}
@@ -394,7 +381,7 @@ export default function LandingPage() {
             <button
               className="md:hidden p-2"
               onClick={() => setMobileNavOpen(!mobileNavOpen)}
-              aria-label="Abrir menú"
+              aria-label="Menu"
               style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.6)" }}
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -413,21 +400,21 @@ export default function LandingPage() {
                   className="text-sm font-semibold text-black px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5"
                   style={{ background: "#ffffff" }}
                 >
-                  Dashboard
+                  {t.nav.dashboard}
                 </Link>
                 <UserMenu />
               </>
             ) : (
               <>
                 <Link href="/sign-in" className="text-sm text-gray-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-transparent hover:border-white/10">
-                  Iniciar sesión
+                  {t.nav.signIn}
                 </Link>
                 <Link
                   href="/sign-up"
                   className="text-sm font-semibold text-black px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5"
                   style={{ background: "#ffffff" }}
                 >
-                  Empezar gratis
+                  {t.landing.startFree}
                 </Link>
               </>
             )}
@@ -437,13 +424,13 @@ export default function LandingPage() {
         {/* Mobile menu */}
         {mobileNavOpen && (
           <div className="md:hidden border-t" style={{ borderColor: "#1a1a1a", background: "#000000" }}>
-            {/* Productos accordion */}
+            {/* Products accordion */}
             <button
               onClick={() => setMobileProductsOpen(!mobileProductsOpen)}
               className="w-full flex items-center justify-between px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors"
               style={{ background: "none", border: "none", cursor: "pointer" }}
             >
-              <span>Productos</span>
+              <span>{t.nav.products}</span>
               <ChevronDown size={14} style={{ transition: "transform 0.15s", transform: mobileProductsOpen ? "rotate(180deg)" : "none" }} />
             </button>
             {mobileProductsOpen && (
@@ -462,13 +449,13 @@ export default function LandingPage() {
                 ))}
               </div>
             )}
-            {/* Empresa accordion */}
+            {/* Company accordion */}
             <button
               onClick={() => setMobileEmpresaOpen(!mobileEmpresaOpen)}
               className="w-full flex items-center justify-between px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors border-t"
               style={{ background: "none", border: "none", borderTop: "1px solid #1a1a1a", cursor: "pointer" }}
             >
-              <span>Empresa</span>
+              <span>{t.nav.company}</span>
               <ChevronDown size={14} style={{ transition: "transform 0.15s", transform: mobileEmpresaOpen ? "rotate(180deg)" : "none" }} />
             </button>
             {mobileEmpresaOpen && (
@@ -487,8 +474,8 @@ export default function LandingPage() {
                 ))}
               </div>
             )}
-            <Link href="/pricing" onClick={() => setMobileNavOpen(false)} className="block px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors border-t" style={{ borderColor: "#1a1a1a" }}>Precios</Link>
-            <Link href="/voices" onClick={() => setMobileNavOpen(false)} className="block px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors border-t" style={{ borderColor: "#1a1a1a" }}>Voces</Link>
+            <Link href="/pricing" onClick={() => setMobileNavOpen(false)} className="block px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors border-t" style={{ borderColor: "#1a1a1a" }}>{t.nav.pricing}</Link>
+            <Link href="/voices" onClick={() => setMobileNavOpen(false)} className="block px-5 py-3.5 text-sm text-gray-300 hover:text-white transition-colors border-t" style={{ borderColor: "#1a1a1a" }}>{t.nav.voices}</Link>
           </div>
         )}
       </header>
@@ -503,11 +490,11 @@ export default function LandingPage() {
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 md:gap-10">
               {/* Left: title */}
               <h1 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight">
-                {(["Genera.", "Clona.", "Domina."] as const).map((word, i) => (
+                {[t.landing.word1, t.landing.word2, t.landing.word3].map((word, i) => (
                   <span
-                    key={word}
+                    key={i}
                     style={{
-                      color: word === "Clona." ? "#ffffff" : "#ffffff",
+                      color: "#ffffff",
                       display: "inline-block",
                       marginRight: "0.35em",
                       animation: `heroWordIn 0.5s ease-out both`,
@@ -527,12 +514,12 @@ export default function LandingPage() {
 
               {/* Right: subtitle */}
               <p className="hidden md:block text-base leading-relaxed flex-shrink-0 max-w-xs pb-0.5" style={{ color: "#6b7280" }}>
-                Clonación de voz, biblioteca de voces, narraciones y mucho más
+                {t.landing.subheadline}
               </p>
             </div>
           </div>
 
-          {/* Demo widget — Fish Audio style */}
+          {/* Demo widget */}
           <div className="max-w-5xl mx-auto px-4">
             <div
               className="p-4 sm:p-6 md:px-10 md:pt-8 md:pb-6"
@@ -543,7 +530,7 @@ export default function LandingPage() {
                 boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
               }}
             >
-              {/* Tab pills — animated sliding indicator */}
+              {/* Tab pills */}
               <div className="flex justify-center mb-6">
                 <div
                   style={{
@@ -555,7 +542,6 @@ export default function LandingPage() {
                     gridTemplateColumns: "1fr 1fr 1fr",
                   }}
                 >
-                  {/* Sliding white pill */}
                   <div
                     style={{
                       position: "absolute",
@@ -571,7 +557,7 @@ export default function LandingPage() {
                     }}
                   />
                   {(["tts", "clone", "stt"] as const).map((key, i) => {
-                    const labels = ["Texto a voz", "Clonación de voz", "De voz a texto"];
+                    const labels = [t.hero.tab1, t.hero.tab2, t.hero.tab3];
                     const active = demoTab === key;
                     return (
                       <button
@@ -608,7 +594,6 @@ export default function LandingPage() {
                 }}
               >
                 {demoTab !== "tts" ? (
-                  /* Upsell overlay for locked tabs */
                   <div
                     className="flex flex-col items-center justify-center text-center"
                     style={{ minHeight: "240px", padding: "48px 32px" }}
@@ -624,23 +609,23 @@ export default function LandingPage() {
                       🔒
                     </div>
                     <p style={{ color: "#e5e7eb", fontSize: "15px", fontWeight: 600, marginBottom: "6px" }}>
-                      Función exclusiva para miembros
+                      {t.hero.exclusiveTitle}
                     </p>
                     <p style={{ color: "#666666", fontSize: "13px", marginBottom: "20px", maxWidth: "300px" }}>
-                      Crea una cuenta gratis para acceder a esta función
+                      {t.hero.exclusiveDesc}
                     </p>
                     <Link
                       href="/sign-up"
                       className="font-semibold text-white transition-all hover:opacity-80"
                       style={{ fontSize: "13px", padding: "9px 22px", borderRadius: "8px", background: "#ffffff", color: "#000000" }}
                     >
-                      Empezar gratis →
+                      {t.hero.startFreeArrow}
                     </Link>
                   </div>
                 ) : (
                 <div className="flex flex-col md:flex-row" style={{ minHeight: "240px" }}>
 
-                  {/* Left: voice list ~280px */}
+                  {/* Left: voice list */}
                   <div
                     className="flex-shrink-0 flex flex-col w-full md:w-[280px] border-b md:border-b-0 md:border-r"
                     style={{ background: "#111111", borderColor: "#1a1a1a" }}
@@ -681,7 +666,7 @@ export default function LandingPage() {
                         className="transition-colors hover:text-gray-300"
                         style={{ fontSize: "12px", color: "#666666" }}
                       >
-                        2.000.000+ voces <span style={{ color: "#aaaaaa" }}>↗</span>
+                        {t.hero.voiceCount}
                       </Link>
                     </div>
                   </div>
@@ -691,7 +676,7 @@ export default function LandingPage() {
                     <textarea
                       value={demoText}
                       onChange={(e) => setDemoText(e.target.value.slice(0, 30000))}
-                      placeholder="Introduce tu propio texto"
+                      placeholder={t.hero.demoPlaceholder}
                       className="w-full outline-none resize-none leading-relaxed placeholder-[#666666]"
                       style={{
                         flex: 1,
@@ -728,10 +713,10 @@ export default function LandingPage() {
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                             </svg>
-                            Generando...
+                            {t.hero.generating}
                           </>
                         ) : (
-                          <><PlayIcon /> Generar y reproducir</>
+                          <><PlayIcon /> {t.hero.generatePlay}</>
                         )}
                       </button>
                     </div>
@@ -746,7 +731,7 @@ export default function LandingPage() {
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse flex-shrink-0" />
                   <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>
-                    Powered by Elite Labs E2 Pro
+                    {t.hero.poweredBy}
                   </span>
                 </div>
                 <div className="flex items-center gap-4">
@@ -754,7 +739,7 @@ export default function LandingPage() {
                     className="hidden sm:inline"
                     style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.08em", fontWeight: 600 }}
                   >
-                    EMPIEZA GRATIS HOY
+                    {t.hero.startFree}
                   </span>
                   {isLoaded && isSignedIn ? (
                     <Link
@@ -762,7 +747,7 @@ export default function LandingPage() {
                       className="font-semibold text-white transition-all hover:opacity-80 flex-shrink-0"
                       style={{ fontSize: "13px", padding: "8px 18px", borderRadius: "8px", background: "#ffffff", color: "#000000" }}
                     >
-                      Ir al Dashboard →
+                      {t.hero.goToDashboard}
                     </Link>
                   ) : (
                     <Link
@@ -770,7 +755,7 @@ export default function LandingPage() {
                       className="font-semibold text-white transition-all hover:opacity-80 flex-shrink-0"
                       style={{ fontSize: "13px", padding: "8px 18px", borderRadius: "8px", background: "#ffffff", color: "#000000" }}
                     >
-                      Empezar gratis →
+                      {t.landing.startFree} →
                     </Link>
                   )}
                 </div>
@@ -784,8 +769,8 @@ export default function LandingPage() {
         <section className="py-20 px-4">
           <div className="max-w-5xl mx-auto px-4">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-3">Para cada caso de uso</h2>
-              <p className="text-gray-400">Genera audio profesional para cualquier proyecto</p>
+              <h2 className="text-3xl font-bold mb-3">{t.features.title}</h2>
+              <p className="text-gray-400">{t.features.subtitle}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -795,7 +780,6 @@ export default function LandingPage() {
                   className="relative rounded-2xl overflow-hidden p-6 border"
                   style={{ background: uc.bg, borderColor: "rgba(255,255,255,0.05)", minHeight: "220px" }}
                 >
-                  {/* Decorative waveform */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none px-4">
                     <svg viewBox="0 0 200 60" className="w-full" fill="none">
                       {WAVE_BARS.map(([x, h], i) => (
@@ -832,7 +816,7 @@ export default function LandingPage() {
               {/* Left */}
               <div>
                 <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-snug">
-                  Crea voces de IA de calidad profesional para vídeos, audiolibros y personajes
+                  {t.features.desc}
                 </h2>
                 <ul className="space-y-4 mb-8">
                   {FEATURES.map((f) => (
@@ -854,7 +838,7 @@ export default function LandingPage() {
                     className="inline-block px-6 py-3 rounded-xl font-semibold text-black text-sm transition-all hover:-translate-y-0.5"
                     style={{ background: "#ffffff", boxShadow: "0 4px 15px rgba(255,255,255,0.1)" }}
                   >
-                    Ir al Dashboard →
+                    {t.features.goToDashboard}
                   </Link>
                 ) : (
                   <Link
@@ -862,7 +846,7 @@ export default function LandingPage() {
                     className="px-6 py-3 rounded-xl font-semibold text-black text-sm transition-all hover:-translate-y-0.5"
                     style={{ background: "#ffffff", boxShadow: "0 4px 15px rgba(255,255,255,0.1)" }}
                   >
-                    Empezar gratis →
+                    {t.features.startFree}
                   </Link>
                 )}
               </div>
@@ -885,7 +869,7 @@ export default function LandingPage() {
                       className="rounded-lg px-4 py-3 text-xs text-gray-400 mb-3 leading-relaxed"
                       style={{ background: "#000000", border: "1px solid #222222" }}
                     >
-                      &ldquo;Bienvenidos a este episodio del podcast. Hoy vamos a hablar sobre el futuro de la inteligencia artificial y cómo está cambiando el mundo.&rdquo;
+                      &ldquo;{t.features.demoScript}&rdquo;
                     </div>
 
                     {/* Waveform area */}
@@ -894,7 +878,6 @@ export default function LandingPage() {
                       style={{ background: "#000000", border: "1px solid #222222", minHeight: "56px" }}
                     >
                       {featuresPlaying ? (
-                        /* Animated waveform bars */
                         <div className="flex items-center gap-0.5 h-9">
                           {Array.from({ length: 28 }, (_, i) => {
                             const baseH = Math.abs(Math.sin(i * 0.55) * 14 + Math.sin(i * 1.1) * 8 + 10);
@@ -915,7 +898,6 @@ export default function LandingPage() {
                           })}
                         </div>
                       ) : (
-                        /* Static waveform SVG */
                         <svg viewBox="0 0 300 36" className="w-full" fill="none">
                           {Array.from({ length: 60 }, (_, i) => {
                             const h = Math.abs(Math.sin(i * 0.45) * 11 + Math.sin(i * 0.9) * 7 + 10);
@@ -939,8 +921,8 @@ export default function LandingPage() {
                     <div className="flex items-center gap-3">
                       <VoiceAvatarGenerative seed={fv?._id ?? "default"} size={32} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-white truncate">{fv?.title ?? "Cargando..."}</p>
-                        <p className="text-xs" style={{ color: "#6b7280" }}>Español</p>
+                        <p className="text-xs font-medium text-white truncate">{fv?.title ?? "..."}</p>
+                        <p className="text-xs" style={{ color: "#6b7280" }}>{t.features.demoLanguage}</p>
                       </div>
                       <button
                         onClick={handleFeaturesPlay}
@@ -961,7 +943,7 @@ export default function LandingPage() {
                         ) : (
                           <PlayIcon />
                         )}
-                        {featuresLoading ? "Generando..." : featuresPlaying ? "Pausar" : featuresAudioUrl ? "Reproducir" : "Escuchar"}
+                        {featuresLoading ? t.features.generating : featuresPlaying ? t.features.playing : featuresAudioUrl ? t.features.reproduce : t.features.listen}
                       </button>
                     </div>
                   </div>
@@ -973,7 +955,6 @@ export default function LandingPage() {
 
         {/* ── Stats ──────────────────────────────────────────────── */}
         <section className="py-24 px-4 relative overflow-hidden">
-          {/* Background glow */}
           <div
             className="absolute inset-0 flex items-center justify-center pointer-events-none"
             aria-hidden
@@ -985,7 +966,6 @@ export default function LandingPage() {
           </div>
 
           <div className="max-w-5xl mx-auto px-4 text-center relative">
-            {/* Floating avatars */}
             <div className="relative flex justify-center gap-3 mb-10">
               {STAT_AVATARS.map((av, i) => (
                 <div
@@ -1006,9 +986,9 @@ export default function LandingPage() {
             <h2 className="text-6xl md:text-8xl font-bold mb-4">
               2.000.000<span style={{ color: "#aaaaaa" }}>+</span>
             </h2>
-            <p className="text-2xl font-semibold text-gray-200 mb-4">Voces disponibles</p>
+            <p className="text-2xl font-semibold text-gray-200 mb-4">{t.stats.voices}</p>
             <p className="text-gray-500 max-w-md mx-auto">
-              Accede a una biblioteca masiva de voces públicas o crea las tuyas propias con clonación instantánea.
+              {t.stats.voicesDesc}
             </p>
           </div>
         </section>
@@ -1016,7 +996,7 @@ export default function LandingPage() {
         {/* ── FAQ ────────────────────────────────────────────────── */}
         <section className="py-20 px-4">
           <div className="max-w-5xl mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-12">Preguntas frecuentes</h2>
+            <h2 className="text-3xl font-bold text-center mb-12">{t.faq.title}</h2>
             <div className="space-y-3">
               {FAQ_ITEMS.map((item, i) => (
                 <FaqItem
@@ -1049,9 +1029,9 @@ export default function LandingPage() {
               />
 
               <h2 className="text-3xl md:text-4xl font-bold mb-4 relative">
-                ¡Empieza a convertir texto en audio hoy mismo!
+                {t.cta.title}
               </h2>
-              <p className="text-gray-400 mb-8 relative">Sin tarjeta de crédito. Explora las voces gratis.</p>
+              <p className="text-gray-400 mb-8 relative">{t.cta.subtitle}</p>
 
               {isLoaded && isSignedIn ? (
                 <Link
@@ -1059,7 +1039,7 @@ export default function LandingPage() {
                   className="inline-block px-8 py-4 rounded-xl font-semibold text-black text-base transition-all hover:-translate-y-1 relative"
                   style={{ background: "#ffffff", boxShadow: "0 4px 20px rgba(255,255,255,0.1)" }}
                 >
-                  Ir al Dashboard →
+                  {t.cta.goToDashboard}
                 </Link>
               ) : (
                 <Link
@@ -1067,7 +1047,7 @@ export default function LandingPage() {
                   className="px-8 py-4 rounded-xl font-semibold text-black text-base transition-all hover:-translate-y-1 relative"
                   style={{ background: "#ffffff", boxShadow: "0 4px 20px rgba(255,255,255,0.1)" }}
                 >
-                  Empezar gratis →
+                  {t.cta.startFree}
                 </Link>
               )}
             </div>
@@ -1097,22 +1077,22 @@ export default function LandingPage() {
                 <span className="font-bold text-white">Elite Labs</span>
               </Link>
               <p className="text-sm leading-relaxed" style={{ color: "#666666" }}>
-                Síntesis de voz con IA de calidad profesional.
+                {t.footer.tagline}
               </p>
             </div>
 
-            {/* Producto */}
+            {/* Product */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#666666" }}>Producto</p>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#666666" }}>{t.footer.product}</p>
               <ul className="space-y-3">
                 {[
-                  { label: "Texto a Voz", href: "/dashboard" },
-                  { label: "Voz a Texto", href: "/dashboard" },
-                  { label: "Clonación de voz", href: "/dashboard" },
-                  { label: "Texto a Diálogo", href: "/dashboard" },
-                  { label: "Imagen y Video", href: "/dashboard" },
-                  { label: "Galería", href: "/gallery" },
-                  { label: "Precios", href: "/pricing" },
+                  { label: t.nav.tts,       href: "/dashboard" },
+                  { label: t.nav.stt,       href: "/dashboard" },
+                  { label: t.nav.voiceClone,href: "/dashboard" },
+                  { label: t.nav.dialogue,  href: "/dashboard" },
+                  { label: t.nav.imageVideo,href: "/dashboard" },
+                  { label: t.nav.gallery,   href: "/gallery" },
+                  { label: t.nav.pricing,   href: "/pricing" },
                 ].map(({ label, href }) => (
                   <li key={label}>
                     <Link href={href} className="text-sm transition-colors hover:text-white" style={{ color: "#888888" }}>
@@ -1123,14 +1103,14 @@ export default function LandingPage() {
               </ul>
             </div>
 
-            {/* Empresa */}
+            {/* Company */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#666666" }}>Empresa</p>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#666666" }}>{t.footer.company}</p>
               <ul className="space-y-3">
                 {[
-                  { label: "Sobre nosotros", href: "/about" },
-                  { label: "Blog", href: "/blog" },
-                  { label: "Soporte", href: "/support" },
+                  { label: t.nav.about,   href: "/about" },
+                  { label: t.nav.blog,    href: "/blog" },
+                  { label: t.nav.support, href: "/support" },
                 ].map(({ label, href }) => (
                   <li key={label}>
                     <Link href={href} className="text-sm transition-colors hover:text-white" style={{ color: "#888888" }}>
@@ -1143,11 +1123,11 @@ export default function LandingPage() {
 
             {/* Legal */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#666666" }}>Legal</p>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#666666" }}>{t.footer.legal}</p>
               <ul className="space-y-3">
                 {[
-                  { label: "Política de privacidad", href: "/privacy" },
-                  { label: "Términos de uso", href: "/terms" },
+                  { label: t.footer.privacy, href: "/privacy" },
+                  { label: t.footer.terms,   href: "/terms" },
                 ].map(({ label, href }) => (
                   <li key={label}>
                     <Link href={href} className="text-sm transition-colors hover:text-white" style={{ color: "#888888" }}>
@@ -1166,16 +1146,16 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4 order-last sm:order-first">
               <p className="text-xs" style={{ color: "#666666" }}>
-                © 2026 Elite Tube LLC. All rights reserved.
+                {t.footer.copyright}
               </p>
               <LanguageSelector />
             </div>
 
             <div className="flex items-center gap-4 flex-wrap justify-center">
               {[
-                { label: "Política de privacidad", href: "/privacy" },
-                { label: "Términos de uso", href: "/terms" },
-                { label: "Contacto", href: "/support" },
+                { label: t.footer.privacy,  href: "/privacy" },
+                { label: t.footer.terms,    href: "/terms" },
+                { label: t.footer.contact,  href: "/support" },
               ].map(({ label, href }, i, arr) => (
                 <span key={label} className="flex items-center gap-4">
                   <a href={href} className="text-xs transition-colors hover:text-white/70" style={{ color: "#666666" }}>

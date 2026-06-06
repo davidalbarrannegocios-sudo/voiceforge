@@ -18,7 +18,29 @@
     "discover": "Découvrir",
     "team": "Équipe",
     "textToDialogue": "Texte en dialogue",
-    "imageVideo": "Image et Vidéo"
+    "imageVideo": "Image et Vidéo",
+    "tts": "Texte en voix",
+    "ttsDesc": "Générez une voix claire à partir de scripts",
+    "stt": "Voix en texte",
+    "sttDesc": "Transcrivez l'audio en texte avec précision",
+    "voiceClone": "Clonage vocal",
+    "voiceCloneDesc": "Créez une réplique de votre voix",
+    "dialogue": "Texte en dialogue",
+    "dialogueDesc": "Convertissez des scripts en dialogues avec des voix",
+    "imageVideoDesc": "Générez des images et vidéos avec l'IA",
+    "gallery": "Galerie",
+    "galleryDesc": "Images créées par la communauté",
+    "company": "Entreprise",
+    "about": "À propos",
+    "aboutDesc": "Découvrez notre équipe et notre mission",
+    "blog": "Blog",
+    "blogDesc": "Articles sur l'IA et la synthèse vocale",
+    "support": "Support",
+    "supportDesc": "Aide et contact",
+    "pricing": "Tarifs",
+    "voices": "Voix",
+    "dashboard": "Tableau de bord",
+    "signIn": "Se connecter"
   },
   "tabs": {
     "home": "Accueil",
@@ -391,7 +413,14 @@
     "changePlanA": "Oui, vous pouvez upgrader ou downgrader à tout moment depuis le portail de facturation.",
     "cloneFormatsQ": "Quels formats le clonage vocal accepte-t-il ?",
     "cloneFormatsA": "WAV, MP3 et M4A. Nous recommandons entre 10 et 30 secondes d'audio clair sans bruit.",
-    "viewResults": "Voir {count} voix"
+    "viewResults": "Voir {count} voix",
+    "currentPlan": "PLAN ACTUEL",
+    "annualSavings": "Économisez ${n}/an",
+    "upTo8x": "Jusqu'à 8× plus de caractères qu'ElevenLabs au même prix.",
+    "discountLabel": "REMISE",
+    "lifetimeName": "Elite à vie",
+    "lifetimeDesc": "Accès à vie · 20 000 000 caractères/mois · Sans renouvellements",
+    "lifetimeRenew": "Renouveler les crédits ($340)"
   },
   "voicesPage": {
     "heroTitle": "Découvrez les voix IA les plus réalistes",
@@ -665,5 +694,75 @@
     "ticketClosed": "FERMÉ",
     "teamResponse": "RÉPONSE DE L'ÉQUIPE",
     "errorSend": "Erreur d'envoi"
+  },
+  "hero": {
+    "title": "Générez. Clonez. Dominez.",
+    "subtitle": "Clonage vocal, bibliothèque de voix, narrations et bien plus encore",
+    "tab1": "Texte en voix",
+    "tab2": "Clonage vocal",
+    "tab3": "Voix en texte",
+    "voiceCount": "2 000 000+ voix ↗",
+    "generatePlay": "Générer et écouter",
+    "poweredBy": "Powered by Elite Labs E2 Pro",
+    "startFree": "COMMENCEZ GRATUITEMENT",
+    "goToDashboard": "Aller au tableau de bord →",
+    "exclusiveTitle": "Fonctionnalité exclusive aux membres",
+    "exclusiveDesc": "Créez un compte gratuit pour accéder à cette fonctionnalité",
+    "startFreeArrow": "Commencer gratuitement →",
+    "generating": "Génération...",
+    "demoPlaceholder": "Entrez votre propre texte",
+    "demoText": "Bonjour, je suis une voix générée par intelligence artificielle par Elite Labs. La qualité est exceptionnelle et le résultat sonne complètement naturel."
+  },
+  "features": {
+    "title": "Pour chaque cas d'usage",
+    "subtitle": "Générez de l'audio professionnel pour tout projet",
+    "useCase1": "Narration vidéo",
+    "useCase2": "Livres audio",
+    "useCase3": "Contenu YouTube",
+    "desc": "Créez des voix IA de qualité professionnelle pour vidéos, livres audio et personnages",
+    "bullet1": "Voix off professionnelles en quelques secondes",
+    "bullet2": "Narration de livres audio avec voix naturelle",
+    "bullet3": "Voix de personnages uniques et immersives",
+    "goToDashboard": "Aller au tableau de bord →",
+    "startFree": "Commencer gratuitement →",
+    "playing": "Pause",
+    "listen": "Écouter",
+    "reproduce": "Lire",
+    "generating": "Génération...",
+    "demoScript": "Bienvenue dans cet épisode de podcast. Aujourd'hui, nous allons parler de l'avenir de l'intelligence artificielle et de comment elle change le monde.",
+    "demoLanguage": "Français"
+  },
+  "stats": {
+    "voices": "Voix disponibles",
+    "voicesDesc": "Accédez à une vaste bibliothèque de voix publiques ou créez les vôtres avec le clonage instantané."
+  },
+  "faq": {
+    "title": "Questions fréquentes",
+    "q1": "Qu'est-ce qu'Elite Labs et comment ça marche ?",
+    "a1": "Elite Labs est une plateforme de synthèse vocale IA qui convertit le texte en audio de qualité professionnelle. Nous utilisons des modèles d'intelligence artificielle avancés pour générer des voix naturelles dans plus de 80 langues.",
+    "q2": "Comment fonctionne le clonage vocal ?",
+    "a2": "Vous n'avez besoin que de 10 secondes d'audio propre. Notre IA analyse les caractéristiques uniques de la voix — timbre, cadence, intonation — et crée un modèle personnalisé.",
+    "q3": "Les caractères ont-ils une date d'expiration ?",
+    "a3": "Non. Les caractères que vous achetez vous appartiennent pour toujours. Sans abonnements ni expiration. Payez une fois et utilisez-les quand vous voulez.",
+    "q4": "Dans combien de langues puis-je générer de l'audio ?",
+    "a4": "Elite Labs prend en charge plus de 80 langues et dialectes via sa bibliothèque de voix publiques : espagnol, anglais, français, allemand, portugais, chinois, japonais et bien d'autres.",
+    "q5": "Quelle est la qualité de l'audio généré ?",
+    "a5": "L'audio est généré au format MP3 haute qualité, idéal pour les vidéos, podcasts, livres audio et le contenu professionnel. La qualité est comparable à un narrateur professionnel de studio."
+  },
+  "cta": {
+    "title": "Commencez à convertir du texte en audio dès aujourd'hui !",
+    "subtitle": "Aucune carte de crédit requise. Explorez les voix gratuitement.",
+    "goToDashboard": "Aller au tableau de bord →",
+    "startFree": "Commencer gratuitement →"
+  },
+  "footer": {
+    "tagline": "Synthèse vocale IA de qualité professionnelle.",
+    "product": "Produit",
+    "company": "Entreprise",
+    "legal": "Légal",
+    "privacy": "Politique de confidentialité",
+    "terms": "Conditions d'utilisation",
+    "contact": "Contact",
+    "copyright": "© 2026 Elite Tube LLC. All rights reserved."
   }
 }

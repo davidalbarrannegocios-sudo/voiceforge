@@ -18,7 +18,29 @@
     "discover": "Entdecken",
     "team": "Team",
     "textToDialogue": "Text zu Dialog",
-    "imageVideo": "Bild & Video"
+    "imageVideo": "Bild & Video",
+    "tts": "Text zu Sprache",
+    "ttsDesc": "Erzeuge saubere Stimme aus Skripten",
+    "stt": "Sprache zu Text",
+    "sttDesc": "Transkribiere Audio präzise in Text",
+    "voiceClone": "Stimm-Klonen",
+    "voiceCloneDesc": "Erstelle ein Abbild deiner Stimme",
+    "dialogue": "Text zu Dialog",
+    "dialogueDesc": "Wandle Skripte in Dialoge mit Stimmen um",
+    "imageVideoDesc": "Generiere Bilder und Videos mit KI",
+    "gallery": "Galerie",
+    "galleryDesc": "Von der Community erstellte Bilder",
+    "company": "Unternehmen",
+    "about": "Über uns",
+    "aboutDesc": "Lerne unser Team und unsere Mission kennen",
+    "blog": "Blog",
+    "blogDesc": "Artikel über KI und Sprachsynthese",
+    "support": "Support",
+    "supportDesc": "Hilfe und Kontakt",
+    "pricing": "Preise",
+    "voices": "Stimmen",
+    "dashboard": "Dashboard",
+    "signIn": "Anmelden"
   },
   "tabs": {
     "home": "Startseite",
@@ -391,7 +413,14 @@
     "changePlanA": "Ja, Sie können jederzeit über das Abrechnungsportal upgraden oder downgraden.",
     "cloneFormatsQ": "Welche Formate akzeptiert das Stimmklonen?",
     "cloneFormatsA": "WAV, MP3 und M4A. Wir empfehlen 10 bis 30 Sekunden sauberes Audio ohne Rauschen.",
-    "viewResults": "{count} Stimmen ansehen"
+    "viewResults": "{count} Stimmen ansehen",
+    "currentPlan": "AKTUELLER PLAN",
+    "annualSavings": "${n}/Jahr gespart",
+    "upTo8x": "Bis zu 8× mehr Zeichen als ElevenLabs zum gleichen Preis.",
+    "discountLabel": "RABATT",
+    "lifetimeName": "Elite Lifetime",
+    "lifetimeDesc": "Lebenslanger Zugang · 20.000.000 Zeichen/Monat · Keine Verlängerungen",
+    "lifetimeRenew": "Credits erneuern ($340)"
   },
   "voicesPage": {
     "heroTitle": "Entdecken Sie die realistischsten KI-Stimmen",
@@ -665,5 +694,75 @@
     "ticketClosed": "GESCHLOSSEN",
     "teamResponse": "TEAMANTWORT",
     "errorSend": "Sendefehler"
+  },
+  "hero": {
+    "title": "Generieren. Klonen. Dominieren.",
+    "subtitle": "Stimm-Klonen, Stimmbibliothek, Erzählungen und vieles mehr",
+    "tab1": "Text zu Sprache",
+    "tab2": "Stimm-Klonen",
+    "tab3": "Sprache zu Text",
+    "voiceCount": "2.000.000+ Stimmen ↗",
+    "generatePlay": "Generieren und abspielen",
+    "poweredBy": "Powered by Elite Labs E2 Pro",
+    "startFree": "JETZT KOSTENLOS STARTEN",
+    "goToDashboard": "Zum Dashboard →",
+    "exclusiveTitle": "Exklusiv für Mitglieder",
+    "exclusiveDesc": "Erstelle ein kostenloses Konto, um auf diese Funktion zuzugreifen",
+    "startFreeArrow": "Kostenlos starten →",
+    "generating": "Wird generiert...",
+    "demoPlaceholder": "Gib deinen eigenen Text ein",
+    "demoText": "Hallo, ich bin eine von Elite Labs mit künstlicher Intelligenz generierte Stimme. Die Qualität ist außergewöhnlich und das Ergebnis klingt völlig natürlich."
+  },
+  "features": {
+    "title": "Für jeden Anwendungsfall",
+    "subtitle": "Professionelles Audio für jedes Projekt generieren",
+    "useCase1": "Video-Erzählung",
+    "useCase2": "Hörbücher",
+    "useCase3": "YouTube-Inhalte",
+    "desc": "Erstellen Sie KI-Stimmen in professioneller Qualität für Videos, Hörbücher und Figuren",
+    "bullet1": "Professionelle Video-Vertonungen in Sekunden",
+    "bullet2": "Hörbuch-Erzählung mit natürlicher Stimme",
+    "bullet3": "Einzigartige und immersive Charakterstimmen",
+    "goToDashboard": "Zum Dashboard →",
+    "startFree": "Kostenlos starten →",
+    "playing": "Pausieren",
+    "listen": "Anhören",
+    "reproduce": "Abspielen",
+    "generating": "Wird generiert...",
+    "demoScript": "Willkommen zu dieser Podcast-Episode. Heute werden wir über die Zukunft der künstlichen Intelligenz und wie sie die Welt verändert sprechen.",
+    "demoLanguage": "Deutsch"
+  },
+  "stats": {
+    "voices": "Verfügbare Stimmen",
+    "voicesDesc": "Greifen Sie auf eine umfangreiche Bibliothek öffentlicher Stimmen zu oder erstellen Sie Ihre eigenen mit Sofortklonen."
+  },
+  "faq": {
+    "title": "Häufig gestellte Fragen",
+    "q1": "Was ist Elite Labs und wie funktioniert es?",
+    "a1": "Elite Labs ist eine KI-Sprachsynthese-Plattform, die Text in professionelle Audioqualität umwandelt. Wir verwenden fortschrittliche KI-Modelle, um natürliche Stimmen in über 80 Sprachen zu erzeugen.",
+    "q2": "Wie funktioniert das Stimm-Klonen?",
+    "a2": "Sie benötigen nur 10 Sekunden sauberes Audio. Unsere KI analysiert die einzigartigen Eigenschaften der Stimme — Klangfarbe, Kadenz, Intonation — und erstellt ein personalisiertes Modell.",
+    "q3": "Haben Zeichen ein Ablaufdatum?",
+    "a3": "Nein. Die Zeichen, die Sie kaufen, gehören Ihnen für immer. Keine Abonnements oder Ablauf. Einmal bezahlen und jederzeit verwenden.",
+    "q4": "In wie vielen Sprachen kann ich Audio generieren?",
+    "a4": "Elite Labs unterstützt über 80 Sprachen und Dialekte durch seine öffentliche Stimmbibliothek: Spanisch, Englisch, Französisch, Deutsch, Portugiesisch, Chinesisch, Japanisch und viele mehr.",
+    "q5": "Welche Qualität hat das generierte Audio?",
+    "a5": "Audio wird im hochqualitativen MP3-Format generiert, ideal für Videos, Podcasts, Hörbücher und professionelle Inhalte. Die Qualität ist mit einem professionellen Studio-Sprecher vergleichbar."
+  },
+  "cta": {
+    "title": "Beginnen Sie noch heute, Text in Audio umzuwandeln!",
+    "subtitle": "Keine Kreditkarte erforderlich. Erkunden Sie Stimmen kostenlos.",
+    "goToDashboard": "Zum Dashboard →",
+    "startFree": "Kostenlos starten →"
+  },
+  "footer": {
+    "tagline": "KI-Sprachsynthese in professioneller Qualität.",
+    "product": "Produkt",
+    "company": "Unternehmen",
+    "legal": "Rechtliches",
+    "privacy": "Datenschutzerklärung",
+    "terms": "Nutzungsbedingungen",
+    "contact": "Kontakt",
+    "copyright": "© 2026 Elite Tube LLC. All rights reserved."
   }
 }

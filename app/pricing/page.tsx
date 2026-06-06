@@ -6,99 +6,20 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import { Users } from "lucide-react";
 import { useLang } from "@/app/dashboard/LanguageContext";
 
 type Plan = {
   key: string;
   name: string;
   description: string;
-  price: number;       // monthly price
-  annualTotal: number; // billed yearly
+  price: number;
+  annualTotal: number;
   characters: number;
   popular: boolean;
   free: boolean;
   cta: string;
   features: string[];
 };
-
-const PLANS: Plan[] = [
-  {
-    key: "free",
-    name: "Gratis",
-    description: "Para explorar la plataforma",
-    price: 0,
-    annualTotal: 0,
-    characters: 10_000,
-    popular: false,
-    free: true,
-    cta: "Empezar gratis",
-    features: [
-      "10.000 caracteres al registrarte",
-      "Voz aleatoria (sin selección)",
-      "2 transcripciones/traducciones",
-      "Sin clonación de voz",
-      "Audios disponibles 72 horas",
-    ],
-  },
-  {
-    key: "plus",
-    name: "Plus",
-    description: "Para creadores que están empezando",
-    price: 8,
-    annualTotal: 81.60,
-    characters: 250_000,
-    popular: false,
-    free: false,
-    cta: "Suscribirse",
-    features: [
-      "250.000 caracteres/mes (x2 con EliteLabs 2)",
-      "Selección de voz completa",
-      "Transcripciones y traducciones ilimitadas",
-      "3 voces clonadas",
-      "Audios disponibles 14 días",
-    ],
-  },
-  {
-    key: "pro",
-    name: "Pro",
-    description: "La mejor opción para creadores activos",
-    price: 55,
-    annualTotal: 561,
-    characters: 2_000_000,
-    popular: true,
-    free: false,
-    cta: "Suscribirse",
-    features: [
-      "2.000.000 caracteres/mes (x2 con EliteLabs 2)",
-      "Selección de voz completa",
-      "Transcripciones y traducciones ilimitadas",
-      "10 voces clonadas",
-      "Generación prioritaria",
-      "Audios disponibles 30 días",
-    ],
-  },
-  {
-    key: "elite",
-    name: "Elite",
-    description: "Máximo rendimiento sin límites",
-    price: 315,
-    annualTotal: 3213,
-    characters: 15_000_000,
-    popular: false,
-    free: false,
-    cta: "Suscribirse",
-    features: [
-      "15.000.000 caracteres/mes (x2 con EliteLabs 2)",
-      "Selección de voz completa",
-      "Transcripciones y traducciones ilimitadas",
-      "20 voces clonadas",
-      "Prioridad máxima",
-      "Soporte preferente",
-      "Audios disponibles 90 días",
-    ],
-  },
-];
 
 function FeatureTick() {
   return (
@@ -135,11 +56,92 @@ function PricingContent() {
   const [discount, setDiscount] = useState<Discount | null>(null);
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
 
+  function fmtChars(n: number) {
+    return n.toLocaleString("es-ES");
+  }
+
+  const PLANS: Plan[] = [
+    {
+      key: "free",
+      name: t.pricing.freePrice,
+      description: t.billing.planDescFree,
+      price: 0,
+      annualTotal: 0,
+      characters: 10_000,
+      popular: false,
+      free: true,
+      cta: t.pricing.startFree,
+      features: [
+        t.billing.feat10k,
+        t.billing.featRandomVoice,
+        t.billing.feat2Transcriptions,
+        t.billing.featNoClone,
+        t.billing.featAudio72h,
+      ],
+    },
+    {
+      key: "plus",
+      name: "Plus",
+      description: t.billing.planDescStarter,
+      price: 8,
+      annualTotal: 81.60,
+      characters: 250_000,
+      popular: false,
+      free: false,
+      cta: t.pricing.subscribe,
+      features: [
+        t.billing.featCharsX2.replace("{n}", fmtChars(250_000)),
+        t.billing.featFullVoice,
+        t.billing.featUnlimitedTrans,
+        t.billing.feat3Clones,
+        t.billing.featAudio14d,
+      ],
+    },
+    {
+      key: "pro",
+      name: "Pro",
+      description: t.billing.planDescPro,
+      price: 55,
+      annualTotal: 561,
+      characters: 2_000_000,
+      popular: true,
+      free: false,
+      cta: t.pricing.subscribe,
+      features: [
+        t.billing.featCharsX2.replace("{n}", fmtChars(2_000_000)),
+        t.billing.featFullVoice,
+        t.billing.featUnlimitedTrans,
+        t.billing.feat10Clones,
+        t.billing.featPriorityGen,
+        t.billing.featAudio30d,
+      ],
+    },
+    {
+      key: "elite",
+      name: "Elite",
+      description: t.billing.planDescElite,
+      price: 315,
+      annualTotal: 3213,
+      characters: 15_000_000,
+      popular: false,
+      free: false,
+      cta: t.pricing.subscribe,
+      features: [
+        t.billing.featCharsX2.replace("{n}", fmtChars(15_000_000)),
+        t.billing.featFullVoice,
+        t.billing.featUnlimitedTrans,
+        t.billing.feat20Clones,
+        t.billing.featTopPriority,
+        t.billing.featSupport,
+        t.billing.featAudio90d,
+      ],
+    },
+  ];
+
   useEffect(() => {
     const planKey = searchParams.get("plan");
-    if (planKey && isSignedIn) {
-      const found = PLANS.find((p) => p.key === planKey);
-      if (found && !found.free) router.push(`/checkout/${planKey}?billing=${billing}`);
+    if (planKey && isSignedIn && planKey !== "free") {
+      router.push(`/checkout/${planKey}?billing=${billing}`);
     }
   }, [isSignedIn, searchParams]);
 
@@ -163,12 +165,11 @@ function PricingContent() {
         .then(d => { if (d.hasDiscount) setDiscount({ active: true, percent: d.percentage, label: d.label }); })
         .catch(() => {});
     } else {
-      // Read non-httpOnly cookie written by AffiliateRefTracker
       const m = document.cookie.match(/(?:^|;\s*)affiliate_discount=([^;]*)/);
       if (m) {
         try {
           const d = JSON.parse(decodeURIComponent(m[1]));
-          if (d.percentage > 0) setDiscount({ active: true, percent: d.percentage, label: d.label || "DESCUENTO" });
+          if (d.percentage > 0) setDiscount({ active: true, percent: d.percentage, label: d.label || t.pricing.discountLabel });
         } catch {}
       }
     }
@@ -202,10 +203,6 @@ function PricingContent() {
   }
   function annualSavings(plan: Plan): number {
     return Math.round((plan.price * 12 - plan.annualTotal) * 100) / 100;
-  }
-
-  function fmtChars(n: number) {
-    return n.toLocaleString("es-ES");
   }
 
   function cardBg(_plan: Plan) {
@@ -268,7 +265,6 @@ function PricingContent() {
         {/* Monthly / Annual toggle */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "40px" }}>
           <div style={{ position: "relative", display: "inline-grid", gridTemplateColumns: "1fr 1fr", background: "#000000", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "3px" }}>
-            {/* Sliding pill */}
             <div style={{
               position: "absolute", top: "3px", left: "3px",
               width: "calc(50% - 3px)", height: "calc(100% - 6px)",
@@ -314,14 +310,13 @@ function PricingContent() {
                   <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{plan.name}</span>
                   {billing === "annual" && !plan.free && (
                     <span style={{ fontSize: "10px", fontWeight: 500, padding: "2px 7px", borderRadius: "6px", background: "rgba(34,197,94,0.12)", color: "#4ade80", whiteSpace: "nowrap" }}>
-                      Ahorras ${annualSavings(plan).toFixed(2)}/año
+                      {t.pricing.annualSavings.replace("{n}", "$" + annualSavings(plan).toFixed(2))}
                     </span>
                   )}
                 </div>
-                {/* "PLAN ACTUAL" only for users on a new plan (free/plus/pro/elite) */}
                 {currentPlan === plan.key && ["free","plus","pro","elite"].includes(currentPlan) && (
                   <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(245,158,11,0.45)", color: "#f59e0b", background: "rgba(245,158,11,0.1)", whiteSpace: "nowrap", flexShrink: 0 }}>
-                    PLAN ACTUAL
+                    {t.pricing.currentPlan}
                   </span>
                 )}
                 {plan.popular && !(currentPlan === plan.key && ["free","plus","pro","elite"].includes(currentPlan ?? "")) && (
@@ -360,7 +355,7 @@ function PricingContent() {
                   <>
                     {(billing === "annual" || discount?.active) && (
                       <p style={{ fontSize: "13px", color: "#444444", textDecoration: "line-through", marginBottom: "0px", lineHeight: 1 }}>
-                        ${plan.price}/mes
+                        ${plan.price}{t.pricing.perMonth}
                       </p>
                     )}
                     <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
@@ -416,7 +411,6 @@ function PricingContent() {
                 ))}
               </ul>
 
-
               {/* Card footer — character count */}
               <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                 <p style={{ fontSize: "14px", fontWeight: 500, color: "rgba(255,255,255,0.60)", textAlign: "center" }}>
@@ -443,13 +437,13 @@ function PricingContent() {
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
                 <span style={{ fontSize: "20px" }}>♾</span>
-                <span style={{ fontSize: "17px", fontWeight: 800, color: "#f59e0b" }}>Elite Vitalicio</span>
+                <span style={{ fontSize: "17px", fontWeight: 800, color: "#f59e0b" }}>{t.pricing.lifetimeName}</span>
                 <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(245,158,11,0.45)", color: "#f59e0b", background: "rgba(245,158,11,0.1)" }}>
-                  PLAN ACTUAL
+                  {t.pricing.currentPlan}
                 </span>
               </div>
               <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", margin: 0 }}>
-                Acceso de por vida · 20.000.000 caracteres/mes · Sin renovaciones
+                {t.pricing.lifetimeDesc}
               </p>
             </div>
             <Link
@@ -467,7 +461,7 @@ function PricingContent() {
                 flexShrink: 0,
               }}
             >
-              Renovar créditos ($340)
+              {t.pricing.lifetimeRenew}
             </Link>
           </div>
         )}
@@ -487,7 +481,7 @@ function PricingContent() {
                   <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "#555555", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     {t.pricing.platform}
                   </th>
-                  {["~$8/mes", "~$55/mes", "~$315/mes"].map((col) => (
+                  {[`~$8${t.pricing.perMonth}`, `~$55${t.pricing.perMonth}`, `~$315${t.pricing.perMonth}`].map((col) => (
                     <th key={col} style={{ padding: "12px 10px", fontWeight: 600, color: "#555555", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                       {col}
                     </th>
@@ -499,14 +493,6 @@ function PricingContent() {
                 ElevenLabs: $11→121k, $99→600k, $299→2M, $990→6M
                 Minimax: $15→330k, $30→750k, $99→3M
                 Recalcular interpolando a los precios actuales de Elite Labs ($8, $55, $315)
-
-                ElevenLabs ~$8:  lerp($0→0, $11→121k) × (8/11) ≈ 88k
-                ElevenLabs ~$55: lerp($11→121k, $99→600k) × ((55-11)/(99-11)) ≈ 363k
-                ElevenLabs ~$315: lerp($299→2M, $990→6M) × ((315-299)/(990-299)) ≈ 1.85M
-
-                Minimax ~$8:  lerp($0→0, $15→330k) × (8/15) ≈ 176k
-                Minimax ~$55: lerp($30→750k, $99→3M) × ((55-30)/(99-30)) ≈ 1.63M
-                Minimax ~$315: extrapolando tendencia $99→3M → ~9M
               */}
               <tbody>
                 {[
@@ -531,9 +517,9 @@ function PricingContent() {
             </table>
           </div>
           <p style={{ marginTop: "12px", textAlign: "center", fontSize: "13px" }}>
-            <span style={{ color: "#ffffff", fontWeight: 600 }}>Hasta 8× más caracteres que ElevenLabs al mismo precio.</span>
+            <span style={{ color: "#ffffff", fontWeight: 600 }}>{t.pricing.upTo8x}</span>
             {" "}
-            <span style={{ color: "#444444", fontWeight: 400 }}>Sin límite por generación.</span>
+            <span style={{ color: "#444444", fontWeight: 400 }}>{t.pricing.noLimit}</span>
           </p>
         </div>
 

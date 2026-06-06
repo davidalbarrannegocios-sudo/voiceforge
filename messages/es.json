@@ -18,7 +18,29 @@
     "discover": "Descubrir",
     "team": "Equipo",
     "textToDialogue": "Texto a Diálogo",
-    "imageVideo": "Imagen y Video"
+    "imageVideo": "Imagen y Video",
+    "tts": "Texto a Voz",
+    "ttsDesc": "Genera voz limpia a partir de guiones",
+    "stt": "Voz a Texto",
+    "sttDesc": "Transcribe audio a texto con precisión",
+    "voiceClone": "Clonación de voz",
+    "voiceCloneDesc": "Crea una réplica de tu voz",
+    "dialogue": "Texto a Diálogo",
+    "dialogueDesc": "Convierte guiones en diálogos con voces",
+    "imageVideoDesc": "Genera imágenes y vídeos con IA",
+    "gallery": "Galería",
+    "galleryDesc": "Imágenes creadas por la comunidad",
+    "company": "Empresa",
+    "about": "Sobre nosotros",
+    "aboutDesc": "Conoce nuestro equipo y misión",
+    "blog": "Blog",
+    "blogDesc": "Artículos sobre IA y síntesis de voz",
+    "support": "Soporte",
+    "supportDesc": "Ayuda y contacto",
+    "pricing": "Precios",
+    "voices": "Voces",
+    "dashboard": "Dashboard",
+    "signIn": "Iniciar sesión"
   },
   "tabs": {
     "home": "Inicio",
@@ -391,7 +413,14 @@
     "changePlanA": "Sí, puedes hacer upgrade o downgrade en cualquier momento desde el portal de facturación.",
     "cloneFormatsQ": "¿Qué formatos acepta la clonación?",
     "cloneFormatsA": "WAV, MP3 y M4A. Recomendamos entre 10 y 30 segundos de audio limpio sin ruido.",
-    "viewResults": "Ver {count} voces"
+    "viewResults": "Ver {count} voces",
+    "currentPlan": "PLAN ACTUAL",
+    "annualSavings": "Ahorras ${n}/año",
+    "upTo8x": "Hasta 8× más caracteres que ElevenLabs al mismo precio.",
+    "discountLabel": "DESCUENTO",
+    "lifetimeName": "Elite Vitalicio",
+    "lifetimeDesc": "Acceso de por vida · 20.000.000 caracteres/mes · Sin renovaciones",
+    "lifetimeRenew": "Renovar créditos ($340)"
   },
   "voicesPage": {
     "heroTitle": "Descubre las voces de IA más realistas",
@@ -665,5 +694,75 @@
     "ticketClosed": "CERRADO",
     "teamResponse": "RESPUESTA DEL EQUIPO",
     "errorSend": "Error al enviar"
+  },
+  "hero": {
+    "title": "Genera. Clona. Domina.",
+    "subtitle": "Clonación de voz, biblioteca de voces, narraciones y mucho más",
+    "tab1": "Texto a voz",
+    "tab2": "Clonación de voz",
+    "tab3": "De voz a texto",
+    "voiceCount": "2.000.000+ voces ↗",
+    "generatePlay": "Generar y reproducir",
+    "poweredBy": "Powered by Elite Labs E2 Pro",
+    "startFree": "EMPIEZA GRATIS HOY",
+    "goToDashboard": "Ir al Dashboard →",
+    "exclusiveTitle": "Función exclusiva para miembros",
+    "exclusiveDesc": "Crea una cuenta gratis para acceder a esta función",
+    "startFreeArrow": "Empezar gratis →",
+    "generating": "Generando...",
+    "demoPlaceholder": "Introduce tu propio texto",
+    "demoText": "Hola, soy una voz generada con inteligencia artificial por Elite Labs. La calidad es excepcional y el resultado suena completamente natural."
+  },
+  "features": {
+    "title": "Para cada caso de uso",
+    "subtitle": "Genera audio profesional para cualquier proyecto",
+    "useCase1": "Narración de vídeo",
+    "useCase2": "Audiolibros",
+    "useCase3": "Contenido YouTube",
+    "desc": "Crea voces de IA de calidad profesional para vídeos, audiolibros y personajes",
+    "bullet1": "Locuciones de vídeo profesionales en segundos",
+    "bullet2": "Narración de audiolibros con voz natural",
+    "bullet3": "Voces de personajes únicos e inmersivos",
+    "goToDashboard": "Ir al Dashboard →",
+    "startFree": "Empezar gratis →",
+    "playing": "Pausar",
+    "listen": "Escuchar",
+    "reproduce": "Reproducir",
+    "generating": "Generando...",
+    "demoScript": "Bienvenidos a este episodio del podcast. Hoy vamos a hablar sobre el futuro de la inteligencia artificial y cómo está cambiando el mundo.",
+    "demoLanguage": "Español"
+  },
+  "stats": {
+    "voices": "Voces disponibles",
+    "voicesDesc": "Accede a una biblioteca masiva de voces públicas o crea las tuyas propias con clonación instantánea."
+  },
+  "faq": {
+    "title": "Preguntas frecuentes",
+    "q1": "¿Qué es Elite Labs y cómo funciona?",
+    "a1": "Elite Labs es una plataforma de síntesis de voz con IA que convierte texto en audio de calidad profesional. Usamos modelos de inteligencia artificial avanzados para generar voces naturales en más de 80 idiomas.",
+    "q2": "¿Cómo funciona la clonación de voz?",
+    "a2": "Solo necesitas 10 segundos de audio limpio. Nuestra IA analiza las características únicas de la voz —timbre, cadencia, entonación— y crea un modelo personalizado que puedes usar en todas tus generaciones.",
+    "q3": "¿Los caracteres tienen fecha de caducidad?",
+    "a3": "No. Los caracteres que compras son tuyos para siempre. Sin suscripciones ni caducidad. Paga una vez y úsalos cuando quieras.",
+    "q4": "¿En cuántos idiomas puedo generar audio?",
+    "a4": "Elite Labs soporta más de 80 idiomas y dialectos a través de su biblioteca de voces públicas: español, inglés, francés, alemán, portugués, chino, japonés y muchos más.",
+    "q5": "¿Qué calidad tiene el audio generado?",
+    "a5": "El audio se genera en formato MP3 de alta calidad, ideal para vídeos, podcasts, audiolibros y contenido profesional. La calidad es comparable a la de un locutor profesional de estudio."
+  },
+  "cta": {
+    "title": "¡Empieza a convertir texto en audio hoy mismo!",
+    "subtitle": "Sin tarjeta de crédito. Explora las voces gratis.",
+    "goToDashboard": "Ir al Dashboard →",
+    "startFree": "Empezar gratis →"
+  },
+  "footer": {
+    "tagline": "Síntesis de voz con IA de calidad profesional.",
+    "product": "Producto",
+    "company": "Empresa",
+    "legal": "Legal",
+    "privacy": "Política de privacidad",
+    "terms": "Términos de uso",
+    "contact": "Contacto",
+    "copyright": "© 2026 Elite Tube LLC. All rights reserved."
   }
 }
