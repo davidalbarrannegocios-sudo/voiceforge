@@ -213,7 +213,7 @@
     "charsMonth": "characters/month",
     "planDescFree": "To explore the platform",
     "planDescStarter": "For creators just starting out",
-    "planDescPro": "The best option for active creators",
+    "planDescPro": "For active professional creators",
     "planDescElite": "Maximum performance without limits",
     "planDescEnterprise": "For professionals and teams",
     "feat10k": "10,000 characters on sign up",
@@ -231,7 +231,7 @@
     "featSupport": "Priority support",
     "featAudioTrans": "Audio translation +10%",
     "featUnlimitedClones": "Unlimited cloned voices",
-    "featCharsX2": "{n} characters/month (x2 with EliteLabs 2)",
+    "featCharsX2": "{n} characters/month (x2 with EliteLabs Turbo)",
     "feat3Clones": "3 cloned voices",
     "feat10Clones": "10 cloned voices",
     "feat20Clones": "20 cloned voices",
@@ -278,7 +278,7 @@
     "errorPrepare": "Error preparing form",
     "errorUnknown": "Unknown error",
     "planDescCreator": "For creators just getting started",
-    "planDescPlus": "For active creators and growing projects",
+    "planDescPlus": "The most popular option",
     "feat15Clones": "15 cloned voices"
   },
   "landing": {

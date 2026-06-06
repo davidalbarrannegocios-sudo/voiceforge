@@ -213,7 +213,7 @@
     "charsMonth": "Zeichen/Monat",
     "planDescFree": "Um die Plattform zu erkunden",
     "planDescStarter": "Für Ersteller, die anfangen",
-    "planDescPro": "Die beste Option für aktive Ersteller",
+    "planDescPro": "Für aktive professionelle Kreative",
     "planDescElite": "Maximale Leistung ohne Grenzen",
     "planDescEnterprise": "Für Profis und Teams",
     "feat10k": "10.000 Zeichen bei der Registrierung",
@@ -231,7 +231,7 @@
     "featSupport": "Prioritäts-Support",
     "featAudioTrans": "Audio-Übersetzung +10%",
     "featUnlimitedClones": "Unbegrenzte geklonte Stimmen",
-    "featCharsX2": "{n} Zeichen/Monat (x2 mit EliteLabs 2)",
+    "featCharsX2": "{n} Zeichen/Monat (x2 mit EliteLabs Turbo)",
     "feat3Clones": "3 geklonte Stimmen",
     "feat10Clones": "10 geklonte Stimmen",
     "feat20Clones": "20 geklonte Stimmen",
@@ -278,7 +278,7 @@
     "errorPrepare": "Fehler beim Vorbereiten des Formulars",
     "errorUnknown": "Unbekannter Fehler",
     "planDescCreator": "Für Kreative, die gerade starten",
-    "planDescPlus": "Für aktive Kreative und wachsende Projekte",
+    "planDescPlus": "Die beliebteste Option",
     "feat15Clones": "15 geklonte Stimmen"
   },
   "landing": {

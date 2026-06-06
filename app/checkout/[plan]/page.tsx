@@ -22,23 +22,30 @@ const CREDIT_PACKS: Record<string, { label: string; credits: number; price: numb
 };
 
 const PLAN_FEATURES: Record<string, string[]> = {
-  plus: [
-    "250.000 caracteres/mes (x2 con EliteLabs 2)",
+  creator: [
+    "250.000 caracteres/mes (x2 con EliteLabs Turbo)",
     "Selección de voz completa",
     "Transcripciones y traducciones ilimitadas",
     "3 voces clonadas",
     "Audios disponibles 14 días",
   ],
-  pro: [
-    "2.000.000 caracteres/mes (x2 con EliteLabs 2)",
+  plus: [
+    "1.000.000 caracteres/mes (x2 con EliteLabs Turbo)",
     "Selección de voz completa",
     "Transcripciones y traducciones ilimitadas",
     "10 voces clonadas",
+    "Audios disponibles 14 días",
+  ],
+  pro: [
+    "2.000.000 caracteres/mes (x2 con EliteLabs Turbo)",
+    "Selección de voz completa",
+    "Transcripciones y traducciones ilimitadas",
+    "15 voces clonadas",
     "Generación prioritaria",
     "Audios disponibles 30 días",
   ],
   elite: [
-    "15.000.000 caracteres/mes (x2 con EliteLabs 2)",
+    "15.000.000 caracteres/mes (x2 con EliteLabs Turbo)",
     "Selección de voz completa",
     "Transcripciones y traducciones ilimitadas",
     "20 voces clonadas",
@@ -48,14 +55,14 @@ const PLAN_FEATURES: Record<string, string[]> = {
   ],
   // legacy — kept for existing subscribers who access checkout
   starter: [
-    "200.000 caracteres/mes (x2 con EliteLabs 2)",
+    "200.000 caracteres/mes (x2 con EliteLabs Turbo)",
     "Selección de voz completa",
     "Transcripciones y traducciones ilimitadas",
     "3 voces clonadas",
     "Audios disponibles 14 días",
   ],
   enterprise: [
-    "5.000.000 caracteres/mes (x2 con EliteLabs 2)",
+    "5.000.000 caracteres/mes (x2 con EliteLabs Turbo)",
     "Voces clonadas ilimitadas",
     "Transcripciones y traducciones ilimitadas",
     "Traducción de audio +10%",

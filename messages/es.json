@@ -213,7 +213,7 @@
     "charsMonth": "caracteres/mes",
     "planDescFree": "Para explorar la plataforma",
     "planDescStarter": "Para creadores que están empezando",
-    "planDescPro": "La mejor opción para creadores activos",
+    "planDescPro": "Para creadores profesionales activos",
     "planDescElite": "Máximo rendimiento sin límites",
     "planDescEnterprise": "Para profesionales y equipos",
     "feat10k": "10.000 caracteres al registrarte",
@@ -231,7 +231,7 @@
     "featSupport": "Soporte preferente",
     "featAudioTrans": "Traducción de audio +10%",
     "featUnlimitedClones": "Voces clonadas ilimitadas",
-    "featCharsX2": "{n} caracteres/mes (x2 con EliteLabs 2)",
+    "featCharsX2": "{n} caracteres/mes (x2 con EliteLabs Turbo)",
     "feat3Clones": "3 voces clonadas",
     "feat10Clones": "10 voces clonadas",
     "feat20Clones": "20 voces clonadas",
@@ -278,7 +278,7 @@
     "errorPrepare": "Error al preparar el formulario",
     "errorUnknown": "Error desconocido",
     "planDescCreator": "Para creadores que están empezando",
-    "planDescPlus": "Para creadores activos y proyectos en crecimiento",
+    "planDescPlus": "La opción más popular",
     "feat15Clones": "15 voces clonadas"
   },
   "landing": {
