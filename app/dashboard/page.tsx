@@ -2732,15 +2732,22 @@ function BillingTab({
                 position: "relative",
               }}
             >
-              {/* Name + badge */}
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "6px", marginBottom: "4px" }}>
-                <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{p.name}</span>
+              {/* Name + badges */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", marginBottom: "4px", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                  <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{p.name}</span>
+                  {billing === "annual" && p.price > 0 && (
+                    <span style={{ fontSize: "10px", fontWeight: 500, padding: "2px 7px", borderRadius: "6px", background: "rgba(34,197,94,0.12)", color: "#4ade80", whiteSpace: "nowrap" }}>
+                      Ahorras ${annualSavings.toFixed(2)}/año
+                    </span>
+                  )}
+                </div>
                 {isCurrent && !isLegacyUser ? (
-                  <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px", color: planBadge?.color, background: planBadge?.bg, letterSpacing: "0.05em", whiteSpace: "nowrap", flexShrink: 0 }}>
+                  <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: "6px", color: planBadge?.color, background: planBadge?.bg, letterSpacing: "0.05em", whiteSpace: "nowrap", flexShrink: 0 }}>
                     ACTUAL
                   </span>
                 ) : p.popular ? (
-                  <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.2)", color: "#ffffff", background: "rgba(255,255,255,0.05)", whiteSpace: "nowrap", flexShrink: 0 }}>
+                  <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "6px", color: "#ffffff", background: "rgba(255,255,255,0.10)", whiteSpace: "nowrap", flexShrink: 0 }}>
                     Popular
                   </span>
                 ) : null}
@@ -2779,14 +2786,9 @@ function BillingTab({
                       <span style={{ fontSize: "12px", color: "#444444", marginLeft: "2px" }}>/mes</span>
                     </div>
                     {billing === "annual" ? (
-                      <>
-                        <p style={{ fontSize: "11px", color: "#555555", marginTop: "2px" }}>
-                          ${Math.round(effectiveMonthly * 12 * 100) / 100} facturado anualmente
-                        </p>
-                        <span style={{ display: "inline-block", marginTop: "3px", fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "999px", background: "rgba(34,197,94,0.12)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.25)" }}>
-                          Ahorras ${annualSavings.toFixed(2)}/año
-                        </span>
-                      </>
+                      <p style={{ fontSize: "11px", color: "#555555", marginTop: "2px" }}>
+                        ${Math.round(effectiveMonthly * 12 * 100) / 100} facturado anualmente
+                      </p>
                     ) : discount ? (
                       <p style={{ fontSize: "11px", color: "#4ade80", marginTop: "3px" }}>
                         {discount.percentage}% de descuento aplicado
