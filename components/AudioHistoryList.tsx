@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Clock, Trash2, Play, Pause, Download, RefreshCw, FileText, Copy, Check } from "lucide-react";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 import { useLang } from "@/app/dashboard/LanguageContext";
+import { downloadAudio } from "@/lib/downloadAudio";
 
 interface PendingJob {
   jobId: string;
@@ -469,16 +470,13 @@ export default function AudioHistoryList({
                                   <><Play size={10} fill="currentColor" style={{ flexShrink: 0 }} />Play</>
                                 )}
                               </button>
-                              <a
-                                href={gen.audioUrl!}
-                                download={`audio-${gen.id}.mp3`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ display: "flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "9999px", background: "rgba(255,255,255,0.08)", fontSize: "11px", fontWeight: 500, color: "#e2e8f0", textDecoration: "none", flexShrink: 0 }}
+                              <button
+                                onClick={() => downloadAudio(gen.audioUrl!, `audio-${gen.id}.mp3`)}
+                                style={{ display: "flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "9999px", background: "rgba(255,255,255,0.08)", fontSize: "11px", fontWeight: 500, color: "#e2e8f0", border: "none", cursor: "pointer", flexShrink: 0 }}
                               >
                                 <Download size={10} />
                                 {t.voices.download}
-                              </a>
+                              </button>
                             </>
                           )}
                           <div style={{ flex: 1 }} />

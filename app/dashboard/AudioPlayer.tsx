@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { downloadAudio } from "@/lib/downloadAudio";
 
 function fmt(seconds: number) {
   const m = Math.floor(seconds / 60);
@@ -97,13 +98,10 @@ export function AudioPlayer({
         </span>
 
         {/* Download */}
-        <a
-          href={src}
-          download={filename}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={() => downloadAudio(src, filename)}
           className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-105"
-          style={{ background: "#1a1a2e", border: "1px solid #2a2a3e", color: "#aaaaaa" }}
+          style={{ background: "#1a1a2e", border: "1px solid #2a2a3e", color: "#aaaaaa", cursor: "pointer" }}
           aria-label="Descargar audio"
           title="Descargar"
         >
@@ -111,7 +109,7 @@ export function AudioPlayer({
             <path d="M7 1v8M4 6l3 3 3-3" />
             <path d="M1 11h12" />
           </svg>
-        </a>
+        </button>
       </div>
     </div>
   );

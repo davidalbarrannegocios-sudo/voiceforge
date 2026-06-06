@@ -24,6 +24,7 @@ import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 import { generateVoiceGradient } from "@/lib/voice-gradient";
 import { TaggedTextEditor, cleanPastedText } from "@/components/TaggedTextEditor";
 import { NoCreditsModal } from "@/components/NoCreditsModal";
+import { downloadAudio } from "@/lib/downloadAudio";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface Voice {
@@ -628,14 +629,14 @@ function HomeTab({
                     {new Date(gen.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
                   </p>
                   {gen.audioUrl && (
-                    <a href={gen.audioUrl} download
-                       target="_blank" rel="noopener noreferrer"
+                    <button
+                       onClick={() => downloadAudio(gen.audioUrl!, `audio-${gen.id}.mp3`)}
                        className="text-xs transition-colors"
-                       style={{ color: "#555555" }}
+                       style={{ color: "#555555", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                        onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
                        onMouseLeave={e => (e.currentTarget.style.color = "#555555")}>
                       ↓ MP3
-                    </a>
+                    </button>
                   )}
                 </div>
               </div>
@@ -2365,20 +2366,17 @@ function HistoryTab({ plan }: { plan: string }) {
                           <div style={{ flex: 1 }} />
 
                           {gen.audioUrl && (
-                            <a
-                              href={gen.audioUrl}
-                              download
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <button
+                              onClick={() => downloadAudio(gen.audioUrl!, `audio-${gen.id}.mp3`)}
                               style={{
                                 display: "flex", alignItems: "center", justifyContent: "center",
                                 width: 26, height: 26, borderRadius: "50%",
-                                background: "#1a1a1a", color: "#9ca3af", textDecoration: "none",
+                                background: "#1a1a1a", color: "#9ca3af", border: "none", cursor: "pointer",
                               }}
                               title="Descargar"
                             >
                               <Download size={11} />
-                            </a>
+                            </button>
                           )}
 
                           <button
@@ -3502,16 +3500,14 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 </span>
 
                 {/* Download */}
-                <a
-                  href={result.audioUrl}
-                  download={`traduccion-${result.targetLanguageName.toLowerCase()}.mp3`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => downloadAudio(result.audioUrl, `traduccion-${result.targetLanguageName.toLowerCase()}.mp3`)}
                   className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/30 hover:text-white transition-colors flex-shrink-0"
+                  style={{ background: "none", border: "none", cursor: "pointer" }}
                   title="Descargar"
                 >
                   <Download className="w-3.5 h-3.5" />
-                </a>
+                </button>
               </div>
               <div className="grid gap-3">
                 <div className="rounded-xl p-4" style={{ background: "#111111", border: "1px solid #222222" }}>
@@ -3676,16 +3672,13 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                             ? <Pause className="w-3.5 h-3.5" />
                             : <Play className="w-3.5 h-3.5 ml-0.5" />}
                         </button>
-                        <a
-                          href={task.audioUrl}
-                          download={`${task.fileName?.replace(/\.[^/.]+$/, '') ?? 'traduccion'}-${task.targetLanguage}.mp3`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          onClick={e => { e.stopPropagation(); downloadAudio(task.audioUrl!, `${task.fileName?.replace(/\.[^/.]+$/, '') ?? 'traduccion'}-${task.targetLanguage}.mp3`); }}
                           className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/40 hover:text-white transition-colors"
-                          onClick={e => e.stopPropagation()}
+                          style={{ background: "none", border: "none", cursor: "pointer" }}
                         >
                           <Download className="w-3.5 h-3.5" />
-                        </a>
+                        </button>
                       </>
                     )}
                     {task.status === 'expired' && (
