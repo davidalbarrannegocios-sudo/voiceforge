@@ -102,7 +102,7 @@ export function DashboardSidebar() {
         top: 0,
         borderRight: "1px solid #1a1a1a",
         background: "#000000",
-        overflowX: "hidden",
+        overflow: "visible",
         transition: "width 0.3s ease-in-out",
       }}
     >
