@@ -34,7 +34,7 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
   const showRing = used !== undefined && total !== undefined && total > 0;
   const remaining = (total ?? 0) - (used ?? 0);
   const pct = showRing ? Math.min(100, (used! / total!) * 100) : 0;
-  // Rounded-rect ring: 36×36 SVG, 2px inset, rx=10 to match avatar's 10px border-radius
+  // rx = avatarBorderRadius(12px via rounded-xl) - inset(2) = 10
   const rx = 10;
   const inset = 2;
   const sz = 36 - 2 * inset; // 34

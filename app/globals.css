@@ -364,31 +364,3 @@ input[type="range"]::-moz-range-thumb {
   border-radius: 16px !important;
 }
 
-/* ── Clerk avatar — cuadrado con esquinas redondeadas ── */
-.cl-userButtonAvatarBox,
-.cl-userButtonAvatarImage,
-.cl-avatarBox,
-.cl-avatarImage {
-  border-radius: 10px !important;
-}
-
-.cl-userButtonAvatarBox img,
-.cl-userButtonAvatarBox > *,
-.cl-avatarBox img,
-.cl-avatarBox > *,
-[data-localization-key] .cl-avatarBox,
-.cl-userButtonAvatarImage,
-.cl-avatarImage {
-  border-radius: 10px !important;
-}
-
-.cl-userButtonTrigger,
-.cl-userButtonTrigger:focus,
-.cl-userButtonTrigger[data-color] {
-  border-radius: 10px !important;
-}
-
-.cl-userButtonTrigger::after,
-.cl-userButtonTrigger::before {
-  border-radius: 10px !important;
-}
