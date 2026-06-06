@@ -177,7 +177,7 @@ export function SupportChat({ open, onClose }: { open: boolean; onClose: () => v
                 maxWidth: "80%", padding: "9px 13px",
                 borderRadius: "16px 16px 4px 16px",
                 fontSize: "13px", lineHeight: 1.6,
-                background: "rgba(255,255,255,0.10)",
+                background: "#3f3f46",
                 color: "#ffffff",
                 whiteSpace: "pre-wrap", wordBreak: "break-word",
               }}>
@@ -218,7 +218,7 @@ export function SupportChat({ open, onClose }: { open: boolean; onClose: () => v
             style={{
               width: 30, height: 30, borderRadius: "8px", border: "none",
               cursor: input.trim() && !loading ? "pointer" : "not-allowed",
-              background: input.trim() && !loading ? "#2563eb" : "rgba(255,255,255,0.06)",
+              background: input.trim() && !loading ? "#3f3f46" : "rgba(255,255,255,0.06)",
               color: input.trim() && !loading ? "#ffffff" : "#4b5563",
               display: "flex", alignItems: "center", justifyContent: "center",
               transition: "background 0.15s, color 0.15s", flexShrink: 0,
