@@ -18,10 +18,14 @@ export async function POST(req: NextRequest) {
   if (!prompt?.trim()) return NextResponse.json({ error: 'Prompt requerido' }, { status: 400 })
 
   const totalVideoCredits = VIDEO_CREDITS_PER_SECOND * duration
+  const totalAvailable = dbUser.credits + dbUser.extraCredits
 
-  if (dbUser.credits < totalVideoCredits) {
+  if (totalAvailable < totalVideoCredits) {
     return NextResponse.json({ error: 'Créditos insuficientes' }, { status: 402 })
   }
+
+  const fromPlan  = Math.min(dbUser.credits, totalVideoCredits)
+  const fromExtra = totalVideoCredits - fromPlan
 
   const XAI_KEY = process.env.XAI_API_KEY!
 
@@ -61,12 +65,12 @@ export async function POST(req: NextRequest) {
 
   await prisma.user.update({
     where: { id: dbUser.id },
-    data: { credits: { decrement: totalVideoCredits } },
+    data: { credits: { decrement: fromPlan }, extraCredits: { decrement: fromExtra } },
   })
 
   return NextResponse.json({
     taskId: data.request_id,
     creditsUsed: totalVideoCredits,
-    creditsRemaining: dbUser.credits - totalVideoCredits,
+    creditsRemaining: totalAvailable - totalVideoCredits,
   })
 }

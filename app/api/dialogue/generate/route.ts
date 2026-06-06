@@ -95,9 +95,12 @@ export async function POST(req: NextRequest) {
   }
 
   const totalChars = lines.reduce((sum, l) => sum + l.text.length, 0)
-  if (dbUser.credits < totalChars) {
+  const totalAvailable = dbUser.credits + dbUser.extraCredits
+  if (totalAvailable < totalChars) {
     return NextResponse.json({ error: 'Insufficient credits' }, { status: 402 })
   }
+  const fromPlan  = Math.min(dbUser.credits, totalChars)
+  const fromExtra = totalChars - fromPlan
 
   const sessionId = randomUUID()
   const audioPaths: string[] = []
@@ -174,7 +177,7 @@ export async function POST(req: NextRequest) {
     await prisma.$transaction([
       prisma.user.update({
         where: { id: dbUser.id },
-        data: { credits: { decrement: totalChars } },
+        data: { credits: { decrement: fromPlan }, extraCredits: { decrement: fromExtra } },
       }),
       prisma.generation.create({
         data: {
@@ -197,7 +200,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       audioUrl,
-      creditsRemaining: dbUser.credits - totalChars,
+      creditsRemaining: totalAvailable - totalChars,
     })
   } catch (err: unknown) {
     await Promise.all(audioPaths.map(p => unlink(p).catch(() => {})))

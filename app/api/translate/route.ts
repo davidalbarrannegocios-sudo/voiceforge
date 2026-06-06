@@ -157,20 +157,25 @@ export async function POST(req: Request) {
     // ── Credit check & deduction ─────────────────────────────────
     const translateMultiplier = effectivePlan === "enterprise" ? 1.1 : 1.2;
     const charCost = Math.ceil(calculateCharCost(translatedText.length) * translateMultiplier);
+    const totalAvailable = user.credits + user.extraCredits;
 
-    if (user.credits < charCost) {
+    if (totalAvailable < charCost) {
       await prisma.translationTask.update({ where: { id: task.id }, data: { status: "error", errorMessage: `Créditos insuficientes (necesitas ${charCost})` } });
       await cleanup();
       return NextResponse.json(
-        { error: `Créditos insuficientes. Necesitas ${charCost} para ${translatedText.length} caracteres.`, charCost, charsAvailable: user.credits },
+        { error: `Créditos insuficientes. Necesitas ${charCost} para ${translatedText.length} caracteres.`, charCost, charsAvailable: totalAvailable },
         { status: 402 },
       );
     }
 
+    const fromPlan  = Math.min(user.credits, charCost);
+    const fromExtra = charCost - fromPlan;
+
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        credits: { decrement: charCost },
+        credits: { decrement: fromPlan },
+        extraCredits: { decrement: fromExtra },
         ...(effectivePlan === "free" && { transcriptionUsed: { increment: 1 } }),
       },
     });

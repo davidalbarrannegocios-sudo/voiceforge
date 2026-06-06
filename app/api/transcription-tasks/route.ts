@@ -101,8 +101,9 @@ export async function POST(req: Request) {
     }
 
     const charCost = calculateCharCost(transcribedText.length);
+    const totalAvailable = user.credits + user.extraCredits;
 
-    if (user.credits < charCost) {
+    if (totalAvailable < charCost) {
       await prisma.transcriptionTask.update({
         where: { id: task.id },
         data: { status: "error", errorMessage: `Créditos insuficientes (necesitas ${charCost})` },
@@ -112,6 +113,9 @@ export async function POST(req: Request) {
         { status: 402 }
       );
     }
+
+    const fromPlan  = Math.min(user.credits, charCost);
+    const fromExtra = charCost - fromPlan;
 
     const [updatedTask] = await prisma.$transaction([
       prisma.transcriptionTask.update({
@@ -126,7 +130,8 @@ export async function POST(req: Request) {
       prisma.user.update({
         where: { id: user.id },
         data: {
-          credits: { decrement: charCost },
+          credits: { decrement: fromPlan },
+          extraCredits: { decrement: fromExtra },
           ...(effectivePlan === "free" && { transcriptionUsed: { increment: 1 } }),
         },
       }),

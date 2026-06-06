@@ -58,10 +58,14 @@ export async function POST(req: NextRequest) {
 
   const creditsPerImage = MODEL_CREDITS[model] ?? 2000
   const totalCredits = creditsPerImage * count
+  const totalAvailable = dbUser.credits + dbUser.extraCredits
 
-  if (dbUser.credits < totalCredits) {
+  if (totalAvailable < totalCredits) {
     return NextResponse.json({ error: 'Créditos insuficientes' }, { status: 402 })
   }
+
+  const fromPlan  = Math.min(dbUser.credits, totalCredits)
+  const fromExtra = totalCredits - fromPlan
 
   const isXAI = model.startsWith('grok-imagine-image')
 
@@ -98,13 +102,13 @@ export async function POST(req: NextRequest) {
 
     await prisma.user.update({
       where: { id: dbUser.id },
-      data: { credits: { decrement: totalCredits } },
+      data: { credits: { decrement: fromPlan }, extraCredits: { decrement: fromExtra } },
     })
 
     return NextResponse.json({
       images,
       creditsUsed: totalCredits,
-      creditsRemaining: dbUser.credits - totalCredits,
+      creditsRemaining: totalAvailable - totalCredits,
     })
   }
 
@@ -144,12 +148,12 @@ export async function POST(req: NextRequest) {
 
   await prisma.user.update({
     where: { id: dbUser.id },
-    data: { credits: { decrement: totalCredits } },
+    data: { credits: { decrement: fromPlan }, extraCredits: { decrement: fromExtra } },
   })
 
   return NextResponse.json({
     jobs,
     creditsUsed: totalCredits,
-    creditsRemaining: dbUser.credits - totalCredits,
+    creditsRemaining: totalAvailable - totalCredits,
   })
 }
