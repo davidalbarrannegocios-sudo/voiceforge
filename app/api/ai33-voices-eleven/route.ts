@@ -55,11 +55,9 @@ export async function GET(req: Request) {
   const ageFilter = (searchParams.get("age") ?? "").toLowerCase().trim();
   const useCaseFilter = (searchParams.get("use_case") ?? "").toLowerCase().trim();
   const accentFilter = (searchParams.get("accent") ?? "").toLowerCase().trim();
-  const PAGE_SIZE = 20;
-
   // Build server-side filter params for ai33.pro
   // age and gender work server-side; use_case does not (always returns full set)
-  const params = new URLSearchParams({ page_size: "100" });
+  const params = new URLSearchParams({ page_size: "100", page: String(page) });
   if (langFilter && langFilter !== "all") params.set("language", langFilter);
   if (genderFilter && genderFilter !== "all") params.set("gender", genderFilter);
   if (ageFilter && ageFilter !== "all") params.set("age", ageFilter);
@@ -101,8 +99,7 @@ export async function GET(req: Request) {
 
   const allItems = filtered.map(mapToFishVoice);
   const total = allItems.length;
-  const items = allItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  console.log(`[ai33-voices-eleven] returning items=${items.length} total=${total} accents=${accents.length} serverTotal=${serverTotal}`);
-  return NextResponse.json({ items, total, accents, serverTotal });
+  console.log(`[ai33-voices-eleven] returning items=${total} accents=${accents.length} serverTotal=${serverTotal}`);
+  return NextResponse.json({ items: allItems, total, accents, serverTotal });
 }

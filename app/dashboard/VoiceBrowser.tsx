@@ -875,6 +875,7 @@ export function VoiceBrowser({
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [favoriteVoices, setFavoriteVoices] = useState<FavoriteVoice[]>([]);
   const [total, setTotal] = useState(0);
+  const [externalServerTotal, setExternalServerTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   // Refs for progressive accumulation when advanced filters are active
@@ -926,6 +927,7 @@ export function VoiceBrowser({
     setAvailableAccents([]);
     setElevenFilters(EMPTY_ELEVEN_FILTERS);
     setAppliedElevenFilters(EMPTY_ELEVEN_FILTERS);
+    setExternalServerTotal(0);
     setPage(1);
     setPublicVoices([]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1123,6 +1125,7 @@ export function VoiceBrowser({
           setTotal(data.total ?? 0);
           setAccentNotEnough(!isExternalSource && !!data.accentNotEnough);
           if (isExternalSource && Array.isArray(data.accents)) setAvailableAccents(data.accents);
+          if (isExternalSource) setExternalServerTotal(data.serverTotal ?? 0);
         }
       } catch (e) {
         if ((e as Error)?.name === "AbortError") return;
@@ -1188,7 +1191,12 @@ export function VoiceBrowser({
           const res = await fetch(`${effectiveEndpoint}?${p}`, { signal });
           if (signal.aborted) return;
           const data = await res.json();
-          setPublicVoices(data.items ?? []);
+          if (isExternalSource) {
+            setPublicVoices((prev) => [...prev, ...(data.items ?? [])]);
+            setExternalServerTotal(data.serverTotal ?? 0);
+          } else {
+            setPublicVoices(data.items ?? []);
+          }
           setTotal(data.total ?? 0);
         }
       } catch (e) {
@@ -1382,6 +1390,12 @@ export function VoiceBrowser({
             {/* ── Explore tab ── */}
             {tab === "explore" && (
               <div className="px-6 py-4">
+                {/* Total count for external sources */}
+                {isExternalSource && externalServerTotal > 0 && (
+                  <div className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.35)" }}>
+                    {externalServerTotal.toLocaleString()} voces disponibles
+                  </div>
+                )}
                 {/* Search + controls row */}
                 <div className="flex gap-3 mb-4">
                   {/* Search */}
@@ -1525,7 +1539,7 @@ export function VoiceBrowser({
                 )}
 
                 {/* Voice list */}
-                {loading ? (
+                {loading && publicVoices.length === 0 ? (
                   <div className="rounded-xl overflow-hidden mt-2" style={{ border: "1px solid #1a1a1a" }}>
                     {Array.from({ length: 8 }).map((_, i) => (
                       <div key={i} className="h-[72px] animate-pulse" style={{ background: i % 2 === 0 ? "#0d0d0d" : "#0b0b0b", borderBottom: "1px solid #111111" }} />
@@ -1550,27 +1564,50 @@ export function VoiceBrowser({
                   </div>
                 )}
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-3 mt-6 pb-2">
-                    <button
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                      className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
-                      style={{ background: "#0d0d0d", color: "#cccccc", border: "1px solid #1a1a1a" }}
-                    >
-                      ← Anterior
-                    </button>
-                    <span className="text-sm" style={{ color: "#666666" }}>{page} / {totalPages}</span>
-                    <button
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={page >= totalPages}
-                      className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
-                      style={{ background: "#0d0d0d", color: "#cccccc", border: "1px solid #1a1a1a" }}
-                    >
-                      Siguiente →
-                    </button>
-                  </div>
+                {/* Load more (external) / Pagination (Fish Audio) */}
+                {isExternalSource ? (
+                  <>
+                    {loading && publicVoices.length > 0 && (
+                      <div className="flex justify-center mt-4 pb-2">
+                        <span className="text-sm" style={{ color: "#666666" }}>Cargando más voces...</span>
+                      </div>
+                    )}
+                    {!loading && publicVoices.length < externalServerTotal && (
+                      <div className="flex justify-center mt-6 pb-2">
+                        <button
+                          onClick={() => setPage((p) => p + 1)}
+                          className="px-5 py-2 rounded-lg text-sm font-medium transition-all"
+                          style={{ background: "#0d0d0d", color: "#cccccc", border: "1px solid #1a1a1a" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)")}
+                          onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1a1a1a")}
+                        >
+                          {`Cargar más voces (${publicVoices.length.toLocaleString()} de ${externalServerTotal.toLocaleString()})`}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-3 mt-6 pb-2">
+                      <button
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
+                        style={{ background: "#0d0d0d", color: "#cccccc", border: "1px solid #1a1a1a" }}
+                      >
+                        ← Anterior
+                      </button>
+                      <span className="text-sm" style={{ color: "#666666" }}>{page} / {totalPages}</span>
+                      <button
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={page >= totalPages}
+                        className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
+                        style={{ background: "#0d0d0d", color: "#cccccc", border: "1px solid #1a1a1a" }}
+                      >
+                        Siguiente →
+                      </button>
+                    </div>
+                  )
                 )}
               </div>
             )}
