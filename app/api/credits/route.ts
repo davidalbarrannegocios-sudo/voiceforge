@@ -141,6 +141,7 @@ export async function GET() {
     effectivePlan,
     planExpiresAt: user.planExpiresAt?.toISOString() ?? null,
     transcriptionUsed: user.transcriptionUsed,
+    language: user.language,
     ...renewal,
   });
 }
