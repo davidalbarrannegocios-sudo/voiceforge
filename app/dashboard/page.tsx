@@ -4951,7 +4951,7 @@ function TeamTab({
 
   const PLAN_LABELS: Record<string, string> = { free: "Free", starter: "Starter", pro: "Pro", enterprise: "Enterprise" };
   const PLAN_MEMBER_LIMITS: Record<string, number> = { free: 2, starter: 5, pro: 10, enterprise: 50 };
-  const PLAN_CREDIT_LIMITS: Record<string, number> = { free: 10_000, starter: 100_000, pro: 500_000, enterprise: ENTERPRISE_CREDITS };
+  const PLAN_CREDIT_LIMITS: Record<string, number> = { free: 10_000, starter: 100_000, pro: 500_000, enterprise: ENTERPRISE_CREDITS, lifetime: 20_000_000 };
 
   const memberLimit = PLAN_MEMBER_LIMITS[plan] ?? 5;
   const creditLimit = PLAN_CREDIT_LIMITS[plan] ?? 10_000;
@@ -5690,8 +5690,8 @@ export default function DashboardPage() {
                   </svg>
                 </a>
                 <UserMenu
-                  used={credits !== null ? Math.max(0, (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 10_000) + extraCredits - credits) : undefined}
-                  total={credits !== null ? (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 10_000) + extraCredits : undefined}
+                  used={credits !== null ? Math.max(0, (plan === "lifetime" ? 20_000_000 : (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 10_000)) + extraCredits - credits) : undefined}
+                  total={credits !== null ? (plan === "lifetime" ? 20_000_000 : (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 10_000)) + extraCredits : undefined}
                   plan={plan}
                 />
               </div>
