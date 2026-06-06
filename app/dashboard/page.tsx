@@ -25,6 +25,7 @@ import { generateVoiceGradient } from "@/lib/voice-gradient";
 import { TaggedTextEditor, cleanPastedText } from "@/components/TaggedTextEditor";
 import { NoCreditsModal } from "@/components/NoCreditsModal";
 import { downloadAudio } from "@/lib/downloadAudio";
+import { SupportChat } from "@/components/SupportChat";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface Voice {
@@ -5518,6 +5519,7 @@ export default function DashboardPage() {
   const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(null);
   const [translateVoice, setTranslateVoice] = useState<SelectedVoice | null>(null);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [nextRenewalDate, setNextRenewalDate] = useState<string | null>(null);
   const [daysUntilRenewal, setDaysUntilRenewal] = useState<number | null>(null);
@@ -5601,6 +5603,7 @@ export default function DashboardPage() {
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "#000000" }}>
       {supportOpen && <SupportModal onClose={() => setSupportOpen(false)} />}
+      <SupportChat open={chatOpen} onClose={() => setChatOpen(false)} />
 
       {/* Mobile drawer overlay */}
       {sidebarOpen && (
@@ -5656,6 +5659,13 @@ export default function DashboardPage() {
                   className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-xl border border-white/10 bg-transparent text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   <Languages size={16} />
+                </button>
+                <button
+                  onClick={() => setChatOpen(true)}
+                  title="Ask AI"
+                  className="h-9 px-3 min-h-[36px] flex items-center justify-center rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors cursor-pointer text-sm font-medium"
+                >
+                  Ask
                 </button>
                 <button
                   onClick={() => setSupportOpen(true)}
