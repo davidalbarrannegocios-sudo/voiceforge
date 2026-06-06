@@ -169,11 +169,10 @@ export function DashboardSidebar() {
         {showProductMenu && (
           <>
             <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setShowProductMenu(false)} />
-            <div style={{
+            <div className="glass-menu" style={{
               position: "absolute", top: "100%", left: collapsed ? "0" : "12px", right: collapsed ? "auto" : "12px",
               marginTop: "4px", minWidth: "220px",
-              zIndex: 50, background: "#111111", border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "12px", boxShadow: "0 16px 48px rgba(0,0,0,0.6)", padding: "4px",
+              zIndex: 50, padding: "4px",
             }}>
               {/* Elite Studio — activo */}
               <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px", borderRadius: "8px", background: "rgba(255,255,255,0.08)" }}>
