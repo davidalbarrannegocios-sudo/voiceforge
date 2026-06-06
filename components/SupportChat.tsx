@@ -86,25 +86,17 @@ export function SupportChat({ open, onClose }: { open: boolean; onClose: () => v
   }
 
   return (
-    <>
-      {/* Overlay */}
-      {open && (
-        <div
-          onClick={onClose}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 40, backdropFilter: "blur(2px)" }}
-        />
-      )}
-
-      {/* Panel */}
+    /* Panel — no overlay, floats over content without blocking it */
       <div
         style={{
           position: "fixed", top: 0, right: 0, height: "100vh", width: "380px",
           zIndex: 50, display: "flex", flexDirection: "column",
-          background: "rgba(12,12,18,0.97)", backdropFilter: "blur(24px)",
+          background: "#09090b",
           borderLeft: "1px solid rgba(255,255,255,0.08)",
           transform: open ? "translateX(0)" : "translateX(100%)",
           transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)",
-          boxShadow: open ? "-20px 0 60px rgba(0,0,0,0.5)" : "none",
+          boxShadow: "-24px 0 64px rgba(0,0,0,0.7)",
+          pointerEvents: open ? "auto" : "none",
         }}
       >
         {/* Header */}
@@ -190,6 +182,5 @@ export function SupportChat({ open, onClose }: { open: boolean; onClose: () => v
           </p>
         </div>
       </div>
-    </>
   );
 }

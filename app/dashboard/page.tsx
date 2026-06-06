@@ -5661,9 +5661,9 @@ export default function DashboardPage() {
                   <Languages size={16} />
                 </button>
                 <button
-                  onClick={() => setChatOpen(true)}
+                  onClick={() => setChatOpen(prev => !prev)}
                   title="Ask AI"
-                  className="h-9 px-3 min-h-[36px] flex items-center justify-center rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors cursor-pointer text-sm font-medium"
+                  className={`h-9 px-3 min-h-[36px] flex items-center justify-center rounded-xl border transition-colors cursor-pointer text-sm font-medium ${chatOpen ? "border-white/20 bg-white/10 text-white" : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"}`}
                 >
                   Ask
                 </button>
