@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { LanguageProvider } from "./LanguageContext";
+import { SidebarProvider } from "./SidebarContext";
 import { DashboardSidebar } from "./DashboardSidebar";
 
 export const metadata: Metadata = {
@@ -20,14 +21,16 @@ export default async function DashboardLayout({
 
   return (
     <LanguageProvider>
-      <div style={{ display: "flex", minHeight: "100vh", background: "#000000" }}>
-        <Suspense fallback={null}>
-          <DashboardSidebar />
-        </Suspense>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {children}
+      <SidebarProvider>
+        <div style={{ display: "flex", minHeight: "100vh", background: "#000000" }}>
+          <Suspense fallback={null}>
+            <DashboardSidebar />
+          </Suspense>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {children}
+          </div>
         </div>
-      </div>
+      </SidebarProvider>
     </LanguageProvider>
   );
 }

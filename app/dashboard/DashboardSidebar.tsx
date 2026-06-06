@@ -10,6 +10,7 @@ import {
   Image as ImageIcon, Compass,
 } from "lucide-react";
 import { useLang } from "./LanguageContext";
+import { useSidebar } from "./SidebarContext";
 
 type Tab = "home" | "voices" | "generate" | "dialogue" | "imagevideo" | "transcribe" | "translate" | "history" | "billing" | "referral" | "team";
 
@@ -18,6 +19,7 @@ export function DashboardSidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { t } = useLang();
+  const { collapsed } = useSidebar();
 
   const [plan, setPlan] = useState<string>("free");
   const [memberInfo, setMemberInfo] = useState<{
@@ -92,7 +94,7 @@ export function DashboardSidebar() {
     <aside
       className="hidden lg:flex"
       style={{
-        width: "240px",
+        width: collapsed ? "64px" : "240px",
         flexShrink: 0,
         height: "100vh",
         flexDirection: "column",
@@ -101,11 +103,12 @@ export function DashboardSidebar() {
         borderRight: "1px solid #1a1a1a",
         background: "#000000",
         overflowX: "hidden",
+        transition: "width 0.3s ease-in-out",
       }}
     >
       {/* Logo */}
-      <div style={{ height: "56px", display: "flex", alignItems: "center", paddingLeft: "20px", flexShrink: 0 }}>
-        <Link href="/" className="flex items-center gap-2.5">
+      <div style={{ height: "56px", display: "flex", alignItems: "center", paddingLeft: collapsed ? "0" : "20px", justifyContent: collapsed ? "center" : "flex-start", flexShrink: 0 }}>
+        <Link href="/" className="flex items-center gap-2.5" title={collapsed ? "Elite Labs" : undefined}>
           <Image
             src="/elitelabs.png"
             alt="Elite Labs"
@@ -114,12 +117,12 @@ export function DashboardSidebar() {
             style={{ height: "28px", width: "auto", objectFit: "contain", imageRendering: "-webkit-optimize-contrast", flexShrink: 0 }}
             className="rounded-lg"
           />
-          <span className="font-bold text-white tracking-tight text-sm">Elite Labs</span>
+          {!collapsed && <span className="font-bold text-white tracking-tight text-sm">Elite Labs</span>}
         </Link>
       </div>
 
       {/* Product selector */}
-      <div style={{ padding: "0 12px 8px", position: "relative", flexShrink: 0 }}>
+      <div style={{ padding: "0 12px 8px", position: "relative", flexShrink: 0, display: collapsed ? "none" : "block" }}>
         <button
           onClick={() => setShowProductMenu(p => !p)}
           style={{
@@ -191,10 +194,10 @@ export function DashboardSidebar() {
       </div>
 
       {/* Nav */}
-      <nav style={{ flex: 1, paddingTop: "8px", paddingBottom: "8px", paddingLeft: "12px", paddingRight: "12px", overflowY: "auto" }}>
+      <nav style={{ flex: 1, paddingTop: "8px", paddingBottom: "8px", paddingLeft: collapsed ? "8px" : "12px", paddingRight: collapsed ? "8px" : "12px", overflowY: "auto" }}>
         {sections.map((section, si) => (
           <div key={si} style={{ marginBottom: si < sections.length - 1 ? "20px" : 0 }}>
-            {section.label && (
+            {section.label && !collapsed && (
               <p style={{ paddingLeft: "12px", marginBottom: "4px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#444444" }}>
                 {section.label}
               </p>
@@ -207,12 +210,14 @@ export function DashboardSidebar() {
                     <button
                       key={key}
                       onClick={() => router.push(`/dashboard?tab=${key}`)}
+                      title={collapsed ? label : undefined}
                       style={{
                         width: "100%",
                         display: "flex",
                         alignItems: "center",
-                        gap: "10px",
-                        padding: "8px 12px",
+                        justifyContent: collapsed ? "center" : "flex-start",
+                        gap: collapsed ? 0 : "10px",
+                        padding: collapsed ? "8px 0" : "8px 12px",
                         borderRadius: "8px",
                         fontSize: "13px",
                         fontWeight: 500,
@@ -227,18 +232,24 @@ export function DashboardSidebar() {
                       onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#555555"; } }}
                     >
                       <Icon size={15} style={{ color: isActive ? "#ffffff" : "#444444", flexShrink: 0 }} />
-                      <span style={{ flex: 1 }}>{label}</span>
-                      {isActive && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
+                      {!collapsed && (
+                        <>
+                          <span style={{ flex: 1 }}>{label}</span>
+                          {isActive && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
+                        </>
+                      )}
                     </button>
                     {si === 0 && itemIdx === 0 && (
                       <Link
                         key="discover"
                         href="/voices"
+                        title={collapsed ? t.nav.discover : undefined}
                         style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: "10px",
-                          padding: "8px 12px",
+                          justifyContent: collapsed ? "center" : "flex-start",
+                          gap: collapsed ? 0 : "10px",
+                          padding: collapsed ? "8px 0" : "8px 12px",
                           borderRadius: "8px",
                           fontSize: "13px",
                           fontWeight: 500,
@@ -251,8 +262,12 @@ export function DashboardSidebar() {
                         onMouseLeave={(e) => { if (!isDiscover) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#555555"; } }}
                       >
                         <Compass size={15} style={{ color: isDiscover ? "#ffffff" : "#444444", flexShrink: 0 }} />
-                        <span style={{ flex: 1 }}>{t.nav.discover}</span>
-                        {isDiscover && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
+                        {!collapsed && (
+                          <>
+                            <span style={{ flex: 1 }}>{t.nav.discover}</span>
+                            {isDiscover && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
+                          </>
+                        )}
                       </Link>
                     )}
                   </>
@@ -265,11 +280,13 @@ export function DashboardSidebar() {
         {/* Mi cuenta */}
         <Link
           href="/dashboard/mi-cuenta"
+          title={collapsed ? t.nav.account : undefined}
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "10px",
-            padding: "8px 12px",
+            justifyContent: collapsed ? "center" : "flex-start",
+            gap: collapsed ? 0 : "10px",
+            padding: collapsed ? "8px 0" : "8px 12px",
             borderRadius: "8px",
             fontSize: "13px",
             fontWeight: 500,
@@ -283,13 +300,17 @@ export function DashboardSidebar() {
           onMouseLeave={(e) => { if (!isMiCuenta) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#555555"; } }}
         >
           <Settings size={15} style={{ color: isMiCuenta ? "#ffffff" : "#444444", flexShrink: 0 }} />
-          <span style={{ flex: 1 }}>{t.nav.account}</span>
-          {isMiCuenta && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
+          {!collapsed && (
+            <>
+              <span style={{ flex: 1 }}>{t.nav.account}</span>
+              {isMiCuenta && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
+            </>
+          )}
         </Link>
       </nav>
 
       {/* Team membership section */}
-      {memberInfo && (
+      {memberInfo && !collapsed && (
         <div style={{ borderTop: "1px solid #1a1a1a", padding: "12px 20px 16px" }}>
           <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#444444", marginBottom: "8px" }}>
             {t.sidebar.team}
@@ -350,15 +371,17 @@ export function DashboardSidebar() {
 
       {/* Upgrade button */}
       {plan !== "enterprise" && plan !== "lifetime" && (
-        <div style={{ padding: "0 12px 16px", flexShrink: 0 }}>
+        <div style={{ padding: collapsed ? "0 8px 16px" : "0 12px 16px", flexShrink: 0 }}>
           <button
             onClick={() => router.push("/dashboard?tab=billing")}
+            title={collapsed ? t.nav.upgradePlan : undefined}
             style={{
               width: "100%",
               display: "flex",
               alignItems: "center",
-              gap: "8px",
-              padding: "10px 14px",
+              justifyContent: collapsed ? "center" : "flex-start",
+              gap: collapsed ? 0 : "8px",
+              padding: collapsed ? "10px 0" : "10px 14px",
               borderRadius: "10px",
               border: "1px solid rgba(255,255,255,0.08)",
               cursor: "pointer",
@@ -373,18 +396,22 @@ export function DashboardSidebar() {
             <div style={{ position: "relative", zIndex: 1, width: "24px", height: "24px", borderRadius: "6px", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <Zap size={13} style={{ color: "#cccccc" }} />
             </div>
-            <span style={{ position: "relative", zIndex: 1, fontSize: "13px", fontWeight: 600, color: "#cccccc", flex: 1, textAlign: "left" }}>
-              {t.nav.upgradePlan}
-            </span>
-            <svg style={{ position: "relative", zIndex: 1 }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
+            {!collapsed && (
+              <>
+                <span style={{ position: "relative", zIndex: 1, fontSize: "13px", fontWeight: 600, color: "#cccccc", flex: 1, textAlign: "left" }}>
+                  {t.nav.upgradePlan}
+                </span>
+                <svg style={{ position: "relative", zIndex: 1 }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </>
+            )}
           </button>
         </div>
       )}
 
       {/* Lifetime badge */}
-      {plan === "lifetime" && (
+      {plan === "lifetime" && !collapsed && (
         <div style={{ padding: "0 12px 16px", flexShrink: 0 }}>
           <div style={{
             width: "100%",
