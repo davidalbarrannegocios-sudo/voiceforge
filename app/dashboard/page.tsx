@@ -2476,17 +2476,18 @@ function HistoryTab({ plan }: { plan: string }) {
   );
 }
 /* ─── Plan limits (mirrored from lib/stripe.ts for client use) ── */
-const VOICE_SLOT_LIMITS: Record<string, number> = { free: 1, plus: 3, pro: 10, elite: 20, starter: 3, enterprise: Infinity, lifetime: Infinity };
+const VOICE_SLOT_LIMITS: Record<string, number> = { free: 1, creator: 3, plus: 10, pro: 15, elite: 20, starter: 3, enterprise: Infinity, lifetime: Infinity };
 
 /* ─── Billing Tab ────────────────────────────────────────── */
 
 const PLAN_BADGE: Record<string, { label: string; color: string; bg: string }> = {
   free:       { label: "Gratis",     color: "#6b7280", bg: "rgba(107,114,128,0.12)" },
-  plus:       { label: "Plus",       color: "#60a5fa", bg: "rgba(96,165,250,0.12)"  },
+  creator:    { label: "Creator",    color: "#60a5fa", bg: "rgba(96,165,250,0.12)"  },
+  plus:       { label: "Plus",       color: "#a78bfa", bg: "rgba(167,139,250,0.12)" },
   pro:        { label: "Pro",        color: "#aaaaaa", bg: "rgba(255,255,255,0.08)"  },
   elite:      { label: "Elite",      color: "#fbbf24", bg: "rgba(251,191,36,0.12)"  },
   // legacy
-  starter:    { label: "Starter",    color: "#a78bfa", bg: "rgba(167,139,250,0.12)" },
+  starter:    { label: "Starter",    color: "#34d399", bg: "rgba(52,211,153,0.12)"  },
   enterprise: { label: "Enterprise", color: "#34d399", bg: "rgba(52,211,153,0.12)"  },
   lifetime:   { label: "LIFETIME ♾",  color: "#f59e0b", bg: "rgba(245,158,11,0.15)" },
 };
@@ -2503,14 +2504,19 @@ function getBillingPlans(t: Translations) {
       features: [t.billing.feat10k, t.billing.featRandomVoice, t.billing.feat2Transcriptions, t.billing.featNoClone, t.billing.featAudio72h],
     },
     {
-      key: "plus", name: "Plus", description: t.billing.planDescStarter,
+      key: "creator", name: "Creator", description: t.billing.planDescCreator,
       price: 8, annualTotal: 81.60, characters: 250_000, popular: false,
       features: [t.billing.featCharsX2.replace('{n}', '250.000'), t.billing.featFullVoice, t.billing.featUnlimitedTrans, t.billing.feat3Clones, t.billing.featAudio14d],
     },
     {
+      key: "plus", name: "Plus", description: t.billing.planDescPlus,
+      price: 26, annualTotal: 265.20, characters: 1_000_000, popular: true,
+      features: [t.billing.featCharsX2.replace('{n}', '1.000.000'), t.billing.featFullVoice, t.billing.featUnlimitedTrans, t.billing.feat10Clones, t.billing.featPriorityGen, t.billing.featAudio30d],
+    },
+    {
       key: "pro", name: "Pro", description: t.billing.planDescPro,
-      price: 55, annualTotal: 561, characters: 2_000_000, popular: true,
-      features: [t.billing.featCharsX2.replace('{n}', '2.000.000'), t.billing.featFullVoice, t.billing.featUnlimitedTrans, t.billing.feat10Clones, t.billing.featPriorityGen, t.billing.featAudio30d],
+      price: 49, annualTotal: 499.80, characters: 2_000_000, popular: false,
+      features: [t.billing.featCharsX2.replace('{n}', '2.000.000'), t.billing.featFullVoice, t.billing.featUnlimitedTrans, t.billing.feat15Clones, t.billing.featPriorityGen, t.billing.featAudio30d],
     },
     {
       key: "elite", name: "Elite", description: t.billing.planDescElite,

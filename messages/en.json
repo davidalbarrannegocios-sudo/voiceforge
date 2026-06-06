@@ -276,7 +276,10 @@
     "paymentMethodLabel": "Payment method",
     "preparingPayment": "Preparing payment form...",
     "errorPrepare": "Error preparing form",
-    "errorUnknown": "Unknown error"
+    "errorUnknown": "Unknown error",
+    "planDescCreator": "For creators just getting started",
+    "planDescPlus": "For active creators and growing projects",
+    "feat15Clones": "15 cloned voices"
   },
   "landing": {
     "word1": "Generate.",

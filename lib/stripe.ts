@@ -2,8 +2,9 @@ import Stripe from "stripe";
 
 export const PLAN_CREDITS: Record<string, number> = {
   free:       10_000,
-  // new plans
-  plus:       250_000,
+  // current plans
+  creator:    250_000,
+  plus:       1_000_000,
   pro:        2_000_000,
   elite:      15_000_000,
   // legacy plans (unchanged — webhooks still use these)
@@ -15,8 +16,9 @@ export const PLAN_CREDITS: Record<string, number> = {
 // -1 = unlimited
 export const PLAN_VOICE_SLOTS: Record<string, number> = {
   free:       1,
-  plus:       3,
-  pro:        10,
+  creator:    3,
+  plus:       10,
+  pro:        15,
   elite:      20,
   // legacy
   starter:    3,
@@ -26,8 +28,9 @@ export const PLAN_VOICE_SLOTS: Record<string, number> = {
 
 // Active sellable plans (used for checkout validation)
 export const PLANS = {
-  plus:       { name: "Plus",       price: 8,   characters: 250_000    },
-  pro:        { name: "Pro",        price: 55,  characters: 2_000_000  },
+  creator:    { name: "Creator",    price: 8,   characters: 250_000    },
+  plus:       { name: "Plus",       price: 26,  characters: 1_000_000  },
+  pro:        { name: "Pro",        price: 49,  characters: 2_000_000  },
   elite:      { name: "Elite",      price: 315, characters: 15_000_000 },
   // legacy — kept so activate-subscription still validates them
   starter:    { name: "Starter",    price: 7,   characters: 200_000    },
@@ -39,7 +42,7 @@ export type PlanKey = keyof typeof PLANS;
 /** Server-only: resolve priceId from environment variables */
 export function getPriceId(planKey: string, billing: "monthly" | "annual" = "monthly"): string {
   const monthly: Record<string, string | undefined> = {
-    // new plans
+    creator:    process.env.STRIPE_CREATOR_MONTHLY_PRICE_ID,
     plus:       process.env.STRIPE_PLUS_MONTHLY_PRICE_ID,
     pro:        process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
     elite:      process.env.STRIPE_ELITE_MONTHLY_PRICE_ID,
@@ -48,7 +51,7 @@ export function getPriceId(planKey: string, billing: "monthly" | "annual" = "mon
     enterprise: process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY,
   };
   const annual: Record<string, string | undefined> = {
-    // new plans
+    creator:    process.env.STRIPE_CREATOR_ANNUAL_PRICE_ID,
     plus:       process.env.STRIPE_PLUS_ANNUAL_PRICE_ID,
     pro:        process.env.STRIPE_PRO_ANNUAL_PRICE_ID,
     elite:      process.env.STRIPE_ELITE_ANNUAL_PRICE_ID,
@@ -63,7 +66,7 @@ export function getPriceId(planKey: string, billing: "monthly" | "annual" = "mon
 export function getPlanFromPriceId(priceId: string): string | null {
   const maps: Record<string, string | undefined>[] = [
     {
-      // new plans
+      creator:    process.env.STRIPE_CREATOR_MONTHLY_PRICE_ID,
       plus:       process.env.STRIPE_PLUS_MONTHLY_PRICE_ID,
       pro:        process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
       elite:      process.env.STRIPE_ELITE_MONTHLY_PRICE_ID,
@@ -72,7 +75,7 @@ export function getPlanFromPriceId(priceId: string): string | null {
       enterprise: process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY,
     },
     {
-      // new plans
+      creator:    process.env.STRIPE_CREATOR_ANNUAL_PRICE_ID,
       plus:       process.env.STRIPE_PLUS_ANNUAL_PRICE_ID,
       pro:        process.env.STRIPE_PRO_ANNUAL_PRICE_ID,
       elite:      process.env.STRIPE_ELITE_ANNUAL_PRICE_ID,

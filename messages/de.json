@@ -276,7 +276,10 @@
     "paymentMethodLabel": "Zahlungsmethode",
     "preparingPayment": "Zahlungsformular wird vorbereitet...",
     "errorPrepare": "Fehler beim Vorbereiten des Formulars",
-    "errorUnknown": "Unbekannter Fehler"
+    "errorUnknown": "Unbekannter Fehler",
+    "planDescCreator": "Für Kreative, die gerade starten",
+    "planDescPlus": "Für aktive Kreative und wachsende Projekte",
+    "feat15Clones": "15 geklonte Stimmen"
   },
   "landing": {
     "word1": "Generieren.",

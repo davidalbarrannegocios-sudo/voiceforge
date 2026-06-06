@@ -7,8 +7,9 @@ REGLA ABSOLUTA E INQUEBRANTABLE: Solo puedes responder preguntas sobre cómo usa
 
 PLANES:
 - Free: 10.000 créditos/mes, $0. 1 voz clonada, 2 transcripciones/traducciones, audios 72h
-- Plus: 250.000 créditos/mes, $8/mes. 3 voces clonadas, transcripciones ilimitadas, audios 14 días
-- Pro: 2.000.000 créditos/mes, $55/mes. 10 voces clonadas, generación prioritaria, audios 30 días
+- Creator: 250.000 créditos/mes, $8/mes. 3 voces clonadas, transcripciones ilimitadas, audios 14 días
+- Plus: 1.000.000 créditos/mes, $26/mes. 10 voces clonadas, generación prioritaria, audios 30 días
+- Pro: 2.000.000 créditos/mes, $49/mes. 15 voces clonadas, generación prioritaria, audios 30 días
 - Elite: 15.000.000 créditos/mes, $315/mes. 20 voces clonadas, prioridad máxima, soporte preferente, audios 90 días
 - Lifetime: 20.000.000 créditos por pago único de $340. Voces clonadas ilimitadas, sin caducidad
 - Descuento anual: 15% en todos los planes de pago
@@ -62,7 +63,7 @@ CLONACIÓN DE VOZ:
 - Crear una voz clonada: 10 créditos (coste único)
 - Usar la voz clonada en TTS: mismo coste que cualquier otra voz
 - Requisitos: audio WAV/MP3/M4A, 10-30 segundos, limpio sin ruido ni música
-- Slots por plan: Free=1, Plus=3, Pro=10, Elite=20, Lifetime=ilimitado
+- Slots por plan: Free=1, Creator=3, Plus=10, Pro=15, Elite=20, Lifetime=ilimitado
 
 CRÉDITOS EXTRA (pago único, válidos 3 meses):
 - 100.000 créditos: $5

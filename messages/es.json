@@ -276,7 +276,10 @@
     "paymentMethodLabel": "Método de pago",
     "preparingPayment": "Preparando formulario de pago...",
     "errorPrepare": "Error al preparar el formulario",
-    "errorUnknown": "Error desconocido"
+    "errorUnknown": "Error desconocido",
+    "planDescCreator": "Para creadores que están empezando",
+    "planDescPlus": "Para creadores activos y proyectos en crecimiento",
+    "feat15Clones": "15 voces clonadas"
   },
   "landing": {
     "word1": "Genera.",

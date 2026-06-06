@@ -276,7 +276,10 @@
     "paymentMethodLabel": "Método de pagamento",
     "preparingPayment": "A preparar formulário de pagamento...",
     "errorPrepare": "Erro ao preparar o formulário",
-    "errorUnknown": "Erro desconhecido"
+    "errorUnknown": "Erro desconhecido",
+    "planDescCreator": "Para criadores que estão começando",
+    "planDescPlus": "Para criadores ativos e projetos em crescimento",
+    "feat15Clones": "15 vozes clonadas"
   },
   "landing": {
     "word1": "Gere.",

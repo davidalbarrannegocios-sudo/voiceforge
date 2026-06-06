@@ -276,7 +276,10 @@
     "paymentMethodLabel": "Moyen de paiement",
     "preparingPayment": "Préparation du formulaire de paiement...",
     "errorPrepare": "Erreur lors de la préparation du formulaire",
-    "errorUnknown": "Erreur inconnue"
+    "errorUnknown": "Erreur inconnue",
+    "planDescCreator": "Pour les créateurs qui débutent",
+    "planDescPlus": "Pour les créateurs actifs et les projets en croissance",
+    "feat15Clones": "15 voix clonées"
   },
   "landing": {
     "word1": "Générez.",

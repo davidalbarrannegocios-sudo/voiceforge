@@ -80,9 +80,9 @@ function PricingContent() {
       ],
     },
     {
-      key: "plus",
-      name: "Plus",
-      description: t.billing.planDescStarter,
+      key: "creator",
+      name: "Creator",
+      description: t.billing.planDescCreator,
       price: 8,
       annualTotal: 81.60,
       characters: 250_000,
@@ -98,20 +98,39 @@ function PricingContent() {
       ],
     },
     {
+      key: "plus",
+      name: "Plus",
+      description: t.billing.planDescPlus,
+      price: 26,
+      annualTotal: 265.20,
+      characters: 1_000_000,
+      popular: true,
+      free: false,
+      cta: t.pricing.subscribe,
+      features: [
+        t.billing.featCharsX2.replace("{n}", fmtChars(1_000_000)),
+        t.billing.featFullVoice,
+        t.billing.featUnlimitedTrans,
+        t.billing.feat10Clones,
+        t.billing.featPriorityGen,
+        t.billing.featAudio30d,
+      ],
+    },
+    {
       key: "pro",
       name: "Pro",
       description: t.billing.planDescPro,
-      price: 55,
-      annualTotal: 561,
+      price: 49,
+      annualTotal: 499.80,
       characters: 2_000_000,
-      popular: true,
+      popular: false,
       free: false,
       cta: t.pricing.subscribe,
       features: [
         t.billing.featCharsX2.replace("{n}", fmtChars(2_000_000)),
         t.billing.featFullVoice,
         t.billing.featUnlimitedTrans,
-        t.billing.feat10Clones,
+        t.billing.feat15Clones,
         t.billing.featPriorityGen,
         t.billing.featAudio30d,
       ],
@@ -288,8 +307,8 @@ function PricingContent() {
           </div>
         </div>
 
-        {/* Plans — 4 col grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "60px", alignItems: "start" }}>
+        {/* Plans — 5 col grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px", marginBottom: "60px", alignItems: "start" }}>
           {PLANS.map((plan) => (
             <div
               key={plan.key}
@@ -314,12 +333,12 @@ function PricingContent() {
                     </span>
                   )}
                 </div>
-                {currentPlan === plan.key && ["free","plus","pro","elite"].includes(currentPlan) && (
+                {currentPlan === plan.key && ["free","creator","plus","pro","elite"].includes(currentPlan) && (
                   <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(245,158,11,0.45)", color: "#f59e0b", background: "rgba(245,158,11,0.1)", whiteSpace: "nowrap", flexShrink: 0 }}>
                     {t.pricing.currentPlan}
                   </span>
                 )}
-                {plan.popular && !(currentPlan === plan.key && ["free","plus","pro","elite"].includes(currentPlan ?? "")) && (
+                {plan.popular && !(currentPlan === plan.key && ["free","creator","plus","pro","elite"].includes(currentPlan ?? "")) && (
                   <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "6px", color: "#ffffff", background: "rgba(255,255,255,0.10)", whiteSpace: "nowrap", flexShrink: 0 }}>
                     {t.pricing.popular}
                   </span>
@@ -481,7 +500,7 @@ function PricingContent() {
                   <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "#555555", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     {t.pricing.platform}
                   </th>
-                  {[`~$8${t.pricing.perMonth}`, `~$55${t.pricing.perMonth}`, `~$315${t.pricing.perMonth}`].map((col) => (
+                  {[`~$8${t.pricing.perMonth}`, `~$26${t.pricing.perMonth}`, `~$49${t.pricing.perMonth}`, `~$315${t.pricing.perMonth}`].map((col) => (
                     <th key={col} style={{ padding: "12px 10px", fontWeight: 600, color: "#555555", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                       {col}
                     </th>
@@ -492,12 +511,12 @@ function PricingContent() {
                 DATOS FUENTE COMPETENCIA (actualizar si cambian sus precios)
                 ElevenLabs: $11→121k, $99→600k, $299→2M, $990→6M
                 Minimax: $15→330k, $30→750k, $99→3M
-                Recalcular interpolando a los precios actuales de Elite Labs ($8, $55, $315)
+                Recalcular interpolando a los precios de Elite Labs ($8, $26, $49, $315)
               */}
               <tbody>
                 {[
-                  { name: "ElevenLabs", cols: ["~88.000 chars",   "~363.000 chars",   "~1.850.000 chars"] },
-                  { name: "Minimax",    cols: ["~176.000 chars",  "~1.630.000 chars", "~9.000.000 chars"] },
+                  { name: "ElevenLabs", cols: ["~88.000 chars",   "~200.000 chars",  "~330.000 chars",  "~1.850.000 chars"] },
+                  { name: "Minimax",    cols: ["~176.000 chars",  "~650.000 chars",  "~1.500.000 chars", "~9.000.000 chars"] },
                 ].map((row, i) => (
                   <tr key={row.name} style={{ background: i % 2 === 0 ? "transparent" : "#0a0a0a", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     <td style={{ padding: "12px 16px", color: "#555555", fontWeight: 500 }}>{row.name}</td>
@@ -509,7 +528,7 @@ function PricingContent() {
                 {/* Elite Labs row */}
                 <tr style={{ background: "rgba(255,255,255,0.03)", borderLeft: "3px solid #ffffff" }}>
                   <td style={{ padding: "12px 16px", fontWeight: 700, color: "#ffffff" }}>Elite Labs</td>
-                  {["250.000 chars", "2.000.000 chars", "15.000.000 chars"].map((c) => (
+                  {["250.000 chars", "1.000.000 chars", "2.000.000 chars", "15.000.000 chars"].map((c) => (
                     <td key={c} style={{ padding: "12px 10px", textAlign: "center", fontWeight: 600, color: "#ffffff" }}>{c}</td>
                   ))}
                 </tr>
