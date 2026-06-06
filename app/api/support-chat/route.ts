@@ -19,6 +19,54 @@ INFORMACIÓN COMPLETA:
 - Los caracteres no se acumulan, se renuevan cada período
 - Contacto soporte humano: soporte@elitelabs.es
 
+IMÁGENES Y VÍDEO (sección Imagen y Video del dashboard):
+- Modelo disponible: FLUX 1.1 Pro
+- Resoluciones: 1:1, 16:9, 9:16, 4:3, 3:4
+- Cantidad por generación: 1 a 4 imágenes
+- Coste aproximado: ~10.000 caracteres por imagen (varía según resolución)
+- Las imágenes NO se guardan al cerrar la página — el usuario debe descargarlas antes
+- Hay dos pestañas: Historial (generaciones guardadas) y Explorar (galería pública)
+- Para generar: ir a Dashboard → Imagen y Video → escribir un prompt descriptivo → seleccionar modelo, resolución y cantidad → clic en Generar
+- Consejos para buenos prompts: ser específico con el estilo, iluminación, composición y sujeto
+- También se puede subir una imagen de referencia para guiar la generación
+
+VÍDEOS:
+- La generación de vídeo está disponible en la misma sección Imagen y Video
+- El coste es mayor que las imágenes por la complejidad del proceso
+- Para generar vídeo: mismo flujo que imágenes pero seleccionar opciones de vídeo
+
+CLONACIÓN DE VOZ (Custom Voice):
+- Requisitos del audio de muestra:
+  * Duración: entre 10 y 30 segundos (ideal 20-30s)
+  * Formato: WAV, MP3 o M4A
+  * Calidad: audio limpio, sin ruido de fondo, sin música, sin ecos
+  * Voz clara y natural, no susurrada ni forzada
+  * Una sola persona hablando
+- Proceso: Dashboard → Voz personalizada → Clonar nueva voz → subir audio → dar nombre → confirmar
+- La voz clonada aparece en el selector de voces de Texto a Voz y Texto a Diálogo
+- Límites de voces clonadas según plan:
+  * Free: 0 voces clonadas
+  * Plus: 3 voces clonadas
+  * Pro: 10 voces clonadas
+  * Elite: 20 voces clonadas
+  * Lifetime: ilimitadas
+- Las voces clonadas son privadas, solo las ve el usuario que las creó
+- Se puede usar la voz clonada como referencia en Traducción de Audio para mantener la voz original
+
+TRADUCCIÓN DE AUDIO:
+- Sube un audio en cualquier idioma y se traduce manteniendo tu voz
+- Idiomas destino: Inglés, Chino, Alemán, Japonés, Francés, Español, Coreano, Árabe, Ruso, Portugués
+- Coste: 20% adicional sobre el coste estándar de caracteres
+- Formato: MP3, WAV, M4A — máximo 50MB
+- Los audios traducidos se eliminan automáticamente según el plan (14-90 días)
+- Se puede usar una voz de referencia propia para el audio traducido
+
+AUDIO A TEXTO (Transcripción):
+- Transcribe audio y vídeo a texto con alta precisión
+- Proceso: Dashboard → Audio a Texto → Crear tarea → subir archivo → procesar
+- Detecta automáticamente múltiples hablantes
+- El resultado se puede copiar o descargar como texto
+
 INSTRUCCIONES:
 - Responde en el idioma del usuario
 - Sé conciso, amable y directo
