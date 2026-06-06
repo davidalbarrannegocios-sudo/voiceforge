@@ -308,9 +308,16 @@ function PricingContent() {
                 transition: "transform 0.15s",
               }}
             >
-              {/* Name + badge */}
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "6px", marginBottom: "4px" }}>
-                <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{plan.name}</span>
+              {/* Name + badges */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", marginBottom: "4px", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                  <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{plan.name}</span>
+                  {billing === "annual" && !plan.free && (
+                    <span style={{ fontSize: "10px", fontWeight: 500, padding: "3px 8px", borderRadius: "999px", background: "rgba(34,197,94,0.12)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.22)", whiteSpace: "nowrap" }}>
+                      Ahorras ${annualSavings(plan).toFixed(2)}/año
+                    </span>
+                  )}
+                </div>
                 {/* "PLAN ACTUAL" only for users on a new plan (free/plus/pro/elite) */}
                 {currentPlan === plan.key && ["free","plus","pro","elite"].includes(currentPlan) && (
                   <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(245,158,11,0.45)", color: "#f59e0b", background: "rgba(245,158,11,0.1)", whiteSpace: "nowrap", flexShrink: 0 }}>
@@ -364,14 +371,9 @@ function PricingContent() {
                       <span style={{ fontSize: "12px", color: "#444444", marginLeft: "2px" }}>{t.pricing.perMonth}</span>
                     </div>
                     {billing === "annual" ? (
-                      <>
-                        <p style={{ fontSize: "11px", color: "#555555", marginTop: "2px" }}>
-                          ${effectiveAnnual(plan)} {t.pricing.billedAnnually}
-                        </p>
-                        <span style={{ display: "inline-block", marginTop: "3px", fontSize: "10px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px", background: "rgba(34,197,94,0.12)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.25)" }}>
-                          Ahorras ${annualSavings(plan).toFixed(2)}/año
-                        </span>
-                      </>
+                      <p style={{ fontSize: "11px", color: "#555555", marginTop: "2px" }}>
+                        ${effectiveAnnual(plan)} {t.pricing.billedAnnually}
+                      </p>
                     ) : discount?.active ? (
                       <p style={{ fontSize: "11px", color: "#4ade80", marginTop: "3px" }}>
                         {discount.percent}{t.pricing.discountApplied}
