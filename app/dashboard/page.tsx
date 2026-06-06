@@ -5525,7 +5525,6 @@ export default function DashboardPage() {
   const [translateVoice, setTranslateVoice] = useState<SelectedVoice | null>(null);
   const [supportOpen, setSupportOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [nextRenewalDate, setNextRenewalDate] = useState<string | null>(null);
   const [daysUntilRenewal, setDaysUntilRenewal] = useState<number | null>(null);
   const { t: tt, toggle: toggleLang } = useLang();
@@ -5608,32 +5607,22 @@ export default function DashboardPage() {
     <div className="flex h-screen overflow-hidden" style={{ background: "#000000" }}>
       {supportOpen && <SupportModal onClose={() => setSupportOpen(false)} />}
 
-      {/* Mobile drawer overlay */}
+      {/* Sidebar overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 lg:hidden"
+          className="fixed inset-0 z-40"
           style={{ background: "rgba(0,0,0,0.6)" }}
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Mobile drawer */}
+      {/* Sidebar drawer */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col lg:hidden transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
         style={{ width: "260px", background: "#111111", borderRight: "1px solid #1a1a1a" }}
       >
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onClose={() => setSidebarOpen(false)} plan={plan} memberInfo={memberInfo} />
       </div>
-
-      {/* Desktop sidebar */}
-      <Sidebar
-        desktop
-        collapsed={sidebarCollapsed}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        plan={plan}
-        memberInfo={memberInfo}
-      />
 
       <main className="flex-1 flex flex-col overflow-hidden relative min-w-0" style={{ padding: "0" }}>
         {/* Topbar */}
@@ -5655,9 +5644,9 @@ export default function DashboardPage() {
           return (
             <div style={{ height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", position: "sticky", top: 0, zIndex: 200, borderBottom: "1px solid #1a1a1a", background: "#000000", flexShrink: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                {/* Hamburger — opens mobile drawer / collapses desktop sidebar */}
+                {/* Hamburger — toggles sidebar drawer */}
                 <button
-                  onClick={() => { setSidebarCollapsed(c => !c); setSidebarOpen(true); }}
+                  onClick={() => setSidebarOpen(s => !s)}
                   style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #222222", background: "transparent", cursor: "pointer", color: "#888888", flexShrink: 0 }}
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect y="2" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="7.25" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="12.5" width="16" height="1.5" rx="0.75" fill="currentColor"/></svg>
