@@ -34,8 +34,15 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
   const showRing = used !== undefined && total !== undefined && total > 0;
   const remaining = (total ?? 0) - (used ?? 0);
   const pct = showRing ? Math.min(100, (used! / total!) * 100) : 0;
-  const r = 16;
-  const circumference = 2 * Math.PI * r;
+  // Rounded-rect ring: 36×36 SVG, 1px inset, rx=11 to match button's rounded-xl (12px)
+  const rx = 11;
+  const inset = 1;
+  const sz = 36 - 2 * inset; // 34
+  const x0 = inset, y0 = inset, x1 = x0 + sz, y1 = y0 + sz;
+  const midX = x0 + sz / 2;
+  // Path starts at top-center and goes clockwise — no rotation needed
+  const ringPath = `M ${midX} ${y0} H ${x1 - rx} A ${rx} ${rx} 0 0 1 ${x1} ${y0 + rx} V ${y1 - rx} A ${rx} ${rx} 0 0 1 ${x1 - rx} ${y1} H ${x0 + rx} A ${rx} ${rx} 0 0 1 ${x0} ${y1 - rx} V ${y0 + rx} A ${rx} ${rx} 0 0 1 ${x0 + rx} ${y0} H ${midX}`;
+  const circumference = 4 * (sz - 2 * rx) + 2 * Math.PI * rx; // ≈117
   const strokeDashoffset = circumference - (pct / 100) * circumference;
   const ringColor = pct < 60 ? "#ffffff" : pct < 85 ? "#f59e0b" : "#ef4444";
 
@@ -48,10 +55,10 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
           className="w-9 h-9 min-w-[36px] min-h-[36px] relative flex-shrink-0 flex items-center justify-center p-0 bg-transparent border-none cursor-pointer"
           aria-label="Menú de usuario"
         >
-          <svg className="absolute inset-0 -rotate-90" width="36" height="36">
-            <circle cx="18" cy="18" r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="2" />
-            <circle
-              cx="18" cy="18" r={r} fill="none"
+          <svg className="absolute inset-0" width="36" height="36">
+            <path d={ringPath} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="2" />
+            <path
+              d={ringPath} fill="none"
               stroke={ringColor} strokeWidth="2"
               strokeDasharray={circumference} strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
