@@ -94,7 +94,7 @@ export function DashboardSidebar() {
     <aside
       className="hidden lg:flex"
       style={{
-        width: collapsed ? "64px" : "240px",
+        width: collapsed ? "56px" : "240px",
         flexShrink: 0,
         height: "100vh",
         flexDirection: "column",
@@ -122,14 +122,13 @@ export function DashboardSidebar() {
       </div>
 
       {/* Product selector */}
-      <div style={{ padding: collapsed ? "0 8px 8px" : "0 12px 8px", position: "relative", flexShrink: 0 }}>
+      <div style={{ padding: collapsed ? "0 8px 8px" : "0 12px 8px", position: "relative", flexShrink: 0, display: "flex", justifyContent: collapsed ? "center" : "initial" }}>
         {collapsed ? (
           /* Icon-only when collapsed */
           <button
             onClick={() => setShowProductMenu(p => !p)}
             title="Elite Studio"
-            className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors"
-            style={{ background: "linear-gradient(135deg, #1a3a5c, #0ea5e9)", border: "1px solid rgba(14,165,233,0.3)", cursor: "pointer", width: "100%" }}
+            style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg, #1a3a5c, #0ea5e9)", border: "1px solid rgba(14,165,233,0.3)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M2 9 Q5 3 9 6 Q13 9 16 4" stroke="rgba(255,255,255,0.9)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
