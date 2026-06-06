@@ -130,7 +130,7 @@ function CheckoutForm({
   const baseUrl = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL ?? "");
 
   const monthlyPrice = billing === "annual"
-    ? Math.round(plan.price * 0.83 * 10) / 10
+    ? Math.round(plan.price * 0.85 * 10) / 10
     : plan.price;
   const annualTotal = Math.round(monthlyPrice * 12);
 
@@ -267,13 +267,13 @@ function CheckoutForm({
               }}
             >
               <div style={{ position: "absolute", top: "10px", right: "10px", fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e" }}>
-                AHORRA 17%
+                AHORRA 15%
               </div>
               <p style={{ fontSize: "12px", color: billing === "annual" ? "#cccccc" : "#555555", margin: "0 0 4px", fontWeight: 500 }}>
                 Facturación anual
               </p>
               <p style={{ fontSize: "20px", fontWeight: 800, color: billing === "annual" ? "#ffffff" : "#666666", margin: 0 }}>
-                ${Math.round(plan.price * 0.83 * 10) / 10}<span style={{ fontSize: "12px", fontWeight: 400, color: "#555555" }}>/mes</span>
+                ${Math.round(plan.price * 0.85 * 10) / 10}<span style={{ fontSize: "12px", fontWeight: 400, color: "#555555" }}>/mes</span>
               </p>
             </button>
           </div>
@@ -583,7 +583,7 @@ function ChangePlanConfirm({
 
   const plan = PLANS[planKey];
   const features = PLAN_FEATURES[planKey] ?? [];
-  const monthlyPrice = billing === "annual" ? Math.round(plan.price * 0.83 * 10) / 10 : plan.price;
+  const monthlyPrice = billing === "annual" ? Math.round(plan.price * 0.85 * 10) / 10 : plan.price;
   const annualTotal = Math.round(monthlyPrice * 12);
   const displayPrice = billing === "annual" ? `$${annualTotal}/año` : `$${plan.price}/mes`;
 
@@ -650,10 +650,10 @@ function ChangePlanConfirm({
               onClick={() => setBilling("annual")}
               style={{ padding: "14px 16px", borderRadius: "12px", border: billing === "annual" ? "2px solid #ffffff" : "1px solid #222222", background: billing === "annual" ? "rgba(255,255,255,0.04)" : "#0a0a0a", cursor: "pointer", textAlign: "left", transition: "all 0.15s", position: "relative" }}
             >
-              <div style={{ position: "absolute", top: "10px", right: "10px", fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e" }}>AHORRA 17%</div>
+              <div style={{ position: "absolute", top: "10px", right: "10px", fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e" }}>AHORRA 15%</div>
               <p style={{ fontSize: "12px", color: billing === "annual" ? "#cccccc" : "#555555", margin: "0 0 4px", fontWeight: 500 }}>Facturación anual</p>
               <p style={{ fontSize: "20px", fontWeight: 800, color: billing === "annual" ? "#ffffff" : "#666666", margin: 0 }}>
-                ${Math.round(plan.price * 0.83 * 10) / 10}<span style={{ fontSize: "12px", fontWeight: 400, color: "#555555" }}>/mes</span>
+                ${Math.round(plan.price * 0.85 * 10) / 10}<span style={{ fontSize: "12px", fontWeight: 400, color: "#555555" }}>/mes</span>
               </p>
             </button>
           </div>
