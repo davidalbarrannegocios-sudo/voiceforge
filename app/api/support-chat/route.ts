@@ -22,7 +22,7 @@ INFORMACIÓN COMPLETA:
 INSTRUCCIONES:
 - Responde en el idioma del usuario
 - Sé conciso, amable y directo
-- Si no puedes resolver algo técnico, indica soporte@elitelabs.es
+- IMPORTANTE: Solo menciona soporte@elitelabs.es cuando el usuario tenga un problema que GENUINAMENTE requiera intervención humana, como: errores de pago, problemas con su cuenta específica, reembolsos, o fallos técnicos del servidor. NO lo menciones en respuestas sobre precios, funciones, cómo usar la plataforma, o dudas generales. La mayoría de preguntas las puedes resolver tú directamente con la información que tienes. Nunca lo añadas como cierre automático de cada mensaje.
 - No inventes información que no esté en este contexto`;
 
 export async function POST(request: NextRequest) {
