@@ -2476,15 +2476,17 @@ function HistoryTab({ plan }: { plan: string }) {
   );
 }
 /* ─── Plan limits (mirrored from lib/stripe.ts for client use) ── */
-const VOICE_SLOT_LIMITS: Record<string, number> = { free: 1, starter: 3, pro: 10, elite: 20, enterprise: Infinity, lifetime: Infinity };
+const VOICE_SLOT_LIMITS: Record<string, number> = { free: 1, plus: 3, pro: 10, elite: 20, starter: 3, enterprise: Infinity, lifetime: Infinity };
 
 /* ─── Billing Tab ────────────────────────────────────────── */
 
 const PLAN_BADGE: Record<string, { label: string; color: string; bg: string }> = {
   free:       { label: "Gratis",     color: "#6b7280", bg: "rgba(107,114,128,0.12)" },
-  starter:    { label: "Starter",    color: "#a78bfa", bg: "rgba(167,139,250,0.12)" },
+  plus:       { label: "Plus",       color: "#60a5fa", bg: "rgba(96,165,250,0.12)"  },
   pro:        { label: "Pro",        color: "#aaaaaa", bg: "rgba(255,255,255,0.08)"  },
   elite:      { label: "Elite",      color: "#fbbf24", bg: "rgba(251,191,36,0.12)"  },
+  // legacy
+  starter:    { label: "Starter",    color: "#a78bfa", bg: "rgba(167,139,250,0.12)" },
   enterprise: { label: "Enterprise", color: "#34d399", bg: "rgba(52,211,153,0.12)"  },
   lifetime:   { label: "LIFETIME ♾",  color: "#f59e0b", bg: "rgba(245,158,11,0.15)" },
 };
@@ -2497,28 +2499,23 @@ function getBillingPlans(t: Translations) {
   return [
     {
       key: "free", name: "Free", description: t.billing.planDescFree,
-      price: 0, characters: 10_000, popular: false,
+      price: 0, annualTotal: 0, characters: 10_000, popular: false,
       features: [t.billing.feat10k, t.billing.featRandomVoice, t.billing.feat2Transcriptions, t.billing.featNoClone, t.billing.featAudio72h],
     },
     {
-      key: "starter", name: "Starter", description: t.billing.planDescStarter,
-      price: 7, characters: 200_000, popular: false,
-      features: [t.billing.featCharsX2.replace('{n}', '200.000'), t.billing.featFullVoice, t.billing.featUnlimitedTrans, t.billing.feat3Clones, t.billing.featAudio14d],
+      key: "plus", name: "Plus", description: t.billing.planDescStarter,
+      price: 8, annualTotal: 81.60, characters: 250_000, popular: false,
+      features: [t.billing.featCharsX2.replace('{n}', '250.000'), t.billing.featFullVoice, t.billing.featUnlimitedTrans, t.billing.feat3Clones, t.billing.featAudio14d],
     },
     {
       key: "pro", name: "Pro", description: t.billing.planDescPro,
-      price: 13, characters: 500_000, popular: true,
-      features: [t.billing.featCharsX2.replace('{n}', '500.000'), t.billing.featFullVoice, t.billing.featUnlimitedTrans, t.billing.feat10Clones, t.billing.featPriorityGen, t.billing.featAudio30d],
+      price: 55, annualTotal: 561, characters: 2_000_000, popular: true,
+      features: [t.billing.featCharsX2.replace('{n}', '2.000.000'), t.billing.featFullVoice, t.billing.featUnlimitedTrans, t.billing.feat10Clones, t.billing.featPriorityGen, t.billing.featAudio30d],
     },
     {
       key: "elite", name: "Elite", description: t.billing.planDescElite,
-      price: 25, characters: 1_000_000, popular: false,
-      features: [t.billing.featCharsX2.replace('{n}', '1.000.000'), t.billing.featFullVoice, t.billing.featUnlimitedTrans, t.billing.feat20Clones, t.billing.featTopPriority, t.billing.featSupport, t.billing.featAudio30d],
-    },
-    {
-      key: "enterprise", name: "Enterprise", description: t.billing.planDescEnterprise,
-      price: 110, characters: 5_000_000, popular: false,
-      features: [t.billing.featCharsX2.replace('{n}', '5.000.000'), t.billing.featUnlimitedClones, t.billing.featUnlimitedTrans, t.billing.featAudioTrans, t.billing.featPriorityGen, t.billing.featSupport, t.billing.featAudio90d],
+      price: 315, annualTotal: 3213, characters: 15_000_000, popular: false,
+      features: [t.billing.featCharsX2.replace('{n}', '15.000.000'), t.billing.featFullVoice, t.billing.featUnlimitedTrans, t.billing.feat20Clones, t.billing.featTopPriority, t.billing.featSupport, t.billing.featAudio90d],
     },
   ];
 }
@@ -2670,7 +2667,7 @@ function BillingTab({
           >
             {t.billing.annual}
             <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e", letterSpacing: "0.03em" }}>
-              −17%
+              −15%
             </span>
           </button>
         </div>
@@ -2700,19 +2697,27 @@ function BillingTab({
         </div>
       )}
 
-      {/* ── Plan cards (5 in a row) — hidden for lifetime ── */}
-      {plan !== "lifetime" && <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 w-full">
+      {/* Legacy plan notice — starter/enterprise users */}
+      {(plan === "starter" || plan === "enterprise") && (
+        <div style={{ marginBottom: "20px", padding: "12px 16px", borderRadius: "10px", border: "1px solid rgba(167,139,250,0.25)", background: "rgba(167,139,250,0.06)", fontSize: "13px", color: "#a78bfa" }}>
+          Tu plan legacy <strong>{plan}</strong> se mantiene activo · No se factura ningún cambio automático
+        </div>
+      )}
+
+      {/* ── Plan cards (4 in a row) — hidden for lifetime ── */}
+      {plan !== "lifetime" && <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 w-full">
         {BILLING_PLANS.map((p) => {
+          const isLegacyUser = plan === "starter" || plan === "enterprise";
           const isCurrent = plan === p.key;
           const planBadge = PLAN_BADGE[p.key];
-          const monthlyPrice = billing === "annual" && p.price > 0
-            ? Math.round(p.price * 0.83 * 10) / 10
-            : p.price;
+          const annualMonthlyPrice = p.annualTotal > 0 ? Math.round((p.annualTotal / 12) * 100) / 100 : 0;
+          const monthlyPrice = billing === "annual" && p.price > 0 ? annualMonthlyPrice : p.price;
           const effectiveMonthly = (discount && p.price > 0)
-            ? Math.round(monthlyPrice * (1 - discount.percentage / 100) * 10) / 10
+            ? Math.round(monthlyPrice * (1 - discount.percentage / 100) * 100) / 100
             : monthlyPrice;
           const borderColor = isCurrent ? (planBadge?.color ?? "#888888") : p.popular ? "#333333" : "#1a1a1a";
           const isDowngrade = plan !== "free" && p.key === "free";
+          const annualSavings = p.price > 0 ? Math.round((p.price * 12 - p.annualTotal) * 100) / 100 : 0;
 
           return (
             <div
@@ -2730,17 +2735,13 @@ function BillingTab({
               {/* Name + badge */}
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "6px", marginBottom: "4px" }}>
                 <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{p.name}</span>
-                {isCurrent ? (
+                {isCurrent && !isLegacyUser ? (
                   <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px", color: planBadge?.color, background: planBadge?.bg, letterSpacing: "0.05em", whiteSpace: "nowrap", flexShrink: 0 }}>
                     ACTUAL
                   </span>
                 ) : p.popular ? (
                   <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.2)", color: "#ffffff", background: "rgba(255,255,255,0.05)", whiteSpace: "nowrap", flexShrink: 0 }}>
                     Popular
-                  </span>
-                ) : p.key === "enterprise" ? (
-                  <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(16,185,129,0.45)", color: "#6ee7b7", background: "rgba(16,185,129,0.05)", whiteSpace: "nowrap", flexShrink: 0 }}>
-                    Equipos
                   </span>
                 ) : null}
               </div>
@@ -2778,9 +2779,14 @@ function BillingTab({
                       <span style={{ fontSize: "12px", color: "#444444", marginLeft: "2px" }}>/mes</span>
                     </div>
                     {billing === "annual" ? (
-                      <p style={{ fontSize: "11px", color: "#555555", marginTop: "3px" }}>
-                        ${Math.round(effectiveMonthly * 12)} facturado anualmente
-                      </p>
+                      <>
+                        <p style={{ fontSize: "11px", color: "#555555", marginTop: "2px" }}>
+                          ${Math.round(effectiveMonthly * 12 * 100) / 100} facturado anualmente
+                        </p>
+                        <span style={{ display: "inline-block", marginTop: "3px", fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "999px", background: "rgba(34,197,94,0.12)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.25)" }}>
+                          Ahorras ${annualSavings.toFixed(2)}/año
+                        </span>
+                      </>
                     ) : discount ? (
                       <p style={{ fontSize: "11px", color: "#4ade80", marginTop: "3px" }}>
                         {discount.percentage}% de descuento aplicado
@@ -2796,31 +2802,37 @@ function BillingTab({
               </div>
 
               {/* CTA button */}
-              <button
-                onClick={() => {
-                  if (isCurrent) return;
-                  if (isDowngrade || p.key === "free") { openPortal(); return; }
-                  router.push(`/checkout/${p.key}?billing=${billing}`);
-                }}
-                disabled={isCurrent}
-                style={
-                  isCurrent
-                    ? { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #222222", background: "transparent", color: "#444444", fontSize: "13px", fontWeight: 600, marginBottom: "16px", cursor: "not-allowed" }
-                    : p.popular
-                    ? { width: "100%", padding: "10px", borderRadius: "8px", border: "none", cursor: "pointer", background: "#ffffff", color: "#000000", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
-                    : { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #333333", cursor: "pointer", background: "#1a1a1a", color: "#e5e7eb", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
-                }
-              >
-                {isCurrent
-                  ? t.billing.currentPlanBtn
-                  : isDowngrade
-                  ? t.billing.changeToFree
-                  : plan !== "free"
-                  ? `${t.billing.changeTo} ${p.name}`
-                  : p.key === "free"
-                  ? t.billing.currentPlanBtn
-                  : t.billing.subscribe}
-              </button>
+              {isLegacyUser ? (
+                <div style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #1a1a1a", background: "transparent", color: "#444444", fontSize: "12px", fontWeight: 500, marginBottom: "16px", textAlign: "center" }}>
+                  Disponible para nuevas suscripciones
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (isCurrent) return;
+                    if (isDowngrade || p.key === "free") { openPortal(); return; }
+                    router.push(`/checkout/${p.key}?billing=${billing}`);
+                  }}
+                  disabled={isCurrent}
+                  style={
+                    isCurrent
+                      ? { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #222222", background: "transparent", color: "#444444", fontSize: "13px", fontWeight: 600, marginBottom: "16px", cursor: "not-allowed" }
+                      : p.popular
+                      ? { width: "100%", padding: "10px", borderRadius: "8px", border: "none", cursor: "pointer", background: "#ffffff", color: "#000000", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
+                      : { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #333333", cursor: "pointer", background: "#1a1a1a", color: "#e5e7eb", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
+                  }
+                >
+                  {isCurrent
+                    ? t.billing.currentPlanBtn
+                    : isDowngrade
+                    ? t.billing.changeToFree
+                    : plan !== "free"
+                    ? `${t.billing.changeTo} ${p.name}`
+                    : p.key === "free"
+                    ? t.billing.currentPlanBtn
+                    : t.billing.subscribe}
+                </button>
+              )}
 
               {/* Divider */}
               <div style={{ height: "1px", background: "#1a1a1a", marginBottom: "14px" }} />
@@ -2843,22 +2855,6 @@ function BillingTab({
                 ))}
               </ul>
 
-              {/* Enterprise seats block */}
-              {p.key === "enterprise" && (
-                <div style={{ marginTop: "14px", background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "8px", padding: "10px" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 700, color: "#fff" }}>
-                      <Users size={12} style={{ color: "#fff", flexShrink: 0 }} /> {t.billing.seats}
-                    </span>
-                    <span style={{ fontSize: "11px", color: "#555555", textDecoration: "line-through" }}>$5/seat/mes</span>
-                  </div>
-                  <div style={{ textAlign: "center" }}>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: "6px", padding: "3px 8px", fontSize: "11px", fontWeight: 700, color: "#4ade80" }}>
-                      {t.billing.sponsoredFree}
-                    </span>
-                  </div>
-                </div>
-              )}
 
               {/* Card footer — character count */}
               <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>

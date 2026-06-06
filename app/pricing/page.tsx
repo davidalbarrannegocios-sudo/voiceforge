@@ -13,7 +13,8 @@ type Plan = {
   key: string;
   name: string;
   description: string;
-  price: number;
+  price: number;       // monthly price
+  annualTotal: number; // billed yearly
   characters: number;
   popular: boolean;
   free: boolean;
@@ -27,6 +28,7 @@ const PLANS: Plan[] = [
     name: "Gratis",
     description: "Para explorar la plataforma",
     price: 0,
+    annualTotal: 0,
     characters: 10_000,
     popular: false,
     free: true,
@@ -40,18 +42,17 @@ const PLANS: Plan[] = [
     ],
   },
   {
-    key: "starter",
-    name: "Starter",
+    key: "plus",
+    name: "Plus",
     description: "Para creadores que están empezando",
-    price: 7,
-    characters: 200_000,
+    price: 8,
+    annualTotal: 81.60,
+    characters: 250_000,
     popular: false,
     free: false,
     cta: "Suscribirse",
     features: [
-      "200.000 caracteres/mes (x2 con EliteLabs 2)",
-      "Hasta 350 imágenes con IA/mes",
-      "Hasta 25 vídeos con IA/mes",
+      "250.000 caracteres/mes (x2 con EliteLabs 2)",
       "Selección de voz completa",
       "Transcripciones y traducciones ilimitadas",
       "3 voces clonadas",
@@ -62,15 +63,14 @@ const PLANS: Plan[] = [
     key: "pro",
     name: "Pro",
     description: "La mejor opción para creadores activos",
-    price: 13,
-    characters: 500_000,
+    price: 55,
+    annualTotal: 561,
+    characters: 2_000_000,
     popular: true,
     free: false,
     cta: "Suscribirse",
     features: [
-      "500.000 caracteres/mes (x2 con EliteLabs 2)",
-      "Hasta 875 imágenes con IA/mes",
-      "Hasta 62 vídeos con IA/mes",
+      "2.000.000 caracteres/mes (x2 con EliteLabs 2)",
       "Selección de voz completa",
       "Transcripciones y traducciones ilimitadas",
       "10 voces clonadas",
@@ -82,40 +82,18 @@ const PLANS: Plan[] = [
     key: "elite",
     name: "Elite",
     description: "Máximo rendimiento sin límites",
-    price: 25,
-    characters: 1_000_000,
+    price: 315,
+    annualTotal: 3213,
+    characters: 15_000_000,
     popular: false,
     free: false,
     cta: "Suscribirse",
     features: [
-      "1.000.000 caracteres/mes (x2 con EliteLabs 2)",
-      "Hasta 1.750 imágenes con IA/mes",
-      "Hasta 124 vídeos con IA/mes",
+      "15.000.000 caracteres/mes (x2 con EliteLabs 2)",
       "Selección de voz completa",
       "Transcripciones y traducciones ilimitadas",
       "20 voces clonadas",
       "Prioridad máxima",
-      "Soporte preferente",
-      "Audios disponibles 30 días",
-    ],
-  },
-  {
-    key: "enterprise",
-    name: "Enterprise",
-    description: "Para profesionales y equipos",
-    price: 110,
-    characters: 5_000_000,
-    popular: false,
-    free: false,
-    cta: "Suscribirse",
-    features: [
-      "5.000.000 caracteres/mes (x2 con EliteLabs 2)",
-      "Hasta 8.750 imágenes con IA/mes",
-      "Hasta 630 vídeos con IA/mes",
-      "Voces clonadas ilimitadas",
-      "Transcripciones y traducciones ilimitadas",
-      "Traducción de audio +10%",
-      "Generación prioritaria",
       "Soporte preferente",
       "Audios disponibles 90 días",
     ],
@@ -209,20 +187,21 @@ function PricingContent() {
     router.push(`/checkout/${plan.key}?billing=${billing}`);
   }
 
-  function annualMonthly(price: number) {
-    return Math.round(price * 0.83 * 10) / 10;
-  }
-  function annualTotal(price: number) {
-    return Math.round(annualMonthly(price) * 12);
+  function annualMonthly(plan: Plan) {
+    if (plan.annualTotal === 0) return 0;
+    return Math.round((plan.annualTotal / 12) * 100) / 100;
   }
 
-  function effectiveMonthly(price: number): number {
-    const base = billing === "annual" ? annualMonthly(price) : price;
+  function effectiveMonthly(plan: Plan): number {
+    const base = billing === "annual" ? annualMonthly(plan) : plan.price;
     if (!discount?.active) return base;
-    return Math.round(base * (1 - discount.percent / 100) * 10) / 10;
+    return Math.round(base * (1 - discount.percent / 100) * 100) / 100;
   }
-  function effectiveAnnual(price: number): number {
-    return Math.round(effectiveMonthly(price) * 12);
+  function effectiveAnnual(plan: Plan): number {
+    return Math.round(effectiveMonthly(plan) * 12 * 100) / 100;
+  }
+  function annualSavings(plan: Plan): number {
+    return Math.round((plan.price * 12 - plan.annualTotal) * 100) / 100;
   }
 
   function fmtChars(n: number) {
@@ -308,13 +287,13 @@ function PricingContent() {
               style={{ position: "relative", zIndex: 1, padding: "8px 28px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: 600, background: "transparent", color: billing === "annual" ? "#000000" : "#666666", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "color 0.2s ease" }}
             >
               {t.billing.annual}
-              <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e", whiteSpace: "nowrap" }}>−17%</span>
+              <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "999px", background: "rgba(34,197,94,0.15)", color: "#22c55e", whiteSpace: "nowrap" }}>−15%</span>
             </button>
           </div>
         </div>
 
-        {/* Plans — 5 col grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px", marginBottom: "60px", alignItems: "start" }}>
+        {/* Plans — 4 col grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "60px", alignItems: "start" }}>
           {PLANS.map((plan) => (
             <div
               key={plan.key}
@@ -332,19 +311,15 @@ function PricingContent() {
               {/* Name + badge */}
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "6px", marginBottom: "4px" }}>
                 <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{plan.name}</span>
-                {currentPlan === plan.key && (
+                {/* "PLAN ACTUAL" only for users on a new plan (free/plus/pro/elite) */}
+                {currentPlan === plan.key && ["free","plus","pro","elite"].includes(currentPlan) && (
                   <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(245,158,11,0.45)", color: "#f59e0b", background: "rgba(245,158,11,0.1)", whiteSpace: "nowrap", flexShrink: 0 }}>
                     PLAN ACTUAL
                   </span>
                 )}
-                {plan.popular && currentPlan !== plan.key && (
+                {plan.popular && !(currentPlan === plan.key && ["free","plus","pro","elite"].includes(currentPlan ?? "")) && (
                   <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.2)", color: "#ffffff", background: "rgba(255,255,255,0.05)", whiteSpace: "nowrap", flexShrink: 0 }}>
                     {t.pricing.popular}
-                  </span>
-                )}
-                {plan.key === "enterprise" && currentPlan !== plan.key && (
-                  <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(16,185,129,0.45)", color: "#6ee7b7", background: "rgba(16,185,129,0.05)", whiteSpace: "nowrap", flexShrink: 0 }}>
-                    {t.pricing.teams}
                   </span>
                 )}
               </div>
@@ -368,7 +343,7 @@ function PricingContent() {
               )}
 
               {/* Price */}
-              <div style={{ marginBottom: "16px", minHeight: "58px" }}>
+              <div style={{ marginBottom: "16px", minHeight: "62px" }}>
                 {plan.free ? (
                   <>
                     <span style={{ fontSize: "38px", fontWeight: 800, color: "#fff", lineHeight: 1, display: "block" }}>{t.pricing.freePrice}</span>
@@ -376,7 +351,6 @@ function PricingContent() {
                   </>
                 ) : (
                   <>
-                    {/* Original price crossed out when annual OR discount active */}
                     {(billing === "annual" || discount?.active) && (
                       <p style={{ fontSize: "13px", color: "#444444", textDecoration: "line-through", marginBottom: "0px", lineHeight: 1 }}>
                         ${plan.price}/mes
@@ -385,14 +359,19 @@ function PricingContent() {
                     <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
                       <span style={{ fontSize: "38px", fontWeight: 800, lineHeight: 1,
                         color: discount?.active ? "#4ade80" : "#fff" }}>
-                        ${effectiveMonthly(plan.price)}
+                        ${effectiveMonthly(plan)}
                       </span>
                       <span style={{ fontSize: "12px", color: "#444444", marginLeft: "2px" }}>{t.pricing.perMonth}</span>
                     </div>
                     {billing === "annual" ? (
-                      <p style={{ fontSize: "11px", color: "#555555", marginTop: "3px" }}>
-                        ${effectiveAnnual(plan.price)} {t.pricing.billedAnnually}
-                      </p>
+                      <>
+                        <p style={{ fontSize: "11px", color: "#555555", marginTop: "2px" }}>
+                          ${effectiveAnnual(plan)} {t.pricing.billedAnnually}
+                        </p>
+                        <span style={{ display: "inline-block", marginTop: "3px", fontSize: "10px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px", background: "rgba(34,197,94,0.12)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.25)" }}>
+                          Ahorras ${annualSavings(plan).toFixed(2)}/año
+                        </span>
+                      </>
                     ) : discount?.active ? (
                       <p style={{ fontSize: "11px", color: "#4ade80", marginTop: "3px" }}>
                         {discount.percent}{t.pricing.discountApplied}
@@ -435,22 +414,6 @@ function PricingContent() {
                 ))}
               </ul>
 
-              {/* Enterprise seats block */}
-              {plan.key === "enterprise" && (
-                <div style={{ marginTop: "14px", background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "8px", padding: "10px" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 700, color: "#fff" }}>
-                      <Users size={12} style={{ color: "#fff", flexShrink: 0 }} /> Seats
-                    </span>
-                    <span style={{ fontSize: "11px", color: "#555555", textDecoration: "line-through" }}>$5/seat/mes</span>
-                  </div>
-                  <div style={{ textAlign: "center" }}>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: "6px", padding: "3px 8px", fontSize: "11px", fontWeight: 700, color: "#4ade80" }}>
-                      {t.pricing.enterpriseSponsored}
-                    </span>
-                  </div>
-                </div>
-              )}
 
               {/* Card footer — character count */}
               <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
@@ -522,7 +485,7 @@ function PricingContent() {
                   <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "#555555", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     {t.pricing.platform}
                   </th>
-                  {["~$7/mes", "~$13/mes", "~$25/mes", "~$110/mes"].map((col) => (
+                  {["~$8/mes", "~$55/mes", "~$315/mes"].map((col) => (
                     <th key={col} style={{ padding: "12px 10px", fontWeight: 600, color: "#555555", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                       {col}
                     </th>
@@ -531,8 +494,8 @@ function PricingContent() {
               </thead>
               <tbody>
                 {[
-                  { name: "ElevenLabs", cols: ["30.000 chars",  "121.000 chars",  "~200.000 chars",  "~2.200.000 chars"] },
-                  { name: "Minimax",    cols: ["100.000 chars", "330.000 chars",  "~540.000 chars",  "~1.800.000 chars"] },
+                  { name: "ElevenLabs", cols: ["100.000 chars",  "~500.000 chars",  "~2.000.000 chars"] },
+                  { name: "Minimax",    cols: ["330.000 chars",  "~900.000 chars",  "~3.000.000 chars"] },
                 ].map((row, i) => (
                   <tr key={row.name} style={{ background: i % 2 === 0 ? "transparent" : "#0a0a0a", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     <td style={{ padding: "12px 16px", color: "#555555", fontWeight: 500 }}>{row.name}</td>
@@ -544,7 +507,7 @@ function PricingContent() {
                 {/* Elite Labs row */}
                 <tr style={{ background: "rgba(255,255,255,0.03)", borderLeft: "3px solid #ffffff" }}>
                   <td style={{ padding: "12px 16px", fontWeight: 700, color: "#ffffff" }}>Elite Labs</td>
-                  {["200.000 chars", "500.000 chars", "1.000.000 chars", "5.000.000 chars"].map((c) => (
+                  {["250.000 chars", "2.000.000 chars", "15.000.000 chars"].map((c) => (
                     <td key={c} style={{ padding: "12px 10px", textAlign: "center", fontWeight: 600, color: "#ffffff" }}>{c}</td>
                   ))}
                 </tr>
