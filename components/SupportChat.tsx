@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { X, Send } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   role: "user" | "assistant";
@@ -166,9 +167,20 @@ export function SupportChat({ open, onClose }: { open: boolean; onClose: () => v
                 background: "rgba(39,39,42,0.9)",
                 color: "rgba(255,255,255,0.88)",
                 border: "1px solid rgba(255,255,255,0.07)",
-                whiteSpace: "pre-wrap", wordBreak: "break-word",
+                wordBreak: "break-word",
               }}>
-                {msg.content}
+                <ReactMarkdown
+                  components={{
+                    p: ({ children }) => <p style={{ margin: "0 0 4px", lineHeight: 1.6 }} className="last:mb-0">{children}</p>,
+                    strong: ({ children }) => <strong style={{ fontWeight: 600, color: "#fff" }}>{children}</strong>,
+                    h3: ({ children }) => <h3 style={{ fontWeight: 600, color: "#fff", fontSize: "13px", margin: "6px 0 2px" }}>{children}</h3>,
+                    ul: ({ children }) => <ul style={{ listStyleType: "disc", paddingLeft: "16px", margin: "2px 0 4px" }}>{children}</ul>,
+                    li: ({ children }) => <li style={{ fontSize: "13px", lineHeight: 1.6 }}>{children}</li>,
+                    code: ({ children }) => <code style={{ background: "rgba(255,255,255,0.1)", padding: "1px 4px", borderRadius: "3px", fontSize: "12px" }}>{children}</code>,
+                  }}
+                >
+                  {msg.content}
+                </ReactMarkdown>
               </div>
             </div>
           ) : (
