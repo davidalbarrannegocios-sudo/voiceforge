@@ -31,7 +31,7 @@ export function DashboardSidebar() {
   const [leaving, setLeaving] = useState(false);
   const [showProductMenu, setShowProductMenu] = useState(false);
 
-  const isMiCuenta = pathname === "/dashboard/mi-cuenta";
+  const isMiCuenta = pathname === "/dashboard/account";
   const isDiscover = pathname === "/voices" || pathname === "/descubrir";
   const activeTab: Tab | null = (isMiCuenta || isDiscover)
     ? null
@@ -309,7 +309,7 @@ export function DashboardSidebar() {
         {/* Mi cuenta */}
         <div className="relative group" style={{ marginTop: "2px" }}>
           <Link
-            href="/dashboard/mi-cuenta"
+            href="/dashboard/account"
             style={{
               display: "flex",
               alignItems: "center",

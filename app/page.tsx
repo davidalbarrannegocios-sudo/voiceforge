@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import { UserMenu } from "@/components/UserMenu";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import { ChevronDown, Check } from "lucide-react";
 import { AudioPlayer } from "./dashboard/AudioPlayer";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
@@ -404,6 +405,7 @@ export default function LandingPage() {
               </svg>
             </button>
 
+            <LanguageSelector />
             {isLoaded && isSignedIn ? (
               <>
                 <Link
@@ -1162,9 +1164,12 @@ export default function LandingPage() {
 
           {/* Bottom bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs order-last sm:order-first" style={{ color: "#666666" }}>
-              © 2026 Elite Tube LLC. All rights reserved.
-            </p>
+            <div className="flex items-center gap-4 order-last sm:order-first">
+              <p className="text-xs" style={{ color: "#666666" }}>
+                © 2026 Elite Tube LLC. All rights reserved.
+              </p>
+              <LanguageSelector />
+            </div>
 
             <div className="flex items-center gap-4 flex-wrap justify-center">
               {[

@@ -261,7 +261,7 @@ function Sidebar({
 
         {/* Mi cuenta */}
         <Link
-          href="/dashboard/mi-cuenta"
+          href="/dashboard/account"
           title={collapsed && desktop ? "Mi cuenta" : undefined}
           style={{
             display: "flex",

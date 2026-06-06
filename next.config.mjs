@@ -1,6 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
+  async redirects() {
+    return [
+      {
+        source: "/dashboard/mi-cuenta",
+        destination: "/dashboard/account",
+        permanent: true,
+      },
+    ];
+  },
   experimental: {
     proxyTimeout: 300000,
     serverActions: {

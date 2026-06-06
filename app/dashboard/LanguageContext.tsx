@@ -69,22 +69,39 @@ interface LangCtx {
 }
 
 const LanguageContext = createContext<LangCtx>({
-  lang: "es", t: ALL.es, toggle: () => {}, setLang: () => {},
+  lang: "en", t: ALL.en, toggle: () => {}, setLang: () => {},
 });
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("es");
+  const [lang, setLangState] = useState<Lang>("en");
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY) as Lang | null;
     if (stored && (VALID_LANGS as string[]).includes(stored)) {
       setLangState(stored);
+      return;
     }
+    // No stored preference: fetch from DB
+    fetch("/api/credits")
+      .then(r => r.json())
+      .then(d => {
+        const dbLang = d.language as Lang | undefined;
+        if (dbLang && (VALID_LANGS as string[]).includes(dbLang)) {
+          setLangState(dbLang);
+          localStorage.setItem(STORAGE_KEY, dbLang);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const setLang = useCallback((l: string) => {
     localStorage.setItem(STORAGE_KEY, l);
     setLangState(l as Lang);
+    fetch("/api/user/preferences", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ language: l }),
+    }).catch(() => {});
   }, []);
 
   const toggle = useCallback(() => {
