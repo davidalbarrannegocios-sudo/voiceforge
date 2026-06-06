@@ -104,9 +104,9 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
             <div className="flex items-center gap-3 mb-3">
               {user?.imageUrl ? (
                 <img src={user.imageUrl} alt={user.fullName ?? "Avatar"}
-                  className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                  className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center text-white font-bold flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-neutral-700 flex items-center justify-center text-white font-bold flex-shrink-0">
                   {initial}
                 </div>
               )}
