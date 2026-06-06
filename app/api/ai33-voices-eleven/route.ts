@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 interface SharedVoice {
-  voice_id: string;
+  voice_id?: string;
+  id?: string;
   name?: string;
   language?: string;
   accent?: string;
@@ -19,6 +20,7 @@ interface SharedVoice {
 }
 
 function mapToFishVoice(v: SharedVoice) {
+  const voiceId = v.voice_id || v.id || "";
   const tags: string[] = [
     v.gender,
     v.age,
@@ -28,7 +30,7 @@ function mapToFishVoice(v: SharedVoice) {
   ].filter((t): t is string => typeof t === "string" && t.length > 0);
 
   return {
-    _id: v.voice_id,
+    _id: voiceId,
     title: v.name ?? "",
     description: v.description ?? v.descriptive ?? null,
     cover_image: v.image_url ?? null,
