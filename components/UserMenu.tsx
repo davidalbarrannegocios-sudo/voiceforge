@@ -56,10 +56,10 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
           aria-label="Menú de usuario"
         >
           <svg className="absolute inset-0" width="36" height="36">
-            <path d={ringPath} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="2" />
+            <path d={ringPath} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
             <path
               d={ringPath} fill="none"
-              stroke={ringColor} strokeWidth="2"
+              stroke={ringColor} strokeWidth="1"
               strokeDasharray={circumference} strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
               style={{ transition: "stroke-dashoffset 0.5s ease" }}
