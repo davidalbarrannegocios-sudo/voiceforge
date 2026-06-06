@@ -122,19 +122,23 @@ export function DashboardSidebar() {
       </div>
 
       {/* Product selector */}
-      <div style={{ padding: collapsed ? "0 8px 8px" : "0 12px 8px", position: "relative", flexShrink: 0, display: "flex", justifyContent: collapsed ? "center" : "initial" }}>
+      <div style={{ padding: collapsed ? "0 8px 8px" : "0 12px 8px", position: "relative", flexShrink: 0 }}>
         {collapsed ? (
           /* Icon-only when collapsed */
           <button
             onClick={() => setShowProductMenu(p => !p)}
             title="Elite Studio"
-            style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg, #1a3a5c, #0ea5e9)", border: "1px solid rgba(14,165,233,0.3)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+            style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: "8px", borderRadius: "10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", transition: "background 0.15s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
           >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M2 9 Q5 3 9 6 Q13 9 16 4" stroke="rgba(255,255,255,0.9)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-              <path d="M2 12 Q6 7 9 10 Q12 13 16 8" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-              <circle cx="9" cy="9" r="1.5" fill="white" opacity="0.8"/>
-            </svg>
+            <div style={{ width: "24px", height: "24px", borderRadius: "6px", background: "linear-gradient(135deg, #1a3a5c, #0ea5e9)", border: "1px solid rgba(14,165,233,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
+                <path d="M2 9 Q5 3 9 6 Q13 9 16 4" stroke="rgba(255,255,255,0.9)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                <path d="M2 12 Q6 7 9 10 Q12 13 16 8" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                <circle cx="9" cy="9" r="1.5" fill="white" opacity="0.8"/>
+              </svg>
+            </div>
           </button>
         ) : (
           <button
