@@ -4,11 +4,11 @@ import { useState, useEffect, useRef } from "react";
 import { useLang } from "@/app/dashboard/LanguageContext";
 
 const LANGUAGES = [
-  { code: "en", flag: "🇺🇸", label: "English" },
-  { code: "es", flag: "🇪🇸", label: "Español" },
-  { code: "de", flag: "🇩🇪", label: "Deutsch" },
-  { code: "fr", flag: "🇫🇷", label: "Français" },
-  { code: "pt", flag: "🇵🇹", label: "Português" },
+  { code: "en", flag: "https://flagcdn.com/w20/us.png", label: "English" },
+  { code: "es", flag: "https://flagcdn.com/w20/es.png", label: "Español" },
+  { code: "de", flag: "https://flagcdn.com/w20/de.png", label: "Deutsch" },
+  { code: "fr", flag: "https://flagcdn.com/w20/fr.png", label: "Français" },
+  { code: "pt", flag: "https://flagcdn.com/w20/pt.png", label: "Português" },
 ];
 
 export function LanguageSelector() {
@@ -32,47 +32,84 @@ export function LanguageSelector() {
   const current = LANGUAGES.find(l => l.code === lang) ?? LANGUAGES[0];
 
   return (
-    <div className="relative" ref={ref}>
+    <div style={{ position: "relative" }} ref={ref}>
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm transition-colors"
-        style={{ color: "#9ca3af", background: "transparent", border: "none", cursor: "pointer" }}
-        onMouseEnter={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
-        onMouseLeave={e => { e.currentTarget.style.color = "#9ca3af"; e.currentTarget.style.background = "transparent"; }}
+        style={{
+          display: "flex", alignItems: "center", gap: "6px",
+          padding: "6px 10px", borderRadius: "8px",
+          background: "rgba(255,255,255,0.05)",
+          border: "1px solid rgba(255,255,255,0.10)",
+          cursor: "pointer", color: "#ffffff", fontSize: "13px",
+          transition: "background 0.15s",
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.10)"; }}
+        onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
       >
-        <span style={{ fontSize: "15px" }}>{current.flag}</span>
-        <span style={{ fontSize: "12px", fontWeight: 500 }}>{current.code.toUpperCase()}</span>
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: 0.5 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={current.flag}
+          alt={current.code}
+          width={16}
+          height={12}
+          style={{ objectFit: "cover", borderRadius: "2px", display: "block" }}
+        />
+        <span style={{ fontWeight: 500 }}>{current.label}</span>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: 0.5, flexShrink: 0, transition: "transform 0.15s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>
           <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
 
       {open && (
-        <div
-          className="glass-menu"
-          style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", minWidth: "160px", zIndex: 9999, padding: "4px" }}
-        >
-          {LANGUAGES.map(l => (
-            <button
-              key={l.code}
-              onClick={() => handleSelect(l.code)}
-              className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm transition-colors"
-              style={{
-                color: l.code === lang ? "#fff" : "#9ca3af",
-                background: l.code === lang ? "rgba(255,255,255,0.06)" : "transparent",
-                border: "none", cursor: "pointer", textAlign: "left",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#fff"; }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = l.code === lang ? "rgba(255,255,255,0.06)" : "transparent";
-                e.currentTarget.style.color = l.code === lang ? "#fff" : "#9ca3af";
-              }}
-            >
-              <span style={{ fontSize: "15px" }}>{l.flag}</span>
-              <span style={{ flex: 1 }}>{l.label}</span>
-              {l.code === lang && <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "11px" }}>✓</span>}
-            </button>
-          ))}
+        <div style={{
+          position: "absolute", right: 0, top: "calc(100% + 6px)",
+          minWidth: "140px", zIndex: 9999,
+          background: "rgba(18,18,18,0.92)", backdropFilter: "blur(20px)",
+          border: "1px solid rgba(255,255,255,0.10)",
+          borderRadius: "12px", overflow: "hidden",
+          boxShadow: "0 16px 40px rgba(0,0,0,0.6)",
+          padding: "4px",
+        }}>
+          {LANGUAGES.map(l => {
+            const active = l.code === lang;
+            return (
+              <button
+                key={l.code}
+                onClick={() => handleSelect(l.code)}
+                style={{
+                  display: "flex", alignItems: "center", gap: "8px",
+                  width: "100%", padding: "7px 10px", borderRadius: "8px",
+                  border: "none", cursor: "pointer", textAlign: "left",
+                  background: active ? "rgba(255,255,255,0.08)" : "transparent",
+                  color: active ? "#ffffff" : "rgba(255,255,255,0.6)",
+                  fontSize: "13px", transition: "background 0.12s, color 0.12s",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+                  e.currentTarget.style.color = "#ffffff";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = active ? "rgba(255,255,255,0.08)" : "transparent";
+                  e.currentTarget.style.color = active ? "#ffffff" : "rgba(255,255,255,0.6)";
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={l.flag}
+                  alt={l.code}
+                  width={16}
+                  height={12}
+                  style={{ objectFit: "cover", borderRadius: "2px", flexShrink: 0 }}
+                />
+                <span style={{ flex: 1, fontWeight: active ? 600 : 400 }}>{l.label}</span>
+                {active && (
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: 0.5, flexShrink: 0 }}>
+                    <path d="M1.5 5.5L4 8L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
