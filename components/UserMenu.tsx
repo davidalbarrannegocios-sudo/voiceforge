@@ -34,9 +34,9 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
   const showRing = used !== undefined && total !== undefined && total > 0;
   const remaining = (total ?? 0) - (used ?? 0);
   const pct = showRing ? Math.min(100, (used! / total!) * 100) : 0;
-  // Rounded-rect ring: 36×36 SVG, 1px inset, rx=11 to match button's 12px border-radius
-  const rx = 11;
-  const inset = 1;
+  // Rounded-rect ring: 36×36 SVG, 2px inset, rx=10 to match avatar's 10px border-radius
+  const rx = 10;
+  const inset = 2;
   const sz = 36 - 2 * inset; // 34
   const x0 = inset, y0 = inset, x1 = x0 + sz, y1 = y0 + sz;
   const midX = x0 + sz / 2;
