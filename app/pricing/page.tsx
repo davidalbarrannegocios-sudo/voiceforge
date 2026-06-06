@@ -313,7 +313,7 @@ function PricingContent() {
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                   <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{plan.name}</span>
                   {billing === "annual" && !plan.free && (
-                    <span style={{ fontSize: "10px", fontWeight: 500, padding: "3px 8px", borderRadius: "999px", background: "rgba(34,197,94,0.12)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.22)", whiteSpace: "nowrap" }}>
+                    <span style={{ fontSize: "10px", fontWeight: 500, padding: "2px 7px", borderRadius: "6px", background: "rgba(34,197,94,0.12)", color: "#4ade80", whiteSpace: "nowrap" }}>
                       Ahorras ${annualSavings(plan).toFixed(2)}/año
                     </span>
                   )}
@@ -325,7 +325,7 @@ function PricingContent() {
                   </span>
                 )}
                 {plan.popular && !(currentPlan === plan.key && ["free","plus","pro","elite"].includes(currentPlan ?? "")) && (
-                  <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.2)", color: "#ffffff", background: "rgba(255,255,255,0.05)", whiteSpace: "nowrap", flexShrink: 0 }}>
+                  <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "6px", color: "#ffffff", background: "rgba(255,255,255,0.10)", whiteSpace: "nowrap", flexShrink: 0 }}>
                     {t.pricing.popular}
                   </span>
                 )}
