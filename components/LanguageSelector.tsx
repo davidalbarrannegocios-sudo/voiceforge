@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useLang } from "@/app/dashboard/LanguageContext";
 
 const LANGUAGES = [
   { code: "en", flag: "🇺🇸", label: "English" },
@@ -11,18 +11,10 @@ const LANGUAGES = [
   { code: "pt", flag: "🇵🇹", label: "Português" },
 ];
 
-const STORAGE_KEY = "elitelabs_lang";
-
 export function LanguageSelector() {
-  const { isSignedIn } = useUser();
-  const [lang, setLangState] = useState("en");
+  const { lang, setLang } = useLang();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) setLangState(stored);
-  }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -32,17 +24,9 @@ export function LanguageSelector() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const handleSelect = async (code: string) => {
-    setLangState(code);
-    localStorage.setItem(STORAGE_KEY, code);
+  const handleSelect = (code: string) => {
+    setLang(code);
     setOpen(false);
-    if (isSignedIn) {
-      fetch("/api/user/preferences", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ language: code }),
-      }).catch(() => {});
-    }
   };
 
   const current = LANGUAGES.find(l => l.code === lang) ?? LANGUAGES[0];
