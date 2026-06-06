@@ -262,10 +262,10 @@ export default function MiCuentaPage() {
                   <img
                     src={user.imageUrl}
                     alt="Foto de perfil"
-                    style={{ width: "48px", height: "48px", borderRadius: "50%", objectFit: "cover", opacity: photoSaving ? 0.5 : 1, transition: "opacity 0.2s" }}
+                    style={{ width: "48px", height: "48px", borderRadius: "12px", objectFit: "cover", opacity: photoSaving ? 0.5 : 1, transition: "opacity 0.2s" }}
                   />
                 ) : (
-                  <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#1e1e3e", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", color: "#fff", fontWeight: 700 }}>
+                  <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "#1e1e3e", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", color: "#fff", fontWeight: 700 }}>
                     {user?.firstName?.[0]?.toUpperCase() ?? "U"}
                   </div>
                 )}
