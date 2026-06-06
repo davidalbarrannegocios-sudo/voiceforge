@@ -492,10 +492,24 @@ function PricingContent() {
                   ))}
                 </tr>
               </thead>
+              {/*
+                DATOS FUENTE COMPETENCIA (actualizar si cambian sus precios)
+                ElevenLabs: $11→121k, $99→600k, $299→2M, $990→6M
+                Minimax: $15→330k, $30→750k, $99→3M
+                Recalcular interpolando a los precios actuales de Elite Labs ($8, $55, $315)
+
+                ElevenLabs ~$8:  lerp($0→0, $11→121k) × (8/11) ≈ 88k
+                ElevenLabs ~$55: lerp($11→121k, $99→600k) × ((55-11)/(99-11)) ≈ 363k
+                ElevenLabs ~$315: lerp($299→2M, $990→6M) × ((315-299)/(990-299)) ≈ 1.85M
+
+                Minimax ~$8:  lerp($0→0, $15→330k) × (8/15) ≈ 176k
+                Minimax ~$55: lerp($30→750k, $99→3M) × ((55-30)/(99-30)) ≈ 1.63M
+                Minimax ~$315: extrapolando tendencia $99→3M → ~9M
+              */}
               <tbody>
                 {[
-                  { name: "ElevenLabs", cols: ["100.000 chars",  "~500.000 chars",  "~2.000.000 chars"] },
-                  { name: "Minimax",    cols: ["330.000 chars",  "~900.000 chars",  "~3.000.000 chars"] },
+                  { name: "ElevenLabs", cols: ["~88.000 chars",   "~363.000 chars",   "~1.850.000 chars"] },
+                  { name: "Minimax",    cols: ["~176.000 chars",  "~1.630.000 chars", "~9.000.000 chars"] },
                 ].map((row, i) => (
                   <tr key={row.name} style={{ background: i % 2 === 0 ? "transparent" : "#0a0a0a", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     <td style={{ padding: "12px 16px", color: "#555555", fontWeight: 500 }}>{row.name}</td>
@@ -515,9 +529,9 @@ function PricingContent() {
             </table>
           </div>
           <p style={{ marginTop: "12px", textAlign: "center", fontSize: "13px" }}>
-            <span style={{ color: "#ffffff", fontWeight: 600 }}>{t.pricing.upTo6x}</span>
+            <span style={{ color: "#ffffff", fontWeight: 600 }}>Hasta 8× más caracteres que ElevenLabs al mismo precio.</span>
             {" "}
-            <span style={{ color: "#444444", fontWeight: 400 }}>{t.pricing.noLimit}</span>
+            <span style={{ color: "#444444", fontWeight: 400 }}>Sin límite por generación.</span>
           </p>
         </div>
 
