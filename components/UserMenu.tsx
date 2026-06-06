@@ -60,10 +60,10 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
           </svg>
           {user?.imageUrl ? (
             <img src={user.imageUrl} alt={user.fullName ?? "Avatar"}
-              className="absolute rounded-full object-cover"
+              className="absolute rounded-xl object-cover"
               style={{ top: 3, left: 3, width: "calc(100% - 6px)", height: "calc(100% - 6px)" }} />
           ) : (
-            <div className="absolute rounded-full bg-neutral-700 flex items-center justify-center text-white font-bold text-sm"
+            <div className="absolute rounded-xl bg-neutral-700 flex items-center justify-center text-white font-bold text-sm"
               style={{ top: 3, left: 3, width: "calc(100% - 6px)", height: "calc(100% - 6px)" }}>
               {initial}
             </div>
@@ -72,13 +72,13 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
       ) : (
         <button
           onClick={() => setOpen((v) => !v)}
-          className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-full overflow-hidden relative flex-shrink-0 flex items-center justify-center p-0 bg-transparent border-none cursor-pointer hover:ring-2 hover:ring-white/40 transition-all"
+          className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-xl overflow-hidden relative flex-shrink-0 flex items-center justify-center p-0 bg-transparent border-none cursor-pointer hover:ring-2 hover:ring-white/40 transition-all"
           aria-label="Menú de usuario"
         >
           {user?.imageUrl ? (
             <img src={user.imageUrl} alt={user.fullName ?? "Avatar"} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full rounded-full bg-neutral-700 flex items-center justify-center text-white font-bold text-sm">
+            <div className="w-full h-full rounded-xl bg-neutral-700 flex items-center justify-center text-white font-bold text-sm">
               {initial}
             </div>
           )}
