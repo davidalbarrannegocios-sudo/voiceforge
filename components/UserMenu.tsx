@@ -34,8 +34,8 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
   const showRing = used !== undefined && total !== undefined && total > 0;
   const remaining = (total ?? 0) - (used ?? 0);
   const pct = showRing ? Math.min(100, (used! / total!) * 100) : 0;
-  // Rounded-rect ring: 36×36 SVG, 1px inset, rx=7 to match button's rounded-lg (8px)
-  const rx = 7;
+  // Rounded-rect ring: 36×36 SVG, 1px inset, rx=11 to match button's 12px border-radius
+  const rx = 11;
   const inset = 1;
   const sz = 36 - 2 * inset; // 34
   const x0 = inset, y0 = inset, x1 = x0 + sz, y1 = y0 + sz;
@@ -67,10 +67,10 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
           </svg>
           {user?.imageUrl ? (
             <img src={user.imageUrl} alt={user.fullName ?? "Avatar"}
-              className="absolute rounded-lg object-cover"
+              className="absolute rounded-xl object-cover"
               style={{ top: 3, left: 3, width: "calc(100% - 6px)", height: "calc(100% - 6px)" }} />
           ) : (
-            <div className="absolute rounded-lg bg-neutral-700 flex items-center justify-center text-white font-bold text-sm"
+            <div className="absolute rounded-xl bg-neutral-700 flex items-center justify-center text-white font-bold text-sm"
               style={{ top: 3, left: 3, width: "calc(100% - 6px)", height: "calc(100% - 6px)" }}>
               {initial}
             </div>
@@ -79,13 +79,13 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
       ) : (
         <button
           onClick={() => setOpen((v) => !v)}
-          className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-lg overflow-hidden relative flex-shrink-0 flex items-center justify-center p-0 bg-transparent border-none cursor-pointer hover:ring-2 hover:ring-white/40 transition-all"
+          className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-xl overflow-hidden relative flex-shrink-0 flex items-center justify-center p-0 bg-transparent border-none cursor-pointer hover:ring-2 hover:ring-white/40 transition-all"
           aria-label="Menú de usuario"
         >
           {user?.imageUrl ? (
             <img src={user.imageUrl} alt={user.fullName ?? "Avatar"} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full rounded-lg bg-neutral-700 flex items-center justify-center text-white font-bold text-sm">
+            <div className="w-full h-full rounded-xl bg-neutral-700 flex items-center justify-center text-white font-bold text-sm">
               {initial}
             </div>
           )}
@@ -121,7 +121,7 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
             {/* Balance card */}
             {showRing && (
               <>
-                <div className="rounded-lg p-3 mb-2" style={{ background: "#1c1c1c" }}>
+                <div className="rounded-xl p-3 mb-2" style={{ background: "#1c1c1c" }}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Zap size={14} className="text-gray-400" />
@@ -148,7 +148,7 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
                 </div>
 
                 {/* Plan badge */}
-                <div className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: "#1c1c1c" }}>
+                <div className="flex items-center justify-between rounded-xl px-3 py-2" style={{ background: "#1c1c1c" }}>
                   <div>
                     <p className="text-xs" style={{ color: "#6b7280" }}>Plan actual</p>
                     <p className="text-white text-sm font-medium capitalize">{plan ?? "Free"}</p>
@@ -170,7 +170,7 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
                 key={href}
                 href={href}
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
                 style={{ color: "#9ca3af" }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#fff"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#9ca3af"; }}
@@ -181,7 +181,7 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
             ))}
             <button
               onClick={() => { setOpen(false); router.push("/dashboard/mi-cuenta"); }}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm w-full transition-colors"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm w-full transition-colors"
               style={{ color: "#9ca3af", background: "transparent", border: "none", cursor: "pointer" }}
               onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#fff"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#9ca3af"; }}
@@ -195,7 +195,7 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
           <div className="p-2" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
             <button
               onClick={() => { setOpen(false); signOut({ redirectUrl: "/" }); router; }}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm w-full transition-colors"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm w-full transition-colors"
               style={{ color: "#f87171", background: "transparent", border: "none", cursor: "pointer" }}
               onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; e.currentTarget.style.color = "#fca5a5"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#f87171"; }}
