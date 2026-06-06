@@ -369,16 +369,16 @@ input[type="range"]::-moz-range-thumb {
 .cl-userButtonAvatarImage,
 .cl-avatarBox,
 .cl-avatarImage {
-  border-radius: 12px !important;
+  border-radius: 10px !important;
 }
 
 .cl-userButtonTrigger,
 .cl-userButtonTrigger:focus,
 .cl-userButtonTrigger[data-color] {
-  border-radius: 12px !important;
+  border-radius: 10px !important;
 }
 
 .cl-userButtonTrigger::after,
 .cl-userButtonTrigger::before {
-  border-radius: 12px !important;
+  border-radius: 10px !important;
 }
