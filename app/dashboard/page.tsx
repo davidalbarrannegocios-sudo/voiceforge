@@ -1180,7 +1180,7 @@ function GenerateTab({
                   onClick={() => setTagsOpen(o => !o)}
                   style={{ display: "flex", alignItems: "center", gap: "4px", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, background: tagsOpen ? "rgba(255,255,255,0.08)" : "transparent", border: "1px solid rgba(255,255,255,0.12)", color: "#9ca3af", cursor: "pointer" }}
                 >
-                  Etiquetas
+                  {t.generate.tags}
                   <span style={{ display: "inline-block", transition: "transform 0.15s", transform: tagsOpen ? "rotate(90deg)" : "none", fontSize: "10px" }}>›</span>
                 </button>
                 <button
@@ -1190,14 +1190,14 @@ function GenerateTab({
                   style={{ display: "flex", alignItems: "center", gap: "4px", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: isAutoTagging || !text.trim() ? "#444444" : "#9ca3af", cursor: isAutoTagging || !text.trim() ? "not-allowed" : "pointer", transition: "color 0.15s, border-color 0.15s" }}
                 >
                   {isAutoTagging ? (
-                    <><svg style={{ width: "11px", height: "11px", animation: "spin 1s linear infinite" }} viewBox="0 0 24 24" fill="none"><circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Etiquetando...</>
-                  ) : <>✦ Etiquetado automático</>}
+                    <><svg style={{ width: "11px", height: "11px", animation: "spin 1s linear infinite" }} viewBox="0 0 24 24" fill="none"><circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>{t.generate.tagging}</>
+                  ) : <>✦ {t.generate.autoTag}</>}
                 </button>
 
                 {/* Import file */}
                 <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/[0.08] border border-white/10 text-xs text-white/50 cursor-pointer transition-all">
                   <Upload className="w-3.5 h-3.5" />
-                  Importar
+                  {t.generate.importBtn}
                   <input
                     type="file"
                     accept=".txt,.pdf,.doc,.docx"
@@ -1327,9 +1327,9 @@ function GenerateTab({
                     style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: 500, background: previewing === "playing" ? "rgba(239,68,68,0.1)" : "rgba(255,255,255,0.05)", border: `1px solid ${previewing === "playing" ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`, color: previewing === "playing" ? "#f87171" : previewing === "loading" ? "#6b7280" : "#aaaaaa", cursor: previewing === "loading" ? "not-allowed" : "pointer", opacity: previewing === "loading" ? 0.6 : 1 }}
                   >
                     {previewing === "loading" && <svg className="animate-spin" style={{ width: "12px", height: "12px" }} fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
-                    {previewing === "idle" && "▶ Pre-escuchar"}
-                    {previewing === "loading" && "Generando..."}
-                    {previewing === "playing" && "⏹ Detener"}
+                    {previewing === "idle" && `▶ ${t.generate.preview}`}
+                    {previewing === "loading" && t.generate.generating}
+                    {previewing === "playing" && t.generate.previewStop}
                   </button>
                 )}
                 <button

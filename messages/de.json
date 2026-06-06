@@ -100,6 +100,7 @@
     "credits": "Credits",
     "tags": "Tags",
     "autoTag": "Auto-Tagging",
+    "tagging": "Wird markiert...",
     "importBtn": "Importieren",
     "model": "Modell",
     "normText": "Text-Norm.",
