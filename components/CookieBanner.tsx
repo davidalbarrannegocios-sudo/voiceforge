@@ -5,12 +5,12 @@ export default function CookieBanner() {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    const consent = localStorage.getItem('cookie_consent')
+    const consent = localStorage.getItem('cookie_consent_v2')
     if (!consent) setVisible(true)
   }, [])
 
   const saveConsent = async (type: string) => {
-    localStorage.setItem('cookie_consent', type)
+    localStorage.setItem('cookie_consent_v2', type)
     setVisible(false)
     try {
       await fetch('/api/cookie-consent', {

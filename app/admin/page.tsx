@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, CreditCard, Mic2, Ticket, Handshake, Wallet,
   BarChart2, Settings, RefreshCw, Check, X, AlertTriangle, Play, Pause,
   ExternalLink, Search, Filter, Plus, Minus, ArrowLeft, ChevronRight,
-  ScrollText, Monitor, ChevronDown, Trash2, ShieldOff, Clock,
+  ScrollText, Monitor, ChevronDown, Trash2, ShieldOff, Clock, Shield,
 } from "lucide-react";
 
 /* ─── Types ───────────────────────────────────────────────── */
@@ -72,7 +72,7 @@ interface Payment {
   amountRefunded: number; last4: string | null; createdAt: string;
 }
 
-type Section = "dashboard" | "users" | "subscriptions" | "engines" | "support" | "affiliates" | "withdrawals" | "analytics" | "config" | "logs";
+type Section = "dashboard" | "users" | "subscriptions" | "engines" | "support" | "affiliates" | "withdrawals" | "analytics" | "config" | "logs" | "cookies";
 
 interface UserSession {
   id: string; ip: string | null; browser: string | null; os: string | null;
@@ -1606,6 +1606,50 @@ function LogsSection() {
   );
 }
 
+/* ─── Section: Cookies ────────────────────────────────────── */
+function CookiesSection() {
+  const [consents, setConsents] = useState<{id:string;userId:string|null;ip:string|null;consent:string;createdAt:string}[]>([])
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    fetch('/api/admin/cookie-consents').then(r=>r.json()).then(d=>{setConsents(d);setLoading(false)})
+  }, [])
+  return (
+    <div>
+      <h2 style={{color:'#fff',marginBottom:'1.5rem',fontSize:'1.25rem',fontWeight:700}}>Consentimientos de Cookies</h2>
+      {loading ? <p style={{color:'#888'}}>Cargando...</p> : (
+        <div style={{background:'#111111',border:'1px solid rgba(255,255,255,0.08)',borderRadius:'1rem',padding:0,overflow:'hidden'}}>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:'13px'}}>
+            <thead>
+              <tr style={{borderBottom:'1px solid rgba(255,255,255,0.08)'}}>
+                {['IP','Usuario','Consentimiento','Fecha'].map(h=>(
+                  <th key={h} style={{padding:'12px 16px',textAlign:'left',color:'#888',fontWeight:600}}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {consents.map(c=>(
+                <tr key={c.id} style={{borderBottom:'1px solid rgba(255,255,255,0.05)'}}>
+                  <td style={{padding:'10px 16px',color:'#ccc'}}>{c.ip||'—'}</td>
+                  <td style={{padding:'10px 16px',color:'#ccc'}}>{c.userId||'Anónimo'}</td>
+                  <td style={{padding:'10px 16px'}}>
+                    <span style={{padding:'2px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:700,
+                      background:c.consent==='all'?'rgba(34,197,94,0.1)':'rgba(251,191,36,0.1)',
+                      color:c.consent==='all'?'#22c55e':'#fbbf24',border:`1px solid ${c.consent==='all'?'rgba(34,197,94,0.3)':'rgba(251,191,36,0.3)'}`}}>
+                      {c.consent==='all'?'Todo':'Solo necesarias'}
+                    </span>
+                  </td>
+                  <td style={{padding:'10px 16px',color:'#888'}}>{new Date(c.createdAt).toLocaleString('es-ES')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {consents.length===0&&<p style={{padding:'2rem',textAlign:'center',color:'#555'}}>No hay registros todavía.</p>}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ─── NAV config ──────────────────────────────────────────── */
 const NAV_ITEMS_BASE: { key: Section; label: string; Icon: React.ElementType; href?: string }[] = [
   { key: "dashboard",     label: "Dashboard",      Icon: LayoutDashboard },
@@ -1618,6 +1662,7 @@ const NAV_ITEMS_BASE: { key: Section; label: string; Icon: React.ElementType; hr
   { key: "analytics",     label: "Analytics",        Icon: BarChart2 },
   { key: "config",        label: "Configuración",    Icon: Settings },
   { key: "logs",          label: "Logs",             Icon: ScrollText },
+  { key: "cookies",       label: "Cookies",           Icon: Shield },
 ];
 
 /* ─── Main ────────────────────────────────────────────────── */
@@ -1926,6 +1971,7 @@ export default function AdminPage() {
         {activeSection === "analytics" && <AnalyticsSection users={users} stats={stats} />}
         {activeSection === "config" && <ConfigSection {...engineProps} />}
         {activeSection === "logs" && <LogsSection />}
+        {activeSection === "cookies" && <CookiesSection />}
       </main>
     </div>
   );
