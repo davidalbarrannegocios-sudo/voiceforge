@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { downloadFromR2, keyFromPublicUrl } from "@/lib/r2";
 
-const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL ?? "";
-const HETZNER_OS_PUBLIC_URL = process.env.HETZNER_OS_PUBLIC_URL ?? "";
+const ALLOWED_ORIGINS = [
+  process.env.R2_PUBLIC_URL ?? "",
+  process.env.HETZNER_AUDIO_PUBLIC_URL ?? "",
+];
 
 function isAllowedUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
-    if (R2_PUBLIC_URL && url.startsWith(R2_PUBLIC_URL)) return true;
+    if (ALLOWED_ORIGINS.some(o => o && url.startsWith(o))) return true;
     if (parsed.hostname.endsWith(".r2.dev")) return true;
-    if (HETZNER_OS_PUBLIC_URL && url.startsWith(HETZNER_OS_PUBLIC_URL)) return true;
     if (parsed.hostname.endsWith(".your-objectstorage.com")) return true;
     return false;
   } catch {
@@ -29,21 +29,6 @@ export async function GET(request: NextRequest) {
   if (!isAllowedUrl(url)) return new NextResponse("URL not allowed", { status: 403 });
 
   try {
-    // Si es URL de Hetzner, usar el SDK directamente (bucket privado)
-    if (HETZNER_OS_PUBLIC_URL && url.startsWith(HETZNER_OS_PUBLIC_URL)) {
-      const key = keyFromPublicUrl(url);
-      const buffer = await downloadFromR2(key);
-      return new NextResponse(buffer, {
-        headers: {
-          "Content-Type": "audio/mpeg",
-          "Content-Disposition": `attachment; filename="${filename}"`,
-          "Content-Length": buffer.byteLength.toString(),
-          "Cache-Control": "no-store",
-        },
-      });
-    }
-
-    // URLs de R2 público — fetch directo
     const upstream = await fetch(url);
     if (!upstream.ok) throw new Error(`Upstream ${upstream.status}`);
     const buffer = await upstream.arrayBuffer();
