@@ -631,7 +631,7 @@ function HomeTab({
                   </p>
                   {gen.audioUrl && (
                     <button
-                       onClick={() => downloadAudio(gen.audioUrl!, generateAudioFilename(gen.text))}
+                       onClick={() => downloadAudio(gen.audioUrl!, generateAudioFilename(gen.text ?? ''))}
                        className="text-xs transition-colors"
                        style={{ color: "#555555", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                        onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
@@ -2670,7 +2670,7 @@ function HistoryTab({ plan }: { plan: string }) {
 
                           {gen.audioUrl && (
                             <button
-                              onClick={() => downloadAudio(gen.audioUrl!, generateAudioFilename(gen.text))}
+                              onClick={() => downloadAudio(gen.audioUrl!, generateAudioFilename(gen.text ?? ''))}
                               style={{
                                 display: "flex", alignItems: "center", justifyContent: "center",
                                 width: 26, height: 26, borderRadius: "50%",
