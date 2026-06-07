@@ -1,7 +1,7 @@
 // v2
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
@@ -1774,20 +1774,17 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
 
         {/* Step indicator */}
         <div className="flex items-center gap-3 mb-7">
-          {([1, 2] as const).map((n, i) => (
-            <React.Fragment key={n}>
-              {i > 0 && <div className="flex-1 h-px" style={{ background: step >= n ? "#444" : "#222" }} />}
-              <div className="flex items-center gap-2" style={{ opacity: step >= n ? 1 : 0.35 }}>
-                <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
-                  style={{ background: step >= n ? "#ffffff" : "rgba(255,255,255,0.08)", color: step >= n ? "#000" : "rgba(255,255,255,0.4)" }}>
-                  {n}
-                </span>
-                <span className="text-sm font-medium text-white whitespace-nowrap">
-                  {n === 1 ? "Audio Source" : "Voice Details"}
-                </span>
-              </div>
-            </React.Fragment>
-          ))}
+          <div className="flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
+              style={{ background: "#ffffff", color: "#000" }}>1</span>
+            <span className="text-sm font-medium text-white whitespace-nowrap">Audio Source</span>
+          </div>
+          <div className="flex-1 h-px" style={{ background: step >= 2 ? "#444" : "#222" }} />
+          <div className="flex items-center gap-2" style={{ opacity: step >= 2 ? 1 : 0.35 }}>
+            <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
+              style={{ background: step >= 2 ? "#ffffff" : "rgba(255,255,255,0.08)", color: step >= 2 ? "#000" : "rgba(255,255,255,0.4)" }}>2</span>
+            <span className="text-sm font-medium text-white whitespace-nowrap">Voice Details</span>
+          </div>
         </div>
 
         {/* ── STEP 1 ── */}
