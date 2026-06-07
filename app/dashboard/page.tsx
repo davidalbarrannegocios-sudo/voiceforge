@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare, Loader } from "lucide-react";
 import { DialogueEditor } from "@/components/DialogueEditor";
 import { ImageVideoEditor, type ImageHistoryItem } from "@/components/ImageVideoEditor";
 import { Image as ImageIcon } from "lucide-react";
@@ -427,6 +427,17 @@ function HomeTab({
   const [recentGenerations, setRecentGenerations] = useState<RecentGeneration[]>([])
   const [clonedVoices, setClonedVoices] = useState<ClonedVoiceItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
+
+  async function handleDownload(gen: RecentGeneration) {
+    if (!gen.audioUrl || downloadingId) return;
+    setDownloadingId(gen.id);
+    try {
+      await downloadAudio(gen.audioUrl, generateAudioFilename(gen.text ?? ''));
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   useEffect(() => {
     Promise.all([
@@ -631,12 +642,13 @@ function HomeTab({
                   </p>
                   {gen.audioUrl && (
                     <button
-                       onClick={() => downloadAudio(gen.audioUrl!, generateAudioFilename(gen.text ?? ''))}
+                       onClick={() => handleDownload(gen)}
+                       disabled={downloadingId === gen.id}
                        className="text-xs transition-colors"
-                       style={{ color: "#555555", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                       onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
+                       style={{ color: "#555555", background: "none", border: "none", cursor: downloadingId === gen.id ? "default" : "pointer", padding: 0 }}
+                       onMouseEnter={e => { if (downloadingId !== gen.id) e.currentTarget.style.color = "#ffffff"; }}
                        onMouseLeave={e => (e.currentTarget.style.color = "#555555")}>
-                      ↓ MP3
+                      {downloadingId === gen.id ? t.history.downloading : '↓ MP3'}
                     </button>
                   )}
                 </div>
@@ -2440,7 +2452,18 @@ function HistoryTab({ plan }: { plan: string }) {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playTime, setPlayTime] = useState<{ current: number; duration: number }>({ current: 0, duration: 0 });
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   void plan;
+
+  async function handleDownload(gen: HistoryGen) {
+    if (!gen.audioUrl || downloadingId) return;
+    setDownloadingId(gen.id);
+    try {
+      await downloadAudio(gen.audioUrl, generateAudioFilename(gen.text ?? ''));
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   const fetchHistory = useCallback(async (p: number) => {
     setLoading(true);
@@ -2670,15 +2693,19 @@ function HistoryTab({ plan }: { plan: string }) {
 
                           {gen.audioUrl && (
                             <button
-                              onClick={() => downloadAudio(gen.audioUrl!, generateAudioFilename(gen.text ?? ''))}
+                              onClick={() => handleDownload(gen)}
+                              disabled={downloadingId === gen.id}
                               style={{
                                 display: "flex", alignItems: "center", justifyContent: "center",
                                 width: 26, height: 26, borderRadius: "50%",
-                                background: "#1a1a1a", color: "#9ca3af", border: "none", cursor: "pointer",
+                                background: "#1a1a1a", color: "#9ca3af", border: "none",
+                                cursor: downloadingId === gen.id ? "default" : "pointer",
                               }}
-                              title="Descargar"
+                              title={t.history.download}
                             >
-                              <Download size={11} />
+                              {downloadingId === gen.id
+                                ? <Loader size={11} className="animate-spin" />
+                                : <Download size={11} />}
                             </button>
                           )}
 

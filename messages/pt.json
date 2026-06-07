@@ -386,7 +386,9 @@
     "totalGenerations": "{n} gerações no total",
     "totalGeneration": "1 geração no total",
     "recoveredR2": "Histórico recuperado do R2 — texto original não disponível",
-    "copyText": "Copiar texto"
+    "copyText": "Copiar texto",
+    "download": "Baixar",
+    "downloading": "Baixando..."
   },
   "pricing": {
     "title": "Escolha o seu plano",

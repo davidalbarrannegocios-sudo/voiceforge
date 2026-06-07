@@ -386,7 +386,9 @@
     "totalGenerations": "{n} Generierungen insgesamt",
     "totalGeneration": "1 Generierung insgesamt",
     "recoveredR2": "Verlauf von R2 wiederhergestellt — Originaltext nicht verfügbar",
-    "copyText": "Text kopieren"
+    "copyText": "Text kopieren",
+    "download": "Herunterladen",
+    "downloading": "Wird heruntergeladen..."
   },
   "pricing": {
     "title": "Wählen Sie Ihren Plan",
