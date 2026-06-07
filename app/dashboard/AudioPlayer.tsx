@@ -29,12 +29,14 @@ export function AudioPlayer({
     async function load() {
       try {
         const res = await fetch(getProxiedUrl(src));
+        console.log('[AudioPlayer] fetching:', getProxiedUrl(src), 'status:', res.status, 'ok:', res.ok)
         if (cancelled) return;
         const blob = new Blob([await res.arrayBuffer()], { type: 'audio/mpeg' });
         if (cancelled) return;
         objectUrl = URL.createObjectURL(blob);
         setBlobSrc(objectUrl);
-      } catch {
+      } catch (err) {
+        console.error('[AudioPlayer] fetch error:', err, 'src:', src)
         if (!cancelled) setBlobSrc(getProxiedUrl(src));
       }
     }
