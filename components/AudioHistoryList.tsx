@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Clock, Trash2, Play, Pause, Download, RefreshCw, FileText, Copy, Check } from "lucide-react";
+import { Clock, Trash2, Play, Pause, Download, RefreshCw, FileText, Copy, Check, Loader } from "lucide-react";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 import { useLang } from "@/app/dashboard/LanguageContext";
-import { downloadAudio } from "@/lib/downloadAudio";
+import { downloadAudio, generateAudioFilename } from "@/lib/downloadAudio";
 
 interface PendingJob {
   jobId: string;
@@ -134,6 +134,7 @@ export default function AudioHistoryList({
   const [openTranscripts, setOpenTranscripts] = useState<Set<string>>(new Set());
   const [cleanedIds, setCleanedIds] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const pendingIntervals = useRef<Record<string, ReturnType<typeof setInterval>>>({});
   const pageRef = useRef(page);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -321,6 +322,16 @@ export default function AudioHistoryList({
     setPlayingId(gen.id);
   }
 
+  async function handleDownload(gen: Generation) {
+    if (!gen.audioUrl || downloadingId === gen.id) return
+    setDownloadingId(gen.id)
+    try {
+      await downloadAudio(gen.audioUrl, generateAudioFilename(gen.text ?? ''))
+    } finally {
+      setDownloadingId(null)
+    }
+  }
+
   /* ── Compact (panel derecho TTS) ─────────────────────────── */
   if (compact) {
     const groups = groupByDate(generations, dateLabels);
@@ -471,11 +482,14 @@ export default function AudioHistoryList({
                                 )}
                               </button>
                               <button
-                                onClick={() => downloadAudio(gen.audioUrl!, `audio-${gen.id}.mp3`)}
-                                style={{ display: "flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "9999px", background: "rgba(255,255,255,0.08)", fontSize: "11px", fontWeight: 500, color: "#e2e8f0", border: "none", cursor: "pointer", flexShrink: 0 }}
+                                onClick={() => handleDownload(gen)}
+                                disabled={downloadingId === gen.id}
+                                style={{ display: "flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "9999px", background: "rgba(255,255,255,0.08)", fontSize: "11px", fontWeight: 500, color: "#e2e8f0", border: "none", cursor: "pointer", flexShrink: 0, opacity: downloadingId === gen.id ? 0.7 : 1 }}
                               >
-                                <Download size={10} />
-                                {t.voices.download}
+                                {downloadingId === gen.id
+                                  ? <><Loader size={10} style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }} /> {t.history?.downloading || 'Descargando...'}</>
+                                  : <><Download size={10} /> {t.voices.download}</>
+                                }
                               </button>
                             </>
                           )}
