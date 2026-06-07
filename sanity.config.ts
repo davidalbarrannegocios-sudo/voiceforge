@@ -4,8 +4,8 @@ import { visionTool } from '@sanity/vision'
 import { schemaTypes } from './sanity/schemas'
 
 export default defineConfig({
-  name: 'elitelabs',
-  title: 'Elite Labs',
+  name: 'default',
+  title: 'Elite Labs Blog',
   projectId: 'zrb45klt',
   dataset: 'production',
   basePath: '/studio',
