@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next'
+import { client } from '@/sanity/lib/client'
 
 const BASE_URL = 'https://www.elitelabs.es'
 const LOCALES = ['', '/en', '/de', '/fr', '/pt', '/zh']
@@ -15,7 +16,7 @@ const PAGES = [
   { path: '/sign-in',  changeFrequency: 'yearly'  as const, priority: 0.3 },
 ]
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
   const entries: MetadataRoute.Sitemap = []
 
@@ -28,6 +29,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
         priority: locale === '' ? page.priority : page.priority * 0.9,
       })
     }
+  }
+
+  // Posts del blog desde Sanity
+  const posts = await client.fetch<{ slug: string; publishedAt: string }[]>(
+    `*[_type == "post" && defined(slug.current)]{ "slug": slug.current, publishedAt }`
+  )
+
+  for (const post of posts) {
+    entries.push({
+      url: `${BASE_URL}/blog/${post.slug}`,
+      lastModified: post.publishedAt ? new Date(post.publishedAt) : now,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    })
   }
 
   return entries
