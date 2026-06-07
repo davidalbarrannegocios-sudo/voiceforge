@@ -2502,12 +2502,18 @@ function HistoryTab({ plan }: { plan: string }) {
     const blobUrl = await getAudioBlobUrl(gen.audioUrl);
     const audio = new Audio(blobUrl);
     audioRef.current = audio;
-    audio.onloadedmetadata = () => setPlayTime((p) => ({ ...p, duration: audio.duration || 0 }));
-    audio.ontimeupdate = () => setPlayTime((p) => ({ ...p, current: audio.currentTime }));
-    audio.onended = () => { setPlayingId(null); setPlayTime({ current: 0, duration: 0 }); URL.revokeObjectURL(blobUrl); };
-    audio.onerror = () => { setPlayingId(null); setPlayTime({ current: 0, duration: 0 }); URL.revokeObjectURL(blobUrl); };
-    audio.play();
+    audio.onloadedmetadata = () => setPlayTime({ current: 0, duration: audio.duration });
+    audio.ontimeupdate = () => setPlayTime({ current: audio.currentTime, duration: audio.duration });
+    audio.onended = () => { setPlayingId(null); URL.revokeObjectURL(blobUrl); };
+    audio.onerror = (e) => { console.error('Audio error:', e, audio.error); setPlayingId(null); URL.revokeObjectURL(blobUrl); };
     setPlayingId(gen.id);
+    try {
+      await audio.play();
+    } catch (err) {
+      console.error('Play failed:', err);
+      setPlayingId(null);
+      URL.revokeObjectURL(blobUrl);
+    }
   }
 
   async function handleDelete(id: string) {
