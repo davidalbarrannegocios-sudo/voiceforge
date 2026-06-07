@@ -21,7 +21,6 @@ export default defineType({
       of: [
         { type: 'block' },
         { type: 'image', options: { hotspot: true } },
-        { type: 'code' },
       ],
     }),
   ],
