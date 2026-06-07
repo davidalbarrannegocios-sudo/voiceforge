@@ -9,14 +9,16 @@ export default function CookieBanner() {
     if (!consent) setVisible(true)
   }, [])
 
-  const accept = () => {
-    localStorage.setItem('cookie_consent', 'all')
+  const saveConsent = async (type: string) => {
+    localStorage.setItem('cookie_consent', type)
     setVisible(false)
-  }
-
-  const decline = () => {
-    localStorage.setItem('cookie_consent', 'necessary')
-    setVisible(false)
+    try {
+      await fetch('/api/cookie-consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ consent: type }),
+      })
+    } catch {}
   }
 
   if (!visible) return null
@@ -30,18 +32,18 @@ export default function CookieBanner() {
       flexWrap: 'wrap', gap: '12px',
     }}>
       <p style={{ color: '#aaaaaa', fontSize: '14px', margin: 0, maxWidth: '700px' }}>
-        Usamos cookies esenciales para el funcionamiento del servicio y cookies analíticas para mejorar tu experiencia. 
+        Usamos cookies esenciales para el funcionamiento del servicio y cookies analíticas para mejorar tu experiencia.
         Consulta nuestra{' '}
         <a href="/privacy" style={{ color: '#ffffff', textDecoration: 'underline' }}>política de privacidad</a>.
       </p>
       <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-        <button onClick={decline} style={{
+        <button onClick={() => saveConsent('necessary')} style={{
           padding: '8px 16px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer',
           background: 'transparent', border: '1px solid #333333', color: '#888888',
         }}>
           Solo necesarias
         </button>
-        <button onClick={accept} style={{
+        <button onClick={() => saveConsent('all')} style={{
           padding: '8px 16px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer',
           background: '#ffffff', border: 'none', color: '#000000', fontWeight: 600,
         }}>
