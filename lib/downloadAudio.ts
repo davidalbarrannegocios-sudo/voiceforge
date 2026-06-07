@@ -1,11 +1,16 @@
 function needsProxy(url: string): boolean {
   try {
     const { hostname } = new URL(url);
-    // R2 public URLs (pub-*.r2.dev) block browser fetch via CORS
-    return hostname.endsWith(".r2.dev");
+    return hostname.endsWith(".r2.dev") || hostname.endsWith(".your-objectstorage.com");
   } catch {
     return false;
   }
+}
+
+export function getProxiedUrl(url: string): string {
+  return needsProxy(url)
+    ? `/api/download-audio?url=${encodeURIComponent(url)}`
+    : url;
 }
 
 export async function downloadAudio(url: string, filename: string) {

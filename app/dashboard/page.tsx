@@ -24,7 +24,7 @@ import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 import { generateVoiceGradient } from "@/lib/voice-gradient";
 import { TaggedTextEditor, cleanPastedText } from "@/components/TaggedTextEditor";
 import { NoCreditsModal } from "@/components/NoCreditsModal";
-import { downloadAudio } from "@/lib/downloadAudio";
+import { downloadAudio, getProxiedUrl } from "@/lib/downloadAudio";
 import { SupportChat } from "@/components/SupportChat";
 
 /* ─── Types ──────────────────────────────────────────────── */
@@ -2316,7 +2316,7 @@ function VoicesTab({
       const res = await fetch(`/api/voices/${voice.id}/preview`, { method: "POST" });
       if (!res.ok) throw new Error("Error");
       const { url } = await res.json() as { url: string };
-      const audio = new Audio(url);
+      const audio = new Audio(getProxiedUrl(url));
       previewAudiosRef.current[voice.id] = audio;
       audio.onended = () => setPreviewState((s) => ({ ...s, [voice.id]: "idle" }));
       audio.onerror = () => setPreviewState((s) => ({ ...s, [voice.id]: "idle" }));
@@ -2498,7 +2498,7 @@ function HistoryTab({ plan }: { plan: string }) {
     }
     audioRef.current?.pause();
     setPlayTime({ current: 0, duration: 0 });
-    const audio = new Audio(gen.audioUrl);
+    const audio = new Audio(getProxiedUrl(gen.audioUrl));
     audioRef.current = audio;
     audio.onloadedmetadata = () => setPlayTime((p) => ({ ...p, duration: audio.duration || 0 }));
     audio.ontimeupdate = () => setPlayTime((p) => ({ ...p, current: audio.currentTime }));

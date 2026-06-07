@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { downloadAudio } from "@/lib/downloadAudio";
+import { downloadAudio, getProxiedUrl } from "@/lib/downloadAudio";
 
 function fmt(seconds: number) {
   const m = Math.floor(seconds / 60);
@@ -44,7 +44,7 @@ export function AudioPlayer({
       {/* Hidden audio element */}
       <audio
         ref={audioRef}
-        src={src}
+        src={getProxiedUrl(src)}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => { setPlaying(false); setCurrentTime(0); }}

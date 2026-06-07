@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Globe } from "lucide-react";
 import { FREE_VOICE_IDS } from "@/lib/free-voice-ids";
+import { getProxiedUrl } from "@/lib/downloadAudio";
 import { CustomSelect } from "@/components/CustomSelect";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 
@@ -1257,7 +1258,7 @@ export function VoiceBrowser({
       const res = await fetch(`/api/voice-preview/${id}`);
       if (!res.ok) return;
       const { audioUrl } = await res.json();
-      const audio = new Audio(audioUrl);
+      const audio = new Audio(getProxiedUrl(audioUrl));
       audio.onended = () => setPreviewingId(null);
       audioRef.current = audio;
       await audio.play();
