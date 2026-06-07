@@ -6,7 +6,7 @@ export const metadata = { title: "Política de Privacidad — Elite Labs" };
 const SECTIONS = [
   {
     title: "1. Quiénes somos",
-    body: `Elite Tube LLC es la empresa responsable de Elite Labs, una plataforma de síntesis de voz con inteligencia artificial. Domicilio social: Estado de Wyoming, Estados Unidos. Puede contactarnos en soporte@elitelabs.es.`,
+    body: `Elite Tube LLC es la empresa responsable de Elite Labs, una plataforma de síntesis de voz con inteligencia artificial. Domicilio social: 4111 Hollow Trail Dr, Tampa, Florida 33624, Estados Unidos. Puede contactarnos en soporte@elitelabs.es.`,
   },
   {
     title: "2. Datos que recopilamos",

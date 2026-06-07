@@ -57,7 +57,7 @@ const SECTIONS = [
   },
   {
     title: "12. Legislación aplicable",
-    body: `Estos Términos se rigen por las leyes del Estado de Wyoming (EE. UU.), sin perjuicio de los derechos que la legislación imperativa del país de residencia del usuario pudiera reconocerle. Para cualquier disputa, las partes intentarán resolverla amistosamente antes de acudir a la vía judicial.`,
+    body: `Estos Términos se rigen por las leyes del Estado de New Mexico (EE. UU.), sin perjuicio de los derechos que la legislación imperativa del país de residencia del usuario pudiera reconocerle. Para cualquier disputa, las partes intentarán resolverla amistosamente antes de acudir a la vía judicial.`,
   },
   {
     title: "13. Contacto",
