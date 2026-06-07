@@ -5,6 +5,7 @@ import { dark } from "@clerk/themes";
 import { AffiliateRefTracker } from "@/components/AffiliateRefTracker";
 import { LanguageProvider } from "@/app/dashboard/LanguageContext";
 import "./globals.css";
+import CookieBanner from "@/components/CookieBanner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -124,6 +125,7 @@ export default function RootLayout({
         <body className={`${inter.className} antialiased`}>
           <LanguageProvider>
             <AffiliateRefTracker />
+            <CookieBanner />
             {children}
           </LanguageProvider>
         </body>
