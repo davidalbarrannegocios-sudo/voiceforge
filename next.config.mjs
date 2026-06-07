@@ -8,12 +8,6 @@ const nextConfig = {
         destination: "/dashboard/account",
         permanent: true,
       },
-      {
-        // Redirect /studio to Sanity's hosted studio
-        source: "/studio/:path*",
-        destination: "https://zrb45klt.sanity.studio/:path*",
-        permanent: false,
-      },
     ];
   },
   experimental: {
@@ -21,6 +15,14 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: "50mb",
     },
+  },
+  transpilePackages: ["sanity", "@sanity/ui", "@sanity/vision", "next-sanity"],
+  webpack(config) {
+    config.module.parser = {
+      "javascript/auto": { exportsPresence: "warn" },
+      "javascript/esm": { exportsPresence: "warn" },
+    }
+    return config
   },
   env: {
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_live_Y2xlcmsuZWxpdGVsYWJzLmVzJA",

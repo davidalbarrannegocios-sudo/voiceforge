@@ -25,6 +25,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/demo-voice",
   "/api/v1/(.*)",
   "/api/referral/check",
+  "/studio(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
