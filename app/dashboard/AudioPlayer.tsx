@@ -30,7 +30,7 @@ export function AudioPlayer({
       try {
         const res = await fetch(getProxiedUrl(src));
         if (cancelled) return;
-        const blob = await res.blob();
+        const blob = new Blob([await res.arrayBuffer()], { type: 'audio/mpeg' });
         if (cancelled) return;
         objectUrl = URL.createObjectURL(blob);
         setBlobSrc(objectUrl);

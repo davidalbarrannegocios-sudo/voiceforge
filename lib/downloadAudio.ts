@@ -16,7 +16,8 @@ export function getProxiedUrl(url: string): string {
 export async function getAudioBlobUrl(url: string): Promise<string> {
   const proxied = getProxiedUrl(url);
   const res = await fetch(proxied);
-  const blob = await res.blob();
+  const arrayBuffer = await res.arrayBuffer();
+  const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
   return URL.createObjectURL(blob);
 }
 
