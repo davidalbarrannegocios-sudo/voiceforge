@@ -24,7 +24,7 @@ import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 import { generateVoiceGradient } from "@/lib/voice-gradient";
 import { TaggedTextEditor, cleanPastedText } from "@/components/TaggedTextEditor";
 import { NoCreditsModal } from "@/components/NoCreditsModal";
-import { downloadAudio, getProxiedUrl, getAudioBlobUrl } from "@/lib/downloadAudio";
+import { downloadAudio, getProxiedUrl, getAudioBlobUrl, generateAudioFilename } from "@/lib/downloadAudio";
 import { SupportChat } from "@/components/SupportChat";
 
 /* ─── Types ──────────────────────────────────────────────── */
@@ -631,7 +631,7 @@ function HomeTab({
                   </p>
                   {gen.audioUrl && (
                     <button
-                       onClick={() => downloadAudio(gen.audioUrl!, `audio-${gen.id}.mp3`)}
+                       onClick={() => downloadAudio(gen.audioUrl!, generateAudioFilename(gen.text))}
                        className="text-xs transition-colors"
                        style={{ color: "#555555", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                        onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
@@ -2670,7 +2670,7 @@ function HistoryTab({ plan }: { plan: string }) {
 
                           {gen.audioUrl && (
                             <button
-                              onClick={() => downloadAudio(gen.audioUrl!, `audio-${gen.id}.mp3`)}
+                              onClick={() => downloadAudio(gen.audioUrl!, generateAudioFilename(gen.text))}
                               style={{
                                 display: "flex", alignItems: "center", justifyContent: "center",
                                 width: 26, height: 26, borderRadius: "50%",
