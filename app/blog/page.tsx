@@ -4,7 +4,7 @@ import { client } from '@/sanity/lib/client'
 import { postsQuery } from '@/sanity/lib/queries'
 import { urlFor } from '@/sanity/lib/image'
 
-export const revalidate = 3600
+export const dynamic = "force-dynamic"
 
 export const metadata = {
   title: 'Blog — Elite Labs',
