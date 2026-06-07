@@ -23,6 +23,7 @@ export function AudioPlayer({
   const [blobSrc, setBlobSrc] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!src) return;
     let objectUrl: string | null = null;
     let cancelled = false;
 
@@ -30,6 +31,11 @@ export function AudioPlayer({
       try {
         const res = await fetch(getProxiedUrl(src));
         console.log('[AudioPlayer] fetching:', getProxiedUrl(src), 'status:', res.status, 'ok:', res.ok)
+        if (!res.ok) {
+          console.error('[AudioPlayer] fetch failed:', res.status, res.statusText);
+          if (!cancelled) setBlobSrc(null);
+          return;
+        }
         if (cancelled) return;
         const blob = new Blob([await res.arrayBuffer()], { type: 'audio/mpeg' });
         if (cancelled) return;
@@ -49,6 +55,8 @@ export function AudioPlayer({
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [src]);
+
+  if (!src) return null;
 
   const progress = duration > 0 ? currentTime / duration : 0;
 
