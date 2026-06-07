@@ -18,6 +18,11 @@
 
 # production
 /build
+/dist
+
+# sanity studio build
+/.sanity
+sanity.cli.ts
 
 # misc
 .DS_Store
