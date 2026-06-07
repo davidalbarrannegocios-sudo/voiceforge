@@ -25,27 +25,54 @@ export default function CookieBanner() {
 
   return (
     <div style={{
-      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
-      background: '#111111', borderTop: '1px solid #222222',
-      padding: '16px 24px',
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      flexWrap: 'wrap', gap: '12px',
+      position: 'fixed',
+      bottom: '24px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 9999,
+      width: 'calc(100% - 48px)',
+      maxWidth: '900px',
+      background: 'rgba(255, 255, 255, 0.04)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      borderRadius: '16px',
+      padding: '16px 20px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      gap: '12px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
     }}>
-      <p style={{ color: '#aaaaaa', fontSize: '14px', margin: 0, maxWidth: '700px' }}>
+      <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', margin: 0, maxWidth: '620px', lineHeight: '1.5' }}>
         Usamos cookies esenciales para el funcionamiento del servicio y cookies analíticas para mejorar tu experiencia.
-        Consulta nuestra{' '}
-        <a href="/privacy" style={{ color: '#ffffff', textDecoration: 'underline' }}>política de privacidad</a>.
+        {' '}
+        <a href="/privacy" style={{ color: 'rgba(255,255,255,0.9)', textDecoration: 'underline' }}>Política de privacidad</a>.
       </p>
       <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
         <button onClick={() => saveConsent('necessary')} style={{
-          padding: '8px 16px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer',
-          background: 'transparent', border: '1px solid #333333', color: '#888888',
+          padding: '8px 16px',
+          borderRadius: '10px',
+          fontSize: '13px',
+          cursor: 'pointer',
+          background: 'rgba(255,255,255,0.06)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          color: 'rgba(255,255,255,0.6)',
+          backdropFilter: 'blur(10px)',
+          transition: 'all 0.2s',
         }}>
           Solo necesarias
         </button>
         <button onClick={() => saveConsent('all')} style={{
-          padding: '8px 16px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer',
-          background: '#ffffff', border: 'none', color: '#000000', fontWeight: 600,
+          padding: '8px 18px',
+          borderRadius: '10px',
+          fontSize: '13px',
+          cursor: 'pointer',
+          background: 'rgba(255,255,255,0.95)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          color: '#000000',
+          fontWeight: 600,
         }}>
           Aceptar todo
         </button>
