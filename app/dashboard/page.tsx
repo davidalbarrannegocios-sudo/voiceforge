@@ -2704,7 +2704,7 @@ function HistoryTab({ plan }: { plan: string }) {
                               title={t.history.download}
                             >
                               {downloadingId === gen.id
-                                ? <Loader size={11} className="animate-spin" />
+                                ? <Loader size={11} style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }} />
                                 : <Download size={11} />}
                             </button>
                           )}
