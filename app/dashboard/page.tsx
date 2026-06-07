@@ -1,7 +1,7 @@
 // v2
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
@@ -1642,54 +1642,113 @@ const CLONE_LANGUAGE_OPTIONS = CLONE_LANGUAGES.map((l) => ({
   icon: <span className={`fi fi-${l.fi}`} style={{ borderRadius: "2px", width: "20px", height: "15px", display: "inline-block" }} />,
 }));
 
+const DURATION_MARKERS = [
+  { seconds: 10,  label: "Min" },
+  { seconds: 30,  label: "Good" },
+  { seconds: 90,  label: "" },
+  { seconds: 210, label: "Best" },
+];
+const DURATION_MAX = 210;
+
+const VOICE_TAGS = ["Femenina","Masculina","Joven","Adulta","Mayor","Conversacional","Narración","Profesional","Educativo","Entretenimiento"];
+
+type CloneAudioFile = {
+  id: string;
+  file: File;
+  duration: number;
+  analyzed: boolean;
+  approved?: boolean;
+  detectedLang?: string;
+};
+
+function SpinnerIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  );
+}
+
 function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () => void }) {
-  const { t } = useLang();
-  const [file, setFile] = useState<File | null>(null);
-  const [fileDuration, setFileDuration] = useState<number | null>(null);
-  const [voiceName, setVoiceName] = useState("");
-  const [language, setLanguage] = useState("es");
-  const [gender, setGender] = useState<"masculine" | "feminine">("masculine");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState<1 | 2>(1);
+  const [audioFiles, setAudioFiles] = useState<CloneAudioFile[]>([]);
+  const [analyzing, setAnalyzing] = useState(false);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  async function handleFile(f: File) {
-    if (!f.name.toLowerCase().endsWith(".mp3") && f.type !== "audio/mpeg") {
-      setFile(null);
-      setFileDuration(null);
-      setError("Solo se admiten archivos MP3");
-      setTimeout(() => setError(null), 3000);
-      return;
-    }
-    const duration = await new Promise<number>((resolve) => {
-      const url = URL.createObjectURL(f);
+  /* step-2 fields */
+  const [voiceName, setVoiceName]         = useState("");
+  const [description, setDescription]     = useState("");
+  const [language, setLanguage]           = useState("es");
+  const [gender, setGender]               = useState<"masculine" | "feminine" | "neutral">("masculine");
+  const [age, setAge]                     = useState<"young" | "adult" | "senior">("adult");
+  const [selectedTags, setSelectedTags]   = useState<string[]>([]);
+  const [isPublic, setIsPublic]           = useState(false);
+  const [publicConfirmed, setPublicConfirmed] = useState(false);
+  const [loading, setLoading]             = useState(false);
+  const [error, setError]                 = useState<string | null>(null);
+
+  const totalDuration = audioFiles.reduce((sum, f) => sum + f.duration, 0);
+  const allAnalyzed   = audioFiles.length > 0 && audioFiles.every((f) => f.analyzed);
+  const canContinue   = allAnalyzed && totalDuration >= 10;
+  const fillPct       = Math.min(totalDuration, DURATION_MAX) / DURATION_MAX * 100;
+  const canCreate     = !!voiceName.trim() && audioFiles.length > 0 && (!isPublic || publicConfirmed);
+
+  async function getFileDuration(file: File): Promise<number> {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(file);
       const audio = new Audio(url);
       audio.addEventListener("loadedmetadata", () => { URL.revokeObjectURL(url); resolve(audio.duration); }, { once: true });
-      audio.addEventListener("error", () => { URL.revokeObjectURL(url); resolve(0); }, { once: true });
+      audio.addEventListener("error",          () => { URL.revokeObjectURL(url); resolve(0);             }, { once: true });
     });
-    if (duration < 10) {
-      setError("El audio debe tener al menos 10 segundos de duración.");
-      setFile(null);
-      setFileDuration(null);
-      return;
-    }
-    setFile(f);
-    setFileDuration(duration);
-    setError(null);
+  }
+
+  async function handleFiles(incoming: File[]) {
+    const valid = incoming.filter((f) => {
+      const n = f.name.toLowerCase();
+      return [".mp3",".wav",".m4a",".flac",".mp4",".mov",".webm"].some((ext) => n.endsWith(ext))
+        || f.type.startsWith("audio/") || f.type.startsWith("video/");
+    });
+    const processed = await Promise.all(
+      valid.map(async (f) => ({
+        id: Math.random().toString(36).slice(2),
+        file: f,
+        duration: await getFileDuration(f),
+        analyzed: false,
+      } as CloneAudioFile))
+    );
+    setAudioFiles((prev) => [...prev, ...processed]);
+  }
+
+  async function handleAnalyze() {
+    setAnalyzing(true);
+    await new Promise((r) => setTimeout(r, 1200));
+    setAudioFiles((prev) =>
+      prev.map((f) => ({ ...f, analyzed: true, approved: true, detectedLang: "es" }))
+    );
+    setAnalyzing(false);
+  }
+
+  function removeFile(id: string) {
+    setAudioFiles((prev) => prev.filter((f) => f.id !== id));
+  }
+
+  function toggleTag(tag: string) {
+    setSelectedTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]);
   }
 
   async function handleClone() {
-    if (!file || !voiceName.trim()) return;
+    if (!audioFiles.length || !voiceName.trim()) return;
     setError(null);
     setLoading(true);
     try {
       const fd = new FormData();
-      fd.append("audio", file);
+      fd.append("audio",      audioFiles[0].file);
       fd.append("voice_name", voiceName.trim());
-      fd.append("language", language);
-      fd.append("gender", gender);
-      const res = await fetch("/api/clone", { method: "POST", body: fd });
+      fd.append("language",   language);
+      fd.append("gender",     gender);
+      const res  = await fetch("/api/clone", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al clonar");
       onCloned();
@@ -1702,94 +1761,332 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
-      <div className="w-full max-w-md rounded-2xl p-6" style={{ background: "#111111", border: "1px solid #222222" }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)" }}>
+      <div className="w-full max-w-lg rounded-2xl p-6 overflow-y-auto" style={{ background: "#111111", border: "1px solid #222222", maxHeight: "90vh" }}>
+
+        {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-white">{t.voices.cloneNew}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">×</button>
+          <h2 className="text-lg font-bold text-white">Clone Voice</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1">
+            <X size={18} />
+          </button>
         </div>
 
-        <div
-          onClick={() => inputRef.current?.click()}
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
-          className="rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-all mb-4"
-          style={{ borderColor: dragging ? "#ffffff" : "#222222", background: dragging ? "rgba(255,255,255,0.03)" : "transparent" }}
-        >
-          <input ref={inputRef} type="file" className="hidden" accept=".mp3,audio/mpeg" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
-          {file ? (
-            <div>
-              <p className="text-green-400 font-medium mb-1">{file.name}</p>
-              <p className="text-xs text-gray-500">
-                {(file.size / 1024).toFixed(0)} KB
-                {fileDuration !== null && ` · ${Math.floor(fileDuration)}s`}
-              </p>
-            </div>
-          ) : (
-            <div>
-              <div className="flex justify-center mb-3">
-                <Mic size={32} style={{ color: "#888888" }} />
+        {/* Step indicator */}
+        <div className="flex items-center gap-3 mb-7">
+          {([1, 2] as const).map((n, i) => (
+            <React.Fragment key={n}>
+              {i > 0 && <div className="flex-1 h-px" style={{ background: step >= n ? "#444" : "#222" }} />}
+              <div className="flex items-center gap-2" style={{ opacity: step >= n ? 1 : 0.35 }}>
+                <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
+                  style={{ background: step >= n ? "#ffffff" : "rgba(255,255,255,0.08)", color: step >= n ? "#000" : "rgba(255,255,255,0.4)" }}>
+                  {n}
+                </span>
+                <span className="text-sm font-medium text-white whitespace-nowrap">
+                  {n === 1 ? "Audio Source" : "Voice Details"}
+                </span>
               </div>
-              <p className="text-sm text-gray-400 mb-1">{t.voices.dragAudio}</p>
-              <p className="text-xs text-gray-600">{t.voices.audioFormats}</p>
-            </div>
-          )}
+            </React.Fragment>
+          ))}
         </div>
 
-        {error && (
-          <p className="text-xs mb-3" style={{ color: "#f87171" }}>{error}</p>
+        {/* ── STEP 1 ── */}
+        {step === 1 && (
+          <>
+            {/* Drop zone */}
+            <div
+              onClick={() => inputRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => { e.preventDefault(); setDragging(false); const fs = Array.from(e.dataTransfer.files); if (fs.length) handleFiles(fs); }}
+              className="rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-all mb-4"
+              style={{ borderColor: dragging ? "#6366f1" : "#2a2a2a", background: dragging ? "rgba(99,102,241,0.04)" : "rgba(255,255,255,0.01)" }}
+            >
+              <input
+                ref={inputRef}
+                type="file"
+                className="hidden"
+                accept=".mp3,.wav,.m4a,.flac,.mp4,.mov,.webm,audio/*,video/*"
+                multiple
+                onChange={(e) => { const fs = Array.from(e.target.files || []); if (fs.length) handleFiles(fs); e.target.value = ""; }}
+              />
+              <div className="flex justify-center mb-3">
+                <Mic size={28} style={{ color: "#555" }} />
+              </div>
+              <p className="text-sm font-semibold text-white mb-1">Instant Voice Clone</p>
+              <p className="text-xs mb-4" style={{ color: "#666" }}>Only 10 seconds of audio needed!</p>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "#1a1a1a", border: "1px solid #333", color: "#aaa" }}>
+                <Upload size={12} /> Upload files
+              </span>
+              <p className="text-xs mt-3" style={{ color: "#3a3a3a" }}>MP3 · WAV · M4A · FLAC · MP4 · MOV · WEBM · Max 50MB</p>
+            </div>
+
+            {/* Duration bar */}
+            {audioFiles.length > 0 && (
+              <div className="mb-4 px-1">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs" style={{ color: "#666" }}>
+                    Total: <span className="text-white font-medium">{Math.floor(totalDuration)}s</span>
+                  </span>
+                  {totalDuration < 10 ? (
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(234,179,8,0.12)", color: "#eab308" }}>Aim for ~30s</span>
+                  ) : totalDuration < 30 ? (
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e" }}>Ready to analyze</span>
+                  ) : (
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e" }}>Good quality</span>
+                  )}
+                </div>
+                <div className="relative h-1.5 rounded-full overflow-hidden mb-3" style={{ background: "#1e1e1e" }}>
+                  <div
+                    className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
+                    style={{ width: `${fillPct}%`, background: "linear-gradient(90deg, #6366f1, #8b5cf6)" }}
+                  />
+                  {/* marker ticks */}
+                  {DURATION_MARKERS.map((m) => (
+                    <div
+                      key={m.seconds}
+                      className="absolute top-0 h-full w-px"
+                      style={{ left: `${(m.seconds / DURATION_MAX) * 100}%`, background: "rgba(255,255,255,0.15)" }}
+                    />
+                  ))}
+                </div>
+                <div className="relative h-4">
+                  {DURATION_MARKERS.filter((m) => m.label).map((m) => (
+                    <span
+                      key={m.seconds}
+                      className="absolute text-xs transform -translate-x-1/2"
+                      style={{ left: `${(m.seconds / DURATION_MAX) * 100}%`, color: totalDuration >= m.seconds ? "#8b5cf6" : "#333", fontSize: "10px" }}
+                    >
+                      {m.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* File list */}
+            {audioFiles.length > 0 && (
+              <div className="space-y-2 mb-4">
+                {audioFiles.map((af) => (
+                  <div key={af.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid #1e1e1e" }}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#1a1a1a" }}>
+                        <FileAudio size={14} style={{ color: "#666" }} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm text-white truncate">{af.file.name}</p>
+                        <p className="text-xs" style={{ color: "#555" }}>
+                          {(af.file.size / 1024).toFixed(0)} KB · {Math.floor(af.duration)}s
+                          {af.detectedLang && ` · ${af.detectedLang}`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                      {af.analyzed && af.approved && (
+                        <span className="hidden sm:flex items-center gap-1 text-xs" style={{ color: "#22c55e" }}>
+                          <Check size={11} /> Approved
+                        </span>
+                      )}
+                      <button onClick={() => removeFile(af.id)} className="p-1 rounded transition-colors hover:text-white" style={{ color: "#444" }}>
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex gap-3 mt-2">
+              <button onClick={onClose} className="px-4 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ background: "#1a1a1a", border: "1px solid #222", color: "#555" }}>
+                Cancel
+              </button>
+              {!allAnalyzed ? (
+                <button
+                  onClick={handleAnalyze}
+                  disabled={audioFiles.length === 0 || analyzing}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  style={{ background: "#1a1a1a", border: "1px solid #333", color: "#ccc" }}
+                >
+                  {analyzing ? <><SpinnerIcon className="animate-spin h-4 w-4" /> Analyzing…</> : "Analyze audio"}
+                </button>
+              ) : (
+                <button
+                  onClick={() => canContinue && setStep(2)}
+                  disabled={!canContinue}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: canContinue ? "#ffffff" : "#333", color: canContinue ? "#000" : "#666" }}
+                >
+                  Continue to details →
+                </button>
+              )}
+            </div>
+
+            {allAnalyzed && (
+              <button
+                onClick={() => setAudioFiles((prev) => prev.map((f) => ({ ...f, analyzed: false, approved: undefined, detectedLang: undefined })))}
+                className="w-full mt-2 py-1.5 text-xs text-center transition-colors hover:text-white/50"
+                style={{ color: "#333" }}
+              >
+                Re-analyze audio
+              </button>
+            )}
+          </>
         )}
 
-        <div className="mb-4">
-          <label className="text-sm font-medium text-gray-300 mb-2 block">{t.voices.voiceName}</label>
-          <input
-            type="text"
-            value={voiceName}
-            onChange={(e) => setVoiceName(e.target.value)}
-            placeholder={t.voices.voiceNamePlaceholder}
-            className="w-full rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-white/20"
-            style={{ background: "#000000", border: "1px solid #222222" }}
-          />
-        </div>
+        {/* ── STEP 2 ── */}
+        {step === 2 && (
+          <>
+            <button onClick={() => setStep(1)} className="flex items-center gap-1 text-xs mb-5 transition-colors hover:text-white/60" style={{ color: "#444" }}>
+              ← Back to audio
+            </button>
 
-        {/* Language + Gender row */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div>
-            <label className="text-sm font-medium text-gray-300 mb-2 block">{t.voices.language}</label>
-            <CustomSelect options={CLONE_LANGUAGE_OPTIONS} value={language} onChange={setLanguage} />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-300 mb-2 block">{t.voices.gender}</label>
-            <div style={{ position: "relative", display: "grid", gridTemplateColumns: "1fr 1fr", background: "#000000", border: "1px solid #222222", borderRadius: "8px", padding: "3px" }}>
-              <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#1a1a1a", borderRadius: "5px", pointerEvents: "none", transition: "transform 0.2s ease", transform: `translateX(${gender === "feminine" ? "100%" : "0%"})` }} />
-              <button type="button" onClick={() => setGender("masculine")} style={{ position: "relative", zIndex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 600, background: "transparent", border: "none", cursor: "pointer", color: gender === "masculine" ? "#e5e7eb" : "#444444", transition: "color 0.2s ease" }}>{t.voices.masculine}</button>
-              <button type="button" onClick={() => setGender("feminine")} style={{ position: "relative", zIndex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 600, background: "transparent", border: "none", cursor: "pointer", color: gender === "feminine" ? "#e5e7eb" : "#444444", transition: "color 0.2s ease" }}>{t.voices.feminine}</button>
+            {/* Name */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-300 mb-2 block">
+                Voice name <span style={{ color: "#f87171" }}>*</span>
+              </label>
+              <input
+                type="text"
+                value={voiceName}
+                onChange={(e) => setVoiceName(e.target.value)}
+                placeholder="e.g. My Voice"
+                className="w-full rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-white/10"
+                style={{ background: "#0a0a0a", border: "1px solid #222" }}
+              />
             </div>
-          </div>
-        </div>
 
-        <p className="text-xs text-gray-500 mb-4">{t.voices.cloneIsFree}</p>
+            {/* Description */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-300 mb-2 block">
+                Description <span className="text-white/25 font-normal text-xs">(optional)</span>
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe this voice…"
+                rows={2}
+                className="w-full rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-white/10 resize-none"
+                style={{ background: "#0a0a0a", border: "1px solid #222" }}
+              />
+            </div>
 
-        <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors" style={{ background: "#1a1a1a", border: "1px solid #222222" }}>
-            {t.voices.cancel}
-          </button>
-          <button
-            onClick={handleClone}
-            disabled={!file || !voiceName.trim() || loading}
-            className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            style={{ background: "#ffffff" }}
-          >
-            {loading && (
-              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            )}
-            {loading ? t.voices.cloning : t.voices.cloneNew}
-          </button>
-        </div>
+            {/* Tags */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-300 mb-2 block">
+                Tags <span className="text-white/25 font-normal text-xs">(optional)</span>
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {VOICE_TAGS.map((tag) => {
+                  const active = selectedTags.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      className="px-2.5 py-1 rounded-full text-xs font-medium transition-all"
+                      style={{
+                        background: active ? "rgba(139,92,246,0.18)" : "#1a1a1a",
+                        border: `1px solid ${active ? "#8b5cf6" : "#2a2a2a"}`,
+                        color: active ? "#c4b5fd" : "#555",
+                      }}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Gender + Age */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">Gender</label>
+                <div className="grid grid-cols-3 gap-1 p-1 rounded-xl" style={{ background: "#0a0a0a", border: "1px solid #1e1e1e" }}>
+                  {(["masculine","feminine","neutral"] as const).map((g) => (
+                    <button key={g} type="button" onClick={() => setGender(g)}
+                      className="py-1.5 rounded-lg text-xs font-medium transition-all"
+                      style={{ background: gender === g ? "#1e1e1e" : "transparent", color: gender === g ? "#e5e7eb" : "#444", border: gender === g ? "1px solid #333" : "1px solid transparent" }}
+                    >
+                      {g === "masculine" ? "Male" : g === "feminine" ? "Female" : "Neutral"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">Age</label>
+                <div className="grid grid-cols-3 gap-1 p-1 rounded-xl" style={{ background: "#0a0a0a", border: "1px solid #1e1e1e" }}>
+                  {(["young","adult","senior"] as const).map((a) => (
+                    <button key={a} type="button" onClick={() => setAge(a)}
+                      className="py-1.5 rounded-lg text-xs font-medium transition-all"
+                      style={{ background: age === a ? "#1e1e1e" : "transparent", color: age === a ? "#e5e7eb" : "#444", border: age === a ? "1px solid #333" : "1px solid transparent" }}
+                    >
+                      {a === "young" ? "Young" : a === "adult" ? "Adult" : "Senior"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Language */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-300 mb-2 block">Language</label>
+              <CustomSelect options={CLONE_LANGUAGE_OPTIONS} value={language} onChange={setLanguage} />
+            </div>
+
+            {/* Visibility */}
+            <div className="mb-5 p-4 rounded-xl" style={{ background: "#0a0a0a", border: "1px solid #1e1e1e" }}>
+              <label className="text-sm font-medium text-gray-300 mb-3 block">Visibility</label>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <button type="button" onClick={() => { setIsPublic(false); setPublicConfirmed(false); }}
+                  className="py-2 rounded-xl text-xs font-medium transition-all"
+                  style={{ background: !isPublic ? "#1e1e1e" : "transparent", border: `1px solid ${!isPublic ? "#444" : "#222"}`, color: !isPublic ? "#e5e7eb" : "#444" }}
+                >
+                  🔒 Private
+                </button>
+                <button type="button" onClick={() => setIsPublic(true)}
+                  className="py-2 rounded-xl text-xs font-medium transition-all"
+                  style={{ background: isPublic ? "rgba(139,92,246,0.12)" : "transparent", border: `1px solid ${isPublic ? "#8b5cf6" : "#222"}`, color: isPublic ? "#c4b5fd" : "#444" }}
+                >
+                  🌐 Public
+                </button>
+              </div>
+              {isPublic && (
+                <div className="space-y-2.5">
+                  <p className="text-xs" style={{ color: "#777" }}>Esta voz será visible en la página de voces públicas</p>
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={publicConfirmed}
+                      onChange={(e) => setPublicConfirmed(e.target.checked)}
+                      className="mt-0.5 rounded accent-violet-500"
+                    />
+                    <span className="text-xs leading-relaxed" style={{ color: "#666" }}>
+                      Confirmo que tengo derechos sobre esta grabación y acepto que sea usada públicamente
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {error && <p className="text-xs mb-3" style={{ color: "#f87171" }}>{error}</p>}
+
+            <div className="flex gap-3">
+              <button onClick={() => setStep(1)} className="px-4 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ background: "#1a1a1a", border: "1px solid #222", color: "#555" }}>
+                ←
+              </button>
+              <button
+                onClick={handleClone}
+                disabled={!canCreate || loading}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                style={{ background: canCreate && !loading ? "#ffffff" : "#1e1e1e", color: canCreate && !loading ? "#000" : "#444" }}
+              >
+                {loading && <SpinnerIcon className="animate-spin h-4 w-4" />}
+                {loading ? "Creating voice…" : "Create voice"}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
