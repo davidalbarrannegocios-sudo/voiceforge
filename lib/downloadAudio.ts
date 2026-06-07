@@ -13,6 +13,13 @@ export function getProxiedUrl(url: string): string {
     : url;
 }
 
+export async function getAudioBlobUrl(url: string): Promise<string> {
+  const proxied = getProxiedUrl(url);
+  const res = await fetch(proxied);
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
 export async function downloadAudio(url: string, filename: string) {
   try {
     const fetchUrl = needsProxy(url)

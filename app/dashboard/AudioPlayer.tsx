@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { downloadAudio, getProxiedUrl } from "@/lib/downloadAudio";
 
 function fmt(seconds: number) {
@@ -20,6 +20,33 @@ export function AudioPlayer({
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [blobSrc, setBlobSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    let objectUrl: string | null = null;
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const res = await fetch(getProxiedUrl(src));
+        if (cancelled) return;
+        const blob = await res.blob();
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        setBlobSrc(objectUrl);
+      } catch {
+        if (!cancelled) setBlobSrc(getProxiedUrl(src));
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+      setBlobSrc(null);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [src]);
 
   const progress = duration > 0 ? currentTime / duration : 0;
 
@@ -44,7 +71,7 @@ export function AudioPlayer({
       {/* Hidden audio element */}
       <audio
         ref={audioRef}
-        src={getProxiedUrl(src)}
+        src={blobSrc ?? undefined}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => { setPlaying(false); setCurrentTime(0); }}
@@ -57,8 +84,9 @@ export function AudioPlayer({
         {/* Play / Pause */}
         <button
           onClick={togglePlay}
+          disabled={!blobSrc}
           className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95"
-          style={{ background: "#ffffff", boxShadow: "0 0 12px rgba(255,255,255,0.15)" }}
+          style={{ background: "#ffffff", boxShadow: "0 0 12px rgba(255,255,255,0.15)", opacity: blobSrc ? 1 : 0.5 }}
           aria-label={playing ? "Pausar" : "Reproducir"}
         >
           {playing ? (

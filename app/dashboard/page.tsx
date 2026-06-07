@@ -24,7 +24,7 @@ import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 import { generateVoiceGradient } from "@/lib/voice-gradient";
 import { TaggedTextEditor, cleanPastedText } from "@/components/TaggedTextEditor";
 import { NoCreditsModal } from "@/components/NoCreditsModal";
-import { downloadAudio, getProxiedUrl } from "@/lib/downloadAudio";
+import { downloadAudio, getProxiedUrl, getAudioBlobUrl } from "@/lib/downloadAudio";
 import { SupportChat } from "@/components/SupportChat";
 
 /* ─── Types ──────────────────────────────────────────────── */
@@ -2316,10 +2316,11 @@ function VoicesTab({
       const res = await fetch(`/api/voices/${voice.id}/preview`, { method: "POST" });
       if (!res.ok) throw new Error("Error");
       const { url } = await res.json() as { url: string };
-      const audio = new Audio(getProxiedUrl(url));
+      const blobUrl = await getAudioBlobUrl(url);
+      const audio = new Audio(blobUrl);
       previewAudiosRef.current[voice.id] = audio;
-      audio.onended = () => setPreviewState((s) => ({ ...s, [voice.id]: "idle" }));
-      audio.onerror = () => setPreviewState((s) => ({ ...s, [voice.id]: "idle" }));
+      audio.onended = () => { setPreviewState((s) => ({ ...s, [voice.id]: "idle" })); URL.revokeObjectURL(blobUrl); };
+      audio.onerror = () => { setPreviewState((s) => ({ ...s, [voice.id]: "idle" })); URL.revokeObjectURL(blobUrl); };
       await audio.play();
       setPreviewState((s) => ({ ...s, [voice.id]: "playing" }));
     } catch {
@@ -2488,7 +2489,7 @@ function HistoryTab({ plan }: { plan: string }) {
     return `${m}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
   }
 
-  function togglePlay(gen: HistoryGen) {
+  async function togglePlay(gen: HistoryGen) {
     if (!gen.audioUrl) return;
     if (playingId === gen.id) {
       audioRef.current?.pause();
@@ -2498,12 +2499,13 @@ function HistoryTab({ plan }: { plan: string }) {
     }
     audioRef.current?.pause();
     setPlayTime({ current: 0, duration: 0 });
-    const audio = new Audio(getProxiedUrl(gen.audioUrl));
+    const blobUrl = await getAudioBlobUrl(gen.audioUrl);
+    const audio = new Audio(blobUrl);
     audioRef.current = audio;
     audio.onloadedmetadata = () => setPlayTime((p) => ({ ...p, duration: audio.duration || 0 }));
     audio.ontimeupdate = () => setPlayTime((p) => ({ ...p, current: audio.currentTime }));
-    audio.onended = () => { setPlayingId(null); setPlayTime({ current: 0, duration: 0 }); };
-    audio.onerror = () => { setPlayingId(null); setPlayTime({ current: 0, duration: 0 }); };
+    audio.onended = () => { setPlayingId(null); setPlayTime({ current: 0, duration: 0 }); URL.revokeObjectURL(blobUrl); };
+    audio.onerror = () => { setPlayingId(null); setPlayTime({ current: 0, duration: 0 }); URL.revokeObjectURL(blobUrl); };
     audio.play();
     setPlayingId(gen.id);
   }
