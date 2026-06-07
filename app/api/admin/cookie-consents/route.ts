@@ -9,5 +9,13 @@ export async function GET() {
     orderBy: { createdAt: 'desc' },
     take: 500,
   })
-  return NextResponse.json(consents)
+
+  const clerkIds = [...new Set(consents.map(c => c.userId).filter(Boolean))] as string[]
+  const users = clerkIds.length
+    ? await prisma.user.findMany({ where: { clerkId: { in: clerkIds } }, select: { clerkId: true, email: true } })
+    : []
+  const emailByClerkId = Object.fromEntries(users.map(u => [u.clerkId, u.email]))
+
+  const result = consents.map(c => ({ ...c, email: c.userId ? (emailByClerkId[c.userId] ?? null) : null }))
+  return NextResponse.json(result)
 }

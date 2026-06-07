@@ -1608,7 +1608,7 @@ function LogsSection() {
 
 /* ─── Section: Cookies ────────────────────────────────────── */
 function CookiesSection() {
-  const [consents, setConsents] = useState<{id:string;userId:string|null;ip:string|null;consent:string;createdAt:string}[]>([])
+  const [consents, setConsents] = useState<{id:string;userId:string|null;ip:string|null;email:string|null;consent:string;createdAt:string}[]>([])
   const [loading, setLoading] = useState(true)
   useEffect(() => {
     fetch('/api/admin/cookie-consents').then(r=>r.json()).then(d=>{setConsents(d);setLoading(false)})
@@ -1621,7 +1621,7 @@ function CookiesSection() {
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:'13px'}}>
             <thead>
               <tr style={{borderBottom:'1px solid rgba(255,255,255,0.08)'}}>
-                {['IP','Usuario','Consentimiento','Fecha'].map(h=>(
+                {['IP','Usuario','Email','Consentimiento','Fecha'].map(h=>(
                   <th key={h} style={{padding:'12px 16px',textAlign:'left',color:'#888',fontWeight:600}}>{h}</th>
                 ))}
               </tr>
@@ -1631,6 +1631,7 @@ function CookiesSection() {
                 <tr key={c.id} style={{borderBottom:'1px solid rgba(255,255,255,0.05)'}}>
                   <td style={{padding:'10px 16px',color:'#ccc'}}>{c.ip||'—'}</td>
                   <td style={{padding:'10px 16px',color:'#ccc'}}>{c.userId||'Anónimo'}</td>
+                  <td style={{padding:'10px 16px',color:'#ccc'}}>{c.email||'—'}</td>
                   <td style={{padding:'10px 16px'}}>
                     <span style={{padding:'2px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:700,
                       background:c.consent==='all'?'rgba(34,197,94,0.1)':'rgba(251,191,36,0.1)',
