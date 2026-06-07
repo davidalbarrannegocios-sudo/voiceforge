@@ -3,6 +3,11 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Precios — Planes de Text-to-Speech con IA',
   description: 'Planes desde 7$/mes. Genera voces realistas con IA en español. Free, Starter, Pro, Elite y Enterprise. Sin compromiso, cancela cuando quieras.',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
   alternates: {
     canonical: 'https://www.elitelabs.es/pricing',
     languages: {

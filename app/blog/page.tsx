@@ -1,7 +1,24 @@
 import Link from "next/link";
 import Image from "next/image";
 
-export const metadata = { title: "Blog — Elite Labs" };
+export const metadata = {
+  title: 'Blog — Elite Labs',
+  description: 'Artículos sobre síntesis de voz con IA, clonación de voz, text-to-speech en español y las últimas novedades de Elite Labs.',
+  alternates: {
+    canonical: 'https://www.elitelabs.es/blog',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
+  openGraph: {
+    title: 'Blog — Elite Labs',
+    description: 'Artículos sobre síntesis de voz con IA, clonación de voz y text-to-speech en español.',
+    url: 'https://www.elitelabs.es/blog',
+    locale: 'es_ES',
+  },
+};
 
 export default function BlogPage() {
   return (
