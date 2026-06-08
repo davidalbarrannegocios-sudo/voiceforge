@@ -1729,7 +1729,7 @@ const CLONE_LANGUAGE_OPTIONS = CLONE_LANGUAGES.map((l) => ({
 const DURATION_MARKERS = [
   { seconds: 10,  label: "Min" },
   { seconds: 30,  label: "Good" },
-  { seconds: 90,  label: "" },
+  { seconds: 90,  label: "Max" },
   { seconds: 210, label: "Best" },
 ];
 const DURATION_MAX = 210;
@@ -1775,7 +1775,15 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
 
   const totalDuration = audioFiles.reduce((sum, f) => sum + f.duration, 0);
   const allAnalyzed   = audioFiles.length > 0 && audioFiles.every((f) => f.analyzed);
-  const canContinue   = allAnalyzed && totalDuration >= 10;
+  const durationValid = totalDuration >= 10 && totalDuration <= 90;
+  const durationError = audioFiles.length > 0
+    ? totalDuration < 10
+      ? "El audio debe tener al menos 10 segundos de duración."
+      : totalDuration > 90
+        ? "El audio debe tener entre 10 y 90 segundos de duración."
+        : null
+    : null;
+  const canContinue   = allAnalyzed && durationValid;
   const fillPct       = Math.min(totalDuration, DURATION_MAX) / DURATION_MAX * 100;
   const canCreate     = !!voiceName.trim() && audioFiles.length > 0 && (!isPublic || publicConfirmed);
 
@@ -1910,7 +1918,9 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
                     Total: <span className="text-white font-medium">{Math.floor(totalDuration)}s</span>
                   </span>
                   {totalDuration < 10 ? (
-                    <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(234,179,8,0.12)", color: "#eab308" }}>Aim for ~30s</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(239,68,68,0.12)", color: "#ef4444" }}>Mínimo 10s</span>
+                  ) : totalDuration > 90 ? (
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(239,68,68,0.12)", color: "#ef4444" }}>Máximo 90s</span>
                   ) : totalDuration < 30 ? (
                     <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e" }}>Ready to analyze</span>
                   ) : (
@@ -1920,7 +1930,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
                 <div className="relative h-1.5 rounded-full overflow-hidden mb-3" style={{ background: "#1e1e1e" }}>
                   <div
                     className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
-                    style={{ width: `${fillPct}%`, background: "linear-gradient(90deg, #6366f1, #8b5cf6)" }}
+                    style={{ width: `${fillPct}%`, background: durationValid ? "linear-gradient(90deg, #22c55e, #16a34a)" : "linear-gradient(90deg, #ef4444, #dc2626)" }}
                   />
                   {/* marker ticks */}
                   {DURATION_MARKERS.map((m) => (
@@ -1942,6 +1952,14 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
                     </span>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Duration error */}
+            {durationError && (
+              <div className="mb-4 px-3 py-2.5 rounded-xl flex items-center gap-2" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                <span style={{ color: "#ef4444", flexShrink: 0, fontSize: "14px" }}>⚠</span>
+                <p className="text-xs font-medium" style={{ color: "#f87171" }}>{durationError}</p>
               </div>
             )}
 
