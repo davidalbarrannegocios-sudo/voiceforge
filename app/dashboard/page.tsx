@@ -5908,6 +5908,18 @@ export default function DashboardPage() {
       .catch(() => {});
   }, [fetchCredits, fetchVoices, fetchMemberInfo]);
 
+  // Link anonymous cookie consent to authenticated user
+  useEffect(() => {
+    if (!user?.id) return;
+    const consentId = localStorage.getItem('cookie_consent_id');
+    if (!consentId) return;
+    fetch('/api/cookie-consent/link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ consentId }),
+    }).catch(() => {});
+  }, [user?.id]);
+
   // Restore selected voice from localStorage once userId is available
   useEffect(() => {
     if (!user?.id) return;

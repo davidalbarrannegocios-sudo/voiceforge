@@ -376,6 +376,7 @@ model CookieConsent {
   userId    String?
   ip        String?
   consent   String
+  consentId String?  // UUID anónimo del navegador
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

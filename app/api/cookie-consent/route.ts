@@ -4,12 +4,12 @@ import { auth } from '@clerk/nextjs/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const { consent } = await req.json()
+    const { consent, consentId } = await req.json()
     const { userId } = await auth()
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || null
 
     await prisma.cookieConsent.create({
-      data: { userId, ip, consent }
+      data: { userId, ip, consent, consentId: consentId ?? null }
     })
 
     return NextResponse.json({ ok: true })

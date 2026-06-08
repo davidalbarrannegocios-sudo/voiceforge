@@ -9,14 +9,24 @@ export default function CookieBanner() {
     if (!consent) setVisible(true)
   }, [])
 
+  const getOrCreateConsentId = () => {
+    let id = localStorage.getItem('cookie_consent_id')
+    if (!id) {
+      id = crypto.randomUUID()
+      localStorage.setItem('cookie_consent_id', id)
+    }
+    return id
+  }
+
   const saveConsent = async (type: string) => {
+    const consentId = getOrCreateConsentId()
     localStorage.setItem('cookie_consent_v2', type)
     setVisible(false)
     try {
       await fetch('/api/cookie-consent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ consent: type }),
+        body: JSON.stringify({ consent: type, consentId }),
       })
     } catch {}
   }
