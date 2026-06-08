@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
 import { Resend } from "resend";
+import { Prisma } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -16,16 +17,28 @@ export async function POST(
     const { ticketId } = await params;
     const { reply, close } = await req.json() as { reply?: string; close?: boolean };
 
+    // Obtener ticket actual para leer messages existentes
+    const current = await prisma.supportTicket.findUnique({ where: { id: ticketId } });
+    if (!current) return NextResponse.json({ error: "Ticket no encontrado" }, { status: 404 });
+
+    const existing: Prisma.JsonArray = Array.isArray(current.messages) ? current.messages as Prisma.JsonArray : [];
+
+    const newMessage: Prisma.JsonObject | null = reply?.trim() ? {
+      role: "admin",
+      content: reply.trim(),
+      createdAt: new Date().toISOString(),
+    } : null;
+
     const ticket = await prisma.supportTicket.update({
       where: { id: ticketId },
       data: {
         ...(reply !== undefined && { adminReply: reply.trim() }),
+        ...(newMessage && { messages: [...existing, newMessage] }),
         ...(close === true && { status: "closed" }),
       },
       include: { user: { select: { email: true } } },
     });
 
-    // Send email notification when a reply is provided
     if (reply?.trim() && process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY);
       const typeLabel: Record<string, string> = {
@@ -39,22 +52,17 @@ export async function POST(
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#000000;padding:40px 20px">
     <tr><td align="center">
       <table width="100%" style="max-width:560px;background:#111111;border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden">
-        <!-- Header -->
         <tr>
           <td style="padding:32px 32px 24px;border-bottom:1px solid rgba(255,255,255,0.06)">
             <table cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="font-size:18px;font-weight:800;color:#ffffff;letter-spacing:-0.3px">Elite Labs</td>
-              </tr>
+              <tr><td style="font-size:18px;font-weight:800;color:#ffffff;letter-spacing:-0.3px">Elite Labs</td></tr>
             </table>
           </td>
         </tr>
-        <!-- Body -->
         <tr>
           <td style="padding:32px">
             <p style="margin:0 0 8px;font-size:20px;font-weight:700;color:#ffffff;line-height:1.3">Hemos respondido a tu solicitud de soporte</p>
             <p style="margin:0 0 24px;font-size:14px;color:#666666">Categoría: ${typeLabel[ticket.type] ?? ticket.type}</p>
-            <!-- Reply box -->
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:28px">
               <tr>
                 <td style="padding:20px 22px">
@@ -63,17 +71,15 @@ export async function POST(
                 </td>
               </tr>
             </table>
-            <!-- CTA -->
             <table cellpadding="0" cellspacing="0">
               <tr>
                 <td style="background:#ffffff;border-radius:10px">
-                  <a href="https://www.elitelabs.es/dashboard/support" style="display:inline-block;padding:12px 24px;font-size:13px;font-weight:700;color:#000000;text-decoration:none">Ver mi ticket →</a>
+                  <a href="https://www.elitelabs.es/dashboard/support/${ticketId}" style="display:inline-block;padding:12px 24px;font-size:13px;font-weight:700;color:#000000;text-decoration:none">Ver mi ticket →</a>
                 </td>
               </tr>
             </table>
           </td>
         </tr>
-        <!-- Footer -->
         <tr>
           <td style="padding:20px 32px;border-top:1px solid rgba(255,255,255,0.06)">
             <p style="margin:0;font-size:12px;color:#444444">Elite Labs · <a href="https://www.elitelabs.es" style="color:#555555;text-decoration:none">elitelabs.es</a></p>
