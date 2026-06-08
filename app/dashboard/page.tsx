@@ -6018,6 +6018,7 @@ export default function DashboardPage() {
                 >
                   <Languages size={16} />
                 </button>
+                {/* Elite Text button — hidden temporarily
                 <button
                   onClick={() => setEliteTextOpen(prev => !prev)}
                   title="Elite Text — Generación de guiones"
@@ -6026,6 +6027,7 @@ export default function DashboardPage() {
                   <FileText size={14} />
                   <span className="hidden sm:inline">Text</span>
                 </button>
+                */}
                 <button
                   onClick={() => setChatOpen(prev => !prev)}
                   title="Ask AI"
