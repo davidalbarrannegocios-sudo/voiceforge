@@ -58,6 +58,7 @@ model User {
   apiUsageLogs         ApiUsageLog[]
   apiWallet            ApiWallet?
   sharedImages         SharedImage[]
+  eliteTextPlan        EliteTextPlan?
 }
 
 model Job {
@@ -377,4 +378,19 @@ model CookieConsent {
   consent   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model EliteTextPlan {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  plan                 String
+  tokensTotal          Int
+  tokensUsed           Int       @default(0)
+  stripeSubscriptionId String?   @unique
+  stripePriceId        String?
+  status               String    @default("active")
+  renewsAt             DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
