@@ -25,6 +25,8 @@ const isPublicRoute = createRouteMatcher([
   "/api/demo-voice",
   "/api/v1/(.*)",
   "/api/referral/check",
+  "/api/cookie-consent",
+  "/api/cookie-consent/link",
   "/studio(.*)",
 ]);
 
