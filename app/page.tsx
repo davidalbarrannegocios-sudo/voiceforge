@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import { UserMenu } from "@/components/UserMenu";
 import { LanguageSelector } from "@/components/LanguageSelector";
-import { ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check, Lock } from "lucide-react";
 import { AudioPlayer } from "./dashboard/AudioPlayer";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 import { useLang } from "@/app/dashboard/LanguageContext";
@@ -244,7 +244,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "#000000", color: "white" }}>
+    <div className="min-h-screen overflow-x-hidden" style={{ background: "#000000", color: "white" }}>
 
       {/* ── Nav ────────────────────────────────────────────────── */}
       <header
@@ -483,13 +483,13 @@ export default function LandingPage() {
       <main>
 
         {/* ── Hero ───────────────────────────────────────────────── */}
-        <section className="pt-20 md:pt-32 pb-20 px-4">
+        <section className="pt-20 md:pt-32 pb-20">
 
           {/* Heading */}
           <div className="max-w-5xl mx-auto px-4 mb-10">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 md:gap-10">
               {/* Left: title */}
-              <h1 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight tracking-tight">
                 {[t.landing.word1, t.landing.word2, t.landing.word3].map((word, i) => (
                   <span
                     key={i}
@@ -513,7 +513,7 @@ export default function LandingPage() {
               </h1>
 
               {/* Right: subtitle */}
-              <p className="hidden md:block text-base leading-relaxed flex-shrink-0 max-w-xs pb-0.5" style={{ color: "#6b7280" }}>
+              <p className="text-sm md:text-base leading-relaxed md:flex-shrink-0 md:max-w-xs md:pb-0.5" style={{ color: "#6b7280" }}>
                 {t.landing.subheadline}
               </p>
             </div>
@@ -563,11 +563,12 @@ export default function LandingPage() {
                       <button
                         key={key}
                         onClick={() => setDemoTab(key)}
+                        className="px-2 sm:px-5 text-[11px] sm:text-[13px]"
                         style={{
                           position: "relative",
                           zIndex: 1,
-                          padding: "7px 20px",
-                          fontSize: "13px",
+                          paddingTop: "7px",
+                          paddingBottom: "7px",
                           fontWeight: active ? 600 : 500,
                           color: active ? "#111827" : "rgba(255,255,255,0.4)",
                           borderRadius: "100px",
@@ -603,10 +604,11 @@ export default function LandingPage() {
                         width: "48px", height: "48px", borderRadius: "50%",
                         background: "rgba(255,255,255,0.06)",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: "22px", marginBottom: "16px",
+                        marginBottom: "16px",
+                        color: "rgba(255,255,255,0.5)",
                       }}
                     >
-                      🔒
+                      <Lock size={22} />
                     </div>
                     <p style={{ color: "#e5e7eb", fontSize: "15px", fontWeight: 600, marginBottom: "6px" }}>
                       {t.hero.exclusiveTitle}
@@ -627,7 +629,7 @@ export default function LandingPage() {
 
                   {/* Left: voice list */}
                   <div
-                    className="flex-shrink-0 flex flex-col w-full md:w-[280px] border-b md:border-b-0 md:border-r"
+                    className="flex-shrink-0 flex flex-col w-full md:w-[280px] border-b md:border-b-0 md:border-r max-h-44 md:max-h-none"
                     style={{ background: "#111111", borderColor: "#1a1a1a" }}
                   >
                     <div className="flex-1 overflow-y-auto" style={{ padding: "8px" }}>
@@ -766,7 +768,7 @@ export default function LandingPage() {
         </section>
 
         {/* ── Use Cases ──────────────────────────────────────────── */}
-        <section className="py-20 px-4">
+        <section className="py-20">
           <div className="max-w-5xl mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold mb-3">{t.features.title}</h2>
@@ -809,7 +811,7 @@ export default function LandingPage() {
         </section>
 
         {/* ── Features ───────────────────────────────────────────── */}
-        <section className="py-20 px-4">
+        <section className="py-20">
           <div className="max-w-5xl mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
 
@@ -954,7 +956,7 @@ export default function LandingPage() {
         </section>
 
         {/* ── Stats ──────────────────────────────────────────────── */}
-        <section className="py-24 px-4 relative overflow-hidden">
+        <section className="py-24 relative overflow-hidden">
           <div
             className="absolute inset-0 flex items-center justify-center pointer-events-none"
             aria-hidden
@@ -983,7 +985,7 @@ export default function LandingPage() {
               ))}
             </div>
 
-            <h2 className="text-6xl md:text-8xl font-bold mb-4">
+            <h2 className="text-5xl sm:text-6xl md:text-8xl font-bold mb-4">
               2.000.000<span style={{ color: "#aaaaaa" }}>+</span>
             </h2>
             <p className="text-2xl font-semibold text-gray-200 mb-4">{t.stats.voices}</p>
@@ -994,7 +996,7 @@ export default function LandingPage() {
         </section>
 
         {/* ── FAQ ────────────────────────────────────────────────── */}
-        <section className="py-20 px-4">
+        <section className="py-20">
           <div className="max-w-5xl mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-12">{t.faq.title}</h2>
             <div className="space-y-3">
@@ -1013,10 +1015,10 @@ export default function LandingPage() {
         </section>
 
         {/* ── CTA ────────────────────────────────────────────────── */}
-        <section className="py-20 px-4">
+        <section className="py-20">
           <div className="max-w-5xl mx-auto px-4">
             <div
-              className="rounded-2xl p-12 border relative overflow-hidden text-center"
+              className="rounded-2xl p-6 sm:p-12 border relative overflow-hidden text-center"
               style={{
                 background: "linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.04))",
                 borderColor: "rgba(255,255,255,0.12)",

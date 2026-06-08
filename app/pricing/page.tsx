@@ -269,11 +269,11 @@ function PricingContent() {
         </div>
       </header>
 
-      <main style={{ maxWidth: "1400px", margin: "0 auto", padding: "56px 24px 80px" }}>
+      <main style={{ maxWidth: "1400px", margin: "0 auto", padding: "56px 16px 80px" }}>
 
         {/* Hero */}
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
-          <h1 style={{ fontSize: "40px", fontWeight: 800, color: "#fff", marginBottom: "10px", lineHeight: 1.1 }}>
+          <h1 style={{ fontSize: "clamp(26px, 6vw, 40px)", fontWeight: 800, color: "#fff", marginBottom: "10px", lineHeight: 1.1 }}>
             {t.pricing.title}
           </h1>
           <p style={{ fontSize: "15px", color: "#555555" }}>
@@ -308,7 +308,7 @@ function PricingContent() {
         </div>
 
         {/* Plans — 5 col grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px", marginBottom: "60px", alignItems: "start" }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5" style={{ gap: "8px", marginBottom: "60px", alignItems: "start" }}>
           {PLANS.map((plan) => (
             <div
               key={plan.key}
@@ -442,20 +442,17 @@ function PricingContent() {
 
         {/* Lifetime plan banner — only shown when user has lifetime */}
         {currentPlan === "lifetime" && (
-          <div style={{
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between" style={{
             marginBottom: "40px",
             borderRadius: "16px",
             border: "1px solid rgba(245,158,11,0.35)",
             background: "linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(245,158,11,0.04) 100%)",
             padding: "28px 32px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
             gap: "24px",
           }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
-                <span style={{ fontSize: "20px" }}>♾</span>
+                <span style={{ fontSize: "20px", fontWeight: 900 }}>∞</span>
                 <span style={{ fontSize: "17px", fontWeight: 800, color: "#f59e0b" }}>{t.pricing.lifetimeName}</span>
                 <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", border: "1px solid rgba(245,158,11,0.45)", color: "#f59e0b", background: "rgba(245,158,11,0.1)" }}>
                   {t.pricing.currentPlan}
@@ -493,7 +490,8 @@ function PricingContent() {
           <p style={{ fontSize: "13px", color: "#444444", textAlign: "center", marginBottom: "20px" }}>
             {t.pricing.comparisonSubtitle}
           </p>
-          <div style={{ borderRadius: "12px", border: "1px solid rgba(255,255,255,0.10)", overflow: "hidden" }}>
+          <div style={{ overflowX: "auto" }}>
+          <div style={{ borderRadius: "12px", border: "1px solid rgba(255,255,255,0.10)", overflow: "hidden", minWidth: "540px" }}>
             <table style={{ width: "100%", fontSize: "13px", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#111111" }}>
@@ -534,6 +532,7 @@ function PricingContent() {
                 </tr>
               </tbody>
             </table>
+          </div>
           </div>
           <p style={{ marginTop: "12px", textAlign: "center", fontSize: "13px" }}>
             <span style={{ color: "#ffffff", fontWeight: 600 }}>{t.pricing.upTo8x}</span>
