@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare, Loader } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare, Loader, FileText } from "lucide-react";
 import { DialogueEditor } from "@/components/DialogueEditor";
 import { ImageVideoEditor, type ImageHistoryItem } from "@/components/ImageVideoEditor";
 import { Image as ImageIcon } from "lucide-react";
@@ -26,6 +26,7 @@ import { TaggedTextEditor, cleanPastedText } from "@/components/TaggedTextEditor
 import { NoCreditsModal } from "@/components/NoCreditsModal";
 import { downloadAudio, getProxiedUrl, getAudioBlobUrl, generateAudioFilename } from "@/lib/downloadAudio";
 import { SupportChat } from "@/components/SupportChat";
+import { EliteTextPanel } from "@/components/EliteTextPanel";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface Voice {
@@ -818,14 +819,20 @@ function GenerateTab({
   selectedVoice,
   onVoiceChange,
   plan,
+  externalText,
 }: {
   voices: Voice[];
   onGenerated: () => void;
   selectedVoice: SelectedVoice | null;
   onVoiceChange: (v: SelectedVoice | null) => void;
   plan: string;
+  externalText?: string | null;
 }) {
   const [text, setText] = useState("");
+
+  useEffect(() => {
+    if (externalText) setText(externalText);
+  }, [externalText]);
   const [showBrowser, setShowBrowser] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -5855,6 +5862,9 @@ export default function DashboardPage() {
   const [translateVoice, setTranslateVoice] = useState<SelectedVoice | null>(null);
   const [supportOpen, setSupportOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [eliteTextOpen, setEliteTextOpen] = useState(false);
+  const [pendingNarrateText, setPendingNarrateText] = useState<string | null>(null);
+  const [eliteTextStatus, setEliteTextStatus] = useState<{ tokensUsed: number; tokensTotal: number; percentage: number; plan: string } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [nextRenewalDate, setNextRenewalDate] = useState<string | null>(null);
   const [daysUntilRenewal, setDaysUntilRenewal] = useState<number | null>(null);
@@ -5892,6 +5902,10 @@ export default function DashboardPage() {
     fetchVoices();
     fetchMemberInfo();
     fetch("/api/auth-session", { method: "POST" }).catch(() => {});
+    fetch("/api/elite-text/status")
+      .then((r) => r.json())
+      .then((d) => { if (d.hasPlan) setEliteTextStatus({ tokensUsed: d.tokensUsed, tokensTotal: d.tokensTotal, percentage: d.percentage, plan: d.plan }); })
+      .catch(() => {});
   }, [fetchCredits, fetchVoices, fetchMemberInfo]);
 
   // Restore selected voice from localStorage once userId is available
@@ -5939,6 +5953,15 @@ export default function DashboardPage() {
     <div className="flex h-screen overflow-hidden" style={{ background: "#000000" }}>
       {supportOpen && <SupportModal onClose={() => setSupportOpen(false)} />}
       <SupportChat open={chatOpen} onClose={() => setChatOpen(false)} />
+      <EliteTextPanel
+        open={eliteTextOpen}
+        onClose={() => setEliteTextOpen(false)}
+        onSendToNarrate={(text) => {
+          setPendingNarrateText(text);
+          setActiveTab("generate");
+          setEliteTextOpen(false);
+        }}
+      />
 
       {/* Mobile drawer overlay */}
       {sidebarOpen && (
@@ -5996,6 +6019,14 @@ export default function DashboardPage() {
                   <Languages size={16} />
                 </button>
                 <button
+                  onClick={() => setEliteTextOpen(prev => !prev)}
+                  title="Elite Text — Generación de guiones"
+                  className={`h-9 px-3 min-h-[36px] flex items-center justify-center rounded-xl border transition-colors cursor-pointer text-sm font-medium gap-1.5 ${eliteTextOpen ? "border-violet-500/40 bg-violet-500/15 text-violet-300" : "border-white/10 bg-white/5 text-white/70 hover:bg-violet-500/10 hover:border-violet-500/30 hover:text-violet-300"}`}
+                >
+                  <FileText size={14} />
+                  <span className="hidden sm:inline">Text</span>
+                </button>
+                <button
                   onClick={() => setChatOpen(prev => !prev)}
                   title="Ask AI"
                   className={`h-9 px-3 min-h-[36px] flex items-center justify-center rounded-xl border transition-colors cursor-pointer text-sm font-medium ${chatOpen ? "border-white/20 bg-white/10 text-white" : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"}`}
@@ -6022,6 +6053,7 @@ export default function DashboardPage() {
                   used={credits !== null ? Math.max(0, (plan === "lifetime" ? 20_000_000 : (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 10_000)) + extraCredits - credits) : undefined}
                   total={credits !== null ? (plan === "lifetime" ? 20_000_000 : (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 10_000)) + extraCredits : undefined}
                   plan={plan}
+                  eliteText={eliteTextStatus}
                 />
               </div>
             </div>
@@ -6091,6 +6123,7 @@ export default function DashboardPage() {
                 selectedVoice={selectedVoice}
                 onVoiceChange={setSelectedVoice}
                 plan={effectivePlan}
+                externalText={pendingNarrateText}
               />
             )}
             {activeTab === "voices" && (

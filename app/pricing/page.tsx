@@ -541,6 +541,115 @@ function PricingContent() {
           </p>
         </div>
 
+        {/* ── Elite Text section ─────────────────────────────────── */}
+        <div style={{ marginBottom: "64px" }}>
+          <div style={{ textAlign: "center", marginBottom: "28px" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+              <span style={{ fontSize: "11px", fontWeight: 700, padding: "3px 10px", borderRadius: "999px", background: "rgba(139,92,246,0.15)", color: "#8b5cf6", border: "1px solid rgba(139,92,246,0.3)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                Nuevo
+              </span>
+            </div>
+            <h2 style={{ fontSize: "clamp(20px,4vw,26px)", fontWeight: 800, color: "#fff", margin: "0 0 8px", lineHeight: 1.2 }}>
+              Elite Text — Generación de Guiones con IA
+            </h2>
+            <p style={{ fontSize: "14px", color: "#555555", margin: 0 }}>
+              Crea guiones de podcast, YouTube y vídeo con Claude Sonnet y nárralos directamente con TTS
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: "12px", maxWidth: "760px", margin: "0 auto" }}>
+            {([
+              {
+                key: "text_pro",
+                name: "Text Pro",
+                price: 18,
+                tokens: 750_000,
+                scripts: 150,
+                minutes: 3000,
+                features: [
+                  "750.000 tokens/mes",
+                  "~150 guiones de 20 min",
+                  "~3.000 min de audio narrado",
+                  "Claude Sonnet · máxima calidad",
+                  "Envío directo a narración TTS",
+                ],
+              },
+              {
+                key: "text_elite",
+                name: "Text Elite",
+                price: 60,
+                tokens: 3_000_000,
+                scripts: 600,
+                minutes: 12000,
+                popular: true,
+                features: [
+                  "3.000.000 tokens/mes",
+                  "~600 guiones de 20 min",
+                  "~12.000 min de audio narrado",
+                  "Claude Sonnet · máxima calidad",
+                  "Envío directo a narración TTS",
+                  "Ideal para creadores intensivos",
+                ],
+              },
+            ] as { key: string; name: string; price: number; tokens: number; scripts: number; minutes: number; features: string[]; popular?: boolean }[]).map((plan) => (
+              <div
+                key={plan.key}
+                style={{
+                  borderRadius: "16px",
+                  padding: "22px 20px 20px",
+                  background: "#0a0a0f",
+                  border: plan.popular ? "1px solid rgba(139,92,246,0.4)" : "1px solid rgba(255,255,255,0.08)",
+                  position: "relative",
+                  display: "flex", flexDirection: "column",
+                }}
+              >
+                {plan.popular && (
+                  <div style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)" }}>
+                    <span style={{ fontSize: "10px", fontWeight: 700, padding: "3px 12px", borderRadius: "999px", background: "#8b5cf6", color: "#fff", whiteSpace: "nowrap" }}>
+                      Más popular
+                    </span>
+                  </div>
+                )}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
+                  <span style={{ fontSize: "16px", fontWeight: 700, color: "#fff" }}>{plan.name}</span>
+                  <div style={{ textAlign: "right" }}>
+                    <span style={{ fontSize: "30px", fontWeight: 800, color: "#8b5cf6", lineHeight: 1 }}>${plan.price}</span>
+                    <span style={{ fontSize: "12px", color: "#555", display: "block" }}>/mes</span>
+                  </div>
+                </div>
+                <p style={{ fontSize: "12px", color: "#555", marginBottom: "16px" }}>
+                  {plan.tokens.toLocaleString("es-ES")} tokens · ~{plan.scripts} guiones
+                </p>
+                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 18px", flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {plan.features.map((f) => (
+                    <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "13px", color: "rgba(255,255,255,0.7)" }}>
+                      <span style={{ color: "#8b5cf6", fontWeight: 700, flexShrink: 0, marginTop: "1px" }}>✓</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href={isSignedIn ? "/dashboard" : "/sign-up"}
+                  style={{
+                    display: "block", textAlign: "center",
+                    padding: "10px", borderRadius: "8px",
+                    background: plan.popular ? "#8b5cf6" : "rgba(139,92,246,0.15)",
+                    color: plan.popular ? "#fff" : "#8b5cf6",
+                    fontSize: "13px", fontWeight: 700, textDecoration: "none",
+                    transition: "background 0.15s",
+                    border: plan.popular ? "none" : "1px solid rgba(139,92,246,0.3)",
+                  }}
+                >
+                  {isSignedIn ? "Ir al dashboard →" : "Empezar →"}
+                </a>
+              </div>
+            ))}
+          </div>
+          <p style={{ textAlign: "center", fontSize: "12px", color: "#444", marginTop: "16px" }}>
+            Plans independientes · No requieren un plan de voz activo · Cancela cuando quieras
+          </p>
+        </div>
+
         {/* FAQ */}
         <div>
           <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "20px", textAlign: "center" }}>

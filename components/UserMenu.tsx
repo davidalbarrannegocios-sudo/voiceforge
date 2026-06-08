@@ -4,16 +4,24 @@ import { useUser, useClerk } from "@clerk/nextjs";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Settings, CreditCard, Gift, LogOut, LayoutDashboard, Zap } from "lucide-react";
+import { Settings, CreditCard, Gift, LogOut, LayoutDashboard, Zap, FileText } from "lucide-react";
 import { useLang } from "@/app/dashboard/LanguageContext";
+
+interface EliteTextPlanInfo {
+  tokensUsed: number;
+  tokensTotal: number;
+  percentage: number;
+  plan: string;
+}
 
 interface UserMenuProps {
   used?: number;
   total?: number;
   plan?: string;
+  eliteText?: EliteTextPlanInfo | null;
 }
 
-export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
+export function UserMenu({ used, total, plan, eliteText }: UserMenuProps = {}) {
   const { user } = useUser();
   const { signOut } = useClerk();
   const router = useRouter();
@@ -156,6 +164,29 @@ export function UserMenu({ used, total, plan }: UserMenuProps = {}) {
                   <div className="w-2 h-2 rounded-full" style={{ background: ringColor }} />
                 </div>
               </>
+            )}
+
+            {/* Elite Text section */}
+            {eliteText && (
+              <div className="rounded-xl p-3 mt-2" style={{ background: "#1c1c1c" }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText size={13} style={{ color: "#8b5cf6" }} />
+                  <span className="text-sm font-semibold" style={{ color: "#8b5cf6" }}>Elite Text</span>
+                  <span className="ml-auto text-xs" style={{ color: "#6b7280" }}>{eliteText.percentage}% usado</span>
+                </div>
+                <div className="w-full rounded-full overflow-hidden" style={{ height: 4, background: "rgba(255,255,255,0.08)" }}>
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${eliteText.percentage}%`,
+                      background: eliteText.percentage > 85 ? "#ef4444" : eliteText.percentage > 60 ? "#f59e0b" : "#8b5cf6",
+                    }}
+                  />
+                </div>
+                <p className="text-xs mt-1.5" style={{ color: "#6b7280" }}>
+                  {eliteText.tokensUsed.toLocaleString("es-ES")} / {eliteText.tokensTotal.toLocaleString("es-ES")} tokens
+                </p>
+              </div>
             )}
           </div>
 
