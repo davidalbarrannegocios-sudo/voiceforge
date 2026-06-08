@@ -27,6 +27,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/referral/check",
   "/api/cookie-consent",
   "/api/cookie-consent/link",
+  "/api/visit",
   "/studio(.*)",
 ]);
 

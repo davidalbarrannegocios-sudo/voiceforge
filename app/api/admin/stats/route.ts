@@ -9,7 +9,9 @@ export async function GET() {
     const auth = await requireAdmin();
     if (auth instanceof NextResponse) return auth;
 
-    const [totalUsers, totalGenerations, creditsAggregate, starterCount, proCount, eliteCount, enterpriseCount] =
+    const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+
+    const [totalUsers, totalGenerations, creditsAggregate, starterCount, proCount, eliteCount, enterpriseCount, totalVisits, visitsToday] =
       await Promise.all([
         prisma.user.count(),
         prisma.generation.count(),
@@ -18,6 +20,8 @@ export async function GET() {
         prisma.user.count({ where: { plan: "pro" } }),
         prisma.user.count({ where: { plan: "elite" } }),
         prisma.user.count({ where: { plan: "enterprise" } }),
+        prisma.pageVisit.count(),
+        prisma.pageVisit.count({ where: { createdAt: { gte: todayStart } } }),
       ]);
 
     const mrr = starterCount * 7 + proCount * 13 + eliteCount * 25 + enterpriseCount * 110;
@@ -27,6 +31,8 @@ export async function GET() {
       totalGenerations,
       totalCreditsConsumed: creditsAggregate._sum.creditsUsed ?? 0,
       totalRevenueDollars: mrr.toFixed(2),
+      totalVisits,
+      visitsToday,
     });
   } catch (e) {
     console.error("[admin/stats]", e);

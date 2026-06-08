@@ -395,3 +395,14 @@ model EliteTextPlan {
   updatedAt            DateTime  @updatedAt
   user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+model PageVisit {
+  id        String   @id @default(cuid())
+  ip        String?
+  userAgent String?
+  country   String?
+  path      String   @default("/")
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

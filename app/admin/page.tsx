@@ -39,6 +39,7 @@ interface StripeSubDetail {
 interface Stats {
   totalUsers: number; totalGenerations: number;
   totalCreditsConsumed: number; totalRevenueDollars: string;
+  totalVisits: number; visitsToday: number;
 }
 interface SupportTicket {
   id: string; type: string; description: string; status: string;
@@ -667,11 +668,18 @@ function DashboardSection({
   return (
     <div>
       <p style={{ fontWeight: 800, fontSize: "20px", marginBottom: "20px", color: "#fff" }}>Dashboard</p>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "1.5rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "1rem" }}>
         <StatCard label="Usuarios totales" value={stats ? stats.totalUsers.toLocaleString("es-ES") : "—"} />
         <StatCard label="MRR estimado" value={mrr} />
         <StatCard label="Generaciones totales" value={stats ? stats.totalGenerations.toLocaleString("es-ES") : "—"} />
         <StatCard label="Créditos consumidos" value={stats ? stats.totalCreditsConsumed.toLocaleString("es-ES") : "—"} />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "1.5rem" }}>
+        <div style={{ ...card, borderLeft: "3px solid #0ea5e9" }}>
+          <p style={{ color: "#0ea5e9", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.5rem" }}>Visitas anónimas</p>
+          <p style={{ fontSize: "1.75rem", fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>{stats ? stats.totalVisits.toLocaleString("es-ES") : "—"}</p>
+          <p style={{ fontSize: "0.72rem", color: "#555555", marginTop: "4px" }}>Hoy: {stats ? stats.visitsToday.toLocaleString("es-ES") : "—"}</p>
+        </div>
       </div>
 
       {/* Alerts row */}

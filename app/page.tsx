@@ -10,6 +10,7 @@ import { ChevronDown, Check, Lock } from "lucide-react";
 import { AudioPlayer } from "./dashboard/AudioPlayer";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
 import { useLang } from "@/app/dashboard/LanguageContext";
+import VisitTracker from "@/components/VisitTracker";
 
 /* ─── Types ─────────────────────────────────────────────────── */
 
@@ -245,6 +246,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: "#000000", color: "white" }}>
+      <VisitTracker />
 
       {/* ── Nav ────────────────────────────────────────────────── */}
       <header
