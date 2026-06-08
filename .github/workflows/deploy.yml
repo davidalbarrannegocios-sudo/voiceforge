@@ -22,5 +22,6 @@ jobs:
             npm run build
             cp -r .next/static .next/standalone/.next/static
             cp -r public .next/standalone/public
+            cp .env .next/standalone/.env
             pm2 restart elitelabs --update-env
             echo "Deploy completado $(date)"
