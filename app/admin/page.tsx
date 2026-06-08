@@ -40,6 +40,8 @@ interface Stats {
   totalUsers: number; totalGenerations: number;
   totalCreditsConsumed: number; totalRevenueDollars: string;
   totalVisits: number; visitsToday: number;
+  visitsByDay: { date: string; count: number }[];
+  prevMonthVisits: number;
 }
 interface SupportTicket {
   id: string; type: string; description: string; status: string;
@@ -638,18 +640,46 @@ function AffiliateDetailModal({
 }
 
 /* ─── Section: Dashboard ──────────────────────────────────── */
+function buildMonthOptions() {
+  const options: { value: string; label: string }[] = [];
+  const now = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const raw = d.toLocaleDateString("es-ES", { month: "long", year: "numeric" });
+    const label = raw.charAt(0).toUpperCase() + raw.slice(1);
+    options.push({ value, label });
+  }
+  return options;
+}
+const MONTH_OPTIONS = buildMonthOptions();
+
 function DashboardSection({
-  users, stats, tickets, withdrawals, affiliates, onNav,
+  users, stats: initialStats, tickets, withdrawals, affiliates, onNav,
 }: {
   users: AdminUser[]; stats: Stats | null; tickets: SupportTicket[];
   withdrawals: WithdrawalRequest[]; affiliates: AffiliateApplication[];
   onNav: (s: Section) => void;
 }) {
+  const currentMonthStr = MONTH_OPTIONS[0].value;
+  const [selectedMonth, setSelectedMonth] = useState(currentMonthStr);
+  const [stats, setStats] = useState<Stats | null>(initialStats);
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  useEffect(() => {
+    setLoadingStats(true);
+    fetch(`/api/admin/stats?month=${selectedMonth}`)
+      .then(r => r.json())
+      .then(d => setStats(d && !d.error ? d : null))
+      .catch(() => {})
+      .finally(() => setLoadingStats(false));
+  }, [selectedMonth]);
+
   const pendingTickets = tickets.filter(t => t.status === "open").length;
   const pendingAffiliates = affiliates.filter(a => a.status === "pending").length;
   const pendingWithdrawals = withdrawals.filter(w => w.status === "pending").length;
 
-  // 30-day new users bar chart
+  // 30-day new users bar chart (always from users list, not filtered by month)
   const now = new Date();
   const days30: { label: string; value: number }[] = [];
   for (let i = 29; i >= 0; i--) {
@@ -665,20 +695,60 @@ function DashboardSection({
 
   const mrr = stats ? `$${stats.totalRevenueDollars}/mes` : "—";
 
+  // Visits chart data
+  const visitsDays = (stats?.visitsByDay ?? []).map(v => ({
+    label: v.date.slice(8),
+    value: v.count,
+  }));
+
+  // Trend vs previous month
+  const trendPct = stats && stats.prevMonthVisits > 0
+    ? Math.round(((stats.totalVisits - stats.prevMonthVisits) / stats.prevMonthVisits) * 100)
+    : null;
+
   return (
     <div>
-      <p style={{ fontWeight: 800, fontSize: "20px", marginBottom: "20px", color: "#fff" }}>Dashboard</p>
+      {/* Header with month selector */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+        <p style={{ fontWeight: 800, fontSize: "20px", color: "#fff", margin: 0 }}>Dashboard</p>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {loadingStats && <span style={{ fontSize: "11px", color: "#555" }}>Cargando...</span>}
+          <select
+            value={selectedMonth}
+            onChange={e => setSelectedMonth(e.target.value)}
+            style={{
+              background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "8px", color: "#fff", fontSize: "13px",
+              padding: "6px 10px", cursor: "pointer", outline: "none",
+            }}
+          >
+            {MONTH_OPTIONS.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "1rem" }}>
         <StatCard label="Usuarios totales" value={stats ? stats.totalUsers.toLocaleString("es-ES") : "—"} />
         <StatCard label="MRR estimado" value={mrr} />
         <StatCard label="Generaciones totales" value={stats ? stats.totalGenerations.toLocaleString("es-ES") : "—"} />
         <StatCard label="Créditos consumidos" value={stats ? stats.totalCreditsConsumed.toLocaleString("es-ES") : "—"} />
       </div>
+
+      {/* Visits card */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "1.5rem" }}>
         <div style={{ ...card, borderLeft: "3px solid #0ea5e9" }}>
           <p style={{ color: "#0ea5e9", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.5rem" }}>Visitas anónimas</p>
           <p style={{ fontSize: "1.75rem", fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>{stats ? stats.totalVisits.toLocaleString("es-ES") : "—"}</p>
-          <p style={{ fontSize: "0.72rem", color: "#555555", marginTop: "4px" }}>Hoy: {stats ? stats.visitsToday.toLocaleString("es-ES") : "—"}</p>
+          <div style={{ display: "flex", gap: "10px", marginTop: "4px", flexWrap: "wrap" }}>
+            <p style={{ fontSize: "0.72rem", color: "#555555" }}>Hoy: {stats ? stats.visitsToday.toLocaleString("es-ES") : "—"}</p>
+            {trendPct !== null && (
+              <p style={{ fontSize: "0.72rem", fontWeight: 700, color: trendPct >= 0 ? "#4ade80" : "#f87171" }}>
+                {trendPct >= 0 ? "+" : ""}{trendPct}% vs mes anterior
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -698,7 +768,7 @@ function DashboardSection({
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
-        {/* 30-day chart */}
+        {/* New users chart */}
         <div style={card}>
           <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#555555", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "12px" }}>Nuevos usuarios (30 días)</p>
           <SimpleBarChart data={days30} height={80} />
@@ -708,7 +778,27 @@ function DashboardSection({
           </div>
         </div>
 
-        {/* Top 5 users */}
+        {/* Visits chart */}
+        <div style={card}>
+          <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#555555", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "12px" }}>
+            Visitas anónimas — {MONTH_OPTIONS.find(o => o.value === selectedMonth)?.label ?? selectedMonth}
+          </p>
+          {visitsDays.length > 0 ? (
+            <>
+              <SimpleBarChart data={visitsDays} height={80} />
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
+                <span style={{ fontSize: "10px", color: "#444444" }}>{visitsDays[0]?.label}</span>
+                <span style={{ fontSize: "10px", color: "#444444" }}>{visitsDays[visitsDays.length - 1]?.label}</span>
+              </div>
+            </>
+          ) : (
+            <p style={{ color: "#555555", fontSize: "0.8rem" }}>Sin datos</p>
+          )}
+        </div>
+      </div>
+
+      {/* Top 5 users */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
         <div style={card}>
           <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#555555", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "12px" }}>Top 5 usuarios por generaciones</p>
           {top5Gen.length === 0 ? (
