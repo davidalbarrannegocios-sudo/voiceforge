@@ -132,15 +132,17 @@ function Sidebar({
           position: "sticky",
           top: 0,
           borderRight: "1px solid #1a1a1a",
-          transition: "width 0.2s ease-in-out",
+          transition: collapsed
+            ? "width 0.3s cubic-bezier(0.4,0,0.2,1) 0.12s"
+            : "width 0.3s cubic-bezier(0.4,0,0.2,1)",
           overflowX: "hidden",
         } : {}),
         background: "#111111",
       }}
     >
       {/* Logo */}
-      <div style={{ height: "56px", display: "flex", alignItems: "center", paddingLeft: collapsed && desktop ? "0" : "20px", paddingRight: collapsed && desktop ? "0" : "20px", justifyContent: collapsed && desktop ? "center" : "flex-start", flexShrink: 0 }}>
-        <Link href="/" className="flex items-center gap-2.5" title={collapsed && desktop ? "Elite Labs" : undefined}>
+      <div style={{ height: "56px", display: "flex", alignItems: "center", paddingLeft: "20px", paddingRight: "20px", justifyContent: "flex-start", flexShrink: 0 }}>
+        <Link href="/" className="flex items-center gap-2.5">
           <Image
             src="/elitelabs.png"
             alt="Elite Labs"
@@ -149,13 +151,36 @@ function Sidebar({
             style={{ height: "28px", width: "auto", objectFit: "contain", imageRendering: "-webkit-optimize-contrast", flexShrink: 0 }}
             className="rounded-lg"
           />
-          {!(collapsed && desktop) && <span className="font-bold text-white tracking-tight text-sm">Elite Labs</span>}
+          <span
+            className="font-bold text-white tracking-tight text-sm"
+            style={{
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              maxWidth: collapsed && desktop ? 0 : "120px",
+              opacity: collapsed && desktop ? 0 : 1,
+              transition: collapsed && desktop
+                ? "opacity 0.12s ease, max-width 0s ease 0.12s"
+                : "max-width 0s ease, opacity 0.2s ease 0.28s",
+            }}
+          >
+            Elite Labs
+          </span>
         </Link>
       </div>
 
       {/* Product selector */}
-      {!(collapsed && desktop) && (
-        <div className="px-3 pb-2 relative flex-shrink-0">
+      <div
+        className="px-3 pb-2 relative flex-shrink-0"
+        style={{
+          overflow: "hidden",
+          maxHeight: collapsed && desktop ? 0 : "60px",
+          opacity: collapsed && desktop ? 0 : 1,
+          pointerEvents: collapsed && desktop ? "none" : "auto",
+          transition: collapsed && desktop
+            ? "opacity 0.12s ease, max-height 0s ease 0.12s"
+            : "max-height 0s ease, opacity 0.2s ease 0.28s",
+        }}
+      >
           <button
             onClick={() => setShowProductMenu(p => !p)}
             className="w-full flex items-center justify-between gap-2
@@ -210,21 +235,32 @@ function Sidebar({
               </div>
             </>
           )}
-        </div>
-      )}
+      </div>
 
       {/* Nav */}
-      <nav style={{ flex: 1, paddingTop: "8px", paddingBottom: "8px", paddingLeft: collapsed && desktop ? "8px" : "12px", paddingRight: collapsed && desktop ? "8px" : "12px", overflowY: "auto" }}>
+      <nav style={{ flex: 1, paddingTop: "8px", paddingBottom: "8px", paddingLeft: "12px", paddingRight: "12px", overflowY: "auto" }}>
         {sections.map((section, si) => (
           <div key={si} style={{ marginBottom: si < sections.length - 1 ? "20px" : 0 }}>
-            {section.label && !(collapsed && desktop) && (
-              <p style={{ paddingLeft: "12px", marginBottom: "4px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#444444" }}>
+            {section.label && (
+              <p style={{
+                paddingLeft: "12px", marginBottom: "4px", fontSize: "10px", fontWeight: 700,
+                textTransform: "uppercase", letterSpacing: "0.1em", color: "#444444",
+                overflow: "hidden", whiteSpace: "nowrap",
+                maxHeight: collapsed && desktop ? 0 : "20px",
+                opacity: collapsed && desktop ? 0 : 1,
+                transition: collapsed && desktop
+                  ? "opacity 0.12s ease, max-height 0s ease 0.12s"
+                  : "max-height 0s ease, opacity 0.2s ease 0.28s",
+              }}>
                 {section.label}
               </p>
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
               {section.items.map(({ key, label, Icon }) => {
                 const isActive = activeTab === key;
+                const textTransition = collapsed && desktop
+                  ? "opacity 0.12s ease, max-width 0s ease 0.12s"
+                  : "max-width 0s ease, opacity 0.2s ease 0.28s";
                 return (
                   <button
                     key={key}
@@ -234,9 +270,9 @@ function Sidebar({
                       width: "100%",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: collapsed && desktop ? "center" : "flex-start",
-                      gap: collapsed && desktop ? 0 : "10px",
-                      padding: collapsed && desktop ? "8px 0" : "8px 12px",
+                      justifyContent: "flex-start",
+                      gap: "10px",
+                      padding: "8px 12px",
                       borderRadius: "8px",
                       fontSize: "13px",
                       fontWeight: 500,
@@ -249,12 +285,20 @@ function Sidebar({
                     }}
                   >
                     <Icon size={15} style={{ color: isActive ? "#aaaaaa" : "#444444", flexShrink: 0 }} />
-                    {!(collapsed && desktop) && (
-                      <>
-                        <span style={{ flex: 1 }}>{label}</span>
-                        {isActive && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
-                      </>
-                    )}
+                    <span style={{
+                      flex: 1,
+                      overflow: "hidden",
+                      whiteSpace: "nowrap",
+                      maxWidth: collapsed && desktop ? 0 : "180px",
+                      opacity: collapsed && desktop ? 0 : 1,
+                      transition: textTransition,
+                    }}>{label}</span>
+                    <span style={{
+                      width: "5px", height: "5px", borderRadius: "50%",
+                      background: "#ffffff", flexShrink: 0,
+                      opacity: isActive && !(collapsed && desktop) ? 1 : 0,
+                      transition: textTransition,
+                    }} />
                   </button>
                 );
               })}
@@ -269,9 +313,9 @@ function Sidebar({
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: collapsed && desktop ? "center" : "flex-start",
-            gap: collapsed && desktop ? 0 : "10px",
-            padding: collapsed && desktop ? "8px 0" : "8px 12px",
+            justifyContent: "flex-start",
+            gap: "10px",
+            padding: "8px 12px",
             borderRadius: "8px",
             fontSize: "13px",
             fontWeight: 500,
@@ -285,7 +329,16 @@ function Sidebar({
           onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#555555"; }}
         >
           <Settings size={15} style={{ color: "#444444", flexShrink: 0 }} />
-          {!(collapsed && desktop) && <span style={{ flex: 1 }}>Mi cuenta</span>}
+          <span style={{
+            flex: 1,
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+            maxWidth: collapsed && desktop ? 0 : "180px",
+            opacity: collapsed && desktop ? 0 : 1,
+            transition: collapsed && desktop
+              ? "opacity 0.12s ease, max-width 0s ease 0.12s"
+              : "max-width 0s ease, opacity 0.2s ease 0.28s",
+          }}>Mi cuenta</span>
         </Link>
       </nav>
 
@@ -351,7 +404,7 @@ function Sidebar({
 
       {/* Upgrade button — hidden for enterprise and lifetime */}
       {plan !== "enterprise" && plan !== "lifetime" && (
-        <div style={{ padding: collapsed && desktop ? "0 8px 0" : "0 12px 0", flexShrink: 0 }}>
+        <div style={{ padding: "0 12px 0", flexShrink: 0 }}>
           <button
             onClick={() => { setActiveTab("billing"); onClose?.(); }}
             title={collapsed && desktop ? "Mejorar plan" : undefined}
@@ -359,9 +412,9 @@ function Sidebar({
               width: "100%",
               display: "flex",
               alignItems: "center",
-              justifyContent: collapsed && desktop ? "center" : "flex-start",
-              gap: collapsed && desktop ? 0 : "8px",
-              padding: collapsed && desktop ? "10px 0" : "10px 14px",
+              justifyContent: "flex-start",
+              gap: "8px",
+              padding: "10px 14px",
               borderRadius: "10px",
               border: "1px solid rgba(255,255,255,0.08)",
               cursor: "pointer",
@@ -382,14 +435,26 @@ function Sidebar({
             <div style={{ position: "relative", zIndex: 1, width: "24px", height: "24px", borderRadius: "6px", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <Zap size={13} style={{ color: "#aaaaaa" }} />
             </div>
-            {!(collapsed && desktop) && (
-              <>
-                <span style={{ position: "relative", zIndex: 1, fontSize: "13px", fontWeight: 600, color: "#cccccc", flex: 1, textAlign: "left" }}>Mejorar plan</span>
-                <svg style={{ position: "relative", zIndex: 1 }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666666" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </>
-            )}
+            <span style={{
+              position: "relative", zIndex: 1,
+              fontSize: "13px", fontWeight: 600, color: "#cccccc", flex: 1, textAlign: "left",
+              overflow: "hidden", whiteSpace: "nowrap",
+              maxWidth: collapsed && desktop ? 0 : "120px",
+              opacity: collapsed && desktop ? 0 : 1,
+              transition: collapsed && desktop
+                ? "opacity 0.12s ease, max-width 0s ease 0.12s"
+                : "max-width 0s ease, opacity 0.2s ease 0.28s",
+            }}>Mejorar plan</span>
+            <svg
+              style={{
+                position: "relative", zIndex: 1, flexShrink: 0,
+                opacity: collapsed && desktop ? 0 : 1,
+                transition: collapsed && desktop ? "opacity 0.12s ease" : "opacity 0.2s ease 0.28s",
+              }}
+              width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666666" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
           </button>
         </div>
       )}
