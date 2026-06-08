@@ -458,7 +458,7 @@ export function EliteTextPanel({
         borderLeft: "1px solid rgba(255,255,255,0.07)",
         transform: open ? "translateX(0)" : "translateX(100%)",
         transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)",
-        boxShadow: "-24px 0 64px rgba(0,0,0,0.8)",
+        boxShadow: open ? "-24px 0 64px rgba(0,0,0,0.8)" : "none",
         pointerEvents: open ? "auto" : "none",
       }}
     >
