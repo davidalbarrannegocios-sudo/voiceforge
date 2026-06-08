@@ -6129,13 +6129,13 @@ export default function DashboardPage() {
                 >
                   Ask
                 </button>
-                <button
-                  onClick={() => setSupportOpen(true)}
+                <Link
+                  href="/dashboard/support"
                   title="Soporte"
                   className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-xl border border-white/10 bg-transparent text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   <HelpCircle size={16} />
-                </button>
+                </Link>
                 <a
                   href="#"
                   title="Discord"
