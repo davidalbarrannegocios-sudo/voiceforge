@@ -155,10 +155,10 @@ export default function SupportPage() {
         </button>
       </div>
       <div style={{ display: "flex", gap: "10px", marginBottom: "24px", flexWrap: "wrap" }}>
-        <select value={statusFilter} onChange={e => setStatus(e.target.value)} style={{ background: "#111", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", color: statusFilter === "all" ? "#666" : "#fff", fontSize: "13px", padding: "7px 12px", cursor: "pointer", outline: "none" }}>
+        <select value={statusFilter} onChange={e => setStatus(e.target.value)} style={{ background: "rgba(255,255,255,0.05)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", color: statusFilter === "all" ? "#666" : "#fff", fontSize: "13px", padding: "8px 14px", cursor: "pointer", outline: "none" }}>
           {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
-        <select value={typeFilter} onChange={e => setType(e.target.value)} style={{ background: "#111", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", color: typeFilter === "all" ? "#666" : "#fff", fontSize: "13px", padding: "7px 12px", cursor: "pointer", outline: "none" }}>
+        <select value={typeFilter} onChange={e => setType(e.target.value)} style={{ background: "rgba(255,255,255,0.05)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", color: typeFilter === "all" ? "#666" : "#fff", fontSize: "13px", padding: "8px 14px", cursor: "pointer", outline: "none" }}>
           {CATEGORY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       </div>
