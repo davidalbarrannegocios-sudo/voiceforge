@@ -541,7 +541,7 @@ function PricingContent() {
           </p>
         </div>
 
-        {/* ── Elite Text section ─────────────────────────────────── */}
+        {/* ── Elite Text section (hidden temporarily) ────────────────
         <div style={{ marginBottom: "64px" }}>
           <div style={{ textAlign: "center", marginBottom: "28px" }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
@@ -649,6 +649,7 @@ function PricingContent() {
             Plans independientes · No requieren un plan de voz activo · Cancela cuando quieras
           </p>
         </div>
+        ── end Elite Text section ── */}
 
         {/* FAQ */}
         <div>

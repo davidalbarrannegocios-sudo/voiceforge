@@ -5980,7 +5980,7 @@ export default function DashboardPage() {
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onClose={() => setSidebarOpen(false)} plan={plan} memberInfo={memberInfo} />
       </div>
 
-      <main className="flex-1 flex flex-col overflow-hidden relative min-w-0" style={{ padding: "0", marginRight: chatOpen ? "380px" : "0", transition: "margin-right 0.28s cubic-bezier(0.4,0,0.2,1)" }}>
+      <main className="flex-1 flex flex-col overflow-hidden relative min-w-0" style={{ padding: "0", marginRight: chatOpen ? "380px" : eliteTextOpen ? "400px" : "0", transition: "margin-right 0.28s cubic-bezier(0.4,0,0.2,1)" }}>
         {/* Topbar */}
         {(() => {
           const TAB_META: Record<Tab, { title: string; Icon: React.ElementType }> = {
