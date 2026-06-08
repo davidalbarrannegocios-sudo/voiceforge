@@ -132,7 +132,7 @@ export default function SupportPage() {
   });
 
   return (
-    <div style={{ padding: "32px 32px 64px", maxWidth: "900px", width: "100%", margin: "0 auto" }}>
+    <div style={{ padding: "32px 32px 64px" }}>
       <Link href="/dashboard" style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#555", textDecoration: "none", marginBottom: "24px" }} onMouseEnter={e => (e.currentTarget.style.color = "#fff")} onMouseLeave={e => (e.currentTarget.style.color = "#555")}>
         <ArrowLeft size={14} /> Dashboard
       </Link>

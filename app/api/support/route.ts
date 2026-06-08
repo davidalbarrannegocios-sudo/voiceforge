@@ -57,7 +57,7 @@ export async function POST(req: Request) {
 
   if (process.env.RESEND_API_KEY) {
     const userEmail = clerkUser.emailAddresses[0]?.emailAddress;
-    const caseId = "#" + ticket.id.slice(-6).toUpperCase();
+    const caseId = "#" + ticket.id.slice(-8).toUpperCase();
     if (userEmail) {
       try {
         await fetch("https://api.resend.com/emails", {
