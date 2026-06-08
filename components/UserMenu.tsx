@@ -174,12 +174,14 @@ export function UserMenu({ used, total, plan, eliteText }: UserMenuProps = {}) {
                   <span className="text-sm font-semibold" style={{ color: "#8b5cf6" }}>Elite Text</span>
                   <span className="ml-auto text-xs" style={{ color: "#6b7280" }}>{eliteText.percentage}% usado</span>
                 </div>
-                <div className="w-full rounded-full overflow-hidden" style={{ height: 4, background: "rgba(255,255,255,0.08)" }}>
+                <div style={{ width: "100%", height: "4px", background: "rgba(139,92,246,0.2)", borderRadius: "999px", overflow: "hidden", marginTop: "6px" }}>
                   <div
-                    className="h-full rounded-full transition-all"
                     style={{
-                      width: `${eliteText.percentage}%`,
+                      width: `${Math.max(eliteText.percentage, 2)}%`,
+                      height: "100%",
                       background: eliteText.percentage > 85 ? "#ef4444" : eliteText.percentage > 60 ? "#f59e0b" : "#8b5cf6",
+                      borderRadius: "999px",
+                      transition: "width 0.3s ease",
                     }}
                   />
                 </div>
