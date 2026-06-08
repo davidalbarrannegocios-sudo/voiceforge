@@ -89,10 +89,10 @@ function NewCaseModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
 
   return (
     <div
-      style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}
+      style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div style={{ width: "100%", maxWidth: "520px", background: "#111111", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px", padding: "28px", position: "relative" }}>
+      <div style={{ width: "100%", maxWidth: "520px", background: "rgba(15,15,20,0.75)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", boxShadow: "0 8px 32px rgba(0,0,0,0.4)", padding: "28px", position: "relative" }}>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <div>
