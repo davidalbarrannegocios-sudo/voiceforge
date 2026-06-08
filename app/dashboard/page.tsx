@@ -1727,12 +1727,11 @@ const CLONE_LANGUAGE_OPTIONS = CLONE_LANGUAGES.map((l) => ({
 }));
 
 const DURATION_MARKERS = [
-  { seconds: 10,  label: "Min" },
-  { seconds: 30,  label: "Good" },
-  { seconds: 90,  label: "Max" },
-  { seconds: 210, label: "Best" },
+  { seconds: 10, label: "Min" },
+  { seconds: 30, label: "Good" },
+  { seconds: 90, label: "Max" },
 ];
-const DURATION_MAX = 210;
+const DURATION_MAX = 90;
 
 const VOICE_TAGS = ["Femenina","Masculina","Joven","Adulta","Mayor","Conversacional","Narración","Profesional","Educativo","Entretenimiento"];
 
