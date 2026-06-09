@@ -740,6 +740,7 @@ function VoiceCard({
     <div
       className="relative group rounded-xl overflow-hidden cursor-pointer transition-all duration-200 border min-h-[160px]"
       style={{ background: "transparent", borderColor: "rgba(255,255,255,0.05)" }}
+      onClick={() => onUse(voice)}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = "rgba(255,255,255,0.03)";
         e.currentTarget.style.borderColor = "rgba(255,255,255,0.20)";
@@ -762,7 +763,24 @@ function VoiceCard({
 
         {/* Top: avatar + name/author/description */}
         <div className="flex gap-3 mb-3">
-          <VoiceAvatar name={voice.title} coverImage={voice.cover_image ?? undefined} size="xl" id={voice._id} />
+          {/* Avatar with play overlay */}
+          <div className="relative flex-shrink-0 group/avatar">
+            <VoiceAvatar name={voice.title} coverImage={voice.cover_image ?? undefined} size="xl" id={voice._id} />
+            <button
+              onClick={(e) => { e.stopPropagation(); onPreview(voice._id, sampleUrl); }}
+              disabled={isPreviewLoading}
+              className="absolute inset-0 flex items-center justify-center rounded-xl opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-200 disabled:cursor-not-allowed"
+              style={{ background: "rgba(0,0,0,0.55)" }}
+            >
+              {isPreviewLoading ? (
+                <div style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+              ) : isPreviewing ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>
+              )}
+            </button>
+          </div>
           <div className="flex-1 min-w-0 pt-0.5">
             <div className="flex items-center gap-1.5 mb-0.5 pr-8">
               <span className="text-sm font-semibold text-white truncate leading-tight">{voice.title}</span>
@@ -813,32 +831,6 @@ function VoiceCard({
         </div>
       </div>
 
-      {/* Hover overlay — bottom gradient with action buttons */}
-      <div
-        className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-all duration-200 flex gap-2 justify-end items-center"
-        style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)" }}
-      >
-        <button
-          onClick={(e) => { e.stopPropagation(); onPreview(voice._id, sampleUrl); }}
-          disabled={isPreviewLoading}
-          className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-60"
-          style={{
-            background: isPreviewing ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.12)",
-            color: isPreviewing ? "#aaaaaa" : "#e2e2f0",
-            border: `1px solid ${isPreviewing ? "rgba(59,130,246,0.5)" : "rgba(255,255,255,0.15)"}`,
-            backdropFilter: "blur(4px)",
-          }}
-        >
-          {isPreviewLoading ? "···" : isPreviewing ? "⏹ Stop" : "▶ Vista previa"}
-        </button>
-        <button
-          onClick={(e) => { e.stopPropagation(); onUse(voice); }}
-          className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex-shrink-0"
-          style={{ background: "#ffffff", color: "#000000" }}
-        >
-          Usar →
-        </button>
-      </div>
     </div>
   );
 }
