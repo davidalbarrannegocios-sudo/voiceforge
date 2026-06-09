@@ -922,8 +922,11 @@ function GenerateTab({
   const [m1LangOverride, setM1LangOverride] = useState(false);
   const [m1OutputFormat, setM1OutputFormat] = useState("mp3_44100_128");
   const [m1SpeakerBoost, setM1SpeakerBoost] = useState(true);
+  const [m1ModelId, setM1ModelId] = useState<string>(() => { try { return localStorage.getItem("elitelabs_turbo_model") ?? "eleven_multilingual_v2_5"; } catch { return "eleven_multilingual_v2_5"; } });
   const [m1OutDropOpen, setM1OutDropOpen] = useState(false);
+  const [m1ModelDropOpen, setM1ModelDropOpen] = useState(false);
   const m1OutDropRef = useRef<HTMLDivElement>(null);
+  const m1ModelDropRef = useRef<HTMLDivElement>(null);
   const [previewing, setPreviewing] = useState<"idle" | "loading" | "playing">("idle");
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const [tagsOpen, setTagsOpen] = useState(false);
@@ -1012,6 +1015,10 @@ function GenerateTab({
   useEffect(() => {
     try { localStorage.setItem("elitelabs_selected_model", selectedModel); } catch { /* ignore */ }
   }, [selectedModel]);
+
+  useEffect(() => {
+    try { localStorage.setItem("elitelabs_turbo_model", m1ModelId); } catch { /* ignore */ }
+  }, [m1ModelId]);
 
   useEffect(() => {
     const cached = localStorage.getItem("turboStatusCache");
@@ -1113,7 +1120,7 @@ function GenerateTab({
           voice_id: selectedVoice?.referenceId ?? undefined,
           voiceName: selectedVoice?.name ?? "Voz por defecto",
           provider: "elevenlabs",
-          model_id: "eleven_multilingual_v2",
+          model_id: m1ModelId,
           voice_settings: {
             stability: m1Stability,
             similarity_boost: m1Similarity,
@@ -1607,6 +1614,41 @@ function GenerateTab({
                     </div>
                   </div>
 
+                  {/* ElevenLabs Model selector */}
+                  <div style={{ position: "relative" }} ref={m1ModelDropRef}>
+                    <button
+                      onClick={() => setM1ModelDropOpen((o) => !o)}
+                      style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", height: "40px", fontSize: "12px", background: "#111111", border: "none", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
+                    >
+                      <span style={{ fontWeight: 500, color: "#888888" }}>Modelo</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ fontSize: "11px", color: m1ModelId !== "eleven_multilingual_v2_5" ? "#aaaaaa" : "#6b7280" }}>
+                          {m1ModelId === "eleven_multilingual_v2_5" ? "Multilingual v2.5" : m1ModelId === "eleven_multilingual_v2" ? "Multilingual v2" : m1ModelId === "eleven_turbo_v2_5" ? "Turbo v2.5" : "Flash v2.5"}
+                        </span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", transform: m1ModelDropOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
+                      </div>
+                    </button>
+                    {m1ModelDropOpen && (
+                      <div className="glass-menu" style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "2px", padding: "4px" }}>
+                        {([
+                          { value: "eleven_multilingual_v2_5", label: "Multilingual v2.5", sub: "Recomendado" },
+                          { value: "eleven_multilingual_v2",   label: "Multilingual v2",   sub: "" },
+                          { value: "eleven_turbo_v2_5",        label: "Turbo v2.5",         sub: "Más rápido" },
+                          { value: "eleven_flash_v2_5",        label: "Flash v2.5",         sub: "Más económico" },
+                        ] as const).map(({ value, label, sub }) => (
+                          <button key={value} onClick={() => { setM1ModelId(value); setM1ModelDropOpen(false); }}
+                            style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", fontSize: "12px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: m1ModelId === value ? "#e2e2f0" : "#6b7280", cursor: "pointer" }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                          >
+                            <span>{label}{sub ? <span style={{ color: "#444", marginLeft: "6px", fontSize: "11px" }}>{sub}</span> : null}</span>
+                            {m1ModelId === value && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Output Format dropdown */}
                   <div style={{ position: "relative" }} ref={m1OutDropRef}>
                     <button
@@ -1653,7 +1695,7 @@ function GenerateTab({
                         <button onClick={() => setM1SpeakerBoost(true)}  style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color:  m1SpeakerBoost ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>On</button>
                       </div>
                       <button
-                        onClick={() => { setM1Speed(1.0); setM1Stability(0.5); setM1Similarity(0.75); setM1StyleExag(0); setM1LangOverride(false); setM1OutputFormat("mp3_44100_128"); setM1SpeakerBoost(true); }}
+                        onClick={() => { setM1Speed(1.0); setM1Stability(0.5); setM1Similarity(0.75); setM1StyleExag(0); setM1LangOverride(false); setM1OutputFormat("mp3_44100_128"); setM1SpeakerBoost(true); setM1ModelId("eleven_multilingual_v2_5"); }}
                         style={{ fontSize: "11px", color: "#6b7280", background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
                       >Reset values</button>
                     </div>

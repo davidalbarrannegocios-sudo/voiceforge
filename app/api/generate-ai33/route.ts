@@ -61,7 +61,8 @@ async function ai33Generate(
   text: string,
   provider: "elevenlabs" | "minimax",
   apiKey: string,
-  signal: AbortSignal
+  signal: AbortSignal,
+  modelId: string = "eleven_multilingual_v2_5"
 ): Promise<{ audio_url: string; duration_seconds: number }> {
   let ttsRes: Response;
 
@@ -80,7 +81,7 @@ async function ai33Generate(
     ttsRes = await fetch(`https://api.ai33.pro/v1/text-to-speech/${voiceId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "xi-api-key": apiKey },
-      body: JSON.stringify({ text, model_id: "eleven_multilingual_v2" }),
+      body: JSON.stringify({ text, model_id: modelId }),
       signal,
     });
   }
@@ -100,7 +101,7 @@ export async function POST(req: Request) {
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const { text, voice_id, voiceName, provider = "elevenlabs" } = await req.json();
+  const { text, voice_id, voiceName, provider = "elevenlabs", model_id = "eleven_multilingual_v2_5" } = await req.json();
 
   if (!text || typeof text !== "string" || text.trim().length === 0) {
     return NextResponse.json({ error: "Texto requerido" }, { status: 400 });
@@ -154,7 +155,7 @@ export async function POST(req: Request) {
 
     let result: { audio_url: string; duration_seconds: number };
     try {
-      result = await ai33Generate(voiceId, trimmed, resolvedProvider, apiKey, req.signal);
+      result = await ai33Generate(voiceId, trimmed, resolvedProvider, apiKey, req.signal, model_id as string);
     } catch (err) {
       const isAbort = req.signal.aborted;
       const errMsg = isAbort ? "Generación cancelada" : (err instanceof Error ? err.message : String(err));
