@@ -250,8 +250,8 @@ export default function LandingPage() {
 
       {/* ── Nav ────────────────────────────────────────────────── */}
       <header
-        className="fixed top-0 left-0 right-0 z-50 border-b"
-        style={{ background: "rgba(0,0,0,0.9)", backdropFilter: "blur(12px)", borderColor: "#222222" }}
+        className="fixed top-0 left-0 right-0 z-50"
+        style={{ background: "transparent" }}
       >
         <div className="max-w-screen-2xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
@@ -259,8 +259,8 @@ export default function LandingPage() {
             <span className="font-bold text-white text-lg">Elite Labs</span>
           </Link>
 
-          {/* Center links — desktop */}
-          <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+          {/* Center links — desktop pill */}
+          <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2" style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "999px", padding: "6px 20px" }}>
             {/* Products — mega menu */}
             <div
               className="relative"
