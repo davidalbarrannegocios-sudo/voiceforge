@@ -344,7 +344,7 @@ function Sidebar({
 
       {/* Team membership section — only for non-owner members */}
       {memberInfo && !(collapsed && desktop) && (
-        <div style={{ borderTop: "1px solid #1a1a1a", padding: "12px 20px 16px" }}>
+        <div style={{ padding: "12px 20px 16px" }}>
           <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#444444", marginBottom: "8px" }}>
             Equipo
           </p>
@@ -689,7 +689,7 @@ function HomeTab({
             {recentGenerations.map(gen => (
               <div key={gen.id}
                    className="flex items-center gap-3 p-3 rounded-xl transition-colors"
-                   style={{ border: "1px solid #1a1a1a", background: "rgba(255,255,255,0.01)" }}
+                   style={{ background: "transparent" }}
                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
                    onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.01)")}>
                 <div className="w-9 h-9 rounded-lg flex-shrink-0"
@@ -762,7 +762,7 @@ function HomeTab({
                 key={voice.id}
                 onClick={() => setActiveTab('voices')}
                 className="flex items-center gap-3 p-3 rounded-xl text-left transition-colors"
-                style={{ border: "1px solid #1a1a1a", background: "rgba(255,255,255,0.01)" }}
+                style={{ background: "transparent" }}
                 onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
                 onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.01)")}>
                 <div className="w-10 h-10 rounded-lg flex-shrink-0"
@@ -2863,7 +2863,7 @@ function HistoryTab({ plan }: { plan: string }) {
       {totalPages > 1 && (
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          paddingTop: 16, marginTop: 16, borderTop: "1px solid #1a1a1a", flexShrink: 0,
+          paddingTop: 16, marginTop: 16, flexShrink: 0,
         }}>
           <button
             onClick={() => fetchHistory(page - 1)}
@@ -5940,7 +5940,9 @@ export default function DashboardPage() {
   const [transcriptionUsed, setTranscriptionUsed] = useState<number>(0);
   const [memberInfo, setMemberInfo] = useState<{ percentage: number; creditsLastDistributed: number; teamName: string } | null>(null);
   const [voices, setVoices] = useState<Voice[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(null);
+  const DEFAULT_PRO_VOICE: SelectedVoice = { referenceId: "bf322df2096a46f18c579d0baa36f41d", name: "Adrian", isCloned: false };
+  const DEFAULT_TURBO_VOICE: SelectedVoice = { referenceId: "9Ft9sm9dzvprPILZmLJl", name: "Adrian EN", isCloned: false };
+  const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(DEFAULT_PRO_VOICE);
   const [translateVoice, setTranslateVoice] = useState<SelectedVoice | null>(null);
   const [supportOpen, setSupportOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
@@ -6010,15 +6012,17 @@ export default function DashboardPage() {
       if (saved) {
         const parsed = JSON.parse(saved) as SelectedVoice;
         setSelectedVoice(parsed);
+      } else {
+        setSelectedVoice(DEFAULT_PRO_VOICE);
       }
     } catch {
-      // ignore malformed data
+      setSelectedVoice(DEFAULT_PRO_VOICE);
     }
   }, [user?.id]);
 
   // Persist selected voice to localStorage whenever it changes
   useEffect(() => {
-    if (!user?.id || selectedVoice === null) return;
+    if (!user?.id || !selectedVoice) return;
     try {
       localStorage.setItem(`vf_selected_voice_${user.id}`, JSON.stringify(selectedVoice));
     } catch {
@@ -6092,7 +6096,7 @@ export default function DashboardPage() {
           };
           const { title, Icon } = TAB_META[activeTab] ?? { title: "", Icon: Home };
           return (
-            <div style={{ height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", position: "sticky", top: 0, zIndex: 200, borderBottom: "1px solid #1a1a1a", background: "#000000", flexShrink: 0 }}>
+            <div style={{ height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", position: "sticky", top: 0, zIndex: 200, background: "#000000", flexShrink: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 {/* Hamburger — collapses desktop sidebar / opens mobile drawer */}
                 <button

@@ -100,7 +100,7 @@ export function DashboardSidebar() {
         flexDirection: "column",
         position: "sticky",
         top: 0,
-        borderRight: "1px solid #1a1a1a",
+        // borderRight removed
         background: "#000000",
         overflow: "visible",
         transition: "width 0.3s ease-in-out",
@@ -345,7 +345,7 @@ export function DashboardSidebar() {
 
       {/* Team membership section */}
       {memberInfo && !collapsed && (
-        <div style={{ borderTop: "1px solid #1a1a1a", padding: "12px 20px 16px" }}>
+        <div style={{ padding: "12px 20px 16px" }}>
           <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#444444", marginBottom: "8px" }}>
             {t.sidebar.team}
           </p>

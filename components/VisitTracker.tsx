@@ -1,15 +1,13 @@
 'use client'
 import { useEffect } from 'react'
-import { useAuth } from '@clerk/nextjs'
 
 export default function VisitTracker() {
-  const { isSignedIn, isLoaded } = useAuth()
-
   useEffect(() => {
-    if (isLoaded && !isSignedIn) {
+    if (!sessionStorage.getItem('visit_tracked')) {
       fetch('/api/visit', { method: 'POST' }).catch(() => {})
+      sessionStorage.setItem('visit_tracked', '1')
     }
-  }, [isLoaded, isSignedIn])
+  }, [])
 
   return null
 }
