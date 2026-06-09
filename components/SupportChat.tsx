@@ -5,9 +5,16 @@ import { X, Send } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import ReactMarkdown from "react-markdown";
 
+interface TicketAction {
+  type: string;
+  ticketType: string;
+  description: string;
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
+  action?: TicketAction;
 }
 
 const WELCOME: Message = {
@@ -78,6 +85,7 @@ export function SupportChat({ open, onClose }: { open: boolean; onClose: () => v
   const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [ticketStates, setTicketStates] = useState<Record<number, "idle" | "loading" | "success" | "error">>({});
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -108,7 +116,7 @@ export function SupportChat({ open, onClose }: { open: boolean; onClose: () => v
         }),
       });
       const data = await res.json();
-      setMessages([...history, { role: "assistant", content: data.message }]);
+      setMessages([...history, { role: "assistant", content: data.message, action: data.action ?? undefined }]);
     } catch {
       setMessages([
         ...history,
@@ -121,6 +129,20 @@ export function SupportChat({ open, onClose }: { open: boolean; onClose: () => v
 
   function onKey(e: React.KeyboardEvent) {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+  }
+
+  async function createTicket(msgIndex: number, action: TicketAction) {
+    setTicketStates((s) => ({ ...s, [msgIndex]: "loading" }));
+    try {
+      const res = await fetch("/api/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: action.ticketType, description: action.description }),
+      });
+      setTicketStates((s) => ({ ...s, [msgIndex]: res.ok ? "success" : "error" }));
+    } catch {
+      setTicketStates((s) => ({ ...s, [msgIndex]: "error" }));
+    }
   }
 
   return (
@@ -160,27 +182,43 @@ export function SupportChat({ open, onClose }: { open: boolean; onClose: () => v
           msg.role === "assistant" ? (
             <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
               <AiAvatar />
-              <div style={{
-                maxWidth: "80%", padding: "9px 13px",
-                borderRadius: "16px 16px 16px 4px",
-                fontSize: "13px", lineHeight: 1.6,
-                background: "rgba(39,39,42,0.9)",
-                color: "rgba(255,255,255,0.88)",
-                border: "1px solid rgba(255,255,255,0.07)",
-                wordBreak: "break-word",
-              }}>
-                <ReactMarkdown
-                  components={{
-                    p: ({ children }) => <p style={{ margin: "0 0 4px", lineHeight: 1.6 }} className="last:mb-0">{children}</p>,
-                    strong: ({ children }) => <strong style={{ fontWeight: 600, color: "#fff" }}>{children}</strong>,
-                    h3: ({ children }) => <h3 style={{ fontWeight: 600, color: "#fff", fontSize: "13px", margin: "6px 0 2px" }}>{children}</h3>,
-                    ul: ({ children }) => <ul style={{ listStyleType: "disc", paddingLeft: "16px", margin: "2px 0 4px" }}>{children}</ul>,
-                    li: ({ children }) => <li style={{ fontSize: "13px", lineHeight: 1.6 }}>{children}</li>,
-                    code: ({ children }) => <code style={{ background: "rgba(255,255,255,0.1)", padding: "1px 4px", borderRadius: "3px", fontSize: "12px" }}>{children}</code>,
-                  }}
-                >
-                  {msg.content}
-                </ReactMarkdown>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxWidth: "80%" }}>
+                <div style={{
+                  padding: "9px 13px",
+                  borderRadius: "16px 16px 16px 4px",
+                  fontSize: "13px", lineHeight: 1.6,
+                  background: "rgba(39,39,42,0.9)",
+                  color: "rgba(255,255,255,0.88)",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  wordBreak: "break-word",
+                }}>
+                  <ReactMarkdown
+                    components={{
+                      p: ({ children }) => <p style={{ margin: "0 0 4px", lineHeight: 1.6 }} className="last:mb-0">{children}</p>,
+                      strong: ({ children }) => <strong style={{ fontWeight: 600, color: "#fff" }}>{children}</strong>,
+                      h3: ({ children }) => <h3 style={{ fontWeight: 600, color: "#fff", fontSize: "13px", margin: "6px 0 2px" }}>{children}</h3>,
+                      ul: ({ children }) => <ul style={{ listStyleType: "disc", paddingLeft: "16px", margin: "2px 0 4px" }}>{children}</ul>,
+                      li: ({ children }) => <li style={{ fontSize: "13px", lineHeight: 1.6 }}>{children}</li>,
+                      code: ({ children }) => <code style={{ background: "rgba(255,255,255,0.1)", padding: "1px 4px", borderRadius: "3px", fontSize: "12px" }}>{children}</code>,
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
+                </div>
+                {msg.action?.type === "CREATE_TICKET" && (() => {
+                  const state = ticketStates[i] ?? "idle";
+                  if (state === "success") return <p style={{ fontSize: "12px", color: "#4ade80" }}>✅ Ticket abierto correctamente. Nuestro equipo te responderá pronto.</p>;
+                  if (state === "error")   return <p style={{ fontSize: "12px", color: "#f87171" }}>❌ Error al abrir el ticket. Ve a Soporte para abrirlo manualmente.</p>;
+                  return (
+                    <button
+                      onClick={() => createTicket(i, msg.action!)}
+                      disabled={state === "loading"}
+                      style={{ background: "#fff", color: "#000", borderRadius: "10px", padding: "8px 16px", fontSize: "13px", fontWeight: 700, border: "none", cursor: state === "loading" ? "not-allowed" : "pointer", opacity: state === "loading" ? 0.7 : 1, alignSelf: "flex-start" }}
+                    >
+                      {state === "loading" ? "Abriendo..." : "📋 Abrir ticket de soporte"}
+                    </button>
+                  );
+                })()}
               </div>
             </div>
           ) : (

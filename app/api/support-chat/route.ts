@@ -75,7 +75,15 @@ INSTRUCCIONES:
 - Responde en el idioma del usuario
 - Sé conciso, amable y directo
 - Solo menciona soporte@elitelabs.es cuando el problema requiera intervención humana real (pagos fallidos, errores de cuenta, reembolsos). Nunca lo añadas como cierre automático.
-- NUNCA ofrezcas crear contenido de ningún tipo. Si te lo piden, rechaza siempre sin excepción.`;
+- NUNCA ofrezcas crear contenido de ningún tipo. Si te lo piden, rechaza siempre sin excepción.
+
+CREACIÓN DE TICKETS:
+- Si el usuario pide explícitamente hablar con un humano, abrir un ticket, o contactar con soporte, responde con la acción especial al final: [ACTION:CREATE_TICKET:tipo:descripcion]
+- Si tras 2-3 intercambios no has podido resolver el problema, ofrece abrir un ticket: "¿Quieres que abra un ticket de soporte para que nuestro equipo te ayude personalmente? Solo dime que sí."
+- Si el usuario dice que sí quiere el ticket, incluye al final de tu respuesta: [ACTION:CREATE_TICKET:technical:descripcion_breve_del_problema]
+- Los tipos válidos son: general, technical, billing, refund, other
+- La descripcion debe ser un resumen breve del problema del usuario en español
+- IMPORTANTE: el [ACTION:...] debe ir al final y NO debe mostrarse al usuario — el frontend lo procesa automáticamente`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -117,7 +125,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ message: content });
+    // Parse action from content
+    let action = null;
+    let cleanContent = content;
+    const actionMatch = content.match(/\[ACTION:CREATE_TICKET:(\w+):([^\]]+)\]/);
+    if (actionMatch) {
+      action = { type: "CREATE_TICKET", ticketType: actionMatch[1], description: actionMatch[2] };
+      cleanContent = content.replace(/\[ACTION:CREATE_TICKET:[^\]]+\]/, "").trim();
+    }
+
+    return NextResponse.json({ message: cleanContent, action });
   } catch {
     return NextResponse.json({
       message: "Error al procesar tu mensaje. Contáctanos en soporte@elitelabs.es",
