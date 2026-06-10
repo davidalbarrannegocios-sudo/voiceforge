@@ -59,7 +59,8 @@ export async function GET(req: Request) {
   const accentFilter = (searchParams.get("accent") ?? "").toLowerCase().trim();
   // Build server-side filter params for ai33.pro
   // age and gender work server-side; use_case does not (always returns full set)
-  const params = new URLSearchParams({ page_size: "100", page: String(page) });
+  const params = new URLSearchParams({ page: String(page) });
+  if (!search) params.set("page_size", "100");
   if (langFilter && langFilter !== "all") params.set("language", langFilter);
   if (genderFilter && genderFilter !== "all") params.set("gender", genderFilter);
   if (ageFilter && ageFilter !== "all") params.set("age", ageFilter);

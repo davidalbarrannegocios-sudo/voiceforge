@@ -445,23 +445,7 @@ export function DashboardSidebar() {
       )}
 
       {/* Lifetime badge */}
-      {plan === "lifetime" && !collapsed && (
-        <div style={{ padding: "0 12px 16px", flexShrink: 0 }}>
-          <div style={{
-            width: "100%",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "10px 14px",
-            borderRadius: "10px",
-            border: "1px solid rgba(245,158,11,0.3)",
-            background: "rgba(245,158,11,0.08)",
-          }}>
-            <span style={{ fontSize: "16px", lineHeight: 1 }}>♾</span>
-            <span style={{ fontSize: "12px", fontWeight: 700, color: "#f59e0b", letterSpacing: "0.05em" }}>LIFETIME</span>
-          </div>
-        </div>
-      )}
+
     </aside>
   );
 }
