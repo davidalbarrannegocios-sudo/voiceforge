@@ -3717,105 +3717,103 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 
       {/* ── Convertir tab ── */}
       {innerTab === "convert" && (
-        <div className="space-y-5">
+        <div className="space-y-4">
 
-          {/* Upload card */}
+          {/* Upload bar */}
           <div
-            className="relative rounded-2xl overflow-hidden"
-            style={{ background: "#111111", border: "1px solid #1a1a1a" }}
+            style={{ background: "#111", borderRadius: "10px", padding: "12px 16px", border: `1px solid ${dragging ? "rgba(255,255,255,0.2)" : "#222"}`, transition: "border-color 0.15s" }}
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
           >
-
-            <div className="relative p-8 text-center">
-              {dragging && (
-                <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.3)", borderRadius: "inherit", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <p className="text-gray-300 font-medium">{t.translate.dropHere}</p>
+            {file ? (
+              <div className="flex items-center gap-3">
+                <FileAudio size={15} style={{ color: "#a78bfa", flexShrink: 0 }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">{file.name}</p>
+                  {fileDuration != null && (
+                    <p className="text-xs" style={{ color: "#666" }}>{fmtSec(Math.round(fileDuration))}</p>
+                  )}
                 </div>
-              )}
-              <h3 className="text-base font-semibold text-white mb-1">{t.translate.uploadTitle}</h3>
-              <p className="text-sm mb-1" style={{ color: "#9ca3af" }}>{t.translate.uploadDesc}</p>
-              <p className="text-xs mb-6" style={{ color: "#666666" }}>{t.translate.uploadFormats}</p>
-
-              {file ? (
-                <div className="flex items-center gap-3 rounded-xl px-4 py-3 mx-auto max-w-sm" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                  <FileAudio size={18} style={{ color: "#a78bfa", flexShrink: 0 }} />
-                  <div className="flex-1 text-left min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{file.name}</p>
-                    <p className="text-xs" style={{ color: "#888888" }}>
-                      {fileDuration != null ? fmtSec(Math.round(fileDuration)) + " · " : ""}
-                      {(file.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => { setFile(null); setFileDuration(null); setResult(null); }}
-                    style={{ color: "#6b7280", background: "none", border: "none", cursor: "pointer", padding: "4px", flexShrink: 0 }}
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex gap-3 justify-center flex-wrap">
-                  <button
-                    onClick={() => inputRef.current?.click()}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all hover:bg-white/10"
-                    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#d1d5db" }}
-                  >
-                    <Upload size={14} /> {t.translate.chooseFile}
-                  </button>
-                  <button
-                    onClick={toggleRecording}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all"
-                    style={{
-                      background: recording ? "rgba(239,68,68,0.12)" : "rgba(255,255,255,0.06)",
-                      border: `1px solid ${recording ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.15)"}`,
-                      color: recording ? "#f87171" : "#d1d5db",
-                    }}
-                  >
-                    {recording
-                      ? <><Square size={12} style={{ fill: "#f87171" }} /> {fmtSec(recordingTime)}</>
-                      : <><Mic size={14} /> {t.translate.record}</>
-                    }
-                  </button>
-                </div>
-              )}
-              <input ref={inputRef} type="file" className="hidden" accept=".mp3,.wav,.m4a,audio/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
-            </div>
+                <button
+                  onClick={() => { setFile(null); setFileDuration(null); setResult(null); }}
+                  style={{ color: "#555", background: "none", border: "none", cursor: "pointer", padding: "4px", flexShrink: 0 }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <p className="flex-1 text-sm truncate" style={{ color: dragging ? "#aaa" : "#555" }}>
+                  {dragging ? t.translate.dropHere : "Arrastra un archivo o haz clic para subir"}
+                </p>
+                <button
+                  onClick={() => inputRef.current?.click()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:bg-white/10 flex-shrink-0"
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid #333", color: "#bbb" }}
+                >
+                  <Upload size={11} /> {t.translate.chooseFile}
+                </button>
+                <button
+                  onClick={toggleRecording}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex-shrink-0"
+                  style={{
+                    background: recording ? "rgba(239,68,68,0.12)" : "rgba(255,255,255,0.05)",
+                    border: `1px solid ${recording ? "rgba(239,68,68,0.4)" : "#333"}`,
+                    color: recording ? "#f87171" : "#bbb",
+                  }}
+                >
+                  {recording
+                    ? <><Square size={10} style={{ fill: "#f87171" }} /> {fmtSec(recordingTime)}</>
+                    : <><Mic size={11} /> {t.translate.record}</>
+                  }
+                </button>
+              </div>
+            )}
           </div>
+          <input ref={inputRef} type="file" className="hidden" accept=".mp3,.wav,.m4a,audio/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
 
           {/* Language selector */}
           <div>
-            <p className="text-sm font-semibold text-white mb-3">{t.translate.targetLang}</p>
-            <div className="grid grid-cols-5 gap-2">
-              {TRANSLATE_LANGS.map((lang) => (
-                <button
-                  key={lang.code}
-                  onClick={() => setTargetLang(lang.code)}
-                  className="flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl text-xs font-medium transition-all"
-                  style={
-                    targetLang === lang.code
-                      ? { background: "rgba(255,255,255,0.1)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.2)" }
-                      : { background: "#111111", color: "#888888", border: "1px solid #222222" }
-                  }
-                >
-                  <span className={`fi fi-${lang.fi}`} style={{ width: "24px", height: "18px", display: "inline-block", borderRadius: "3px", flexShrink: 0 }} />
-                  {TRANSLATE_LANG_LABELS[lang.code] ?? lang.label}
-                </button>
-              ))}
+            <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555", letterSpacing: "0.06em" }}>{t.translate.targetLang}</p>
+            <div className="relative">
+              <select
+                value={targetLang}
+                onChange={(e) => setTargetLang(e.target.value)}
+                style={{
+                  width: "100%",
+                  background: "#111",
+                  border: "1px solid #222",
+                  borderRadius: "10px",
+                  padding: "10px 36px 10px 14px",
+                  color: "#e5e7eb",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  appearance: "none",
+                  WebkitAppearance: "none",
+                  outline: "none",
+                }}
+              >
+                {TRANSLATE_LANGS.map((lang) => (
+                  <option key={lang.code} value={lang.code} style={{ background: "#111" }}>
+                    {TRANSLATE_LANG_LABELS[lang.code] ?? lang.label}
+                  </option>
+                ))}
+              </select>
+              <svg style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#555" }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
             </div>
           </div>
 
           {/* Voice section */}
           <div>
-            <p className="text-sm font-semibold text-white mb-3">{t.translate.voiceForAudio}</p>
-            <div className="flex p-1 rounded-xl gap-1 mb-3" style={{ background: "#111111", border: "1px solid #222222" }}>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555", letterSpacing: "0.06em" }}>{t.translate.voiceForAudio}</p>
+            <div className="flex p-0.5 rounded-lg gap-0.5 mb-2.5" style={{ background: "#111111", border: "1px solid #222222" }}>
               {(["model", "reference"] as const).map((subTab) => (
                 <button
                   key={subTab}
                   onClick={() => setVoiceSubTab(subTab)}
-                  className="flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all"
-                  style={{ background: voiceSubTab === subTab ? "#1a1a1a" : "transparent", color: voiceSubTab === subTab ? "#e5e7eb" : "#6b7280", border: "none", cursor: "pointer" }}
+                  className="flex-1 py-1.5 px-3 rounded-md text-xs font-medium transition-all"
+                  style={{ background: voiceSubTab === subTab ? "#1e1e1e" : "transparent", color: voiceSubTab === subTab ? "#e5e7eb" : "#555", border: "none", cursor: "pointer" }}
                 >
                   {subTab === "model" ? t.translate.selectModel : t.translate.uploadReference}
                 </button>
@@ -3825,40 +3823,40 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             {voiceSubTab === "model" ? (
               <button
                 onClick={() => setShowBrowser(true)}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all hover:border-white/20"
+                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all hover:border-white/20"
                 style={{ background: "#111111", border: "1px solid #222222" }}
               >
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.08)" }}>
-                  <Mic size={13} style={{ color: "#aaaaaa" }} />
+                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.06)" }}>
+                  <Mic size={12} style={{ color: "#888" }} />
                 </div>
                 <div className="flex-1 text-left min-w-0">
                   <p className="text-sm font-medium text-white truncate">{selectedVoice?.name ?? t.translate.defaultVoice}</p>
-                  <p className="text-xs" style={{ color: "#888888" }}>{selectedVoice?.isCloned ? t.generate.clonedVoice : t.generate.systemVoice}</p>
+                  <p className="text-xs" style={{ color: "#555" }}>{selectedVoice?.isCloned ? t.generate.clonedVoice : t.generate.systemVoice}</p>
                 </div>
-                <span className="text-xs flex-shrink-0" style={{ color: "#888888" }}>→</span>
+                <span className="text-xs flex-shrink-0" style={{ color: "#444" }}>→</span>
               </button>
             ) : (
               <div>
                 {referenceFile ? (
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: "#111111", border: "1px solid #222222" }}>
-                    <Mic2 size={16} style={{ color: "#a78bfa", flexShrink: 0 }} />
+                  <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl" style={{ background: "#111111", border: "1px solid #222222" }}>
+                    <Mic2 size={14} style={{ color: "#a78bfa", flexShrink: 0 }} />
                     <div className="flex-1 text-left min-w-0">
                       <p className="text-sm font-medium text-white truncate">{referenceFile.name}</p>
-                      <p className="text-xs" style={{ color: "#888888" }}>{(referenceFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                      <p className="text-xs" style={{ color: "#555" }}>{(referenceFile.size / 1024 / 1024).toFixed(2)} MB</p>
                     </div>
-                    <button onClick={() => setReferenceFile(null)} style={{ color: "#6b7280", background: "none", border: "none", cursor: "pointer", padding: "4px" }}>
+                    <button onClick={() => setReferenceFile(null)} style={{ color: "#555", background: "none", border: "none", cursor: "pointer", padding: "4px" }}>
                       <X size={14} />
                     </button>
                   </div>
                 ) : (
                   <div
                     onClick={() => refInputRef.current?.click()}
-                    className="w-full flex flex-col items-center gap-2 px-4 py-6 rounded-xl cursor-pointer transition-all hover:border-white/15"
+                    className="w-full flex flex-col items-center gap-2 px-4 py-5 rounded-xl cursor-pointer transition-all hover:border-white/15"
                     style={{ background: "#111111", border: "1px dashed #222222" }}
                   >
-                    <Mic2 size={20} style={{ color: "#666666" }} />
-                    <p className="text-sm" style={{ color: "#888888" }}>{t.translate.uploadVoiceRef}</p>
-                    <p className="text-xs" style={{ color: "#666666" }}>{t.translate.refFormats}</p>
+                    <Mic2 size={18} style={{ color: "#444" }} />
+                    <p className="text-sm" style={{ color: "#666" }}>{t.translate.uploadVoiceRef}</p>
+                    <p className="text-xs" style={{ color: "#444" }}>{t.translate.refFormats}</p>
                   </div>
                 )}
                 <input ref={refInputRef} type="file" className="hidden" accept=".mp3,.wav,.m4a,audio/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) setReferenceFile(f); e.target.value = ""; }} />
@@ -3867,24 +3865,24 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           </div>
 
           {/* Cost note */}
-          <div className="flex items-start gap-3 px-4 py-3 rounded-xl text-xs leading-relaxed" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#888888" }}>
-            <span className="flex-shrink-0 mt-0.5" style={{ color: "#ffffff" }}>ℹ</span>
+          <div className="flex items-start gap-3 px-3 py-2.5 rounded-xl text-xs leading-relaxed" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", color: "#555" }}>
+            <span className="flex-shrink-0 mt-0.5" style={{ color: "#888" }}>ℹ</span>
             <span>{t.translate.costNote.replace('{pct}', plan === "enterprise" ? "10%" : "20%")}</span>
           </div>
 
           {error && (
-            <div className="p-4 rounded-xl text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
+            <div className="p-3 rounded-xl text-sm" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171" }}>
               {error}
             </div>
           )}
 
           {/* Submit */}
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-end gap-1.5">
             <button
               onClick={handleTranslate}
               disabled={!file || loading || isFreeExhausted}
-              className="flex items-center gap-2 px-8 py-3 rounded-full font-semibold text-black text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
-              style={{ background: "#ffffff", boxShadow: loading || !file ? "none" : "0 4px 20px rgba(255,255,255,0.2)" }}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-black text-sm transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              style={{ background: "#ffffff", boxShadow: loading || !file ? "none" : "0 4px 20px rgba(255,255,255,0.12)" }}
             >
               {loading ? (
                 <>
@@ -3895,10 +3893,15 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                   {stepLabel ?? t.translate.starting}
                 </>
               ) : (
-                <><Globe size={15} /> {t.translate.startTranslation}</>
+                <>Traducir →</>
               )}
             </button>
-            <p className="text-xs text-center" style={{ color: "rgba(255,255,255,0.25)" }}>
+            {file && !loading && (
+              <p className="text-xs" style={{ color: "#444" }}>
+                {fileDuration != null ? `~${fmtSec(Math.round(fileDuration))} · ` : ""}créditos calculados al traducir
+              </p>
+            )}
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.18)" }}>
               {t.translate.autoDelete.replace('{n}', String(TRANSLATE_RETENTION[plan] ?? 3))}
             </p>
           </div>
@@ -3913,7 +3916,6 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                   {result.charCost.toLocaleString("es-ES")} créditos · {result.durationSeconds.toFixed(1)}s
                 </span>
               </div>
-              {/* Hidden audio element */}
               <audio
                 ref={translationAudioRef}
                 src={result.audioUrl}
@@ -3924,10 +3926,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 onLoadedMetadata={() => setTranslationDuration(translationAudioRef.current?.duration ?? 0)}
                 className="hidden"
               />
-
-              {/* Reproductor minimalista */}
               <div className="flex items-center gap-3 px-4 py-3 bg-white/[0.03] rounded-xl border border-white/[0.08]">
-                {/* Play/pause */}
                 <button
                   onClick={() => {
                     if (translationAudioRef.current?.paused) {
@@ -3944,8 +3943,6 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                     <Play className="w-3.5 h-3.5 text-black ml-0.5" />
                   )}
                 </button>
-
-                {/* Progress bar */}
                 <div
                   className="flex-1 h-1 bg-white/10 rounded-full cursor-pointer group relative"
                   onClick={e => {
@@ -3960,13 +3957,9 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                     style={{ width: `${translationDuration ? (translationCurrentTime / translationDuration) * 100 : 0}%` }}
                   />
                 </div>
-
-                {/* Time */}
                 <span className="text-[11px] text-white/30 font-mono flex-shrink-0 tabular-nums">
                   {fmtSec(Math.floor(translationCurrentTime))} / {fmtSec(Math.floor(translationDuration))}
                 </span>
-
-                {/* Download */}
                 <button
                   onClick={() => downloadAudio(result.audioUrl, `traduccion-${result.targetLanguageName.toLowerCase()}.mp3`)}
                   className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/30 hover:text-white transition-colors flex-shrink-0"
@@ -3978,11 +3971,11 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
               </div>
               <div className="grid gap-3">
                 <div className="rounded-xl p-4" style={{ background: "#111111", border: "1px solid #222222" }}>
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#666666" }}>Transcripción (español)</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555" }}>Transcripción (español)</p>
                   <p className="text-sm leading-relaxed" style={{ color: "#9ca3af" }}>{result.transcribedText}</p>
                 </div>
                 <div className="rounded-xl p-4" style={{ background: "#111111", border: "1px solid #222222" }}>
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#666666" }}>Traducción ({result.targetLanguageName})</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555" }}>Traducción ({result.targetLanguageName})</p>
                   <p className="text-sm leading-relaxed" style={{ color: "#9ca3af" }}>{result.translatedText}</p>
                 </div>
               </div>
