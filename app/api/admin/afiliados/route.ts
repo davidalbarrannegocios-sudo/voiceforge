@@ -21,34 +21,44 @@ async function uniqueCode(): Promise<string> {
   throw new Error("No se pudo generar código único");
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const auth = await requireAdmin();
   if (auth instanceof NextResponse) return auth;
 
-  const users = await prisma.user.findMany({
-    select: {
-      id: true,
-      email: true,
-      plan: true,
-      createdAt: true,
-      referralCode: true,
-      affiliateType: true,
-      referralBalance: true,
-      referralEarned: true,
-      hasDiscount: true,
-      discountPercentage: true,
-      discountLabel: true,
-      referralsGiven: {
-        select: {
-          id: true, status: true, rewardChars: true, createdAt: true,
-          referred: { select: { id: true, email: true, plan: true, createdAt: true } },
+  const url = new URL(req.url);
+  const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1"));
+  const limit = Math.min(Math.max(1, parseInt(url.searchParams.get("limit") ?? "50")), 200);
+  const skip = (page - 1) * limit;
+
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        plan: true,
+        createdAt: true,
+        referralCode: true,
+        affiliateType: true,
+        referralBalance: true,
+        referralEarned: true,
+        hasDiscount: true,
+        discountPercentage: true,
+        discountLabel: true,
+        referralsGiven: {
+          select: {
+            id: true, status: true, rewardChars: true, createdAt: true,
+            referred: { select: { id: true, email: true, plan: true, createdAt: true } },
+          },
+          orderBy: { createdAt: "desc" },
         },
-        orderBy: { createdAt: "desc" },
+        _count: { select: { generations: true } },
       },
-      _count: { select: { generations: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+    }),
+    prisma.user.count(),
+  ]);
 
   const mapped = users.map(u => ({
     id: u.id,
@@ -90,6 +100,10 @@ export async function GET() {
       pendingCommission: cashUsers.reduce((s, u) => s + u.referralBalance, 0),
       paidCommission: cashUsers.reduce((s, u) => s + Math.max(0, u.referralEarned - u.referralBalance), 0),
     },
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
   });
 }
 

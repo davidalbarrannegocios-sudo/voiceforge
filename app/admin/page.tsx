@@ -894,8 +894,13 @@ function DashboardSection({
 function UsersSection({
   users, onSelectUser, creditState, roleState, onCredits, onRole, search, onSearch,
   onDeleteUser, onBanUser, onSuspendUser,
+  usersPage, usersTotal, usersTotalPages, onPageChange,
 }: {
   users: AdminUser[];
+  usersPage: number;
+  usersTotal: number;
+  usersTotalPages: number;
+  onPageChange: (page: number) => void;
   onSelectUser: (id: string) => void;
   creditState: { userId: string; amount: string; op: "add" | "subtract"; loading: boolean; setUserId: (v: string) => void; setAmount: (v: string) => void; setOp: (v: "add" | "subtract") => void };
   roleState: { userId: string; role: "admin" | "user"; loading: boolean; setUserId: (v: string) => void; setRole: (v: "admin" | "user") => void };
@@ -966,7 +971,7 @@ function UsersSection({
       {/* Summary stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
         {([
-          { label: "Total usuarios", value: users.length, color: "#60a5fa" },
+          { label: "Total usuarios", value: usersTotal, color: "#60a5fa" },
           { label: "Activos", value: activeCount, color: "#4ade80" },
           { label: "PRO+", value: proPlusCount, color: "#a78bfa" },
           { label: "Nuevos esta semana", value: newThisWeek, color: "#f97316" },
@@ -1092,6 +1097,31 @@ function UsersSection({
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {usersTotalPages > 1 && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>
+              Página {usersPage} de {usersTotalPages} · {usersTotal} usuarios en total
+            </span>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => onPageChange(usersPage - 1)}
+                disabled={usersPage <= 1}
+                style={{ padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, border: "1px solid rgba(255,255,255,0.1)", background: usersPage <= 1 ? "transparent" : "rgba(255,255,255,0.06)", color: usersPage <= 1 ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.7)", cursor: usersPage <= 1 ? "default" : "pointer" }}
+              >
+                ← Anterior
+              </button>
+              <button
+                onClick={() => onPageChange(usersPage + 1)}
+                disabled={usersPage >= usersTotalPages}
+                style={{ padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, border: "1px solid rgba(255,255,255,0.1)", background: usersPage >= usersTotalPages ? "transparent" : "rgba(255,255,255,0.06)", color: usersPage >= usersTotalPages ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.7)", cursor: usersPage >= usersTotalPages ? "default" : "pointer" }}
+              >
+                Siguiente →
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Credit + Role management */}
@@ -2795,6 +2825,9 @@ export default function AdminPage() {
   const [activeSection, setActiveSection] = useState<Section>("dashboard");
   const [authorized, setAuthorized] = useState<boolean | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [usersTotal, setUsersTotal] = useState(0);
+  const [usersTotalPages, setUsersTotalPages] = useState(1);
+  const [usersPage, setUsersPage] = useState(1);
   const [stats, setStats] = useState<Stats | null>(null);
   const [search, setSearch] = useState("");
   const [feedback, setFeedback] = useState<{ msg: string; ok: boolean } | null>(null);
@@ -2857,10 +2890,20 @@ export default function AdminPage() {
     return () => clearInterval(id);
   }, []);
 
+  const fetchUsersPage = useCallback(async (page: number) => {
+    const res = await fetch(`/api/admin/users?page=${page}&limit=50`);
+    if (!res.ok) return;
+    const data = await res.json();
+    setUsers(Array.isArray(data.users) ? data.users : []);
+    setUsersTotal(data.total ?? 0);
+    setUsersTotalPages(data.totalPages ?? 1);
+    setUsersPage(data.page ?? page);
+  }, []);
+
   const fetchAll = useCallback(async () => {
     fetch("/api/admin/fish-credits").then(r => r.json()).then(d => setFishCredits(d)).catch(() => {});
     const [uRes, sRes, tRes, aRes, wRes, cfgRes] = await Promise.all([
-      fetch("/api/admin/users"),
+      fetch("/api/admin/users?page=1&limit=50"),
       fetch("/api/admin/stats"),
       fetch("/api/admin/support"),
       fetch("/api/admin/affiliate-applications"),
@@ -2869,7 +2912,11 @@ export default function AdminPage() {
     ]);
     if (uRes.status === 403 || uRes.status === 401) { setAuthorized(false); return; }
     setAuthorized(true);
-    const uData = await uRes.json(); setUsers(Array.isArray(uData) ? uData : []);
+    const uData = await uRes.json();
+    setUsers(Array.isArray(uData.users) ? uData.users : []);
+    setUsersTotal(uData.total ?? 0);
+    setUsersTotalPages(uData.totalPages ?? 1);
+    setUsersPage(1);
     const sData = await sRes.json(); setStats(sData && !sData.error ? sData : null);
     const tData = await tRes.json(); setTickets(Array.isArray(tData) ? tData : []);
     const aData = await aRes.json(); setAffiliateApps(Array.isArray(aData) ? aData : []);
@@ -3108,6 +3155,10 @@ export default function AdminPage() {
             {activeSection === "users" && (
               <UsersSection
                 users={users}
+                usersPage={usersPage}
+                usersTotal={usersTotal}
+                usersTotalPages={usersTotalPages}
+                onPageChange={fetchUsersPage}
                 onSelectUser={setDetailUserId}
                 creditState={{ userId: creditUserId, amount: creditAmount, op: creditOp, loading: creditLoading, setUserId: setCreditUserId, setAmount: setCreditAmount, setOp: setCreditOp }}
                 roleState={{ userId: roleUserId, role: roleValue, loading: roleLoading, setUserId: setRoleUserId, setRole: setRoleValue }}

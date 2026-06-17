@@ -357,6 +357,9 @@ export default function AdminAfiliados() {
   const [users, setUsers] = useState<AffiliateUser[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
   const [filterPlan, setFilterPlan] = useState("all");
   const [filterInvites, setFilterInvites] = useState("all");
@@ -372,14 +375,17 @@ export default function AdminAfiliados() {
     setTimeout(() => setFeedback(null), 3000);
   };
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (p = 1) => {
     setLoading(true);
-    const res = await fetch("/api/admin/afiliados");
+    const res = await fetch(`/api/admin/afiliados?page=${p}&limit=50`);
     if (res.status === 401 || res.status === 403) { router.push("/admin"); return; }
     if (!res.ok) { flash("Error cargando datos", false); setLoading(false); return; }
     const data = await res.json();
     setUsers(data.users);
     setStats(data.stats);
+    setTotal(data.total ?? 0);
+    setTotalPages(data.totalPages ?? 1);
+    setPage(data.page ?? p);
     setLoading(false);
   }, [router]);
 
@@ -473,7 +479,7 @@ export default function AdminAfiliados() {
             <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>Afiliados</h1>
             <p style={{ color: "#555", fontSize: 13, marginTop: 4 }}>Gestión completa del programa de afiliados</p>
           </div>
-          <button onClick={load} style={s.btn("#1a1a1a", { gap: 6 })}>
+          <button onClick={() => load(1)} style={s.btn("#1a1a1a", { gap: 6 })}>
             <RefreshCw size={13} /> Actualizar
           </button>
         </div>
@@ -577,6 +583,31 @@ export default function AdminAfiliados() {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderTop: "1px solid #1a1a1a" }}>
+                <span style={{ fontSize: 12, color: "#555" }}>
+                  Página {page} de {totalPages} · {total} usuarios en total
+                </span>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    onClick={() => load(page - 1)}
+                    disabled={page <= 1}
+                    style={s.btn("#0d0d0d", { opacity: page <= 1 ? 0.35 : 1, cursor: page <= 1 ? "default" : "pointer" })}
+                  >
+                    ← Anterior
+                  </button>
+                  <button
+                    onClick={() => load(page + 1)}
+                    disabled={page >= totalPages}
+                    style={s.btn("#0d0d0d", { opacity: page >= totalPages ? 0.35 : 1, cursor: page >= totalPages ? "default" : "pointer" })}
+                  >
+                    Siguiente →
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
