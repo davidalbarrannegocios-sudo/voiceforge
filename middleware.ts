@@ -28,6 +28,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/cookie-consent",
   "/api/cookie-consent/link",
   "/api/visit",
+  "/api/cron/(.*)",
   "/studio(.*)",
 ]);
 
@@ -36,6 +37,9 @@ export default clerkMiddleware(async (auth, req) => {
 
   const { userId, sessionClaims } = await auth();
   if (!userId) {
+    if (req.nextUrl.pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 

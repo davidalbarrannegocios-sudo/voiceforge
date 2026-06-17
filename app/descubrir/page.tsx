@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function DescubrirPage() {
-  redirect("/voices");
+export default function Page() {
+  redirect("/dashboard/niche-finder");
 }

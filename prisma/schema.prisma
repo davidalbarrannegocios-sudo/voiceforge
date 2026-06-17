@@ -29,6 +29,7 @@ model User {
   creditsRenewedAt      DateTime?
   referralBalance       Int                    @default(0)
   referralEarned        Int                    @default(0)
+  referralPending       Int                    @default(0)
   stripePriceId         String?
   disabledUntil         DateTime?
   affiliateType         String    @default("standard")
@@ -45,8 +46,9 @@ model User {
   jobs                  Job[]
   payoutRequests        PayoutRequest[]
   purchases             Purchase[]
-  referralReceived      Referral?              @relation("referred")
-  referralsGiven        Referral[]             @relation("referrer")
+  referralReceived          Referral?                @relation("referred")
+  referralsGiven            Referral[]               @relation("referrer")
+  pendingReferralRewards    PendingReferralReward[]
   supportTickets        SupportTicket[]
   teamOwned             Team?                  @relation("TeamOwner")
   teamMember            TeamMember?
@@ -59,6 +61,7 @@ model User {
   apiWallet            ApiWallet?
   sharedImages         SharedImage[]
   eliteTextPlan        EliteTextPlan?
+  announcementsSeen    AnnouncementSeen[]
 }
 
 model Job {
@@ -244,6 +247,38 @@ model AffiliateApplication {
   user          User?    @relation(fields: [userId], references: [id])
 }
 
+model NicheChannel {
+  id                  String   @id @default(cuid())
+  ytChannelId         String   @unique
+  title               String
+  description         String?
+  username            String?
+  thumbnail           String?
+  category            String?
+  format              String?
+  outlierScore        Float?
+  isFaceless          Boolean?
+  isAiChannel         Boolean?
+  isMonetized         Boolean?
+  quality             String?
+  tags                String[]
+  location            String?
+  googleTrendsKeyword String?
+  createdAt           String?
+  subscribers         Int?
+  monthlyRevenue      Float?
+  monthlyViews        Int?
+  totalViews          Int?
+  totalVideos         Int?
+  avgViewsPerVideo    Float?
+  avgVideoLength      Float?
+  uploadsPerWeek      Float?
+  rpm                 Float?
+  firstVideoDate      String?
+  lastVideoDate       String?
+  updatedAt           DateTime @updatedAt
+}
+
 model WithdrawalRequest {
   id        String    @id @default(cuid())
   userId    String
@@ -290,6 +325,10 @@ model SystemConfig {
   elitelabsTurboStatus         String   @default("active")
   updatedAt                    DateTime @updatedAt
   elitelabsTurboManualOverride Boolean  @default(false)
+  registrationOpen             Boolean  @default(true)
+  maintenanceMessage           String   @default("")
+  maintenanceMessageActive     Boolean  @default(false)
+  planCredits                  String   @default("{}")
 }
 
 model UserSession {
@@ -362,14 +401,17 @@ model SharedImage {
   prompt      String
   model       String
   aspectRatio String
-  r2Key       String
+  storageKey  String   @default("")
   imageUrl    String
   type        String   @default("image")
   creditsUsed Int      @default(0)
+  expiresAt   DateTime
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
+  @@index([expiresAt])
+  @@index([userId])
 }
 
 model CookieConsent {
@@ -397,6 +439,19 @@ model EliteTextPlan {
   user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model PendingReferralReward {
+  id           String   @id @default(cuid())
+  referrerId   String
+  referredId   String
+  amount       Int
+  pendingUntil DateTime
+  createdAt    DateTime @default(now())
+  referrer     User     @relation(fields: [referrerId], references: [id])
+
+  @@index([pendingUntil])
+  @@index([referredId])
+}
+
 model PageVisit {
   id        String   @id @default(cuid())
   ip        String?
@@ -406,4 +461,22 @@ model PageVisit {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     Json
+  content   Json
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AnnouncementSeen {
+  id             String   @id @default(cuid())
+  userId         String
+  announcementId String
+  seenAt         DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, announcementId])
 }

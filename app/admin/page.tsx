@@ -9,6 +9,8 @@ import {
   BarChart2, Settings, RefreshCw, Check, X, AlertTriangle, Play, Pause,
   ExternalLink, Search, Filter, Plus, Minus, ArrowLeft, ChevronRight,
   ScrollText, Monitor, ChevronDown, Trash2, ShieldOff, Clock, Shield,
+  DollarSign, Database, Zap, Eye, MessageSquare,
+  CheckCircle, Wrench, PowerOff,
 } from "lucide-react";
 
 /* ─── Types ───────────────────────────────────────────────── */
@@ -24,7 +26,7 @@ interface WithdrawalRequest {
   paidAt: string | null; user: { email: string };
 }
 interface AdminUser {
-  id: string; clerkId: string; email: string; credits: number; plan: string; role: string;
+  id: string; clerkId: string; email: string; credits: number; extraCredits: number; plan: string; role: string;
   createdAt: string; stripeSubscriptionId: string | null;
   stripeCustomerId: string | null; planExpiresAt: string | null;
   billingInterval: string; creditsRenewedAt: string | null;
@@ -75,7 +77,7 @@ interface Payment {
   amountRefunded: number; last4: string | null; createdAt: string;
 }
 
-type Section = "dashboard" | "users" | "subscriptions" | "engines" | "support" | "affiliates" | "withdrawals" | "analytics" | "config" | "logs" | "cookies";
+type Section = "dashboard" | "users" | "subscriptions" | "engines" | "support" | "affiliates" | "withdrawals" | "analytics" | "config" | "logs" | "cookies" | "announcements" | "nichefinder";
 
 interface UserSession {
   id: string; ip: string | null; browser: string | null; os: string | null;
@@ -87,38 +89,39 @@ interface AppLog {
   details: string | null; userId: string | null; createdAt: string;
 }
 
-/* ─── Style helpers ───────────────────────────────────────── */
-const card = {
-  background: "#111111",
-  border: "1px solid rgba(255,255,255,0.08)",
-  borderRadius: "1rem",
-  padding: "1.5rem",
-} as const;
+/* ─── Design system ───────────────────────────────────────── */
+const card: React.CSSProperties = {
+  background: "rgba(255,255,255,0.03)",
+  border: "1px solid rgba(255,255,255,0.07)",
+  borderRadius: 16,
+  padding: 20,
+  backdropFilter: "blur(12px)",
+};
 
-const input = {
-  background: "#111111",
+const input: React.CSSProperties = {
+  background: "rgba(255,255,255,0.04)",
   border: "1px solid rgba(255,255,255,0.08)",
-  borderRadius: "0.5rem",
+  borderRadius: 10,
   color: "#fff",
-  padding: "0.5rem 0.75rem",
-  fontSize: "0.875rem",
+  padding: "8px 12px",
+  fontSize: 13,
   width: "100%",
   outline: "none",
-} as const;
+};
 
-const btn = (color = "#ffffff", extra: React.CSSProperties = {}) =>
+const btn = (color = "#ffffff", extra: React.CSSProperties = {}): React.CSSProperties =>
   ({
     background: color,
     border: "none",
-    borderRadius: "0.5rem",
+    borderRadius: 10,
     color: color === "#ffffff" ? "#000000" : "#fff",
-    padding: "0.5rem 1rem",
-    fontSize: "0.875rem",
+    padding: "8px 16px",
+    fontSize: 13,
     fontWeight: 600,
     cursor: "pointer",
     whiteSpace: "nowrap",
     ...extra,
-  } as const);
+  });
 
 const SIDEBAR_W = 220;
 
@@ -191,23 +194,36 @@ function SimpleBarChart({ data, height = 80 }: { data: { label: string; value: n
   );
 }
 
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+function StatCard({ label, value, sub, Icon, color }: { label: string; value: string | number; sub?: string; Icon?: React.ElementType; color?: string }) {
+  const c = color ?? "rgba(255,255,255,0.5)";
   return (
     <div style={card}>
-      <p style={{ color: "#555555", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.5rem" }}>{label}</p>
-      <p style={{ fontSize: "1.75rem", fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>{value}</p>
-      {sub && <p style={{ fontSize: "0.72rem", color: "#555555", marginTop: "4px" }}>{sub}</p>}
+      {Icon && (
+        <div style={{ width: 32, height: 32, borderRadius: 10, background: `${c}20`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+          <Icon size={15} color={c} />
+        </div>
+      )}
+      <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{label}</p>
+      <p style={{ fontSize: 28, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>{value}</p>
+      {sub && <p style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 4 }}>{sub}</p>}
     </div>
   );
 }
 
 function PlanBadge({ plan }: { plan: string }) {
-  const colors: Record<string, string> = {
-    free: "#555555", plus: "#60a5fa", pro: "#8b5cf6", elite: "#f59e0b", starter: "#3b82f6", enterprise: "#10b981", lifetime: "#f59e0b",
+  const colors: Record<string, [string, string]> = {
+    free:       ["#6b7280", "rgba(107,114,128,0.12)"],
+    creator:    ["#60a5fa", "rgba(96,165,250,0.12)"],
+    plus:       ["#a78bfa", "rgba(167,139,250,0.12)"],
+    pro:        ["#f97316", "rgba(249,115,22,0.12)"],
+    elite:      ["#f59e0b", "rgba(245,158,11,0.12)"],
+    starter:    ["#3b82f6", "rgba(59,130,246,0.12)"],
+    enterprise: ["#10b981", "rgba(16,185,129,0.12)"],
+    lifetime:   ["#f59e0b", "rgba(245,158,11,0.12)"],
   };
-  const c = colors[plan] ?? "#555555";
+  const [color, bg] = colors[plan] ?? ["#6b7280", "rgba(107,114,128,0.12)"];
   return (
-    <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", color: c, background: `${c}22`, border: `1px solid ${c}55`, whiteSpace: "nowrap", textTransform: "uppercase" }}>
+    <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 999, color, background: bg, border: `1px solid ${color}44`, whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "0.04em" }}>
       {plan}
     </span>
   );
@@ -232,6 +248,8 @@ function UserDetailModal({
   const [planLoading, setPlanLoading] = useState(false);
   const [sessions, setSessions] = useState<UserSession[] | null>(null);
   const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [expandedGens, setExpandedGens] = useState<Set<string>>(new Set());
+  const [copiedGen, setCopiedGen] = useState<string | null>(null);
 
   const fetchDetail = useCallback(async () => {
     setLoading(true);
@@ -467,9 +485,27 @@ function UserDetailModal({
                         return (
                           <tr key={g.id} style={{ borderBottom: "1px solid #1a1a1a", opacity: g.refunded ? 0.5 : 1 }}>
                             <td style={{ padding: "0.6rem 0.75rem", color: "#555555", whiteSpace: "nowrap" }}>{new Date(g.createdAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}</td>
-                            <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", maxWidth: "220px" }}>
-                              <span title={g.text}>{g.text.slice(0, 50)}{g.text.length > 50 ? "…" : ""}</span>
-                              {g.voiceName && <span style={{ display: "block", fontSize: "0.7rem", color: "#555555", marginTop: "2px" }}>{g.voiceName}</span>}
+                            <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", maxWidth: "260px" }}>
+                              <p style={expandedGens.has(g.id) ? { margin: 0, fontSize: "0.78rem", lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" } : { margin: 0, fontSize: "0.78rem", lineHeight: 1.45, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
+                                {g.text}
+                              </p>
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+                                {g.text.length > 80 && (
+                                  <button
+                                    onClick={() => setExpandedGens(prev => { const s = new Set(prev); s.has(g.id) ? s.delete(g.id) : s.add(g.id); return s; })}
+                                    style={{ fontSize: "0.68rem", color: "#666", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
+                                  >
+                                    {expandedGens.has(g.id) ? "Ver menos" : "Ver más"}
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => { navigator.clipboard.writeText(g.text); setCopiedGen(g.id); setTimeout(() => setCopiedGen(null), 2000); }}
+                                  style={{ fontSize: "0.68rem", color: copiedGen === g.id ? "#4ade80" : "#555", background: "none", border: "none", cursor: "pointer", padding: 0, fontWeight: copiedGen === g.id ? 700 : 400, transition: "color 0.15s" }}
+                                >
+                                  {copiedGen === g.id ? "¡Copiado!" : "Copiar"}
+                                </button>
+                              </div>
+                              {g.voiceName && <span style={{ display: "block", fontSize: "0.7rem", color: "#555555", marginTop: "3px" }}>{g.voiceName}</span>}
                             </td>
                             <td style={{ padding: "0.6rem 0.75rem", color: "#9ca3af", whiteSpace: "nowrap" }}>{g.durationSeconds != null ? `${g.durationSeconds.toFixed(1)}s` : "—"}</td>
                             <td style={{ padding: "0.6rem 0.75rem", color: "#aaaaaa", fontWeight: 600 }}>{g.creditsUsed.toLocaleString("es-ES")}</td>
@@ -655,11 +691,13 @@ function buildMonthOptions() {
 const MONTH_OPTIONS = buildMonthOptions();
 
 function DashboardSection({
-  users, stats: initialStats, tickets, withdrawals, affiliates, onNav,
+  users, stats: initialStats, tickets, withdrawals, affiliates, onNav, fishCredits, ai33Health,
 }: {
   users: AdminUser[]; stats: Stats | null; tickets: SupportTicket[];
   withdrawals: WithdrawalRequest[]; affiliates: AffiliateApplication[];
   onNav: (s: Section) => void;
+  fishCredits?: { credit: string } | null;
+  ai33Health?: { elevenlabs: string; isDown: boolean } | null;
 }) {
   const currentMonthStr = MONTH_OPTIONS[0].value;
   const [selectedMonth, setSelectedMonth] = useState(currentMonthStr);
@@ -708,108 +746,140 @@ function DashboardSection({
 
   return (
     <div>
-      {/* Header with month selector */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
-        <p style={{ fontWeight: 800, fontSize: "20px", color: "#fff", margin: 0 }}>Dashboard</p>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          {loadingStats && <span style={{ fontSize: "11px", color: "#555" }}>Cargando...</span>}
-          <select
-            value={selectedMonth}
-            onChange={e => setSelectedMonth(e.target.value)}
-            style={{
-              background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "8px", color: "#fff", fontSize: "13px",
-              padding: "6px 10px", cursor: "pointer", outline: "none",
-            }}
-          >
-            {MONTH_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <div>
+          <p style={{ fontWeight: 800, fontSize: 22, color: "#fff", margin: 0 }}>Dashboard</p>
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", margin: "2px 0 0" }}>
+            {loadingStats ? "Actualizando..." : MONTH_OPTIONS.find(o => o.value === selectedMonth)?.label}
+          </p>
         </div>
+        <select
+          value={selectedMonth}
+          onChange={e => setSelectedMonth(e.target.value)}
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 13, padding: "7px 12px", cursor: "pointer", outline: "none" }}
+        >
+          {MONTH_OPTIONS.map(o => (
+            <option key={o.value} value={o.value} style={{ background: "#1a1a1a" }}>{o.label}</option>
+          ))}
+        </select>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "1rem" }}>
-        <StatCard label="Usuarios totales" value={stats ? stats.totalUsers.toLocaleString("es-ES") : "—"} />
-        <StatCard label="MRR estimado" value={mrr} />
-        <StatCard label="Generaciones totales" value={stats ? stats.totalGenerations.toLocaleString("es-ES") : "—"} />
-        <StatCard label="Créditos consumidos" value={stats ? stats.totalCreditsConsumed.toLocaleString("es-ES") : "—"} />
+      {/* 5 stat cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16, marginBottom: 16 }}>
+        <StatCard label="Usuarios totales" value={stats ? stats.totalUsers.toLocaleString("es-ES") : "—"} Icon={Users} color="#3b82f6" />
+        <StatCard label="MRR estimado" value={mrr} Icon={DollarSign} color="#22c55e" />
+        <StatCard label="Generaciones" value={stats ? stats.totalGenerations.toLocaleString("es-ES") : "—"} Icon={BarChart2} color="#a855f7" />
+        <StatCard label="Créditos consumidos" value={stats ? stats.totalCreditsConsumed.toLocaleString("es-ES") : "—"} Icon={Zap} color="#f59e0b" />
+        <StatCard label="Créditos restantes" value={users.reduce((s, u) => s + u.credits + (u.extraCredits ?? 0), 0).toLocaleString("es-ES")} Icon={Database} color="#06b6d4" />
       </div>
 
-      {/* Visits card */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "1.5rem" }}>
-        <div style={{ ...card, borderLeft: "3px solid #0ea5e9" }}>
-          <p style={{ color: "#0ea5e9", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.5rem" }}>Visitas anónimas</p>
-          <p style={{ fontSize: "1.75rem", fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>{stats ? stats.totalVisits.toLocaleString("es-ES") : "—"}</p>
-          <div style={{ display: "flex", gap: "10px", marginTop: "4px", flexWrap: "wrap" }}>
-            <p style={{ fontSize: "0.72rem", color: "#555555" }}>Hoy: {stats ? stats.visitsToday.toLocaleString("es-ES") : "—"}</p>
-            {trendPct !== null && (
-              <p style={{ fontSize: "0.72rem", fontWeight: 700, color: trendPct >= 0 ? "#4ade80" : "#f87171" }}>
-                {trendPct >= 0 ? "+" : ""}{trendPct}% vs mes anterior
-              </p>
-            )}
+      {/* Fish Audio + Estado del sistema */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+        <div style={{ ...card, display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(34,197,94,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <DollarSign size={18} color="#22c55e" />
+          </div>
+          <div>
+            <p style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.08em", color: "rgba(255,255,255,0.45)", marginBottom: 4 }}>Fish Audio API</p>
+            <p style={{ fontSize: 24, fontWeight: 800, color: "#fff", lineHeight: 1, margin: "0 0 2px" }}>
+              {fishCredits?.credit != null ? `$${parseFloat(fishCredits.credit).toFixed(2)}` : "—"}
+            </p>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", margin: 0 }}>Saldo disponible</p>
+          </div>
+        </div>
+        <div style={card}>
+          <p style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.08em", color: "rgba(255,255,255,0.45)", marginBottom: 14 }}>Estado del sistema</p>
+          <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Fish Audio</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <StatusDot color="green" />
+                <span style={{ fontSize: 12, color: "#22c55e", fontWeight: 600 }}>Operativo</span>
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>ElevenLabs Turbo</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <StatusDot color={ai33Health === null || ai33Health === undefined ? "gray" : ai33Health.isDown ? "red" : "green"} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: ai33Health === null || ai33Health === undefined ? "#555" : ai33Health.isDown ? "#ef4444" : "#22c55e" }}>
+                  {ai33Health === null || ai33Health === undefined ? "Comprobando..." : ai33Health.isDown ? "Degradado" : "Operativo"}
+                </span>
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Visitas hoy</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{stats ? stats.visitsToday.toLocaleString("es-ES") : "—"}</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Alerts row */}
-      <div style={{ display: "flex", gap: "12px", marginBottom: "1.5rem", flexWrap: "wrap" }}>
+      {/* Quick actions */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 24, flexWrap: "wrap" as const }}>
         {[
-          { label: "Tickets abiertos", count: pendingTickets, color: "#f87171", bg: "rgba(248,113,113,0.1)", border: "rgba(248,113,113,0.3)", section: "support" as Section },
-          { label: "Afiliados pendientes", count: pendingAffiliates, color: "#fbbf24", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.3)", section: "affiliates" as Section },
-          { label: "Retiros pendientes", count: pendingWithdrawals, color: "#fbbf24", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.3)", section: "withdrawals" as Section },
-        ].map(({ label, count, color, bg, border, section }) => (
-          <button key={label} onClick={() => onNav(section)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 16px", borderRadius: "10px", background: count > 0 ? bg : "rgba(255,255,255,0.03)", border: `1px solid ${count > 0 ? border : "rgba(255,255,255,0.08)"}`, cursor: "pointer", color: count > 0 ? color : "#555555", fontSize: "13px", fontWeight: 600 }}>
-            <span style={{ fontSize: "18px", fontWeight: 800, color: count > 0 ? color : "#555555" }}>{count}</span>
+          { label: "Tickets abiertos", count: pendingTickets, color: "#ef4444", section: "support" as Section },
+          { label: "Afiliados pendientes", count: pendingAffiliates, color: "#f59e0b", section: "affiliates" as Section },
+          { label: "Retiros pendientes", count: pendingWithdrawals, color: "#f59e0b", section: "withdrawals" as Section },
+        ].map(({ label, count, color, section }) => (
+          <button key={label} onClick={() => onNav(section)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 18px", borderRadius: 999, cursor: "pointer", fontSize: 13, fontWeight: 600, background: count > 0 ? `${color}15` : "rgba(255,255,255,0.03)", border: `1px solid ${count > 0 ? `${color}40` : "rgba(255,255,255,0.07)"}`, color: count > 0 ? color : "rgba(255,255,255,0.3)" }}>
+            <span style={{ fontSize: 16, fontWeight: 800 }}>{count}</span>
             {label}
             <ChevronRight size={13} style={{ opacity: 0.6 }} />
           </button>
         ))}
+        {trendPct !== null && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.07)", fontSize: 13, color: trendPct >= 0 ? "#22c55e" : "#ef4444" }}>
+            <span style={{ fontWeight: 700 }}>{trendPct >= 0 ? "+" : ""}{trendPct}%</span>
+            <span style={{ color: "rgba(255,255,255,0.3)", marginLeft: 4 }}>visitas vs mes anterior</span>
+          </div>
+        )}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
-        {/* New users chart */}
+      {/* Charts */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
         <div style={card}>
-          <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#555555", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "12px" }}>Nuevos usuarios (30 días)</p>
+          <p style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase" as const, letterSpacing: "0.08em", marginBottom: 14 }}>Nuevos usuarios (30 días)</p>
           <SimpleBarChart data={days30} height={80} />
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
-            <span style={{ fontSize: "10px", color: "#444444" }}>{days30[0]?.label}</span>
-            <span style={{ fontSize: "10px", color: "#444444" }}>{days30[days30.length - 1]?.label}</span>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.2)" }}>{days30[0]?.label}</span>
+            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.2)" }}>{days30[days30.length - 1]?.label}</span>
           </div>
         </div>
-
-        {/* Visits chart */}
         <div style={card}>
-          <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#555555", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "12px" }}>
-            Visitas anónimas — {MONTH_OPTIONS.find(o => o.value === selectedMonth)?.label ?? selectedMonth}
+          <p style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase" as const, letterSpacing: "0.08em", marginBottom: 14 }}>
+            Visitas — {MONTH_OPTIONS.find(o => o.value === selectedMonth)?.label ?? selectedMonth}
           </p>
           {visitsDays.length > 0 ? (
             <>
               <SimpleBarChart data={visitsDays} height={80} />
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
-                <span style={{ fontSize: "10px", color: "#444444" }}>{visitsDays[0]?.label}</span>
-                <span style={{ fontSize: "10px", color: "#444444" }}>{visitsDays[visitsDays.length - 1]?.label}</span>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+                <span style={{ fontSize: 10, color: "rgba(255,255,255,0.2)" }}>{visitsDays[0]?.label}</span>
+                <span style={{ fontSize: 10, color: "rgba(255,255,255,0.2)" }}>{visitsDays[visitsDays.length - 1]?.label}</span>
               </div>
             </>
           ) : (
-            <p style={{ color: "#555555", fontSize: "0.8rem" }}>Sin datos</p>
+            <p style={{ color: "rgba(255,255,255,0.25)", fontSize: 13 }}>Sin datos</p>
           )}
         </div>
       </div>
 
-      {/* Top 5 users */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
+      {/* Top 5 */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
         <div style={card}>
-          <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#555555", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "12px" }}>Top 5 usuarios por generaciones</p>
+          <p style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase" as const, letterSpacing: "0.08em", marginBottom: 14 }}>Top 5 por generaciones</p>
           {top5Gen.length === 0 ? (
-            <p style={{ color: "#555555", fontSize: "0.8rem" }}>Sin datos</p>
+            <p style={{ color: "rgba(255,255,255,0.2)", fontSize: 13 }}>Sin datos</p>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
               {top5Gen.map((u, i) => (
-                <div key={u.id} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <span style={{ width: 18, fontSize: "11px", color: "#444444", fontWeight: 700, flexShrink: 0 }}>#{i + 1}</span>
-                  <span style={{ flex: 1, fontSize: "12px", color: "#888888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.email}</span>
-                  <span style={{ fontSize: "12px", fontWeight: 700, color: "#fff" }}>{u._count.generations}</span>
+                <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ width: 20, fontSize: 11, color: "rgba(255,255,255,0.2)", fontWeight: 700, flexShrink: 0 }}>#{i + 1}</span>
+                  <div style={{ flex: 1, height: 3, borderRadius: 2, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+                    <div style={{ height: "100%", borderRadius: 2, background: "#3b82f6", width: `${Math.round((u._count.generations / (top5Gen[0]._count.generations || 1)) * 100)}%` }} />
+                  </div>
+                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 120 }}>{u.email.split("@")[0]}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{u._count.generations}</span>
                 </div>
               ))}
             </div>
@@ -843,6 +913,15 @@ function UsersSection({
   const [suspendTarget, setSuspendTarget] = useState<AdminUser | null>(null);
   const [suspendDate, setSuspendDate] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
+  const [emailModal, setEmailModal] = useState(false);
+  const [emailTo, setEmailTo] = useState<string>("all");
+  const [emailPlan, setEmailPlan] = useState<string>("all");
+  const [emailIndividual, setEmailIndividual] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailResult, setEmailResult] = useState<string | null>(null);
 
   function copyId(id: string, e: React.MouseEvent) {
     e.stopPropagation();
@@ -877,68 +956,105 @@ function UsersSection({
 
   const isSuspended = (u: AdminUser) => !!u.disabledUntil && new Date(u.disabledUntil) > new Date();
 
+  const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const activeCount = users.filter(u => !isSuspended(u)).length;
+  const proPlusCount = users.filter(u => ["pro", "elite", "enterprise", "lifetime"].includes(u.plan)).length;
+  const newThisWeek = users.filter(u => new Date(u.createdAt) > oneWeekAgo).length;
+
   return (
     <div>
-      <p style={{ fontWeight: 800, fontSize: "20px", marginBottom: "20px", color: "#fff" }}>Usuarios</p>
-      <div style={{ display: "flex", gap: "10px", marginBottom: "14px", flexWrap: "wrap", alignItems: "center" }}>
-        <div style={{ position: "relative", flex: "1", minWidth: "200px" }}>
-          <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#555555" }} />
-          <input style={{ ...input, paddingLeft: "32px" }} placeholder="Buscar por email o ID..." value={search} onChange={e => onSearch(e.target.value)} />
+      {/* Summary stats */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
+        {([
+          { label: "Total usuarios", value: users.length, color: "#60a5fa" },
+          { label: "Activos", value: activeCount, color: "#4ade80" },
+          { label: "PRO+", value: proPlusCount, color: "#a78bfa" },
+          { label: "Nuevos esta semana", value: newThisWeek, color: "#f97316" },
+        ] as Array<{ label: string; value: number; color: string }>).map(s => (
+          <div key={s.label} style={{ ...card, padding: "16px 20px" }}>
+            <p style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0, marginBottom: 8 }}>{s.label}</p>
+            <p style={{ fontSize: 26, fontWeight: 800, color: s.color, margin: 0, lineHeight: 1 }}>{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Search + Plan filter */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ position: "relative", flex: 1, minWidth: 220 }}>
+          <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.25)", pointerEvents: "none" }} />
+          <input style={{ ...input, paddingLeft: 36 }} placeholder="Buscar por email o ID..." value={search} onChange={e => onSearch(e.target.value)} />
         </div>
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-          {["all", "free", "plus", "pro", "elite", "starter", "enterprise", "lifetime"].map(p => (
-            <button key={p} onClick={() => setPlanFilter(p)} style={{ padding: "5px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: 600, border: `1px solid ${planFilter === p ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.08)"}`, background: planFilter === p ? "rgba(255,255,255,0.1)" : "transparent", color: planFilter === p ? "#fff" : "#555555", cursor: "pointer" }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {["all", "free", "creator", "plus", "pro", "elite", "starter", "enterprise", "lifetime"].map(p => (
+            <button key={p} onClick={() => setPlanFilter(p)} style={{ padding: "5px 12px", borderRadius: 999, fontSize: 11, fontWeight: 600, border: `1px solid ${planFilter === p ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.07)"}`, background: planFilter === p ? "rgba(255,255,255,0.09)" : "transparent", color: planFilter === p ? "#fff" : "rgba(255,255,255,0.35)", cursor: "pointer", transition: "all 0.15s" }}>
               {p === "all" ? "Todos" : p}
             </button>
           ))}
         </div>
+        <button onClick={() => setEmailModal(true)} style={{ padding: "8px 16px", borderRadius: "8px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontSize: "13px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", whiteSpace: "nowrap" }}>
+          ✉ Enviar email
+        </button>
       </div>
 
-      <div style={{ ...card, marginBottom: "1.5rem", padding: 0, overflow: "hidden" }}>
+      {/* Table */}
+      <div style={{ ...card, padding: 0, overflow: "hidden", marginBottom: 24 }}>
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", background: "#0d0d0d" }}>
-                {["CUID", "Email", "Plan", "Créditos", "Generaciones", "Rol", "Registro", "Acciones"].map((h) => (
-                  <th key={h} style={{ padding: "10px 14px", textAlign: "left", color: "#555555", fontWeight: 600, whiteSpace: "nowrap", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
+              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                {["Usuario", "Plan", "Rol", "Créditos", "Estado", "Registro", "Acciones"].map(h => (
+                  <th key={h} style={{ padding: "12px 16px", textAlign: "left", color: "rgba(255,255,255,0.3)", fontWeight: 600, whiteSpace: "nowrap", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", background: "rgba(255,255,255,0.02)" }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.map((u, idx) => (
-                <tr key={u.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", background: idx % 2 === 0 ? "#0d0d0d" : "#111111", cursor: "pointer" }} onClick={() => onSelectUser(u.id)}>
-                  <td style={{ padding: "10px 14px" }} onClick={e => e.stopPropagation()}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span title={u.id} style={{ fontFamily: "monospace", fontSize: "11px", color: "#666666" }}>{u.id.slice(0, 8)}…</span>
-                      <button
-                        onClick={e => copyId(u.id, e)}
-                        title={copiedId === u.id ? "Copiado!" : "Copiar CUID"}
-                        style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 4px", borderRadius: "4px", fontSize: "11px", color: copiedId === u.id ? "#4ade80" : "#555555", transition: "color 0.15s" }}
-                      >
-                        {copiedId === u.id ? "✓" : "⎘"}
-                      </button>
+              {filtered.map(u => (
+                <tr
+                  key={u.id}
+                  style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", background: hoveredRow === u.id ? "rgba(255,255,255,0.03)" : "transparent", cursor: "pointer", transition: "background 0.1s" }}
+                  onClick={() => onSelectUser(u.id)}
+                  onMouseEnter={() => setHoveredRow(u.id)}
+                  onMouseLeave={() => setHoveredRow(null)}
+                >
+                  {/* Avatar + Email */}
+                  <td style={{ padding: "12px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)" }}>
+                        {u.email[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <p style={{ margin: 0, color: "#e5e7eb", fontSize: 13, fontWeight: 500 }}>{u.email}</p>
+                        <button onClick={e => copyId(u.id, e)} title={copiedId === u.id ? "Copiado!" : "Copiar ID"} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 10, fontFamily: "monospace", color: copiedId === u.id ? "#4ade80" : "rgba(255,255,255,0.2)", transition: "color 0.15s" }}>
+                          {u.id.slice(0, 8)}… {copiedId === u.id ? "✓" : "⎘"}
+                        </button>
+                      </div>
                     </div>
                   </td>
-                  <td style={{ padding: "10px 14px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span style={{ color: "#e5e7eb" }}>{u.email}</span>
-                      {isSuspended(u) && <span style={{ fontSize: "9px", fontWeight: 700, padding: "1px 5px", borderRadius: "4px", background: "rgba(234,179,8,0.15)", color: "#facc15", border: "1px solid rgba(234,179,8,0.3)" }}>SUSPENDIDO</span>}
-                    </div>
+                  {/* Plan */}
+                  <td style={{ padding: "12px 16px" }}><PlanBadge plan={u.plan} /></td>
+                  {/* Rol */}
+                  <td style={{ padding: "12px 16px" }}><Tag role={u.role} /></td>
+                  {/* Créditos */}
+                  <td style={{ padding: "12px 16px", color: "rgba(255,255,255,0.65)", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{u.credits.toLocaleString("es-ES")}</td>
+                  {/* Estado */}
+                  <td style={{ padding: "12px 16px" }}>
+                    {isSuspended(u)
+                      ? <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 999, background: "rgba(234,179,8,0.1)", color: "#facc15", border: "1px solid rgba(234,179,8,0.3)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Suspendido</span>
+                      : <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 999, background: "rgba(74,222,128,0.08)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.2)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Activo</span>
+                    }
                   </td>
-                  <td style={{ padding: "10px 14px" }}><PlanBadge plan={u.plan} /></td>
-                  <td style={{ padding: "10px 14px", color: "#aaaaaa", fontWeight: 600 }}>{u.credits.toLocaleString("es-ES")}</td>
-                  <td style={{ padding: "10px 14px", color: "#9ca3af" }}>{u._count.generations}</td>
-                  <td style={{ padding: "10px 14px" }}><Tag role={u.role} /></td>
-                  <td style={{ padding: "10px 14px", color: "#555555", whiteSpace: "nowrap" }}>{new Date(u.createdAt).toLocaleDateString("es-ES")}</td>
-                  <td style={{ padding: "10px 14px" }} onClick={e => e.stopPropagation()}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                      <button onClick={() => onSelectUser(u.id)} style={btn("#1a1a1a", { border: "1px solid rgba(255,255,255,0.08)", color: "#aaaaaa", padding: "0.2rem 0.55rem", fontSize: "0.7rem" })}>
-                        Ver
+                  {/* Fecha */}
+                  <td style={{ padding: "12px 16px", color: "rgba(255,255,255,0.28)", whiteSpace: "nowrap", fontSize: 12 }}>{new Date(u.createdAt).toLocaleDateString("es-ES")}</td>
+                  {/* Acciones */}
+                  <td style={{ padding: "12px 16px" }} onClick={e => e.stopPropagation()}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <button onClick={() => onSelectUser(u.id)} title="Ver detalles" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", padding: "5px 7px", borderRadius: 8, color: "rgba(255,255,255,0.45)", display: "flex", alignItems: "center", transition: "all 0.15s" }}>
+                        <Eye size={13} />
                       </button>
                       <button
                         onClick={e => { e.stopPropagation(); setSuspendTarget(u); setSuspendDate(""); }}
                         title={isSuspended(u) ? `Suspendido hasta ${new Date(u.disabledUntil!).toLocaleDateString("es-ES")}` : "Suspender temporalmente"}
-                        style={{ background: "none", border: "1px solid rgba(234,179,8,0.25)", cursor: "pointer", padding: "4px 6px", borderRadius: "6px", color: isSuspended(u) ? "#facc15" : "#555555", display: "flex", alignItems: "center", transition: "all 0.15s" }}
+                        style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${isSuspended(u) ? "rgba(234,179,8,0.4)" : "rgba(255,255,255,0.08)"}`, cursor: "pointer", padding: "5px 7px", borderRadius: 8, color: isSuspended(u) ? "#facc15" : "rgba(255,255,255,0.35)", display: "flex", alignItems: "center", transition: "all 0.15s" }}
                         disabled={actionLoading === u.id + "_suspend"}
                       >
                         <Clock size={13} />
@@ -946,7 +1062,7 @@ function UsersSection({
                       <button
                         onClick={e => doBan(u, e)}
                         title="Banear usuario en Clerk"
-                        style={{ background: "none", border: "1px solid rgba(251,146,60,0.25)", cursor: "pointer", padding: "4px 6px", borderRadius: "6px", color: "#555555", display: "flex", alignItems: "center", transition: "all 0.15s" }}
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(251,146,60,0.2)", cursor: "pointer", padding: "5px 7px", borderRadius: 8, color: "rgba(251,146,60,0.55)", display: "flex", alignItems: "center", transition: "all 0.15s" }}
                         disabled={actionLoading === u.id + "_ban"}
                       >
                         <ShieldOff size={13} />
@@ -954,38 +1070,46 @@ function UsersSection({
                       <button
                         onClick={e => { e.stopPropagation(); setConfirmDelete(u); }}
                         title="Eliminar usuario"
-                        style={{ background: "none", border: "1px solid rgba(239,68,68,0.25)", cursor: "pointer", padding: "4px 6px", borderRadius: "6px", color: "#555555", display: "flex", alignItems: "center", transition: "all 0.15s" }}
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(239,68,68,0.2)", cursor: "pointer", padding: "5px 7px", borderRadius: 8, color: "rgba(239,68,68,0.55)", display: "flex", alignItems: "center", transition: "all 0.15s" }}
                         disabled={actionLoading === u.id + "_delete"}
                       >
                         <Trash2 size={13} />
+                      </button>
+                      <button
+                        onClick={e => { e.stopPropagation(); setEmailIndividual(u.email); setEmailTo("individual"); setEmailModal(true); }}
+                        title="Enviar email"
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", padding: "5px 7px", borderRadius: 8, color: "rgba(255,255,255,0.45)", display: "flex", alignItems: "center", transition: "all 0.15s", fontSize: 12 }}
+                      >
+                        ✉
                       </button>
                     </div>
                   </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={8} style={{ padding: "2rem", textAlign: "center", color: "#555555" }}>No se encontraron usuarios</td></tr>
+                <tr><td colSpan={7} style={{ padding: "3rem", textAlign: "center", color: "rgba(255,255,255,0.2)", fontSize: 13 }}>No se encontraron usuarios</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+      {/* Credit + Role management */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <div style={card}>
-          <p style={{ fontWeight: 700, marginBottom: "1rem", fontSize: "14px" }}>Gestión de créditos</p>
-          <form onSubmit={onCredits} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          <p style={{ fontWeight: 700, marginBottom: 16, fontSize: 14, color: "#fff" }}>Gestión de créditos</p>
+          <form onSubmit={onCredits} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div>
-              <label style={{ fontSize: "0.75rem", color: "#888888", display: "block", marginBottom: "0.35rem" }}>ID de usuario</label>
+              <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 }}>ID de usuario</label>
               <input style={input} placeholder="cuid del usuario" value={creditState.userId} onChange={e => creditState.setUserId(e.target.value)} />
             </div>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div style={{ display: "flex", gap: 8 }}>
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: "0.75rem", color: "#888888", display: "block", marginBottom: "0.35rem" }}>Cantidad</label>
+                <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 }}>Cantidad</label>
                 <input style={input} type="number" min="1" placeholder="0" value={creditState.amount} onChange={e => creditState.setAmount(e.target.value)} />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: "0.75rem", color: "#888888", display: "block", marginBottom: "0.35rem" }}>Operación</label>
+                <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 }}>Operación</label>
                 <CustomSelect
                   options={[{ value: "add", label: "Añadir" }, { value: "subtract", label: "Quitar" }]}
                   value={creditState.op}
@@ -1000,14 +1124,14 @@ function UsersSection({
           </form>
         </div>
         <div style={card}>
-          <p style={{ fontWeight: 700, marginBottom: "1rem", fontSize: "14px" }}>Gestión de roles</p>
-          <form onSubmit={onRole} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          <p style={{ fontWeight: 700, marginBottom: 16, fontSize: 14, color: "#fff" }}>Gestión de roles</p>
+          <form onSubmit={onRole} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div>
-              <label style={{ fontSize: "0.75rem", color: "#888888", display: "block", marginBottom: "0.35rem" }}>ID de usuario</label>
+              <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 }}>ID de usuario</label>
               <input style={input} placeholder="cuid del usuario" value={roleState.userId} onChange={e => roleState.setUserId(e.target.value)} />
             </div>
             <div>
-              <label style={{ fontSize: "0.75rem", color: "#888888", display: "block", marginBottom: "0.35rem" }}>Nuevo rol</label>
+              <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 }}>Nuevo rol</label>
               <CustomSelect
                 options={[{ value: "user", label: "user" }, { value: "admin", label: "admin" }]}
                 value={roleState.role}
@@ -1024,21 +1148,21 @@ function UsersSection({
 
       {/* Delete confirmation modal */}
       {confirmDelete && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", padding: "28px", width: "360px", display: "flex", flexDirection: "column", gap: "16px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div style={{ width: 36, height: 36, borderRadius: "10px", background: "rgba(239,68,68,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#0f0f0f", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 28, width: 360, display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(239,68,68,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <Trash2 size={16} color="#f87171" />
               </div>
               <div>
-                <p style={{ fontWeight: 700, fontSize: "15px", color: "#fff", margin: 0 }}>Eliminar usuario</p>
-                <p style={{ fontSize: "11px", color: "#555555", margin: 0 }}>Esta acción no se puede deshacer</p>
+                <p style={{ fontWeight: 700, fontSize: 15, color: "#fff", margin: 0 }}>Eliminar usuario</p>
+                <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", margin: 0 }}>Esta acción no se puede deshacer</p>
               </div>
             </div>
-            <p style={{ fontSize: "13px", color: "#aaaaaa", lineHeight: 1.5 }}>
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", lineHeight: 1.6, margin: 0 }}>
               ¿Eliminar permanentemente a <span style={{ color: "#fff", fontWeight: 600 }}>{confirmDelete.email}</span> de Clerk y la base de datos?
             </p>
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{ display: "flex", gap: 8 }}>
               <button onClick={() => setConfirmDelete(null)} style={btn("#1a1a1a", { flex: 1, border: "1px solid rgba(255,255,255,0.08)", color: "#888888" })}>Cancelar</button>
               <button onClick={() => doDelete(confirmDelete)} disabled={actionLoading === confirmDelete.id + "_delete"} style={{ ...btn("#ef4444"), flex: 1, opacity: actionLoading === confirmDelete.id + "_delete" ? 0.6 : 1 }}>
                 {actionLoading === confirmDelete.id + "_delete" ? "Eliminando..." : "Eliminar"}
@@ -1050,33 +1174,27 @@ function UsersSection({
 
       {/* Suspend modal */}
       {suspendTarget && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", padding: "28px", width: "380px", display: "flex", flexDirection: "column", gap: "16px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div style={{ width: 36, height: 36, borderRadius: "10px", background: "rgba(234,179,8,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#0f0f0f", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 28, width: 380, display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(234,179,8,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <Clock size={16} color="#facc15" />
               </div>
               <div>
-                <p style={{ fontWeight: 700, fontSize: "15px", color: "#fff", margin: 0 }}>Suspender cuenta</p>
-                <p style={{ fontSize: "11px", color: "#555555", margin: 0 }}>{suspendTarget.email}</p>
+                <p style={{ fontWeight: 700, fontSize: 15, color: "#fff", margin: 0 }}>Suspender cuenta</p>
+                <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", margin: 0 }}>{suspendTarget.email}</p>
               </div>
             </div>
             {isSuspended(suspendTarget) && (
-              <p style={{ fontSize: "12px", color: "#facc15", background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.2)", borderRadius: "8px", padding: "8px 12px" }}>
+              <p style={{ fontSize: 12, color: "#facc15", background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.2)", borderRadius: 8, padding: "8px 12px", margin: 0 }}>
                 Suspendido hasta {new Date(suspendTarget.disabledUntil!).toLocaleDateString("es-ES")}
               </p>
             )}
             <div>
-              <label style={{ fontSize: "12px", color: "#888888", display: "block", marginBottom: "6px" }}>Suspender hasta:</label>
-              <input
-                type="date"
-                value={suspendDate}
-                min={new Date().toISOString().split("T")[0]}
-                onChange={e => setSuspendDate(e.target.value)}
-                style={{ ...input, colorScheme: "dark" }}
-              />
+              <label style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 }}>Suspender hasta:</label>
+              <input type="date" value={suspendDate} min={new Date().toISOString().split("T")[0]} onChange={e => setSuspendDate(e.target.value)} style={{ ...input, colorScheme: "dark" }} />
             </div>
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{ display: "flex", gap: 8 }}>
               <button onClick={() => { setSuspendTarget(null); setSuspendDate(""); }} style={btn("#1a1a1a", { flex: 1, border: "1px solid rgba(255,255,255,0.08)", color: "#888888" })}>Cancelar</button>
               {isSuspended(suspendTarget) && (
                 <button onClick={async () => { setActionLoading(suspendTarget.id + "_suspend"); try { await onSuspendUser(suspendTarget.id, ""); } finally { setActionLoading(null); setSuspendTarget(null); } }} style={btn("#1a1a1a", { border: "1px solid rgba(255,255,255,0.12)", color: "#aaaaaa" })}>
@@ -1090,6 +1208,109 @@ function UsersSection({
           </div>
         </div>
       )}
+
+      {emailModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+          <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", padding: "28px", width: "100%", maxWidth: "560px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h2 style={{ color: "#fff", fontSize: "18px", fontWeight: 700, margin: 0 }}>Enviar email</h2>
+              <button onClick={() => { setEmailModal(false); setEmailResult(null); }} style={{ background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: "20px" }}>×</button>
+            </div>
+
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ color: "#888", fontSize: "12px", fontWeight: 600, textTransform: "uppercase", display: "block", marginBottom: "8px" }}>Destinatarios</label>
+              <select value={emailTo} onChange={e => setEmailTo(e.target.value)} style={{ width: "100%", background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "10px 12px", color: "#fff", fontSize: "14px" }}>
+                <option value="all">Todos los usuarios</option>
+                <option value="plan">Filtrar por plan</option>
+                <option value="individual">Usuario individual</option>
+              </select>
+            </div>
+
+            {emailTo === "plan" && (
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ color: "#888", fontSize: "12px", fontWeight: 600, textTransform: "uppercase", display: "block", marginBottom: "8px" }}>Plan</label>
+                <select value={emailPlan} onChange={e => setEmailPlan(e.target.value)} style={{ width: "100%", background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "10px 12px", color: "#fff", fontSize: "14px" }}>
+                  <option value="all">Todos</option>
+                  <option value="free">Free</option>
+                  <option value="creator">Creator</option>
+                  <option value="plus">Plus</option>
+                  <option value="pro">Pro</option>
+                  <option value="elite">Elite</option>
+                  <option value="lifetime">Lifetime</option>
+                </select>
+              </div>
+            )}
+
+            {emailTo === "individual" && (
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ color: "#888", fontSize: "12px", fontWeight: 600, textTransform: "uppercase", display: "block", marginBottom: "8px" }}>Email del usuario</label>
+                <input
+                  value={emailIndividual}
+                  onChange={e => setEmailIndividual(e.target.value)}
+                  placeholder="usuario@email.com"
+                  type="email"
+                  style={{ width: "100%", background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "10px 12px", color: "#fff", fontSize: "14px", boxSizing: "border-box" }}
+                />
+              </div>
+            )}
+
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ color: "#888", fontSize: "12px", fontWeight: 600, textTransform: "uppercase", display: "block", marginBottom: "8px" }}>Asunto</label>
+              <input value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder="Asunto del email" style={{ width: "100%", background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "10px 12px", color: "#fff", fontSize: "14px", boxSizing: "border-box" }} />
+            </div>
+
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ color: "#888", fontSize: "12px", fontWeight: 600, textTransform: "uppercase", display: "block", marginBottom: "8px" }}>Mensaje</label>
+              <textarea value={emailMessage} onChange={e => setEmailMessage(e.target.value)} placeholder="Escribe el mensaje aquí..." rows={6} style={{ width: "100%", background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "10px 12px", color: "#fff", fontSize: "14px", resize: "vertical", boxSizing: "border-box", fontFamily: "inherit" }} />
+            </div>
+
+            {emailResult && (
+              <div style={{ marginBottom: "16px", padding: "10px 14px", borderRadius: "8px", background: emailResult.startsWith("✓") ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${emailResult.startsWith("✓") ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`, color: emailResult.startsWith("✓") ? "#22c55e" : "#ef4444", fontSize: "13px" }}>
+                {emailResult}
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button onClick={() => { setEmailModal(false); setEmailResult(null); }} style={{ padding: "10px 20px", borderRadius: "8px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#888", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>Cancelar</button>
+              <button
+                disabled={emailSending || !emailSubject.trim() || !emailMessage.trim() || (emailTo === "individual" && !emailIndividual.trim())}
+                onClick={async () => {
+                  setEmailSending(true);
+                  setEmailResult(null);
+                  try {
+                    const res = await fetch("/api/admin/send-email", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        sendToAll: emailTo !== "individual",
+                        planFilter: emailTo === "plan" ? emailPlan : "all",
+                        to: emailTo === "individual" ? emailIndividual : undefined,
+                        subject: emailSubject,
+                        message: emailMessage,
+                      }),
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                      setEmailResult(`✓ Email enviado a ${data.sent} usuarios`);
+                      setEmailSubject("");
+                      setEmailMessage("");
+                    } else {
+                      setEmailResult(`Error: ${data.error}`);
+                    }
+                  } catch {
+                    setEmailResult("Error al enviar");
+                  } finally {
+                    setEmailSending(false);
+                  }
+                }}
+                style={{ padding: "10px 20px", borderRadius: "8px", background: emailSending || !emailSubject.trim() || !emailMessage.trim() || (emailTo === "individual" && !emailIndividual.trim()) ? "rgba(255,255,255,0.1)" : "#ffffff", color: emailSending || !emailSubject.trim() || !emailMessage.trim() || (emailTo === "individual" && !emailIndividual.trim()) ? "#555" : "#000", fontSize: "13px", fontWeight: 600, cursor: emailSending ? "not-allowed" : "pointer", border: "none" }}
+              >
+                {emailSending ? "Enviando..." : "Enviar email"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1097,60 +1318,123 @@ function UsersSection({
 /* ─── Section: Subscriptions ──────────────────────────────── */
 function SubscriptionsSection({ users }: { users: AdminUser[] }) {
   const [filter, setFilter] = useState<"active" | "all">("active");
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const subs = users.filter(u => filter === "all" || u.stripeSubscriptionId !== null);
+
+  const nowGlobal = new Date();
+  const withSub = users.filter(u => u.stripeSubscriptionId !== null);
+  const activeWithSub = withSub.filter(u => !u.planExpiresAt || new Date(u.planExpiresAt) >= nowGlobal);
+  const expiredCount = withSub.filter(u => u.planExpiresAt && new Date(u.planExpiresAt) < nowGlobal).length;
+  const mrr = activeWithSub.reduce((sum, u) => sum + (PLAN_PRICE[u.plan] ?? 0), 0);
+  const nextWeek = new Date(nowGlobal.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const renewingSoon = activeWithSub.filter(u => u.planExpiresAt && new Date(u.planExpiresAt) <= nextWeek).length;
 
   return (
     <div>
-      <p style={{ fontWeight: 800, fontSize: "20px", marginBottom: "20px", color: "#fff" }}>Suscripciones</p>
-      <div style={{ display: "flex", gap: "6px", marginBottom: "14px" }}>
+      {/* Summary stats */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
+        {([
+          { label: "Total activas", value: withSub.length, color: "#4ade80" },
+          { label: "MRR estimado", value: `$${mrr.toLocaleString("es-ES")}`, color: "#60a5fa" },
+          { label: "Renuevan esta semana", value: renewingSoon, color: "#f97316" },
+          { label: "Expiradas", value: expiredCount, color: "#f87171" },
+        ] as Array<{ label: string; value: string | number; color: string }>).map(s => (
+          <div key={s.label} style={{ ...card, padding: "16px 20px" }}>
+            <p style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0, marginBottom: 8 }}>{s.label}</p>
+            <p style={{ fontSize: 26, fontWeight: 800, color: s.color, margin: 0, lineHeight: 1 }}>{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Filter pills */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
         {(["active", "all"] as const).map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{ padding: "5px 14px", borderRadius: "6px", fontSize: "12px", fontWeight: 600, border: `1px solid ${filter === f ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.08)"}`, background: filter === f ? "rgba(255,255,255,0.1)" : "transparent", color: filter === f ? "#fff" : "#555555", cursor: "pointer" }}>
+          <button key={f} onClick={() => setFilter(f)} style={{ padding: "5px 16px", borderRadius: 999, fontSize: 11, fontWeight: 600, border: `1px solid ${filter === f ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.07)"}`, background: filter === f ? "rgba(255,255,255,0.09)" : "transparent", color: filter === f ? "#fff" : "rgba(255,255,255,0.35)", cursor: "pointer", transition: "all 0.15s" }}>
             {f === "active" ? "Con suscripción" : "Todos"}
           </button>
         ))}
       </div>
+
+      {/* Table */}
       <div style={{ ...card, padding: 0, overflow: "hidden" }}>
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
-            <thead>
-              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", background: "#0d0d0d" }}>
-                {["Email", "Plan", "Intervalo", "Estado", "Próxima renovación", "Stripe ID"].map(h => (
-                  <th key={h} style={{ padding: "10px 14px", textAlign: "left", color: "#555555", fontWeight: 600, whiteSpace: "nowrap", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {subs.map((u, idx) => {
-                const now = new Date();
-                const expires = u.planExpiresAt ? new Date(u.planExpiresAt) : null;
-                const expired = expires && expires < now;
-                const statusColor = !u.stripeSubscriptionId ? "#555555" : expired ? "#f87171" : "#4ade80";
-                const statusLabel = !u.stripeSubscriptionId ? "Sin suscripción" : expired ? "Expirado" : "Activo";
-                return (
-                  <tr key={u.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", background: idx % 2 === 0 ? "#0d0d0d" : "#111111" }}>
-                    <td style={{ padding: "10px 14px", color: "#e5e7eb" }}>{u.email}</td>
-                    <td style={{ padding: "10px 14px" }}><PlanBadge plan={u.plan} /></td>
-                    <td style={{ padding: "10px 14px", color: "#888888" }}>{u.billingInterval === "annual" ? "Anual" : u.billingInterval === "monthly" ? "Mensual" : u.billingInterval || "—"}</td>
-                    <td style={{ padding: "10px 14px" }}>
-                      <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", color: statusColor, background: `${statusColor}22`, border: `1px solid ${statusColor}55` }}>{statusLabel}</span>
-                    </td>
-                    <td style={{ padding: "10px 14px", color: "#888888", whiteSpace: "nowrap" }}>
-                      {expires ? expires.toLocaleDateString("es-ES", { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" }) : "—"}
-                    </td>
-                    <td style={{ padding: "10px 14px", color: "#555555", fontFamily: "monospace", fontSize: "0.7rem" }}>
-                      {u.stripeSubscriptionId ? (
-                        <a href={`https://dashboard.stripe.com/subscriptions/${u.stripeSubscriptionId}`} target="_blank" rel="noopener noreferrer" style={{ color: "#888888", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                          {u.stripeSubscriptionId.slice(0, 18)}… <ExternalLink size={10} />
-                        </a>
-                      ) : "—"}
-                    </td>
-                  </tr>
-                );
-              })}
-              {subs.length === 0 && <tr><td colSpan={6} style={{ padding: "2rem", textAlign: "center", color: "#555555" }}>Sin suscripciones</td></tr>}
-            </tbody>
-          </table>
-        </div>
+        {subs.length === 0 ? (
+          <div style={{ padding: "4rem 2rem", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+            <CreditCard size={32} style={{ color: "rgba(255,255,255,0.08)" }} />
+            <p style={{ fontSize: 14, color: "rgba(255,255,255,0.2)", margin: 0 }}>Sin suscripciones</p>
+          </div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                  {["Email", "Plan", "Intervalo", "Estado", "Próxima renovación", "Stripe ID"].map(h => (
+                    <th key={h} style={{ padding: "12px 16px", textAlign: "left", color: "rgba(255,255,255,0.3)", fontWeight: 600, whiteSpace: "nowrap", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", background: "rgba(255,255,255,0.02)" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {subs.map(u => {
+                  const now = new Date();
+                  const expires = u.planExpiresAt ? new Date(u.planExpiresAt) : null;
+                  const expired = expires && expires < now;
+                  const statusColor = !u.stripeSubscriptionId ? "#6b7280" : expired ? "#f87171" : "#4ade80";
+                  const statusBg = !u.stripeSubscriptionId ? "rgba(107,114,128,0.1)" : expired ? "rgba(248,113,113,0.1)" : "rgba(74,222,128,0.08)";
+                  const statusBorder = !u.stripeSubscriptionId ? "rgba(107,114,128,0.2)" : expired ? "rgba(248,113,113,0.3)" : "rgba(74,222,128,0.2)";
+                  const statusLabel = !u.stripeSubscriptionId ? "Sin sub." : expired ? "Expirado" : "Activo";
+                  return (
+                    <tr
+                      key={u.id}
+                      style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", background: hoveredRow === u.id ? "rgba(255,255,255,0.03)" : "transparent", transition: "background 0.1s" }}
+                      onMouseEnter={() => setHoveredRow(u.id)}
+                      onMouseLeave={() => setHoveredRow(null)}
+                    >
+                      {/* Email */}
+                      <td style={{ padding: "12px 16px", color: "#e5e7eb", fontSize: 13 }}>{u.email}</td>
+                      {/* Plan */}
+                      <td style={{ padding: "12px 16px" }}><PlanBadge plan={u.plan} /></td>
+                      {/* Intervalo */}
+                      <td style={{ padding: "12px 16px" }}>
+                        {u.billingInterval === "annual"
+                          ? <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 999, background: "rgba(74,222,128,0.08)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.2)" }}>Anual</span>
+                          : u.billingInterval === "monthly"
+                            ? <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 999, background: "rgba(96,165,250,0.08)", color: "#60a5fa", border: "1px solid rgba(96,165,250,0.2)" }}>Mensual</span>
+                            : <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>{u.billingInterval || "—"}</span>
+                        }
+                      </td>
+                      {/* Estado */}
+                      <td style={{ padding: "12px 16px" }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 999, color: statusColor, background: statusBg, border: `1px solid ${statusBorder}`, textTransform: "uppercase", letterSpacing: "0.04em" }}>{statusLabel}</span>
+                      </td>
+                      {/* Próxima renovación */}
+                      <td style={{ padding: "12px 16px", color: expired ? "#f87171" : "rgba(255,255,255,0.45)", whiteSpace: "nowrap", fontSize: 12 }}>
+                        {expires ? expires.toLocaleDateString("es-ES", { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" }) : "—"}
+                      </td>
+                      {/* Stripe ID */}
+                      <td style={{ padding: "12px 16px" }}>
+                        {u.stripeSubscriptionId ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontFamily: "monospace", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{u.stripeSubscriptionId.slice(0, 12)}…</span>
+                            <button
+                              onClick={() => { navigator.clipboard.writeText(u.stripeSubscriptionId!); setCopiedId(u.id); setTimeout(() => setCopiedId(null), 1500); }}
+                              title={copiedId === u.id ? "Copiado!" : "Copiar ID"}
+                              style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 4px", fontSize: 11, color: copiedId === u.id ? "#4ade80" : "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", transition: "color 0.15s" }}
+                            >
+                              {copiedId === u.id ? <Check size={11} /> : "⎘"}
+                            </button>
+                            <a href={`https://dashboard.stripe.com/subscriptions/${u.stripeSubscriptionId}`} target="_blank" rel="noopener noreferrer" title="Ver en Stripe" style={{ color: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center" }}>
+                              <ExternalLink size={11} />
+                            </a>
+                          </div>
+                        ) : <span style={{ color: "rgba(255,255,255,0.15)", fontSize: 11 }}>—</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1172,50 +1456,103 @@ function TurboEngineCard({
   onSave: () => void;
   ai33Health: { elevenlabs: string; isDown: boolean } | null;
 }) {
-  const healthColor: "green" | "red" | "gray" = ai33Health === null ? "gray" : ai33Health.isDown ? "red" : "green";
-  const healthLabel = ai33Health === null ? "Comprobando..." : ai33Health.isDown ? "Degradado / Caído" : "Operativo";
+  const [turboChecking, setTurboChecking] = useState(false);
+  const [lastTurboCheck, setLastTurboCheck] = useState<Date | null>(null);
+  const [localHealth, setLocalHealth] = useState<{ elevenlabs: string; isDown: boolean } | null>(null);
+
+  const effectiveHealth = localHealth ?? ai33Health;
+  const healthColor: "green" | "red" | "gray" = effectiveHealth === null ? "gray" : effectiveHealth.isDown ? "red" : "green";
+  const healthLabel = effectiveHealth === null ? "Comprobando..." : effectiveHealth.isDown ? "Degradado / Caído" : "Operativo";
+  const hasChanges = turboStatusPending !== turboStatus || turboManualOverridePending !== turboManualOverride;
+
+  async function forceCheck() {
+    setTurboChecking(true);
+    try {
+      const r = await fetch("/api/ai33-health");
+      const d = await r.json();
+      setLocalHealth({ elevenlabs: d.elevenlabs ?? "unknown", isDown: !!d.isDown });
+    } catch {
+      setLocalHealth({ elevenlabs: "unknown", isDown: true });
+    } finally {
+      setLastTurboCheck(new Date());
+      setTurboChecking(false);
+    }
+  }
 
   return (
     <div style={{ ...card }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px", flexWrap: "wrap", gap: 8 }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "20px" }}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontWeight: 700, fontSize: "14px", color: "#fff" }}>Elite Labs Turbo</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+            <span style={{ fontWeight: 700, fontSize: "15px", color: "#fff" }}>Elite Labs Turbo</span>
             <span style={{ fontSize: "10px", fontWeight: 500, padding: "1px 7px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.4)" }}>ElevenLabs · ai33.pro</span>
           </div>
-          <p style={{ fontSize: "12px", color: "#555555", marginTop: "3px" }}>
-            Estado guardado: <span style={{ color: turboStatus === "active" ? "#4ade80" : turboStatus === "maintenance" ? "#fbbf24" : "#9ca3af", fontWeight: 600 }}>{turboStatus === "active" ? "Activo" : turboStatus === "maintenance" ? "Mantenimiento" : "Desactivado"}</span>
-          </p>
+          {effectiveHealth?.elevenlabs && effectiveHealth.elevenlabs !== "unknown" && (
+            <p style={{ fontSize: "11px", color: "#555" }}>Modelo: <span style={{ color: "#888", fontWeight: 600 }}>{effectiveHealth.elevenlabs}</span></p>
+          )}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px" }}>
+        {/* Prominent health badge */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "6px 12px", borderRadius: "8px", background: healthColor === "green" ? "rgba(74,222,128,0.1)" : healthColor === "red" ? "rgba(248,113,113,0.1)" : "rgba(255,255,255,0.04)", border: `1px solid ${healthColor === "green" ? "rgba(74,222,128,0.3)" : healthColor === "red" ? "rgba(248,113,113,0.3)" : "rgba(255,255,255,0.07)"}` }}>
           <StatusDot color={healthColor} />
-          <span style={{ color: healthColor === "gray" ? "#555555" : healthColor === "red" ? "#f87171" : "#4ade80", fontWeight: 500 }}>{healthLabel}</span>
+          <span style={{ fontSize: "12px", fontWeight: 700, color: healthColor === "green" ? "#4ade80" : healthColor === "red" ? "#f87171" : "#555" }}>{healthLabel}</span>
         </div>
       </div>
-      <div style={{ display: "flex", gap: "8px", marginBottom: "14px", flexWrap: "wrap" }}>
-        {(["active", "maintenance", "disabled"] as const).map((s) => {
-          const cfg = {
-            active: { bg: "rgba(74,222,128,0.15)", border: "rgba(74,222,128,0.4)", text: "#4ade80", label: "Activo" },
-            maintenance: { bg: "rgba(251,191,36,0.15)", border: "rgba(251,191,36,0.4)", text: "#fbbf24", label: "Mantenimiento" },
-            disabled: { bg: "rgba(107,114,128,0.15)", border: "rgba(107,114,128,0.4)", text: "#9ca3af", label: "Desactivado" },
-          }[s];
-          const selected = turboStatusPending === s;
-          return (
-            <button key={s} onClick={() => setTurboStatusPending(s)} style={{ padding: "6px 14px", fontSize: "12px", fontWeight: 500, borderRadius: "6px", cursor: "pointer", transition: "all 150ms", background: selected ? cfg.bg : "transparent", border: `1px solid ${selected ? cfg.border : "rgba(255,255,255,0.08)"}`, color: selected ? cfg.text : "#6b7280" }}>
-              {cfg.label}
-            </button>
-          );
-        })}
+
+      {/* 2-col internal grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+        {/* Left: status buttons */}
+        <div>
+          <p style={{ fontSize: "10px", color: "#555", fontWeight: 700, marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Estado del motor</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            {(["active", "maintenance", "disabled"] as const).map((s) => {
+              const cfgMap = {
+                active:      { color: "#4ade80", border: "rgba(74,222,128,0.4)",    bg: "rgba(74,222,128,0.12)",    label: "Activo",          Icon: CheckCircle },
+                maintenance: { color: "#fbbf24", border: "rgba(251,191,36,0.4)",   bg: "rgba(251,191,36,0.12)",   label: "Mantenimiento",   Icon: Wrench },
+                disabled:    { color: "#9ca3af", border: "rgba(107,114,128,0.35)", bg: "rgba(107,114,128,0.12)", label: "Desactivado",     Icon: PowerOff },
+              } as const;
+              const cfg = cfgMap[s];
+              const selected = turboStatusPending === s;
+              return (
+                <button key={s} onClick={() => setTurboStatusPending(s)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", fontSize: "12px", fontWeight: 600, borderRadius: "7px", cursor: "pointer", transition: "all 150ms", background: selected ? cfg.bg : "transparent", border: `1px solid ${selected ? cfg.border : "rgba(255,255,255,0.06)"}`, color: selected ? cfg.color : "#4b5563", textAlign: "left" }}>
+                  <cfg.Icon size={13} />
+                  {cfg.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right: config + save */}
+        <div>
+          <p style={{ fontSize: "10px", color: "#555", fontWeight: 700, marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Configuración</p>
+          <p style={{ fontSize: "12px", color: "#555", marginBottom: "12px" }}>
+            Guardado: <span style={{ fontWeight: 700, color: turboStatus === "active" ? "#4ade80" : turboStatus === "maintenance" ? "#fbbf24" : "#6b7280" }}>
+              {turboStatus === "active" ? "Activo" : turboStatus === "maintenance" ? "Mantenimiento" : "Desactivado"}
+            </span>
+          </p>
+          <label style={{ display: "flex", alignItems: "flex-start", gap: "8px", marginBottom: "16px", cursor: "pointer" }}>
+            <input type="checkbox" checked={turboManualOverridePending} onChange={e => setTurboManualOverridePending(e.target.checked)} style={{ width: "14px", height: "14px", accentColor: "#ffffff", cursor: "pointer", flexShrink: 0, marginTop: "2px" }} />
+            <span style={{ fontSize: "11px", color: "#666", lineHeight: 1.45 }}>Anular control automático <span style={{ color: "#3d4451" }}>(el health check no sobreescribirá este estado)</span></span>
+          </label>
+          <button
+            onClick={onSave}
+            disabled={turboStatusSaving || !hasChanges}
+            style={{ width: "100%", padding: "8px 16px", fontSize: "12px", fontWeight: 700, borderRadius: "7px", border: "none", transition: "all 150ms", cursor: hasChanges && !turboStatusSaving ? "pointer" : "default", background: hasChanges ? "#ffffff" : "rgba(255,255,255,0.05)", color: hasChanges ? "#000" : "#4b5563", opacity: turboStatusSaving ? 0.6 : 1 }}
+          >{turboStatusSaving ? "Guardando..." : "Guardar cambios"}</button>
+        </div>
       </div>
-      <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px", cursor: "pointer" }}>
-        <input type="checkbox" checked={turboManualOverridePending} onChange={e => setTurboManualOverridePending(e.target.checked)} style={{ width: "14px", height: "14px", accentColor: "#ffffff", cursor: "pointer" }} />
-        <span style={{ fontSize: "12px", color: "#888888" }}>Anular control automático <span style={{ color: "#4b5563" }}>(el health check no sobreescribirá este estado)</span></span>
-      </label>
-      <button
-        onClick={onSave}
-        disabled={turboStatusSaving || (turboStatusPending === turboStatus && turboManualOverridePending === turboManualOverride)}
-        style={{ padding: "6px 18px", fontSize: "12px", fontWeight: 600, borderRadius: "6px", border: "none", transition: "all 150ms", cursor: (turboStatusPending === turboStatus && turboManualOverridePending === turboManualOverride) ? "default" : "pointer", background: (turboStatusPending === turboStatus && turboManualOverridePending === turboManualOverride) ? "rgba(255,255,255,0.05)" : "#ffffff", color: (turboStatusPending === turboStatus && turboManualOverridePending === turboManualOverride) ? "#6b7280" : "#000000", opacity: turboStatusSaving ? 0.6 : 1 }}
-      >{turboStatusSaving ? "Guardando..." : "Guardar cambios"}</button>
+
+      {/* Footer: force check */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", marginTop: "20px", paddingTop: "14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontSize: "11px", color: "#3d4451" }}>
+          {lastTurboCheck ? `Última comprobación: ${lastTurboCheck.toLocaleTimeString("es-ES")}` : "Health check no ejecutado aún"}
+        </span>
+        <button onClick={forceCheck} disabled={turboChecking} style={{ display: "flex", alignItems: "center", gap: "7px", padding: "7px 14px", fontSize: "12px", fontWeight: 600, borderRadius: "7px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#aaa", cursor: turboChecking ? "default" : "pointer", opacity: turboChecking ? 0.6 : 1, transition: "all 150ms" }}>
+          <RefreshCw size={12} style={{ animation: turboChecking ? "spin 1s linear infinite" : "none" }} />
+          {turboChecking ? "Comprobando..." : "Forzar health check ahora"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -1232,27 +1569,78 @@ function EnginesSection(props: {
   onSave: () => void;
   ai33Health: { elevenlabs: string; isDown: boolean } | null;
 }) {
+  const [fishLatency, setFishLatency] = useState<number | null>(null);
+  const [lastFishCheck, setLastFishCheck] = useState<Date | null>(null);
+  const [fishChecking, setFishChecking] = useState(false);
+  const [fishUp, setFishUp] = useState<boolean | null>(null);
+
+  async function checkFish() {
+    setFishChecking(true);
+    const t0 = Date.now();
+    try {
+      const r = await fetch("/api/admin/fish-credits");
+      setFishLatency(Date.now() - t0);
+      setFishUp(r.ok);
+    } catch {
+      setFishLatency(null);
+      setFishUp(false);
+    } finally {
+      setLastFishCheck(new Date());
+      setFishChecking(false);
+    }
+  }
+
+  const fishColor: "green" | "red" | "gray" = fishUp === null ? "gray" : fishUp ? "green" : "red";
+  const fishLabel = fishUp === null ? "Sin comprobar" : fishUp ? "Operativo" : "Error de conexión";
+
   return (
     <div>
       <p style={{ fontWeight: 800, fontSize: "20px", marginBottom: "20px", color: "#fff" }}>Motores TTS</p>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-        {/* Card 1: Elite Labs M2 */}
-        <div style={card}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+        {/* Card 1: Elite Labs M2 (Fish Audio) */}
+        <div style={{ ...card }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+            {/* Left: info + stats */}
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontWeight: 700, fontSize: "14px", color: "#fff" }}>Elite Labs M2</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                <span style={{ fontWeight: 700, fontSize: "15px", color: "#fff" }}>Elite Labs M2</span>
                 <span style={{ fontSize: "10px", fontWeight: 500, padding: "1px 7px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.4)" }}>Fish Audio</span>
               </div>
-              <p style={{ fontSize: "12px", color: "#555555", marginTop: "3px" }}>Motor de síntesis principal</p>
+              <p style={{ fontSize: "12px", color: "#555", marginBottom: "18px" }}>Motor de síntesis principal · Autónomo</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: "12px", color: "#555" }}>Estado API</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <StatusDot color={fishColor} />
+                    <span style={{ fontSize: "12px", fontWeight: 700, color: fishColor === "green" ? "#4ade80" : fishColor === "red" ? "#f87171" : "#555" }}>{fishLabel}</span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: "12px", color: "#555" }}>Latencia estimada</span>
+                  <span style={{ fontSize: "12px", fontWeight: 700, color: "#e2e8f0" }}>
+                    {fishLatency !== null ? `${fishLatency} ms` : "—"}
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: "12px", color: "#555" }}>Última comprobación</span>
+                  <span style={{ fontSize: "11px", color: "#4b5563" }}>
+                    {lastFishCheck ? lastFishCheck.toLocaleTimeString("es-ES") : "—"}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <StatusDot color="green" />
-              <span style={{ fontSize: "12px", color: "#4ade80", fontWeight: 500 }}>Operativo</span>
+            {/* Right: controls */}
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: "12px" }}>
+              <button onClick={checkFish} disabled={fishChecking} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "10px 16px", fontSize: "12px", fontWeight: 700, borderRadius: "8px", border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", color: "#ccc", cursor: fishChecking ? "default" : "pointer", opacity: fishChecking ? 0.6 : 1, transition: "all 150ms", whiteSpace: "nowrap" }}>
+                <RefreshCw size={13} style={{ animation: fishChecking ? "spin 1s linear infinite" : "none" }} />
+                {fishChecking ? "Comprobando..." : "Forzar health check ahora"}
+              </button>
+              <p style={{ fontSize: "11px", color: "#3d4451", textAlign: "center", lineHeight: 1.45 }}>Sin controles manuales — este motor opera de forma autónoma.</p>
             </div>
           </div>
-          <p style={{ fontSize: "12px", color: "#444444" }}>Sin controles manuales — este motor opera de forma autónoma.</p>
         </div>
+
         {/* Card 2: Elite Labs Turbo */}
         <TurboEngineCard {...props} />
       </div>
@@ -1270,68 +1658,115 @@ function SupportSection({
 }) {
   const [filter, setFilter] = useState<"open" | "all">("open");
   const shown = tickets.filter(t => filter === "all" || t.status === "open");
+  const openCount = tickets.filter(t => t.status === "open").length;
+
+  const CATEGORY_COLORS: Record<string, [string, string]> = {
+    technical: ["#60a5fa", "rgba(96,165,250,0.12)"],
+    billing:   ["#4ade80", "rgba(74,222,128,0.1)"],
+    general:   ["#9ca3af", "rgba(156,163,175,0.1)"],
+    refund:    ["#f97316", "rgba(249,115,22,0.1)"],
+    other:     ["#a78bfa", "rgba(167,139,250,0.1)"],
+  };
+
+  const relativeTime = (dateStr: string): string => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `hace ${mins}m`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `hace ${hours}h`;
+    return `hace ${Math.floor(hours / 24)}d`;
+  };
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
-        <p style={{ fontWeight: 800, fontSize: "20px", color: "#fff" }}>Tickets de soporte</p>
-        <div style={{ display: "flex", gap: "6px" }}>
-          {(["open", "all"] as const).map(f => (
-            <button key={f} onClick={() => setFilter(f)} style={{ padding: "5px 14px", borderRadius: "6px", fontSize: "12px", fontWeight: 600, border: `1px solid ${filter === f ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.08)"}`, background: filter === f ? "rgba(255,255,255,0.1)" : "transparent", color: filter === f ? "#fff" : "#555555", cursor: "pointer" }}>
-              {f === "open" ? "Abiertos" : "Todos"}
-            </button>
-          ))}
-        </div>
+      {/* Tabs */}
+      <div style={{ display: "inline-flex", gap: 2, marginBottom: 20, background: "rgba(255,255,255,0.04)", padding: 4, borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)" }}>
+        {(["open", "all"] as const).map(f => (
+          <button key={f} onClick={() => setFilter(f)} style={{ padding: "6px 18px", borderRadius: 8, fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer", background: filter === f ? "#ffffff" : "transparent", color: filter === f ? "#000000" : "rgba(255,255,255,0.4)", transition: "all 0.15s" }}>
+            {f === "open" ? `Abiertos${openCount > 0 ? ` (${openCount})` : ""}` : "Todos"}
+          </button>
+        ))}
       </div>
+
+      {/* Empty state */}
       {shown.length === 0 ? (
-        <p style={{ color: "#555555", fontSize: "0.85rem" }}>No hay tickets{filter === "open" ? " abiertos" : ""}.</p>
+        <div style={{ ...card, padding: "4rem 2rem", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+          <Ticket size={32} style={{ color: "rgba(255,255,255,0.08)" }} />
+          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.2)", margin: 0 }}>No hay tickets{filter === "open" ? " abiertos" : ""}.</p>
+        </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          {shown.map(ticket => (
-            <div key={ticket.id} style={{ borderRadius: "12px", border: `1px solid ${ticket.status === "closed" ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)"}`, background: "#111111", overflow: "hidden" }}>
-              <div style={{ padding: "12px 16px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", flexWrap: "wrap" }}>
-                    <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#9ca3af" }}>{TICKET_TYPE_LABELS[ticket.type] ?? ticket.type}</span>
-                    <span style={{ fontSize: "0.65rem", color: "#555555" }}>·</span>
-                    <span style={{ fontSize: "0.7rem", color: "#555555" }}>{ticket.user.email}</span>
-                    <span style={{ fontSize: "0.65rem", padding: "1px 7px", borderRadius: "999px", background: ticket.status === "closed" ? "rgba(107,114,128,0.12)" : "rgba(248,113,113,0.12)", color: ticket.status === "closed" ? "#6b7280" : "#f87171", border: `1px solid ${ticket.status === "closed" ? "rgba(255,255,255,0.08)" : "rgba(248,113,113,0.3)"}`, fontWeight: 700 }}>
-                      {ticket.status === "closed" ? "CERRADO" : "ABIERTO"}
-                    </span>
-                    <span style={{ fontSize: "0.65rem", color: "#444444", marginLeft: "auto" }}>{new Date(ticket.createdAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {shown.map(ticket => {
+            const [catColor, catBg] = CATEGORY_COLORS[ticket.type] ?? ["#9ca3af", "rgba(156,163,175,0.1)"];
+            const isClosed = ticket.status === "closed";
+            const isReplying = replyState.ticketId === ticket.id;
+            return (
+              <div key={ticket.id} style={{ ...card, padding: 0, overflow: "hidden", opacity: isClosed ? 0.55 : 1, transition: "opacity 0.15s" }}>
+                {/* Card body */}
+                <div style={{ padding: "16px 20px" }}>
+                  {/* Header row: email + category badge | time */}
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", minWidth: 0 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#e5e7eb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 240 }}>{ticket.user.email}</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, color: catColor, background: catBg, border: `1px solid ${catColor}44`, textTransform: "uppercase", letterSpacing: "0.04em", flexShrink: 0 }}>{TICKET_TYPE_LABELS[ticket.type] ?? ticket.type}</span>
+                      {isClosed && <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: "rgba(107,114,128,0.1)", color: "#6b7280", border: "1px solid rgba(107,114,128,0.2)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Cerrado</span>}
+                    </div>
+                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", whiteSpace: "nowrap", flexShrink: 0 }}>{relativeTime(ticket.createdAt)}</span>
                   </div>
-                  <p style={{ fontSize: "0.8rem", color: "#6b7280", lineHeight: 1.5 }}>{ticket.description}</p>
+                  {/* Description — 2-line preview */}
+                  <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.6, margin: 0, overflow: "hidden", maxHeight: "3.2em", marginBottom: ticket.adminReply ? 12 : 0 }}>{ticket.description}</p>
+                  {/* Admin reply block */}
                   {ticket.adminReply && (
-                    <div style={{ marginTop: "8px", padding: "8px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                      <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "#aaaaaa", marginBottom: "3px" }}>TU RESPUESTA</p>
-                      <p style={{ fontSize: "0.78rem", color: "#aaaaaa" }}>{ticket.adminReply}</p>
+                    <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                      <p style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.25)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>Tu respuesta</p>
+                      <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", margin: 0, lineHeight: 1.5 }}>{ticket.adminReply}</p>
                     </div>
                   )}
                 </div>
-                <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
-                  {ticket.status === "open" && (
-                    <>
-                      <button onClick={() => { replyState.setTicketId(replyState.ticketId === ticket.id ? null : ticket.id); replyState.setText(ticket.adminReply ?? ""); }} style={btn("#1e3a5f", { padding: "0.3rem 0.7rem", fontSize: "0.75rem", border: "1px solid rgba(255,255,255,0.15)" })}>Responder</button>
-                      <button onClick={() => onReply(ticket.id, true)} style={btn("#1a1a1a", { padding: "0.3rem 0.7rem", fontSize: "0.75rem", border: "1px solid rgba(255,255,255,0.08)", color: "#6b7280" })}>Cerrar</button>
-                    </>
-                  )}
-                </div>
-              </div>
-              {replyState.ticketId === ticket.id && (
-                <div style={{ padding: "12px 16px", borderTop: "1px solid rgba(255,255,255,0.06)", background: "#0d0d0d" }}>
-                  <textarea value={replyState.text} onChange={e => replyState.setText(e.target.value)} placeholder="Escribe tu respuesta..." rows={3} style={{ ...input, resize: "vertical", marginBottom: "8px" }} />
-                  <div style={{ display: "flex", gap: "6px" }}>
-                    <button onClick={() => onReply(ticket.id, false)} disabled={replyState.loading || !replyState.text.trim()} style={btn("#ffffff", { padding: "0.4rem 1rem", fontSize: "0.8rem", opacity: replyState.loading || !replyState.text.trim() ? 0.6 : 1 })}>
-                      {replyState.loading ? "Enviando..." : "Enviar respuesta"}
+                {/* Card footer — actions */}
+                {!isClosed && (
+                  <div style={{ padding: "10px 20px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.01)" }}>
+                    <button
+                      onClick={() => { replyState.setTicketId(isReplying ? null : ticket.id); replyState.setText(ticket.adminReply ?? ""); }}
+                      style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, border: `1px solid ${isReplying ? "rgba(96,165,250,0.4)" : "rgba(255,255,255,0.1)"}`, background: isReplying ? "rgba(96,165,250,0.1)" : "rgba(255,255,255,0.04)", color: isReplying ? "#60a5fa" : "rgba(255,255,255,0.55)", cursor: "pointer", transition: "all 0.15s" }}
+                    >
+                      <MessageSquare size={12} />
+                      Responder
                     </button>
-                    <button onClick={() => onReply(ticket.id, true)} disabled={replyState.loading} style={btn("#1e3a5f", { padding: "0.4rem 1rem", fontSize: "0.8rem", border: "1px solid rgba(255,255,255,0.15)" })}>
-                      Responder y cerrar
+                    <button
+                      onClick={() => onReply(ticket.id, true)}
+                      style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, border: "1px solid rgba(255,255,255,0.07)", background: "transparent", color: "rgba(255,255,255,0.3)", cursor: "pointer", transition: "all 0.15s" }}
+                    >
+                      <X size={12} />
+                      Cerrar
                     </button>
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+                {/* Inline reply form */}
+                {isReplying && (
+                  <div style={{ padding: "16px 20px", borderTop: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.015)" }}>
+                    <textarea
+                      value={replyState.text}
+                      onChange={e => replyState.setText(e.target.value)}
+                      placeholder="Escribe tu respuesta..."
+                      rows={3}
+                      style={{ ...input, resize: "vertical", marginBottom: 10 }}
+                    />
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={() => onReply(ticket.id, false)} disabled={replyState.loading || !replyState.text.trim()} style={btn("#ffffff", { display: "flex", alignItems: "center", gap: 6, opacity: replyState.loading || !replyState.text.trim() ? 0.5 : 1 })}>
+                        <MessageSquare size={12} />
+                        {replyState.loading ? "Enviando..." : "Enviar respuesta"}
+                      </button>
+                      <button onClick={() => onReply(ticket.id, true)} disabled={replyState.loading} style={btn("#1e3a5f", { border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", gap: 6, opacity: replyState.loading ? 0.5 : 1 })}>
+                        <Check size={12} />
+                        Responder y cerrar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -1476,78 +1911,172 @@ function WithdrawalsSection({
 
 /* ─── Section: Analytics ──────────────────────────────────── */
 function AnalyticsSection({ users, stats }: { users: AdminUser[]; stats: Stats | null }) {
-  const planCounts: Record<string, number> = {};
-  for (const u of users) { planCounts[u.plan] = (planCounts[u.plan] ?? 0) + 1; }
-  const plans = ["free", "plus", "pro", "elite", "starter", "enterprise", "lifetime"];
-  const planData = plans.map(p => ({ label: p, value: planCounts[p] ?? 0 }));
-  const maxPlan = Math.max(...planData.map(d => d.value), 1);
+  const PLAN_PRICES: Record<string, number> = {
+    free: 0, creator: 8, plus: 26, pro: 49, elite: 315,
+    starter: 7, enterprise: 110, lifetime: 0,
+  };
+  const PLAN_COLORS: Record<string, string> = {
+    free: "#6b7280", creator: "#60a5fa", plus: "#a78bfa",
+    pro: "#f97316", elite: "#f59e0b", starter: "#3b82f6",
+    enterprise: "#10b981", lifetime: "#f59e0b",
+  };
+  const TURBO_PLANS = new Set(["pro", "elite", "enterprise", "lifetime"]);
+  const ALL_PLANS = ["free", "creator", "plus", "pro", "elite", "starter", "enterprise", "lifetime"];
 
   const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  // Summary metrics
+  const withSub = users.filter(u => u.stripeSubscriptionId !== null && (!u.planExpiresAt || new Date(u.planExpiresAt) >= now));
+  const mrr = withSub.reduce((sum, u) => sum + (PLAN_PRICES[u.plan] ?? 0), 0);
+  const activeRecent = users.filter(u => new Date(u.createdAt) >= sevenDaysAgo).length;
+  const paidUsers = users.filter(u => u.plan !== "free").length;
+  const convRate = users.length > 0 ? ((paidUsers / users.length) * 100).toFixed(1) : "0.0";
+  const totalCreditsConsumed = stats?.totalCreditsConsumed ?? 0;
+
+  // Plan distribution
+  const planCounts: Record<string, number> = {};
+  for (const u of users) { planCounts[u.plan] = (planCounts[u.plan] ?? 0) + 1; }
+  const planData = ALL_PLANS.map(p => ({ label: p, value: planCounts[p] ?? 0 }));
+  const maxPlan = Math.max(...planData.map(d => d.value), 1);
+
+  // Motor distribution
+  const turboCount = users.filter(u => TURBO_PLANS.has(u.plan)).length;
+  const fishCount = users.length - turboCount;
+  const turboRatio = users.length > 0 ? Math.round((turboCount / users.length) * 100) : 0;
+
+  // Registros 30 días
   const days30: { label: string; value: number }[] = [];
   for (let i = 29; i >= 0; i--) {
     const d = new Date(now); d.setDate(d.getDate() - i);
     const key = d.toISOString().slice(0, 10);
-    const label = `${d.getDate()}/${d.getMonth() + 1}`;
-    const value = users.filter(u => u.createdAt.slice(0, 10) === key).length;
-    days30.push({ label, value });
+    days30.push({ label: `${d.getDate()}/${d.getMonth() + 1}`, value: users.filter(u => u.createdAt.slice(0, 10) === key).length });
   }
 
-  const top10Credits = [...users].sort((a, b) => a.credits - b.credits).slice(0, 10);
-  const planColors: Record<string, string> = { free: "#555555", plus: "#60a5fa", pro: "#8b5cf6", elite: "#f59e0b", starter: "#3b82f6", enterprise: "#10b981" };
+  // Top 10 by fewest credits remaining (most consumed)
+  const top10 = [...users].sort((a, b) => (a.credits + a.extraCredits) - (b.credits + b.extraCredits)).slice(0, 10);
+  const maxTotal = Math.max(...users.map(u => u.credits + u.extraCredits), 1);
 
   return (
     <div>
-      <p style={{ fontWeight: 800, fontSize: "20px", marginBottom: "20px", color: "#fff" }}>Analytics</p>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
+      {/* Summary stat cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
+        {([
+          { label: "MRR estimado", value: `$${mrr.toLocaleString("es-ES")}`, color: "#4ade80", sub: `${withSub.length} suscripciones activas` },
+          { label: "Activos últimos 7d", value: activeRecent, color: "#60a5fa", sub: "nuevos registros" },
+          { label: "Tasa conversión", value: `${convRate}%`, color: "#a78bfa", sub: `${paidUsers} usuarios de pago` },
+          { label: "Créditos consumidos", value: totalCreditsConsumed.toLocaleString("es-ES"), color: "#f97316", sub: "total histórico" },
+        ] as Array<{ label: string; value: string | number; color: string; sub: string }>).map(s => (
+          <div key={s.label} style={{ ...card, padding: "16px 20px" }}>
+            <p style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0, marginBottom: 8 }}>{s.label}</p>
+            <p style={{ fontSize: 24, fontWeight: 800, color: s.color, margin: 0, lineHeight: 1, marginBottom: 4 }}>{s.value}</p>
+            <p style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", margin: 0 }}>{s.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Charts row */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+        {/* Plan distribution */}
         <div style={card}>
-          <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#555555", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "16px" }}>Distribución por plan</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <p style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 16 }}>Distribución por plan</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
             {planData.map(({ label, value }) => (
-              <div key={label} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <span style={{ width: 70, fontSize: "11px", color: planColors[label] ?? "#888888", fontWeight: 700, textTransform: "uppercase" }}>{label}</span>
-                <div style={{ flex: 1, height: 8, borderRadius: "4px", background: "rgba(255,255,255,0.05)", overflow: "hidden" }}>
-                  <div style={{ height: "100%", borderRadius: "4px", background: planColors[label] ?? "#888888", width: `${(value / maxPlan) * 100}%`, transition: "width 0.4s" }} />
+              <div key={label} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ width: 78, fontSize: 11, color: PLAN_COLORS[label] ?? "#888", fontWeight: 700, textTransform: "uppercase" as const }}>{label}</span>
+                <div style={{ flex: 1, height: 6, borderRadius: 3, background: "rgba(255,255,255,0.05)", overflow: "hidden" }}>
+                  <div style={{ height: "100%", borderRadius: 3, background: PLAN_COLORS[label] ?? "#888", width: `${(value / maxPlan) * 100}%`, transition: "width 0.4s" }} />
                 </div>
-                <span style={{ width: 30, fontSize: "12px", color: "#888888", textAlign: "right", fontWeight: 600 }}>{value}</span>
+                <span style={{ width: 28, fontSize: 12, color: "rgba(255,255,255,0.35)", textAlign: "right" as const, fontWeight: 600 }}>{value}</span>
               </div>
             ))}
           </div>
         </div>
 
+        {/* Registros 30 días */}
         <div style={card}>
-          <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#555555", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "12px" }}>Registros (30 días)</p>
+          <p style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Registros (últimos 30 días)</p>
           <SimpleBarChart data={days30} height={90} />
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
-            <span style={{ fontSize: "10px", color: "#444444" }}>{days30[0]?.label}</span>
-            <span style={{ fontSize: "10px", color: "#444444" }}>{days30[days30.length - 1]?.label}</span>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.2)" }}>{days30[0]?.label}</span>
+            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.2)" }}>{days30[days30.length - 1]?.label}</span>
           </div>
         </div>
       </div>
 
+      {/* Motor distribution */}
+      <div style={{ ...card, marginBottom: 16 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 16 }}>Distribución por motor</p>
+        <div style={{ display: "flex", gap: 20, alignItems: "center", marginBottom: 10 }}>
+          <div style={{ textAlign: "center" as const, minWidth: 80 }}>
+            <p style={{ fontSize: 26, fontWeight: 800, color: "#60a5fa", margin: 0 }}>{fishCount}</p>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", margin: 0 }}>Fish Audio</p>
+            <p style={{ fontSize: 10, color: "rgba(255,255,255,0.15)", margin: 0 }}>PRO</p>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ height: 10, borderRadius: 5, background: "rgba(255,255,255,0.05)", overflow: "hidden", display: "flex" }}>
+              <div style={{ width: `${100 - turboRatio}%`, background: "#3b82f6", transition: "width 0.4s", minWidth: turboRatio < 100 ? 2 : 0 }} />
+              <div style={{ width: `${turboRatio}%`, background: "#f97316", transition: "width 0.4s", minWidth: turboRatio > 0 ? 2 : 0 }} />
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+              <span style={{ fontSize: 10, color: "#3b82f6", fontWeight: 600 }}>Fish PRO · {100 - turboRatio}%</span>
+              <span style={{ fontSize: 10, color: "#f97316", fontWeight: 600 }}>Turbo · {turboRatio}%</span>
+            </div>
+          </div>
+          <div style={{ textAlign: "center" as const, minWidth: 80 }}>
+            <p style={{ fontSize: 26, fontWeight: 800, color: "#f97316", margin: 0 }}>{turboCount}</p>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", margin: 0 }}>ElevenLabs</p>
+            <p style={{ fontSize: 10, color: "rgba(255,255,255,0.15)", margin: 0 }}>Turbo</p>
+          </div>
+        </div>
+        <p style={{ fontSize: 11, color: "rgba(255,255,255,0.18)", margin: 0 }}>
+          Turbo: Pro · Elite · Enterprise · Lifetime &nbsp;|&nbsp; Fish PRO: Free · Creator · Plus · Starter
+        </p>
+      </div>
+
+      {/* Top 10 table */}
       <div style={card}>
-        <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#555555", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "14px" }}>Top 10 usuarios — créditos restantes (menor = más consumido)</p>
-        {top10Credits.length === 0 ? (
-          <p style={{ color: "#555555", fontSize: "0.8rem" }}>Sin datos</p>
+        <p style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 14 }}>Top 10 usuarios — mayor consumo de créditos</p>
+        {top10.length === 0 ? (
+          <p style={{ color: "rgba(255,255,255,0.2)", fontSize: 13 }}>Sin datos</p>
         ) : (
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
-                <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                  {["#", "Email", "Plan", "Créditos restantes", "Generaciones"].map(h => (
-                    <th key={h} style={{ padding: "8px 12px", textAlign: "left", color: "#555555", fontWeight: 600, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>{h}</th>
+                <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                  {["#", "Email", "Plan", "Motor", "Créditos rest.", "% Uso", "Generaciones"].map(h => (
+                    <th key={h} style={{ padding: "8px 12px", textAlign: "left" as const, color: "rgba(255,255,255,0.3)", fontWeight: 600, fontSize: 10, textTransform: "uppercase" as const, letterSpacing: "0.08em", whiteSpace: "nowrap" as const, background: "rgba(255,255,255,0.02)" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {top10Credits.map((u, i) => (
-                  <tr key={u.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                    <td style={{ padding: "8px 12px", color: "#444444", fontWeight: 700 }}>#{i + 1}</td>
-                    <td style={{ padding: "8px 12px", color: "#e5e7eb" }}>{u.email}</td>
-                    <td style={{ padding: "8px 12px" }}><PlanBadge plan={u.plan} /></td>
-                    <td style={{ padding: "8px 12px", color: "#f87171", fontWeight: 700 }}>{u.credits.toLocaleString("es-ES")}</td>
-                    <td style={{ padding: "8px 12px", color: "#9ca3af" }}>{u._count.generations}</td>
-                  </tr>
-                ))}
+                {top10.map((u, i) => {
+                  const total = u.credits + u.extraCredits;
+                  const usedPct = Math.max(0, Math.round((1 - total / maxTotal) * 100));
+                  const isTurbo = TURBO_PLANS.has(u.plan);
+                  return (
+                    <tr key={u.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                      <td style={{ padding: "9px 12px", color: "rgba(255,255,255,0.2)", fontWeight: 700, fontSize: 11 }}>#{i + 1}</td>
+                      <td style={{ padding: "9px 12px", color: "#e5e7eb", fontSize: 13 }}>{u.email}</td>
+                      <td style={{ padding: "9px 12px" }}><PlanBadge plan={u.plan} /></td>
+                      <td style={{ padding: "9px 12px" }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: isTurbo ? "rgba(249,115,22,0.1)" : "rgba(59,130,246,0.1)", color: isTurbo ? "#f97316" : "#60a5fa", border: `1px solid ${isTurbo ? "rgba(249,115,22,0.25)" : "rgba(59,130,246,0.25)"}` }}>
+                          {isTurbo ? "Turbo" : "Fish PRO"}
+                        </span>
+                      </td>
+                      <td style={{ padding: "9px 12px", color: total < 500 ? "#f87171" : "rgba(255,255,255,0.55)", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{total.toLocaleString("es-ES")}</td>
+                      <td style={{ padding: "9px 12px", minWidth: 110 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{ flex: 1, height: 5, borderRadius: 3, background: "rgba(255,255,255,0.05)", overflow: "hidden" }}>
+                            <div style={{ height: "100%", borderRadius: 3, width: `${usedPct}%`, background: usedPct > 75 ? "#f87171" : usedPct > 40 ? "#f59e0b" : "#4ade80" }} />
+                          </div>
+                          <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", width: 28, textAlign: "right" as const }}>{usedPct}%</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: "9px 12px", color: "rgba(255,255,255,0.4)" }}>{u._count.generations}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -1558,26 +2087,188 @@ function AnalyticsSection({ users, stats }: { users: AdminUser[]; stats: Stats |
 }
 
 /* ─── Section: Config ─────────────────────────────────────── */
-function ConfigSection(props: {
-  turboStatus: "active" | "maintenance" | "disabled";
-  turboStatusPending: "active" | "maintenance" | "disabled";
-  setTurboStatusPending: (v: "active" | "maintenance" | "disabled") => void;
-  turboManualOverride: boolean;
-  turboManualOverridePending: boolean;
-  setTurboManualOverridePending: (v: boolean) => void;
-  turboStatusSaving: boolean;
-  onSave: () => void;
-  ai33Health: { elevenlabs: string; isDown: boolean } | null;
-}) {
+const CFG_PLAN_ORDER = ["free", "creator", "plus", "pro", "elite"] as const;
+const CFG_PLAN_LABELS: Record<string, string> = { free: "Free", creator: "Creator", plus: "Plus", pro: "Pro", elite: "Elite" };
+const CFG_PLAN_BADGE: Record<string, string> = { free: "#888", creator: "#60a5fa", plus: "#a78bfa", pro: "#f97316", elite: "#fbbf24" };
+const CFG_PLAN_DEFAULT: Record<string, number> = { free: 10000, creator: 250000, plus: 1000000, pro: 2000000, elite: 15000000 };
+
+function ConfigSection() {
+  const [cfgLoading, setCfgLoading] = useState(true);
+  const [cfgSaving, setCfgSaving] = useState<string | null>(null);
+
+  const [registrationOpen, setRegistrationOpen] = useState(true);
+  const [maintActive, setMaintActive] = useState(false);
+  const [maintSaved, setMaintSaved] = useState("");
+  const [maintPending, setMaintPending] = useState("");
+  const [creditsSaved, setCreditsSaved] = useState<Record<string, number>>(CFG_PLAN_DEFAULT);
+  const [creditsPending, setCreditsPending] = useState<Record<string, number>>(CFG_PLAN_DEFAULT);
+
+  useEffect(() => {
+    fetch("/api/admin/system-config")
+      .then(r => r.json())
+      .then(d => {
+        setRegistrationOpen(d.registrationOpen ?? true);
+        setMaintActive(d.maintenanceMessageActive ?? false);
+        const msg = d.maintenanceMessage ?? "";
+        setMaintSaved(msg); setMaintPending(msg);
+        let credits: Record<string, number> = { ...CFG_PLAN_DEFAULT };
+        if (d.planCredits && d.planCredits !== "{}") {
+          try { credits = { ...credits, ...JSON.parse(d.planCredits) }; } catch { /* ignore */ }
+        }
+        setCreditsSaved(credits); setCreditsPending(credits);
+      })
+      .catch(() => {})
+      .finally(() => setCfgLoading(false));
+  }, []);
+
+  async function saveField(key: string, payload: Record<string, unknown>) {
+    setCfgSaving(key);
+    try {
+      const r = await fetch("/api/admin/system-config", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!r.ok) return;
+      const d = await r.json();
+      if ("registrationOpen" in payload) setRegistrationOpen(d.registrationOpen ?? true);
+      if ("maintenanceMessageActive" in payload) setMaintActive(d.maintenanceMessageActive ?? false);
+      if ("maintenanceMessage" in payload) { const m = d.maintenanceMessage ?? ""; setMaintSaved(m); setMaintPending(m); }
+      if ("planCredits" in payload) {
+        let c: Record<string, number> = { ...CFG_PLAN_DEFAULT };
+        try { c = { ...c, ...JSON.parse(d.planCredits ?? "{}") }; } catch { /* ignore */ }
+        setCreditsSaved(c); setCreditsPending(c);
+      }
+    } catch { /* ignore */ }
+    finally { setCfgSaving(null); }
+  }
+
+  const creditsChanged = CFG_PLAN_ORDER.some(p => creditsPending[p] !== creditsSaved[p]);
+
+  if (cfgLoading) return (
+    <div>
+      <p style={{ fontWeight: 800, fontSize: "20px", marginBottom: "20px", color: "#fff" }}>Configuración</p>
+      <div style={{ ...card, textAlign: "center", padding: "3rem", color: "rgba(255,255,255,0.25)" }}>Cargando configuración...</div>
+    </div>
+  );
+
   return (
     <div>
       <p style={{ fontWeight: 800, fontSize: "20px", marginBottom: "20px", color: "#fff" }}>Configuración</p>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-        <TurboEngineCard {...props} />
-        <div style={card}>
-          <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#555555", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "12px" }}>Otras opciones</p>
-          <p style={{ fontSize: "13px", color: "#444444" }}>Más opciones de configuración disponibles próximamente.</p>
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+        {/* Row 1: 2-col */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+
+          {/* Card: Registro de usuarios */}
+          <div style={{ ...card }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: "14px", fontWeight: 700, color: "#fff", marginBottom: "5px" }}>Registro de usuarios</p>
+                <p style={{ fontSize: "12px", color: "#555", lineHeight: 1.55, marginBottom: "18px" }}>Permite o bloquea el registro de nuevas cuentas en la plataforma.</p>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  {/* Toggle switch */}
+                  <button
+                    onClick={() => { const next = !registrationOpen; setRegistrationOpen(next); saveField("registration", { registrationOpen: next }); }}
+                    disabled={cfgSaving === "registration"}
+                    style={{ position: "relative", width: 44, height: 24, borderRadius: 12, border: "none", background: registrationOpen ? "#4ade80" : "rgba(255,255,255,0.1)", cursor: cfgSaving === "registration" ? "default" : "pointer", transition: "background 200ms", flexShrink: 0, opacity: cfgSaving === "registration" ? 0.5 : 1 }}
+                  >
+                    <span style={{ position: "absolute", top: 3, left: registrationOpen ? 23 : 3, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left 200ms", boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }} />
+                  </button>
+                  <span style={{ fontSize: "13px", fontWeight: 700, color: registrationOpen ? "#4ade80" : "#f87171" }}>
+                    {cfgSaving === "registration" ? "Guardando..." : registrationOpen ? "Registro abierto" : "Registro cerrado"}
+                  </span>
+                </div>
+              </div>
+              <div style={{ padding: "10px", borderRadius: "10px", background: "rgba(255,255,255,0.04)", flexShrink: 0 }}>
+                <Users size={20} color={registrationOpen ? "#4ade80" : "#f87171"} />
+              </div>
+            </div>
+          </div>
+
+          {/* Card: Mensaje de mantenimiento */}
+          <div style={{ ...card }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", marginBottom: "14px" }}>
+              <div>
+                <p style={{ fontSize: "14px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>Mensaje de mantenimiento</p>
+                <p style={{ fontSize: "12px", color: "#555" }}>Banner global visible en el dashboard para todos los usuarios.</p>
+              </div>
+              {/* Toggle switch */}
+              <button
+                onClick={() => { const next = !maintActive; setMaintActive(next); saveField("maintenanceActive", { maintenanceMessageActive: next }); }}
+                disabled={cfgSaving === "maintenanceActive"}
+                style={{ position: "relative", width: 44, height: 24, borderRadius: 12, border: "none", background: maintActive ? "#fbbf24" : "rgba(255,255,255,0.1)", cursor: cfgSaving === "maintenanceActive" ? "default" : "pointer", transition: "background 200ms", flexShrink: 0, opacity: cfgSaving === "maintenanceActive" ? 0.5 : 1, marginTop: "2px" }}
+              >
+                <span style={{ position: "absolute", top: 3, left: maintActive ? 23 : 3, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left 200ms", boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }} />
+              </button>
+            </div>
+            <textarea
+              value={maintPending}
+              onChange={e => setMaintPending(e.target.value)}
+              placeholder="Estamos realizando tareas de mantenimiento. Por favor inténtalo más tarde."
+              rows={3}
+              style={{ ...input, resize: "vertical", lineHeight: 1.5, fontFamily: "inherit" }}
+            />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "10px", gap: 8 }}>
+              {maintActive ? (
+                <span style={{ fontSize: "11px", color: "#fbbf24", display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
+                  <AlertTriangle size={11} /> Mensaje activo — visible para todos
+                </span>
+              ) : <span />}
+              <button
+                onClick={() => saveField("maintenance", { maintenanceMessage: maintPending })}
+                disabled={cfgSaving === "maintenance" || maintPending === maintSaved}
+                style={btn(maintPending !== maintSaved ? "#ffffff" : "#1a1a1a", { color: maintPending !== maintSaved ? "#000" : "#555", border: "1px solid rgba(255,255,255,0.08)", opacity: cfgSaving === "maintenance" ? 0.6 : 1, cursor: (cfgSaving === "maintenance" || maintPending === maintSaved) ? "default" : "pointer" })}
+              >
+                {cfgSaving === "maintenance" ? "Guardando..." : "Guardar mensaje"}
+              </button>
+            </div>
+          </div>
         </div>
+
+        {/* Row 2: Plan credits (full width) */}
+        <div style={{ ...card }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "20px", gap: 12 }}>
+            <div>
+              <p style={{ fontSize: "14px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>Límites de créditos por plan</p>
+              <p style={{ fontSize: "12px", color: "#555" }}>Créditos asignados al registrarse y en cada renovación mensual/anual.</p>
+            </div>
+            <button
+              onClick={() => saveField("credits", { planCredits: JSON.stringify(creditsPending) })}
+              disabled={cfgSaving === "credits" || !creditsChanged}
+              style={btn(creditsChanged ? "#ffffff" : "#1a1a1a", { color: creditsChanged ? "#000" : "#555", border: "1px solid rgba(255,255,255,0.08)", opacity: cfgSaving === "credits" ? 0.6 : 1, cursor: (!creditsChanged || cfgSaving === "credits") ? "default" : "pointer" })}
+            >
+              {cfgSaving === "credits" ? "Guardando..." : "Guardar cambios"}
+            </button>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "14px" }}>
+            {CFG_PLAN_ORDER.map(plan => {
+              const badgeColor = CFG_PLAN_BADGE[plan] ?? "#888";
+              const val = creditsPending[plan] ?? 0;
+              return (
+                <div key={plan} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 700, padding: "3px 8px", borderRadius: "5px", background: `${badgeColor}18`, color: badgeColor, border: `1px solid ${badgeColor}38`, display: "inline-block", textAlign: "center" }}>
+                    {CFG_PLAN_LABELS[plan]}
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={10000}
+                    value={val}
+                    onChange={e => {
+                      const n = Math.max(0, parseInt(e.target.value, 10) || 0);
+                      setCreditsPending(prev => ({ ...prev, [plan]: n }));
+                    }}
+                    style={{ ...input, textAlign: "right", fontWeight: 600 }}
+                  />
+                  <span style={{ fontSize: "10px", color: "#444", textAlign: "right" }}>
+                    {val.toLocaleString("es-ES")} cr
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
       </div>
     </div>
   );
@@ -1592,6 +2283,7 @@ function LogsSection() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [clearing, setClearing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchLogs = useCallback(async () => {
     const params = new URLSearchParams({ limit: "100" });
@@ -1602,6 +2294,7 @@ function LogsSection() {
       const data = await res.json();
       setLogs(Array.isArray(data.logs) ? data.logs : []);
       setTotal(typeof data.total === "number" ? data.total : 0);
+      setLastUpdated(new Date());
     } catch { /* ignore */ }
     finally { setLoading(false); }
   }, [levelFilter, categoryFilter]);
@@ -1628,76 +2321,97 @@ function LogsSection() {
   }
 
   const levelColor: Record<string, string> = {
-    info: "#60a5fa",
-    warn: "#f59e0b",
-    error: "#f87171",
-    debug: "#888888",
+    info: "#60a5fa", warn: "#f59e0b", error: "#f87171", debug: "#888888",
+  };
+  const levelBorder: Record<string, string> = {
+    info: "#3b82f6", warn: "#f59e0b", error: "#ef4444", debug: "#6b7280",
   };
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
-        <div>
-          <p style={{ fontWeight: 800, fontSize: "20px", color: "#fff", margin: 0 }}>Errores y Logs</p>
-          <p style={{ fontSize: "12px", color: "#555555", marginTop: "4px", margin: 0 }}>{total.toLocaleString("es-ES")} entradas · actualiza cada 30s</p>
+      {/* Filter bar */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16, alignItems: "center" }}>
+        {/* Level pills */}
+        <div style={{ display: "flex", gap: 5 }}>
+          {(["", "info", "warn", "error", "debug"] as const).map(l => {
+            const label = l === "" ? "Todos" : l.toUpperCase();
+            const col = l === "" ? "rgba(255,255,255,0.5)" : (levelColor[l] ?? "#888");
+            const active = levelFilter === l;
+            return (
+              <button key={l} onClick={() => setLevelFilter(l)} style={{ padding: "4px 11px", borderRadius: 999, fontSize: 11, fontWeight: 600, border: `1px solid ${active ? col : "rgba(255,255,255,0.07)"}`, background: active ? `${col}18` : "transparent", color: active ? col : "rgba(255,255,255,0.35)", cursor: "pointer", transition: "all 0.15s" }}>
+                {label}
+              </button>
+            );
+          })}
         </div>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <button onClick={fetchLogs} style={{ ...btn("#1a1a1a", { border: "1px solid rgba(255,255,255,0.08)", color: "#888888", display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", fontSize: "12px" }) }}>
-            <RefreshCw size={11} /> Actualizar
-          </button>
-          <button onClick={clearLogs} disabled={clearing || logs.length === 0} style={{ ...btn("#ef4444", { padding: "6px 12px", fontSize: "12px", opacity: clearing || logs.length === 0 ? 0.5 : 1 }) }}>
-            Limpiar todo
-          </button>
+        {/* Category input */}
+        <div style={{ position: "relative", flex: 1, minWidth: 160 }}>
+          <Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.2)", pointerEvents: "none" }} />
+          <input placeholder="Filtrar por categoría..." value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{ ...input, paddingLeft: 32 }} />
         </div>
+        {/* Action buttons */}
+        <button onClick={fetchLogs} style={btn("#1a1a1a", { border: "1px solid rgba(255,255,255,0.08)", color: "#888", display: "flex", alignItems: "center", gap: 5 })}>
+          <RefreshCw size={11} /> Actualizar
+        </button>
+        <button onClick={clearLogs} disabled={clearing || logs.length === 0} style={btn("#ef4444", { opacity: clearing || logs.length === 0 ? 0.4 : 1 })}>
+          Limpiar
+        </button>
+        {/* Last updated indicator */}
+        {lastUpdated && (
+          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", marginLeft: "auto", whiteSpace: "nowrap" }}>
+            Actualizado a las {lastUpdated.toLocaleTimeString("es-ES")} · {total.toLocaleString("es-ES")} entradas · auto 30s
+          </span>
+        )}
       </div>
 
-      <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
-        <CustomSelect
-          options={[{ value: "", label: "Todos los niveles" }, { value: "error", label: "Error" }, { value: "warn", label: "Warn" }, { value: "info", label: "Info" }, { value: "debug", label: "Debug" }]}
-          value={levelFilter} onChange={setLevelFilter} style={{ minWidth: "160px" }}
-        />
-        <input
-          placeholder="Filtrar por categoría..."
-          value={categoryFilter}
-          onChange={e => setCategoryFilter(e.target.value)}
-          style={{ ...input, width: "200px" }}
-        />
-      </div>
-
+      {/* Content */}
       {loading ? (
-        <div style={{ padding: "3rem", textAlign: "center", color: "#555555" }}>Cargando logs...</div>
+        <div style={{ ...card, textAlign: "center", padding: "3rem", color: "rgba(255,255,255,0.25)" }}>Cargando logs...</div>
       ) : logs.length === 0 ? (
-        <div style={{ ...card, textAlign: "center", padding: "3rem", color: "#555555" }}>
-          <Monitor size={32} style={{ marginBottom: "12px", opacity: 0.3 }} />
-          <p>Sin logs registrados</p>
+        <div style={{ ...card, textAlign: "center", padding: "3rem", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+          <Monitor size={32} style={{ color: "rgba(255,255,255,0.08)" }} />
+          <p style={{ color: "rgba(255,255,255,0.2)", margin: 0, fontSize: 14 }}>Sin logs registrados</p>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-          {logs.map(log => (
-            <div key={log.id} style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", overflow: "hidden" }}>
-              <div
-                onClick={() => log.details && toggleExpand(log.id)}
-                style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", cursor: log.details ? "pointer" : "default" }}
-              >
-                <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", color: levelColor[log.level] ?? "#888", background: `${levelColor[log.level] ?? "#888"}18`, border: `1px solid ${levelColor[log.level] ?? "#888"}33`, flexShrink: 0 }}>
-                  {log.level.toUpperCase()}
-                </span>
-                <span style={{ fontSize: "11px", color: "#555555", fontFamily: "monospace", flexShrink: 0 }}>{log.category}</span>
-                <span style={{ fontSize: "13px", color: "#e5e7eb", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{log.message}</span>
-                <span style={{ fontSize: "11px", color: "#444444", flexShrink: 0, whiteSpace: "nowrap" }}>{new Date(log.createdAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}</span>
-                {log.details && (
-                  <ChevronDown size={13} style={{ color: "#555555", flexShrink: 0, transform: expanded.has(log.id) ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {logs.map(log => {
+            const lc = levelColor[log.level] ?? "#888";
+            const lb = levelBorder[log.level] ?? "#444";
+            const isExp = expanded.has(log.id);
+            return (
+              <div key={log.id} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderLeft: `3px solid ${lb}`, borderRadius: 8, overflow: "hidden" }}>
+                <div
+                  onClick={() => log.details && toggleExpand(log.id)}
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", cursor: log.details ? "pointer" : "default" }}
+                >
+                  {/* Level pill */}
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 999, color: lc, background: `${lc}15`, border: `1px solid ${lc}30`, flexShrink: 0, textTransform: "uppercase" as const }}>
+                    {log.level}
+                  </span>
+                  {/* Category pill */}
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 999, color: "rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", flexShrink: 0, fontFamily: "monospace" }}>
+                    {log.category}
+                  </span>
+                  {/* Message */}
+                  <span style={{ fontSize: 12, color: "#e5e7eb", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{log.message}</span>
+                  {/* Timestamp */}
+                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", flexShrink: 0, whiteSpace: "nowrap" }}>
+                    {new Date(log.createdAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}
+                  </span>
+                  {log.details && (
+                    <ChevronDown size={13} style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0, transform: isExp ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+                  )}
+                </div>
+                {isExp && log.details && (
+                  <div style={{ padding: "0 14px 12px 28px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                    <pre style={{ margin: 0, fontSize: 11, color: "#9ca3af", background: "rgba(0,0,0,0.4)", borderRadius: 8, padding: "10px 12px", overflowX: "auto", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+                      {(() => { try { return JSON.stringify(JSON.parse(log.details), null, 2); } catch { return log.details; } })()}
+                    </pre>
+                  </div>
                 )}
               </div>
-              {expanded.has(log.id) && log.details && (
-                <div style={{ padding: "0 14px 12px" }}>
-                  <pre style={{ margin: 0, fontSize: "11px", color: "#9ca3af", background: "#000000", borderRadius: "6px", padding: "10px 12px", overflowX: "auto", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
-                    {(() => { try { return JSON.stringify(JSON.parse(log.details), null, 2); } catch { return log.details; } })()}
-                  </pre>
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -1749,7 +2463,314 @@ function CookiesSection() {
   )
 }
 
+/* ─── AnnouncementsSection ───────────────────────────────── */
+function AnnouncementsSection() {
+  interface AdminAnnouncement { id: string; title: Record<string,string>; content: Record<string,string>; active: boolean; createdAt: string; }
+  const [announcements, setAnnouncements] = useState<AdminAnnouncement[]>([]);
+  const [titleEs, setTitleEs] = useState("");
+  const [contentEs, setContentEs] = useState("");
+  const [active, setActive] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    const r = await fetch("/api/admin/announcements");
+    const d = await r.json();
+    if (d.announcements) setAnnouncements(d.announcements);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!titleEs.trim() || !contentEs.trim()) return;
+    setSaving(true);
+    const langs = ["es","en","fr","de","pt","ja","zh"];
+    const title: Record<string,string> = {};
+    const content: Record<string,string> = {};
+    langs.forEach(l => { title[l] = titleEs; content[l] = contentEs; });
+    const r = await fetch("/api/admin/announcements", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, content, active }),
+    });
+    if (r.ok) { setTitleEs(""); setContentEs(""); setMsg("Anuncio publicado"); load(); }
+    else setMsg("Error al publicar");
+    setSaving(false);
+    setTimeout(() => setMsg(null), 3000);
+  }
+
+  async function handleToggle(id: string, current: boolean) {
+    await fetch(`/api/admin/announcements/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ active: !current }),
+    });
+    load();
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("¿Eliminar este anuncio?")) return;
+    await fetch(`/api/admin/announcements/${id}`, { method: "DELETE" });
+    load();
+  }
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
+      {/* Left: Create form */}
+      <div style={card}>
+        <p style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.35)", marginBottom: 18, textTransform: "uppercase", letterSpacing: "0.08em" }}>Nuevo anuncio</p>
+        <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div>
+            <label style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", display: "block", marginBottom: 6 }}>Título</label>
+            <input style={input} value={titleEs} onChange={e => setTitleEs(e.target.value)} placeholder="🚀 Novedades de Elite Labs" required />
+          </div>
+          <div>
+            <label style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", display: "block", marginBottom: 6 }}>Contenido (usa **negrita** para resaltar)</label>
+            <textarea
+              style={{ ...input, minHeight: 120, resize: "vertical", fontFamily: "inherit" }}
+              value={contentEs}
+              onChange={e => setContentEs(e.target.value)}
+              placeholder="**Nueva función** — Descripción de la novedad."
+              required
+            />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <input type="checkbox" id="ann-active" checked={active} onChange={e => setActive(e.target.checked)} style={{ accentColor: "#4ade80", width: 14, height: 14 }} />
+            <label htmlFor="ann-active" style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", cursor: "pointer" }}>Activo (visible para usuarios)</label>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button type="submit" disabled={saving} style={btn("#ffffff", { opacity: saving ? 0.6 : 1 })}>{saving ? "Publicando..." : "Publicar"}</button>
+            {msg && <span style={{ fontSize: 13, color: msg.startsWith("Error") ? "#f87171" : "#4ade80" }}>{msg}</span>}
+          </div>
+        </form>
+      </div>
+
+      {/* Right: Announcements list */}
+      <div>
+        <p style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>
+          Anuncios existentes ({announcements.length})
+        </p>
+        {announcements.length === 0 ? (
+          <div style={{ ...card, textAlign: "center", padding: "3rem" }}>
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.2)", margin: 0 }}>No hay anuncios todavía.</p>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {announcements.map(a => (
+              <div key={a.id} style={{ ...card, padding: "14px 16px" }}>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: "0 0 3px" }}>{a.title.es}</p>
+                    <p style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", margin: 0 }}>{new Date(a.createdAt).toLocaleDateString("es-ES")}</p>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                    <button
+                      onClick={() => handleToggle(a.id, a.active)}
+                      title={a.active ? "Click para desactivar" : "Click para activar"}
+                      style={{ fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: a.active ? "rgba(74,222,128,0.1)" : "rgba(107,114,128,0.1)", color: a.active ? "#4ade80" : "#6b7280", border: `1px solid ${a.active ? "rgba(74,222,128,0.25)" : "rgba(107,114,128,0.2)"}`, cursor: "pointer", transition: "all 0.15s", textTransform: "uppercase" as const, letterSpacing: "0.04em" }}
+                    >
+                      {a.active ? "Activo" : "Inactivo"}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(a.id)}
+                      title="Eliminar anuncio"
+                      style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)", cursor: "pointer", padding: "5px 7px", borderRadius: 8, color: "rgba(239,68,68,0.55)", display: "flex", alignItems: "center", transition: "all 0.15s" }}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                </div>
+                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", margin: 0, overflow: "hidden", maxHeight: "2.6em", lineHeight: 1.5 }}>{a.content.es}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── NAV config ──────────────────────────────────────────── */
+/* ─── Section: Niche Finder ───────────────────────────────── */
+function NicheFinderSection() {
+  const [count, setCount] = useState<number | null>(null);
+  const [countLoading, setCountLoading] = useState(true);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [fileData, setFileData] = useState<object[] | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ inserted: number; updated: number; total: number; errors: string[] } | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function refreshCount() {
+    setCountLoading(true);
+    try {
+      const res = await fetch("/api/admin/niche-channels-count");
+      const data = await res.json();
+      setCount(typeof data.count === "number" ? data.count : null);
+    } catch { setCount(null); }
+    finally { setCountLoading(false); }
+  }
+
+  useEffect(() => { refreshCount(); }, []);
+
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFileName(f.name);
+    setFileError(null);
+    setSyncResult(null);
+    setSyncError(null);
+    setFileData(null);
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const raw = JSON.parse(ev.target?.result as string);
+        const channels = Array.isArray(raw) ? raw : raw?.channels;
+        if (!Array.isArray(channels)) {
+          setFileError("El archivo debe contener un array o un objeto con campo 'channels'.");
+          return;
+        }
+        setFileData(channels);
+      } catch {
+        setFileError("JSON inválido — no se puede parsear el archivo.");
+      }
+    };
+    reader.readAsText(f);
+  }
+
+  async function handleSync() {
+    if (!fileData) return;
+    setSyncing(true);
+    setSyncResult(null);
+    setSyncError(null);
+    try {
+      const res = await fetch("/api/admin/sync-niche-channels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channels: fileData }),
+      });
+      const text = await res.text();
+      let data: Record<string, unknown>;
+      try { data = JSON.parse(text); }
+      catch { throw new Error(`Respuesta no válida del servidor (${res.status}): ${text.slice(0, 200)}`); }
+      if (!res.ok) throw new Error((data.error as string) ?? `Error ${res.status}`);
+      setSyncResult({
+        inserted: data.inserted as number,
+        updated: data.updated as number,
+        total: data.total as number,
+        errors: Array.isArray(data.errors) ? data.errors as string[] : [],
+      });
+      await refreshCount();
+    } catch (err) {
+      setSyncError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  return (
+    <div>
+      <div style={{ marginBottom: 24 }}>
+        <p style={{ fontWeight: 800, fontSize: 22, color: "#fff", margin: 0 }}>Buscador de Nichos</p>
+        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", margin: "4px 0 0" }}>
+          Sincroniza canales de YouTube subiendo un archivo JSON generado externamente
+        </p>
+      </div>
+
+      {/* Stats row */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
+        <div style={card}>
+          <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(167,139,250,0.15)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+            <Database size={15} color="#a78bfa" />
+          </div>
+          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Canales en base de datos</p>
+          <p style={{ fontSize: 32, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
+            {countLoading ? "…" : count?.toLocaleString("es-ES") ?? "—"}
+          </p>
+        </div>
+      </div>
+
+      {/* Upload card */}
+      <div style={{ ...card, maxWidth: 560 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: "#e5e7eb", marginBottom: 4 }}>Importar archivo JSON</p>
+        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>
+          Formato: <code style={{ fontFamily: "monospace", background: "rgba(255,255,255,0.06)", padding: "1px 6px", borderRadius: 4 }}>{`{ channels: [...] }`}</code> o directamente un array <code style={{ fontFamily: "monospace", background: "rgba(255,255,255,0.06)", padding: "1px 6px", borderRadius: 4 }}>[...]</code>
+        </p>
+
+        <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".json"
+            onChange={handleFile}
+            style={{ display: "none" }}
+          />
+          <button
+            onClick={() => fileRef.current?.click()}
+            style={btn("#1a1a1a", { border: "1px solid rgba(255,255,255,0.12)", color: "#ccc", flexShrink: 0 })}
+          >
+            Elegir archivo
+          </button>
+          <span style={{ fontSize: 12, color: fileName ? "#e5e7eb" : "rgba(255,255,255,0.25)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+            {fileName ?? "Ningún archivo seleccionado"}
+          </span>
+        </div>
+
+        {fileData && !fileError && (
+          <p style={{ fontSize: 12, color: "#4ade80", marginBottom: 12 }}>
+            ✓ {fileData.length.toLocaleString("es-ES")} canales detectados en el archivo
+          </p>
+        )}
+
+        {fileError && (
+          <p style={{ fontSize: 12, color: "#f87171", marginBottom: 12 }}>✗ {fileError}</p>
+        )}
+
+        <button
+          onClick={handleSync}
+          disabled={!fileData || syncing}
+          style={btn("#ffffff", { opacity: !fileData || syncing ? 0.5 : 1, cursor: !fileData || syncing ? "not-allowed" : "pointer" })}
+        >
+          {syncing ? "Sincronizando…" : "Sincronizar canales"}
+        </button>
+
+        {/* Result */}
+        {syncResult && (
+          <div style={{ marginTop: 16, padding: "14px 16px", borderRadius: 10, background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.2)" }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: "#4ade80", marginBottom: 6 }}>✓ Sincronización completada</p>
+            <p style={{ fontSize: 13, color: "#e5e7eb" }}>
+              Insertados: <strong>{syncResult.inserted.toLocaleString("es-ES")}</strong>
+              {" · "}Actualizados: <strong>{syncResult.updated.toLocaleString("es-ES")}</strong>
+              {" · "}Total: <strong>{syncResult.total.toLocaleString("es-ES")}</strong>
+            </p>
+            {syncResult.errors.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: "#f59e0b", marginBottom: 4 }}>
+                  {syncResult.errors.length} error{syncResult.errors.length !== 1 ? "es" : ""}:
+                </p>
+                <div style={{ maxHeight: 120, overflowY: "auto", fontSize: 11, color: "#f87171", fontFamily: "monospace", lineHeight: 1.6 }}>
+                  {syncResult.errors.map((e, i) => <div key={i}>{e}</div>)}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {syncError && (
+          <div style={{ marginTop: 16, padding: "14px 16px", borderRadius: 10, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: "#f87171" }}>✗ Error en la sincronización</p>
+            <p style={{ fontSize: 12, color: "#fca5a5", marginTop: 4, wordBreak: "break-all" }}>{syncError}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const NAV_ITEMS_BASE: { key: Section; label: string; Icon: React.ElementType; href?: string }[] = [
   { key: "dashboard",     label: "Dashboard",      Icon: LayoutDashboard },
   { key: "users",         label: "Usuarios",        Icon: Users },
@@ -1759,9 +2780,11 @@ const NAV_ITEMS_BASE: { key: Section; label: string; Icon: React.ElementType; hr
   { key: "affiliates",    label: "Afiliados ↗",      Icon: Handshake, href: "/admin/afiliados" },
   { key: "withdrawals",   label: "Retiros",          Icon: Wallet },
   { key: "analytics",     label: "Analytics",        Icon: BarChart2 },
-  { key: "config",        label: "Configuración",    Icon: Settings },
-  { key: "logs",          label: "Logs",             Icon: ScrollText },
-  { key: "cookies",       label: "Cookies",           Icon: Shield },
+  { key: "config",         label: "Configuración",    Icon: Settings },
+  { key: "nichefinder",    label: "Niche Finder",     Icon: Database },
+  { key: "logs",           label: "Logs",             Icon: ScrollText },
+  { key: "cookies",        label: "Cookies",          Icon: Shield },
+  { key: "announcements",  label: "Anuncios",         Icon: Monitor },
 ];
 
 /* ─── Main ────────────────────────────────────────────────── */
@@ -1801,11 +2824,26 @@ export default function AdminPage() {
   const [turboStatusSaving, setTurboStatusSaving] = useState(false);
   const [ai33Health, setAi33Health] = useState<{ elevenlabs: string; isDown: boolean } | null>(null);
   const [logErrorCount, setLogErrorCount] = useState(0);
+  const [fishCredits, setFishCredits] = useState<{ credit: string } | null>(null);
 
   const toast = useCallback((msg: string, ok = true) => {
     setFeedback({ msg, ok });
     setTimeout(() => setFeedback(null), 3500);
   }, []);
+
+  const [currentTime, setCurrentTime] = useState(new Date());
+  useEffect(() => {
+    const clockId = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(clockId);
+  }, []);
+
+  const SECTION_TITLES: Record<Section, string> = {
+    dashboard: "Dashboard", users: "Usuarios", subscriptions: "Suscripciones",
+    engines: "Motores", support: "Soporte", affiliates: "Afiliados",
+    withdrawals: "Retiros", analytics: "Analytics", config: "Configuración",
+    nichefinder: "Buscador de Nichos",
+    logs: "Logs", cookies: "Cookies", announcements: "Anuncios",
+  };
 
   useEffect(() => {
     function refreshErrorCount() {
@@ -1820,6 +2858,7 @@ export default function AdminPage() {
   }, []);
 
   const fetchAll = useCallback(async () => {
+    fetch("/api/admin/fish-credits").then(r => r.json()).then(d => setFishCredits(d)).catch(() => {});
     const [uRes, sRes, tRes, aRes, wRes, cfgRes] = await Promise.all([
       fetch("/api/admin/users"),
       fetch("/api/admin/stats"),
@@ -1986,26 +3025,46 @@ export default function AdminPage() {
   const engineProps = { turboStatus, turboStatusPending, setTurboStatusPending, turboManualOverride, turboManualOverridePending, setTurboManualOverridePending, turboStatusSaving, onSave: saveTurboStatus, ai33Health };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#000000", color: "#fff", fontFamily: "Inter, sans-serif" }}>
-      <style>{`@keyframes ping { 75%, 100% { transform: scale(2); opacity: 0; } }`}</style>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#080808", color: "#fff", fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif" }}>
+      <style>{`@keyframes ping{75%,100%{transform:scale(2);opacity:0}} @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
       {/* Sidebar */}
-      <aside style={{ width: SIDEBAR_W, flexShrink: 0, background: "#0a0a0a", borderRight: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", position: "sticky", top: 0, height: "100vh", overflow: "hidden" }}>
-        <div style={{ padding: "20px 16px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <p style={{ fontWeight: 800, fontSize: "14px", color: "#fff", margin: 0 }}>Admin Panel</p>
-          <p style={{ fontSize: "11px", color: "#555555", marginTop: "2px", margin: 0 }}>Elite Labs</p>
+      <aside style={{ width: SIDEBAR_W, flexShrink: 0, background: "rgba(10,10,10,0.9)", backdropFilter: "blur(20px)", borderRight: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", position: "sticky", top: 0, height: "100vh", overflow: "hidden" }}>
+        {/* Logo */}
+        <div style={{ height: 64, display: "flex", alignItems: "center", padding: "0 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+          <div>
+            <p style={{ fontWeight: 800, fontSize: 14, color: "#fff", margin: 0, letterSpacing: "-0.02em" }}>Elite Labs</p>
+            <p style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", margin: 0, fontWeight: 500 }}>Admin Panel</p>
+          </div>
         </div>
-        <nav style={{ flex: 1, padding: "8px", overflowY: "auto" }}>
-          {NAV_ITEMS.map(({ key, label, Icon, badge, href }: { key: string; label: string; Icon: React.ElementType; badge: number; href?: string }) => (
-            <button key={key} onClick={() => href ? router.push(href) : setActiveSection(key as Section)} style={{ width: "100%", display: "flex", alignItems: "center", gap: "10px", padding: "8px 12px", borderRadius: "8px", border: "none", cursor: "pointer", background: activeSection === key ? "rgba(255,255,255,0.08)" : "transparent", color: activeSection === key ? "#ffffff" : "#666666", fontSize: "13px", fontWeight: activeSection === key ? 600 : 400, marginBottom: "1px", textAlign: "left", transition: "all 0.15s" }}>
-              <Icon size={15} style={{ flexShrink: 0 }} />
-              <span style={{ flex: 1 }}>{label}</span>
-              {badge > 0 && <span style={{ fontSize: "10px", fontWeight: 700, padding: "1px 6px", borderRadius: "999px", background: "rgba(239,68,68,0.85)", color: "#fff" }}>{badge}</span>}
-            </button>
+        {/* Nav groups */}
+        <nav style={{ flex: 1, padding: "12px 8px", overflowY: "auto" }}>
+          {([
+            { label: "GENERAL", keys: ["dashboard"] },
+            { label: "GESTIÓN", keys: ["users", "subscriptions", "support", "affiliates", "withdrawals"] },
+            { label: "PLATAFORMA", keys: ["engines", "analytics", "config", "nichefinder"] },
+            { label: "SISTEMA", keys: ["logs", "cookies", "announcements"] },
+          ] as Array<{ label: string; keys: string[] }>).map(group => (
+            <div key={group.label} style={{ marginBottom: 20 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.2)", letterSpacing: "0.1em", padding: "0 12px 6px", margin: 0 }}>{group.label}</p>
+              {NAV_ITEMS.filter(item => group.keys.includes(item.key)).map(({ key, label, Icon, badge, href }: { key: string; label: string; Icon: React.ElementType; badge: number; href?: string }) => (
+                <button key={key} onClick={() => href ? router.push(href) : setActiveSection(key as Section)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: activeSection === key ? "rgba(255,255,255,0.08)" : "transparent", color: activeSection === key ? "#ffffff" : "rgba(255,255,255,0.4)", fontSize: 13, fontWeight: activeSection === key ? 600 : 500, marginBottom: 1, textAlign: "left", transition: "all 0.15s" }}>
+                  <Icon size={15} style={{ flexShrink: 0 }} />
+                  <span style={{ flex: 1 }}>{label}</span>
+                  {badge > 0 && <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 999, background: "rgba(239,68,68,0.85)", color: "#fff", flexShrink: 0 }}>{badge}</span>}
+                </button>
+              ))}
+            </div>
           ))}
         </nav>
-        <div style={{ padding: "12px 8px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <button onClick={() => router.push("/dashboard")} style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", borderRadius: "8px", border: "none", cursor: "pointer", background: "transparent", color: "#444444", fontSize: "12px" }}>
+        {/* Bottom */}
+        <div style={{ padding: "12px 8px", borderTop: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+          {user?.primaryEmailAddress?.emailAddress && (
+            <div style={{ padding: "4px 12px 8px" }}>
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.primaryEmailAddress.emailAddress}</p>
+            </div>
+          )}
+          <button onClick={() => router.push("/dashboard")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: "transparent", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>
             <ArrowLeft size={13} />
             Dashboard
           </button>
@@ -2013,64 +3072,77 @@ export default function AdminPage() {
       </aside>
 
       {/* Main */}
-      <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px" }}>
-        {/* Toast */}
-        {feedback && (
-          <div style={{ position: "fixed", top: "1.5rem", right: "1.5rem", zIndex: 200, padding: "0.75rem 1.25rem", borderRadius: "0.75rem", fontWeight: 600, fontSize: "0.875rem", background: feedback.ok ? "rgba(74,222,128,0.15)" : "rgba(239,68,68,0.15)", color: feedback.ok ? "#4ade80" : "#f87171", border: `1px solid ${feedback.ok ? "rgba(74,222,128,0.3)" : "rgba(239,68,68,0.3)"}` }}>
-            {feedback.msg}
+      <main style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+        {/* Top header bar */}
+        <div style={{ height: 64, flexShrink: 0, position: "sticky", top: 0, zIndex: 10, background: "rgba(8,8,8,0.85)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px" }}>
+          <div>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", margin: 0, fontWeight: 500 }}>Admin</p>
+            <p style={{ fontSize: 15, color: "#fff", margin: 0, fontWeight: 700, letterSpacing: "-0.02em" }}>{SECTION_TITLES[activeSection]}</p>
           </div>
-        )}
-
-        {/* Refresh button */}
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "16px" }}>
-          <button onClick={() => fetchAll()} style={btn("#1a1a1a", { border: "1px solid rgba(255,255,255,0.08)", color: "#888888", display: "flex", alignItems: "center", gap: "6px", padding: "6px 14px", fontSize: "12px" })}>
-            <RefreshCw size={12} />
-            Actualizar
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", fontVariantNumeric: "tabular-nums" }}>{currentTime.toLocaleTimeString("es-ES")}</span>
+            <button onClick={() => fetchAll()} style={btn("#1a1a1a", { border: "1px solid rgba(255,255,255,0.08)", color: "#888888", display: "flex", alignItems: "center", gap: "6px", padding: "6px 14px", fontSize: "12px" })}>
+              <RefreshCw size={12} />
+              Actualizar
+            </button>
+          </div>
         </div>
 
-        {/* Modals */}
-        {detailUserId && <UserDetailModal userId={detailUserId} onClose={() => setDetailUserId(null)} toast={toast} />}
-        {affiliateDetailApp && <AffiliateDetailModal app={affiliateDetailApp} onClose={() => setAffiliateDetailApp(null)} onUpdate={updateAffiliateStatus} toast={toast} />}
+        <div style={{ padding: "28px 32px", flex: 1 }}>
+          {/* Toast */}
+          {feedback && (
+            <div style={{ position: "fixed", top: "1.5rem", right: "1.5rem", zIndex: 200, padding: "0.75rem 1.25rem", borderRadius: "0.75rem", fontWeight: 600, fontSize: "0.875rem", background: feedback.ok ? "rgba(74,222,128,0.15)" : "rgba(239,68,68,0.15)", color: feedback.ok ? "#4ade80" : "#f87171", border: `1px solid ${feedback.ok ? "rgba(74,222,128,0.3)" : "rgba(239,68,68,0.3)"}` }}>
+              {feedback.msg}
+            </div>
+          )}
 
-        {/* Sections */}
-        {activeSection === "dashboard" && (
-          <DashboardSection users={users} stats={stats} tickets={tickets} withdrawals={withdrawalRequests} affiliates={affiliateApps} onNav={setActiveSection} />
-        )}
-        {activeSection === "users" && (
-          <UsersSection
-            users={users}
-            onSelectUser={setDetailUserId}
-            creditState={{ userId: creditUserId, amount: creditAmount, op: creditOp, loading: creditLoading, setUserId: setCreditUserId, setAmount: setCreditAmount, setOp: setCreditOp }}
-            roleState={{ userId: roleUserId, role: roleValue, loading: roleLoading, setUserId: setRoleUserId, setRole: setRoleValue }}
-            onCredits={handleCredits}
-            onRole={handleRole}
-            search={search}
-            onSearch={setSearch}
-            onDeleteUser={handleDeleteUser}
-            onBanUser={handleBanUser}
-            onSuspendUser={handleSuspendUser}
-          />
-        )}
-        {activeSection === "subscriptions" && <SubscriptionsSection users={users} />}
-        {activeSection === "engines" && <EnginesSection {...engineProps} />}
-        {activeSection === "support" && (
-          <SupportSection
-            tickets={tickets}
-            replyState={{ ticketId: replyTicketId, text: replyText, loading: replyLoading, setTicketId: setReplyTicketId, setText: setReplyText }}
-            onReply={handleReply}
-          />
-        )}
-        {activeSection === "affiliates" && (
-          <AffiliatesSection affiliates={affiliateApps} onUpdate={updateAffiliateStatus} onSelectApp={setAffiliateDetailApp} />
-        )}
-        {activeSection === "withdrawals" && (
-          <WithdrawalsSection withdrawals={withdrawalRequests} onWithdrawal={handleWithdrawal} loadingId={withdrawalLoading} />
-        )}
-        {activeSection === "analytics" && <AnalyticsSection users={users} stats={stats} />}
-        {activeSection === "config" && <ConfigSection {...engineProps} />}
-        {activeSection === "logs" && <LogsSection />}
-        {activeSection === "cookies" && <CookiesSection />}
+          {/* Modals */}
+          {detailUserId && <UserDetailModal userId={detailUserId} onClose={() => setDetailUserId(null)} toast={toast} />}
+          {affiliateDetailApp && <AffiliateDetailModal app={affiliateDetailApp} onClose={() => setAffiliateDetailApp(null)} onUpdate={updateAffiliateStatus} toast={toast} />}
+
+          {/* Sections */}
+          <div key={activeSection} style={{ animation: "fadeIn 200ms ease-out" }}>
+            {activeSection === "dashboard" && (
+              <DashboardSection users={users} stats={stats} tickets={tickets} withdrawals={withdrawalRequests} affiliates={affiliateApps} onNav={setActiveSection} fishCredits={fishCredits} ai33Health={ai33Health} />
+            )}
+            {activeSection === "users" && (
+              <UsersSection
+                users={users}
+                onSelectUser={setDetailUserId}
+                creditState={{ userId: creditUserId, amount: creditAmount, op: creditOp, loading: creditLoading, setUserId: setCreditUserId, setAmount: setCreditAmount, setOp: setCreditOp }}
+                roleState={{ userId: roleUserId, role: roleValue, loading: roleLoading, setUserId: setRoleUserId, setRole: setRoleValue }}
+                onCredits={handleCredits}
+                onRole={handleRole}
+                search={search}
+                onSearch={setSearch}
+                onDeleteUser={handleDeleteUser}
+                onBanUser={handleBanUser}
+                onSuspendUser={handleSuspendUser}
+              />
+            )}
+            {activeSection === "subscriptions" && <SubscriptionsSection users={users} />}
+            {activeSection === "engines" && <EnginesSection {...engineProps} />}
+            {activeSection === "support" && (
+              <SupportSection
+                tickets={tickets}
+                replyState={{ ticketId: replyTicketId, text: replyText, loading: replyLoading, setTicketId: setReplyTicketId, setText: setReplyText }}
+                onReply={handleReply}
+              />
+            )}
+            {activeSection === "affiliates" && (
+              <AffiliatesSection affiliates={affiliateApps} onUpdate={updateAffiliateStatus} onSelectApp={setAffiliateDetailApp} />
+            )}
+            {activeSection === "withdrawals" && (
+              <WithdrawalsSection withdrawals={withdrawalRequests} onWithdrawal={handleWithdrawal} loadingId={withdrawalLoading} />
+            )}
+            {activeSection === "analytics" && <AnalyticsSection users={users} stats={stats} />}
+            {activeSection === "config" && <ConfigSection />}
+            {activeSection === "logs" && <LogsSection />}
+            {activeSection === "cookies" && <CookiesSection />}
+            {activeSection === "announcements" && <AnnouncementsSection />}
+            {activeSection === "nichefinder" && <NicheFinderSection />}
+          </div>
+        </div>
       </main>
     </div>
   );

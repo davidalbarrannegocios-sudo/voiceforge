@@ -7,7 +7,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Home, Mic2, Type, FileAudio, Globe, Clock,
   CreditCard, Gift, Zap, Settings, Users, MessageSquare, ChevronsUpDown,
-  Image as ImageIcon, Compass,
+  Image as ImageIcon, Compass, Radar, X,
 } from "lucide-react";
 import { useLang } from "./LanguageContext";
 import { useSidebar } from "./SidebarContext";
@@ -31,8 +31,12 @@ export function DashboardSidebar() {
   const [leaving, setLeaving] = useState(false);
   const [showProductMenu, setShowProductMenu] = useState(false);
 
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   const isMiCuenta = pathname === "/dashboard/account";
-  const isDiscover = pathname === "/voices" || pathname === "/descubrir";
+  const isDiscover = pathname === "/voices";
+  const isNicheFinder = pathname?.startsWith("/dashboard/niche-finder") ?? false;
+  const isMainDashboard = pathname === "/dashboard";
   const activeTab: Tab | null = (isMiCuenta || isDiscover)
     ? null
     : ((searchParams.get("tab") as Tab | null) ?? "home");
@@ -80,7 +84,7 @@ export function DashboardSidebar() {
         { key: "dialogue" as Tab, label: t.nav.textToDialogue, Icon: MessageSquare },
         { key: "imagevideo" as Tab, label: t.nav.imageVideo, Icon: ImageIcon },
         { key: "transcribe" as Tab, label: t.nav.transcribe, Icon: FileAudio },
-        { key: "translate" as Tab, label: t.nav.translate, Icon: Globe },
+        { key: "translate" as Tab, label: "Traducción", Icon: Globe },
         { key: "history" as Tab, label: t.nav.history, Icon: Clock },
       ],
     },
@@ -91,6 +95,173 @@ export function DashboardSidebar() {
   ];
 
   return (
+    <>
+    {/* ── Mobile header bar (sticky, in-flow — only on sub-pages) ── */}
+    {!isMainDashboard && (
+      <div
+        className="lg:hidden flex items-center gap-3 px-4 flex-shrink-0"
+        style={{ height: "56px", background: "#000000", borderBottom: "1px solid #1a1a1a", position: "sticky", top: 0, zIndex: 20 }}
+      >
+        <button
+          onClick={() => setMobileOpen(true)}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #222222", background: "transparent", cursor: "pointer", color: "#888888", flexShrink: 0 }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect y="2" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="7.25" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="12.5" width="16" height="1.5" rx="0.75" fill="currentColor"/></svg>
+        </button>
+        <Link href="/" className="flex items-center gap-2">
+          <Image src="/elitelabs.png" alt="Elite Labs" width={24} height={24} style={{ height: "24px", width: "auto", objectFit: "contain" }} className="rounded-lg" />
+          <span className="font-bold text-white tracking-tight text-sm">Elite Labs</span>
+        </Link>
+      </div>
+    )}
+
+    {/* ── Mobile overlay ── */}
+    {mobileOpen && (
+      <div
+        className="lg:hidden fixed inset-0 z-40"
+        style={{ background: "rgba(0,0,0,0.6)" }}
+        onClick={() => setMobileOpen(false)}
+      />
+    )}
+
+    {/* ── Mobile drawer ── */}
+    <div
+      className="lg:hidden fixed inset-y-0 left-0 z-50 flex flex-col"
+      style={{
+        width: "260px",
+        background: "#000000",
+        borderRight: "1px solid #1a1a1a",
+        transform: mobileOpen ? "translateX(0)" : "translateX(-100%)",
+        transition: "transform 0.3s ease-in-out",
+        overflowY: "auto",
+        overflowX: "hidden",
+      }}
+    >
+      {/* Drawer header */}
+      <div style={{ height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: "20px", paddingRight: "12px", flexShrink: 0 }}>
+        <Link href="/" className="flex items-center gap-2.5" onClick={() => setMobileOpen(false)}>
+          <Image src="/elitelabs.png" alt="Elite Labs" width={28} height={28} style={{ height: "28px", width: "auto", objectFit: "contain" }} className="rounded-lg" />
+          <span className="font-bold text-white tracking-tight text-sm">Elite Labs</span>
+        </Link>
+        <button
+          onClick={() => setMobileOpen(false)}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "28px", height: "28px", borderRadius: "6px", border: "none", background: "transparent", cursor: "pointer", color: "#666666" }}
+        >
+          <X size={16} />
+        </button>
+      </div>
+
+      {/* Drawer nav */}
+      <nav style={{ flex: 1, padding: "8px 12px", overflowY: "auto" }}>
+        {sections.map((section, si) => (
+          <div key={si} style={{ marginBottom: si < sections.length - 1 ? "20px" : 0 }}>
+            {section.label && (
+              <p style={{ paddingLeft: "12px", marginBottom: "4px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#444444" }}>
+                {section.label}
+              </p>
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              {section.items.map(({ key, label, Icon }, itemIdx) => {
+                const isActive = activeTab === key;
+                return (
+                  <div key={key}>
+                    <button
+                      onClick={() => { router.push(`/dashboard?tab=${key}`); setMobileOpen(false); }}
+                      style={{
+                        width: "100%", display: "flex", alignItems: "center", gap: "10px",
+                        padding: "9px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
+                        textAlign: "left", border: "none", cursor: "pointer",
+                        background: isActive ? "rgba(255,255,255,0.08)" : "transparent",
+                        color: isActive ? "#ffffff" : "#555555",
+                      }}
+                    >
+                      <Icon size={15} style={{ color: isActive ? "#ffffff" : "#444444", flexShrink: 0 }} />
+                      <span style={{ flex: 1 }}>{label}</span>
+                      {isActive && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
+                    </button>
+                    {si === 0 && itemIdx === 0 && (
+                      <button
+                        key="discover"
+                        onClick={() => { router.push("/voices"); setMobileOpen(false); }}
+                        style={{
+                          width: "100%", display: "flex", alignItems: "center", gap: "10px",
+                          padding: "9px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
+                          textAlign: "left", border: "none", cursor: "pointer",
+                          background: isDiscover ? "rgba(255,255,255,0.08)" : "transparent",
+                          color: isDiscover ? "#ffffff" : "#555555",
+                        }}
+                      >
+                        <Compass size={15} style={{ color: isDiscover ? "#ffffff" : "#444444", flexShrink: 0 }} />
+                        <span style={{ flex: 1 }}>{t.nav.discover}</span>
+                        {isDiscover && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
+                      </button>
+                    )}
+                    {si === 1 && itemIdx === section.items.length - 1 && (
+                      <button
+                        key="niche-finder"
+                        onClick={() => { router.push("/dashboard/niche-finder"); setMobileOpen(false); }}
+                        style={{
+                          width: "100%", display: "flex", alignItems: "center", gap: "10px",
+                          padding: "9px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
+                          textAlign: "left", border: "none", cursor: "pointer",
+                          background: isNicheFinder ? "rgba(255,255,255,0.08)" : "transparent",
+                          color: isNicheFinder ? "#ffffff" : "#555555",
+                        }}
+                      >
+                        <Radar size={15} style={{ color: isNicheFinder ? "#ffffff" : "#444444", flexShrink: 0 }} />
+                        <span style={{ flex: 1 }}>{t.nav.nicheFinder}</span>
+                        {isNicheFinder && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+        {/* Mi cuenta */}
+        <div style={{ marginTop: "2px" }}>
+          <Link
+            href="/dashboard/account"
+            onClick={() => setMobileOpen(false)}
+            style={{
+              display: "flex", alignItems: "center", gap: "10px",
+              padding: "9px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
+              textDecoration: "none", background: isMiCuenta ? "rgba(255,255,255,0.08)" : "transparent",
+              color: isMiCuenta ? "#ffffff" : "#555555",
+            }}
+          >
+            <Settings size={15} style={{ color: isMiCuenta ? "#ffffff" : "#444444", flexShrink: 0 }} />
+            <span style={{ flex: 1 }}>{t.nav.account}</span>
+            {isMiCuenta && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
+          </Link>
+        </div>
+      </nav>
+
+      {/* Upgrade button in drawer */}
+      {plan !== "enterprise" && plan !== "lifetime" && (
+        <div style={{ padding: "0 12px 24px", flexShrink: 0 }}>
+          <button
+            onClick={() => { router.push("/dashboard?tab=billing"); setMobileOpen(false); }}
+            style={{
+              width: "100%", display: "flex", alignItems: "center", gap: "8px",
+              padding: "10px 14px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)",
+              cursor: "pointer", background: "#111111", position: "relative", overflow: "hidden",
+            }}
+          >
+            <div aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none", backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.03) 4px, rgba(255,255,255,0.03) 8px)" }} />
+            <div style={{ position: "relative", zIndex: 1, width: "24px", height: "24px", borderRadius: "6px", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Zap size={13} style={{ color: "#cccccc" }} />
+            </div>
+            <span style={{ position: "relative", zIndex: 1, fontSize: "13px", fontWeight: 600, color: "#cccccc", flex: 1, textAlign: "left" }}>
+              {t.nav.upgradePlan}
+            </span>
+          </button>
+        </div>
+      )}
+    </div>
+
+    {/* ── Desktop sidebar ── */}
     <aside
       className="hidden lg:flex"
       style={{
@@ -100,14 +271,13 @@ export function DashboardSidebar() {
         flexDirection: "column",
         position: "sticky",
         top: 0,
-        // borderRight removed
         background: "#000000",
-        overflow: "visible",
+        overflow: "hidden",
         transition: "width 0.3s ease-in-out",
       }}
     >
       {/* Logo */}
-      <div style={{ height: "56px", display: "flex", alignItems: "center", paddingLeft: collapsed ? "0" : "20px", justifyContent: collapsed ? "center" : "flex-start", flexShrink: 0 }}>
+      <div style={{ height: "56px", display: "flex", alignItems: "center", paddingLeft: collapsed ? "0" : "20px", justifyContent: collapsed ? "center" : "flex-start", flexShrink: 0, overflow: "hidden" }}>
         <Link href="/" className="flex items-center gap-2.5" title={collapsed ? "Elite Labs" : undefined}>
           <Image
             src="/elitelabs.png"
@@ -122,7 +292,7 @@ export function DashboardSidebar() {
       </div>
 
       {/* Product selector */}
-      <div style={{ padding: collapsed ? "0 8px 8px" : "0 12px 8px", position: "relative", flexShrink: 0 }}>
+      <div style={{ padding: collapsed ? "0 8px 8px" : "0 12px 8px", position: "relative", flexShrink: 0, overflow: "hidden" }}>
         {collapsed ? (
           /* Icon-only when collapsed */
           <button
@@ -213,7 +383,7 @@ export function DashboardSidebar() {
       </div>
 
       {/* Nav */}
-      <nav style={{ flex: 1, paddingTop: "8px", paddingBottom: "8px", paddingLeft: collapsed ? "8px" : "12px", paddingRight: collapsed ? "8px" : "12px", overflowY: "auto" }}>
+      <nav style={{ flex: 1, paddingTop: "8px", paddingBottom: "8px", paddingLeft: collapsed ? "8px" : "12px", paddingRight: collapsed ? "8px" : "12px", overflowY: "auto", overflowX: "hidden" }}>
         {sections.map((section, si) => (
           <div key={si} style={{ marginBottom: si < sections.length - 1 ? "20px" : 0 }}>
             {section.label && !collapsed && (
@@ -253,6 +423,9 @@ export function DashboardSidebar() {
                         {!collapsed && (
                           <>
                             <span style={{ flex: 1 }}>{label}</span>
+                            {key === "translate" && new Date() < new Date('2026-09-10') && (
+                              <span style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.04em", padding: "1px 6px", borderRadius: "5px", background: "#2a2a2a", color: "#9ca3af", flexShrink: 0 }}>New</span>
+                            )}
                             {isActive && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
                           </>
                         )}
@@ -295,6 +468,42 @@ export function DashboardSidebar() {
                         {collapsed && (
                           <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-zinc-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
                             {t.nav.discover}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {si === 1 && itemIdx === section.items.length - 1 && (
+                      <div key="niche-finder-wrap" className="relative group">
+                        <Link
+                          href="/dashboard/niche-finder"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: collapsed ? "center" : "flex-start",
+                            gap: collapsed ? 0 : "10px",
+                            padding: collapsed ? "8px 0" : "8px 12px",
+                            borderRadius: "8px",
+                            fontSize: "13px",
+                            fontWeight: 500,
+                            textDecoration: "none",
+                            background: isNicheFinder ? "rgba(255,255,255,0.08)" : "transparent",
+                            color: isNicheFinder ? "#ffffff" : "#555555",
+                            transition: "background 0.15s",
+                          }}
+                          onMouseEnter={(e) => { if (!isNicheFinder) { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#d1d5db"; } }}
+                          onMouseLeave={(e) => { if (!isNicheFinder) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#555555"; } }}
+                        >
+                          <Radar size={15} style={{ color: isNicheFinder ? "#ffffff" : "#444444", flexShrink: 0 }} />
+                          {!collapsed && (
+                            <>
+                              <span style={{ flex: 1 }}>{t.nav.nicheFinder}</span>
+                              {isNicheFinder && <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff", flexShrink: 0 }} />}
+                            </>
+                          )}
+                        </Link>
+                        {collapsed && (
+                          <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-zinc-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
+                            {t.nav.nicheFinder}
                           </div>
                         )}
                       </div>
@@ -405,7 +614,7 @@ export function DashboardSidebar() {
 
       {/* Upgrade button */}
       {plan !== "enterprise" && plan !== "lifetime" && (
-        <div style={{ padding: collapsed ? "0 8px 16px" : "0 12px 16px", flexShrink: 0 }}>
+        <div style={{ padding: collapsed ? "0 8px 16px" : "0 12px 16px", flexShrink: 0, overflow: "hidden", width: "100%" }}>
           <button
             onClick={() => router.push("/dashboard?tab=billing")}
             title={collapsed ? t.nav.upgradePlan : undefined}
@@ -447,5 +656,6 @@ export function DashboardSidebar() {
       {/* Lifetime badge */}
 
     </aside>
+    </>
   );
 }
