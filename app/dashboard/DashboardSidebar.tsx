@@ -245,8 +245,8 @@ export function DashboardSidebar() {
             onClick={() => { router.push("/dashboard?tab=billing"); setMobileOpen(false); }}
             style={{
               width: "100%", display: "flex", alignItems: "center", gap: "8px",
-              padding: "10px 14px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)",
-              cursor: "pointer", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", position: "relative", overflow: "hidden",
+              padding: "10px 14px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)",
+              cursor: "pointer", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", position: "relative", overflow: "hidden",
             }}
           >
             <div aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none", backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.03) 4px, rgba(255,255,255,0.03) 8px)" }} />
@@ -298,7 +298,7 @@ export function DashboardSidebar() {
           <button
             onClick={() => setShowProductMenu(p => !p)}
             title="Elite Studio"
-            style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: "8px", borderRadius: "10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", transition: "background 0.15s" }}
+            style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: "8px", borderRadius: "10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer", transition: "background 0.15s" }}
             onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
           >
@@ -316,7 +316,7 @@ export function DashboardSidebar() {
             style={{
               width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
               gap: "8px", padding: "8px 12px", borderRadius: "10px",
-              background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)",
               cursor: "pointer", transition: "background 0.15s",
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
@@ -345,7 +345,7 @@ export function DashboardSidebar() {
               zIndex: 50, padding: "4px",
             }}>
               {/* Elite Studio — activo */}
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px", borderRadius: "8px", background: "rgba(255,255,255,0.10)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px", borderRadius: "8px", background: "rgba(255,255,255,0.10)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)" }}>
                 <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "linear-gradient(135deg, #1a3a5c, #0ea5e9)", border: "1px solid rgba(14,165,233,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                     <path d="M2 9 Q5 3 9 6 Q13 9 16 4" stroke="rgba(255,255,255,0.9)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
@@ -366,13 +366,13 @@ export function DashboardSidebar() {
                     <rect x="3" y="3" width="5" height="5" rx="1.5" fill="rgba(255,255,255,0.7)"/>
                     <rect x="10" y="3" width="5" height="5" rx="1.5" fill="rgba(255,255,255,0.3)"/>
                     <rect x="3" y="10" width="5" height="5" rx="1.5" fill="rgba(255,255,255,0.3)"/>
-                    <rect x="10" y="10" width="5" height="5" rx="1.5" fill="rgba(255,255,255,0.15)"/>
+                    <rect x="10" y="10" width="5" height="5" rx="1.5" fill="rgba(255,255,255,0.20)"/>
                   </svg>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <p style={{ fontSize: "13px", fontWeight: 500, color: "#ffffff", margin: 0 }}>Elite API</p>
-                    <span style={{ fontSize: "10px", padding: "2px 6px", borderRadius: "999px", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.3)", border: "1px solid rgba(255,255,255,0.08)" }}>Pronto</span>
+                    <span style={{ fontSize: "10px", padding: "2px 6px", borderRadius: "999px", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.3)", border: "1px solid rgba(255,255,255,0.12)" }}>Pronto</span>
                   </div>
                   <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", margin: 0 }}>API de síntesis de voz</p>
                 </div>
@@ -586,7 +586,7 @@ export function DashboardSidebar() {
             </div>
           ) : (
             <>
-              <div style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "10px 12px", display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "10px 12px", display: "flex", alignItems: "center", gap: "10px" }}>
                 <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <Users size={14} style={{ color: "#aaaaaa" }} />
                 </div>
@@ -626,16 +626,16 @@ export function DashboardSidebar() {
               gap: collapsed ? 0 : "8px",
               padding: collapsed ? "10px 0" : "10px 14px",
               borderRadius: "10px",
-              border: "1px solid rgba(255,255,255,0.08)",
+              border: "1px solid rgba(255,255,255,0.12)",
               cursor: "pointer",
               position: "relative",
               overflow: "hidden",
-              background: "rgba(255,255,255,0.04)",
+              background: "rgba(255,255,255,0.08)",
               backdropFilter: "blur(12px)",
               WebkitBackdropFilter: "blur(12px)",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.background = "rgba(255,255,255,0.07)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.background = "rgba(255,255,255,0.12)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
           >
             <div aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none", backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.03) 4px, rgba(255,255,255,0.03) 8px)" }} />
             <div style={{ position: "relative", zIndex: 1, width: "24px", height: "24px", borderRadius: "6px", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>

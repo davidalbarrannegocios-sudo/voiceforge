@@ -379,7 +379,7 @@ function Sidebar({
                 <button
                   onClick={() => setLeaveConfirm(false)}
                   disabled={leaving}
-                  style={{ flex: 1, padding: "5px 0", borderRadius: "7px", border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#555555", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
+                  style={{ flex: 1, padding: "5px 0", borderRadius: "7px", border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "#555555", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
                 >
                   Cancelar
                 </button>
@@ -394,7 +394,7 @@ function Sidebar({
             </div>
           ) : (
             <>
-              <div style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "10px 12px", display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "10px 12px", display: "flex", alignItems: "center", gap: "10px" }}>
                 <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <Users size={14} style={{ color: "#ffffff" }} />
                 </div>
@@ -434,14 +434,14 @@ function Sidebar({
               gap: "8px",
               padding: "10px 14px",
               borderRadius: "10px",
-              border: "1px solid rgba(255,255,255,0.08)",
+              border: "1px solid rgba(255,255,255,0.12)",
               cursor: "pointer",
               position: "relative",
               overflow: "hidden",
-              background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+              background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
           >
             <div
               aria-hidden="true"
@@ -708,7 +708,7 @@ function HomeTab({
               <div key={gen.id}
                    className="flex items-center gap-3 p-3 rounded-xl transition-colors"
                    style={{ background: "transparent" }}
-                   onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                   onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
                    onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.01)")}>
                 <div className="w-9 h-9 rounded-lg flex-shrink-0"
                      style={{ background: generateVoiceGradient(gen.voiceId ?? gen.id) }} />
@@ -781,7 +781,7 @@ function HomeTab({
                 onClick={() => setActiveTab('voices')}
                 className="flex items-center gap-3 p-3 rounded-xl text-left transition-colors"
                 style={{ background: "transparent" }}
-                onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
                 onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.01)")}>
                 <div className="w-10 h-10 rounded-lg flex-shrink-0"
                      style={{ background: generateVoiceGradient(voice.id) }} />
@@ -826,7 +826,7 @@ function CompactSlider({
   return (
     <div
       className="flex items-center gap-3 px-3.5"
-      style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", height: "40px" }}
+      style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", borderRadius: "10px", height: "40px" }}
     >
       <span className="text-xs font-medium flex-shrink-0 w-20" style={{ color: "#888888" }}>{label}</span>
       <div className="flex-1 relative flex items-center" style={{ height: "4px" }}>
@@ -873,7 +873,7 @@ function M1Slider({
   const decimals = step < 0.1 ? 2 : step < 1 ? 2 : 0;
   const isDefault = value === defaultValue;
   return (
-    <div style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", padding: "8px 14px", display: "flex", flexDirection: "column", gap: "5px" }}>
+    <div style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", borderRadius: "10px", padding: "8px 14px", display: "flex", flexDirection: "column", gap: "5px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>{label}</span>
         <span style={{ fontSize: "11px", fontFamily: "monospace", color: isDefault ? "#e5e7eb" : "#aaaaaa" }}>{value.toFixed(decimals)}</span>
@@ -1314,10 +1314,10 @@ function GenerateTab({
     <div className="flex flex-col" style={{ minHeight: "min(calc(100vh - 88px), 100%)", overflow: "auto" }}>
 
       {/* ── Unified two-column container ── */}
-      <div className="flex flex-col lg:flex-row generate-tab-container" style={{ flex: 1, minHeight: 0, background: "#000000", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", overflow: "hidden" }}>
+      <div className="flex flex-col lg:flex-row generate-tab-container" style={{ flex: 1, minHeight: 0, background: "#000000", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "14px", overflow: "hidden" }}>
 
         {/* ── LEFT COLUMN ── */}
-        <div className="flex-1 min-w-0 flex flex-col min-h-[280px] lg:min-h-0 border-b lg:border-b-0" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+        <div className="flex-1 min-w-0 flex flex-col min-h-[280px] lg:min-h-0 border-b lg:border-b-0" style={{ borderColor: "rgba(255,255,255,0.12)" }}>
 
           {/* Left header: avatar + voice name → opens browser */}
           <button
@@ -1412,7 +1412,7 @@ function GenerateTab({
                           <button
                             key={tag}
                             onMouseDown={e => { e.preventDefault(); insertTagAtCursor(tag); }}
-                            style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, background: "#1e1e1e", border: "1px solid rgba(255,255,255,0.08)", color: "#d1d5db", cursor: "pointer", transition: "background 0.1s, color 0.1s" }}
+                            style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, background: "#1e1e1e", border: "1px solid rgba(255,255,255,0.12)", color: "#d1d5db", cursor: "pointer", transition: "background 0.1s, color 0.1s" }}
                             onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#2a2a2a"; (e.currentTarget as HTMLButtonElement).style.color = "#fff"; }}
                             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "#1e1e1e"; (e.currentTarget as HTMLButtonElement).style.color = "#d1d5db"; }}
                           >
@@ -1503,11 +1503,11 @@ function GenerateTab({
         </div>
 
         {/* ── RIGHT COLUMN ── */}
-        <div className="w-full lg:w-72 flex-shrink-0 flex flex-col min-h-0 border-t lg:border-t-0 lg:border-l" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+        <div className="w-full lg:w-72 flex-shrink-0 flex flex-col min-h-0 border-t lg:border-t-0 lg:border-l" style={{ borderColor: "rgba(255,255,255,0.12)" }}>
 
           {/* Sliding pill tab toggle */}
           <div style={{ padding: "12px", flexShrink: 0 }}>
-            <div style={{ position: "relative", display: "flex", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "8px", padding: "4px" }}>
+            <div style={{ position: "relative", display: "flex", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", borderRadius: "8px", padding: "4px" }}>
               <div style={{ position: "absolute", top: "4px", bottom: "4px", left: "4px", width: "calc(50% - 4px)", background: "#222222", borderRadius: "6px", transform: rightTab === "ajustes" ? "translateX(0)" : "translateX(100%)", transition: "transform 200ms ease-out" }} />
               <button onClick={() => setRightTab("ajustes")} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: rightTab === "ajustes" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>{t.generate.settingsTab}</button>
               <button onClick={() => setRightTab("historial")} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: rightTab === "historial" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>{t.generate.historyTab}</button>
@@ -1523,9 +1523,9 @@ function GenerateTab({
 
                 <button
                   onClick={() => setShowBrowser(true)}
-                  style={{ width: "100%", textAlign: "left", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "12px", cursor: "pointer" }}
+                  style={{ width: "100%", textAlign: "left", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "12px", cursor: "pointer" }}
                   onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)")}
                 >
                   <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
                     <VoiceAvatar name={selectedVoice?.name ?? "V"} coverImage={selectedVoice?.coverImage} size="lg" id={selectedVoice?.referenceId} />
@@ -1561,14 +1561,14 @@ function GenerateTab({
                 <div style={{ position: "relative" }} ref={modelDropdownRef}>
                   <button
                     onClick={() => setModelDropdownOpen((o) => !o)}
-                    style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
+                    style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
                       <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         Elite Labs
                       </span>
                       {selectedModel === "speech-1.6" && <span className="badge-shimmer-purple" style={{ fontSize: "12px", fontWeight: 600, padding: "2px 8px", borderRadius: "6px", flexShrink: 0 }}>Pro</span>}
-                      {selectedModel === "speech-1.5" && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>Legacy</span>}
+                      {selectedModel === "speech-1.5" && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.20)", background: "transparent", color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>Legacy</span>}
                       {selectedModel === "turbo" && !turboDisabled && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "white", flexShrink: 0 }}>Turbo</span>}
                       {selectedModel === "turbo" && turboDisabled  && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", background: "rgba(251,191,36,0.15)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)", flexShrink: 0 }}>Mantenimiento</span>}
                     </div>
@@ -1589,14 +1589,14 @@ function GenerateTab({
                             setModelDropdownOpen(false);
                           }}
                           style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: disabled ? "#4b5563" : selectedModel === value ? "#e2e2f0" : "#6b7280", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.55 : 1 }}
-                          onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+                          onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
                           onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                         >
                           <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                               <span style={{ fontWeight: 500 }}>Elite Labs</span>
                               {value === "speech-1.6" && <span className="badge-shimmer-purple" style={{ fontSize: "12px", fontWeight: 600, padding: "2px 8px", borderRadius: "6px", flexShrink: 0 }}>Pro</span>}
-                              {value === "speech-1.5" && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>Legacy</span>}
+                              {value === "speech-1.5" && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.20)", background: "transparent", color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>Legacy</span>}
                               {value === "turbo" && !turboDisabled && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "white", flexShrink: 0 }}>Turbo</span>}
                               {value === "turbo" && turboDisabled  && <span style={{ fontSize: "12px", fontWeight: 500, padding: "2px 8px", borderRadius: "6px", background: "rgba(251,191,36,0.12)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)", flexShrink: 0 }}>Mantenimiento</span>}
                             </div>
@@ -1624,7 +1624,7 @@ function GenerateTab({
                     </>
                   )}
                   {/* Normalización de volumen */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", height: "40px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", borderRadius: "10px", height: "40px" }}>
                     <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>{selectedModel === "speech-1.5" ? "Norm. texto" : "Norm. de volumen"}</span>
                     <div style={{ position: "relative", display: "flex", background: "#000000", borderRadius: "6px", padding: "2px" }}>
                       <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#222222", borderRadius: "4px", transform: normalize ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
@@ -1634,7 +1634,7 @@ function GenerateTab({
                   </div>
                   {/* Pro-only controls */}
                   {selectedModel === "speech-1.6" && (<>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", height: "40px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", borderRadius: "10px", height: "40px" }}>
                       <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>Norm. de texto</span>
                       <div style={{ position: "relative", display: "flex", background: "#000000", borderRadius: "6px", padding: "2px" }}>
                         <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#222222", borderRadius: "4px", transform: proNormText ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
@@ -1642,7 +1642,7 @@ function GenerateTab({
                         <button onClick={() => setProNormText(true)}  style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color:  proNormText ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>Sí</button>
                       </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", height: "40px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", borderRadius: "10px", height: "40px" }}>
                       <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>Calidad MP3</span>
                       <div style={{ position: "relative", display: "flex", background: "#000000", borderRadius: "6px", padding: "2px" }}>
                         <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#222222", borderRadius: "4px", transform: proHighBitrate ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
@@ -1699,7 +1699,7 @@ function GenerateTab({
                     <M1Slider label="Style Exaggeration" leftLabel="None"          rightLabel="Exaggerated"  value={m1StyleExag} onChange={setM1StyleExag} min={0}    max={1}    step={0.01} defaultValue={0} />
 
                     {/* Language Override toggle */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", height: "40px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", borderRadius: "10px", height: "40px" }}>
                       <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>Language Override</span>
                       <div style={{ position: "relative", display: "flex", background: "#000000", borderRadius: "6px", padding: "2px" }}>
                         <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#222222", borderRadius: "4px", transform: m1LangOverride ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
@@ -1712,7 +1712,7 @@ function GenerateTab({
                     <div style={{ position: "relative" }} ref={m1ModelDropRef}>
                       <button
                         onClick={() => setM1ModelDropOpen((o) => !o)}
-                        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", height: "40px", fontSize: "12px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "none", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
+                        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", height: "40px", fontSize: "12px", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "none", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
                       >
                         <span style={{ fontWeight: 500, color: "#888888" }}>Modelo</span>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -1732,7 +1732,7 @@ function GenerateTab({
                           ] as const).map(({ value, label, sub }) => (
                             <button key={value} onClick={() => { setM1ModelId(value); setM1ModelDropOpen(false); }}
                               style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", fontSize: "12px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: m1ModelId === value ? "#e2e2f0" : "#6b7280", cursor: "pointer" }}
-                              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
                               onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                             >
                               <span>{label}{sub ? <span style={{ color: "#444", marginLeft: "6px", fontSize: "11px" }}>{sub}</span> : null}</span>
@@ -1747,7 +1747,7 @@ function GenerateTab({
                     <div style={{ position: "relative" }} ref={m1OutDropRef}>
                       <button
                         onClick={() => setM1OutDropOpen((o) => !o)}
-                        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", height: "40px", fontSize: "12px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "none", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
+                        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", height: "40px", fontSize: "12px", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "none", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
                       >
                         <span style={{ fontWeight: 500, color: "#888888" }}>Output Format</span>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -1768,7 +1768,7 @@ function GenerateTab({
                           ] as const).map(({ value, label }) => (
                             <button key={value} onClick={() => { setM1OutputFormat(value); setM1OutDropOpen(false); }}
                               style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", fontSize: "12px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: m1OutputFormat === value ? "#e2e2f0" : "#6b7280", cursor: "pointer" }}
-                              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
                               onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                             >
                               {label}
@@ -1780,7 +1780,7 @@ function GenerateTab({
                     </div>
 
                     {/* Speaker Boost toggle + Reset */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", height: "40px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", borderRadius: "10px", height: "40px" }}>
                       <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>Speaker Boost</span>
                       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                         <div style={{ position: "relative", display: "flex", background: "#000000", borderRadius: "6px", padding: "2px" }}>
@@ -1802,7 +1802,7 @@ function GenerateTab({
                     <M1Slider label="Speaking Rate"  leftLabel="Slower"   rightLabel="Faster"     value={stealthSpeakingRate} onChange={setStealthSpeakingRate} min={0.5} max={2.0} step={0.1} defaultValue={1.0} />
 
                     {/* Stealth Model selector */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", height: "40px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", borderRadius: "10px", height: "40px" }}>
                       <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>Stealth Model</span>
                       <div style={{ display: "flex", gap: "4px" }}>
                         {([
@@ -1815,7 +1815,7 @@ function GenerateTab({
                             style={{
                               padding: "3px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 500,
                               cursor: "pointer",
-                              background: stealthModel === id ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.04)",
+                              background: stealthModel === id ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.08)",
                               border: stealthModel === id ? "1px solid rgba(255,255,255,0.3)" : "1px solid transparent",
                               color: stealthModel === id ? "#ffffff" : "#6b7280",
                             }}
@@ -2056,7 +2056,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)" }}>
-      <div className="w-full max-w-lg rounded-2xl p-6 overflow-y-auto" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", maxHeight: "90vh" }}>
+      <div className="w-full max-w-lg rounded-2xl p-6 overflow-y-auto" style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)", maxHeight: "90vh" }}>
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -2106,7 +2106,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
               </div>
               <p className="text-sm font-semibold text-white mb-1">Instant Voice Clone</p>
               <p className="text-xs mb-4" style={{ color: "#666" }}>Only 10 seconds of audio needed!</p>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.10)", color: "#aaa" }}>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.10)", color: "#aaa" }}>
                 <Upload size={12} /> Upload files
               </span>
               <p className="text-xs mt-3" style={{ color: "#3a3a3a" }}>MP3 · WAV · M4A · FLAC · MP4 · MOV · WEBM · Max 50MB</p>
@@ -2139,7 +2139,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
                     <div
                       key={m.seconds}
                       className="absolute top-0 h-full w-px"
-                      style={{ left: `${(m.seconds / DURATION_MAX) * 100}%`, background: "rgba(255,255,255,0.15)" }}
+                      style={{ left: `${(m.seconds / DURATION_MAX) * 100}%`, background: "rgba(255,255,255,0.20)" }}
                     />
                   ))}
                 </div>
@@ -2171,7 +2171,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
                 {audioFiles.map((af) => (
                   <div key={af.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)" }}>
                         <FileAudio size={14} style={{ color: "#666" }} />
                       </div>
                       <div className="min-w-0">
@@ -2199,7 +2199,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
 
             {/* Action buttons */}
             <div className="flex gap-3 mt-2">
-              <button onClick={onClose} className="px-4 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", color: "#555" }}>
+              <button onClick={onClose} className="px-4 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)", color: "#555" }}>
                 Cancel
               </button>
               {!allAnalyzed ? (
@@ -2207,7 +2207,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
                   onClick={handleAnalyze}
                   disabled={audioFiles.length === 0 || analyzing}
                   className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.10)", color: "#ccc" }}
+                  style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.10)", color: "#ccc" }}
                 >
                   {analyzing ? <><SpinnerIcon className="animate-spin h-4 w-4" /> Analyzing…</> : "Analyze audio"}
                 </button>
@@ -2253,7 +2253,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
                 onChange={(e) => setVoiceName(e.target.value)}
                 placeholder="e.g. My Voice"
                 className="w-full rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-white/10"
-                style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}
+                style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)" }}
               />
             </div>
 
@@ -2268,7 +2268,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
                 placeholder="Describe this voice…"
                 rows={2}
                 className="w-full rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-white/10 resize-none"
-                style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}
+                style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)" }}
               />
             </div>
 
@@ -2303,7 +2303,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div>
                 <label className="text-sm font-medium text-gray-300 mb-2 block">Gender</label>
-                <div className="grid grid-cols-3 gap-1 p-1 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="grid grid-cols-3 gap-1 p-1 rounded-xl" style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)" }}>
                   {(["masculine","feminine","neutral"] as const).map((g) => (
                     <button key={g} type="button" onClick={() => setGender(g)}
                       className="py-1.5 rounded-lg text-xs font-medium transition-all"
@@ -2316,7 +2316,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-300 mb-2 block">Age</label>
-                <div className="grid grid-cols-3 gap-1 p-1 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="grid grid-cols-3 gap-1 p-1 rounded-xl" style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)" }}>
                   {(["young","adult","senior"] as const).map((a) => (
                     <button key={a} type="button" onClick={() => setAge(a)}
                       className="py-1.5 rounded-lg text-xs font-medium transition-all"
@@ -2408,7 +2408,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
             </div>
 
             {/* Visibility */}
-            <div className="mb-5 p-4 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div className="mb-5 p-4 rounded-xl" style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)" }}>
               <label className="text-sm font-medium text-gray-300 mb-3 block">Visibility</label>
               <div className="grid grid-cols-2 gap-2 mb-3">
                 <button type="button" onClick={() => { setIsPublic(false); setPublicConfirmed(false); }}
@@ -2445,7 +2445,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
             {error && <p className="text-xs mb-3" style={{ color: "#f87171" }}>{error}</p>}
 
             {sampleUrl && (
-              <div style={{ marginTop: "16px", padding: "16px", borderRadius: "12px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ marginTop: "16px", padding: "16px", borderRadius: "12px", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)" }}>
                 <p style={{ fontSize: "12px", color: "#888", marginBottom: "10px", fontWeight: 600 }}>Vista previa del clon generada automáticamente:</p>
                 <audio controls src={sampleUrl} style={{ width: "100%", marginBottom: "12px" }} />
                 <div style={{ display: "flex", gap: "8px" }}>
@@ -2466,7 +2466,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
             )}
 
             <div className="flex gap-3">
-              <button onClick={() => setStep(1)} className="px-4 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", color: "#555" }}>
+              <button onClick={() => setStep(1)} className="px-4 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)", color: "#555" }}>
                 ←
               </button>
               <button
@@ -2534,7 +2534,7 @@ function VoiceCard({
   return (
     <div
       className="rounded-xl border p-3 transition-colors"
-      style={{ background: hovered ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderColor: hovered ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)" }}
+      style={{ background: hovered ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", borderColor: hovered ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.06)" }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => { setHovered(false); setMenuOpen(false); }}
     >
@@ -2604,7 +2604,7 @@ function VoiceCard({
             {menuOpen && (
               <div
                 className="absolute right-0 bottom-full mb-1.5 rounded-xl py-1 z-20 min-w-[150px]"
-                style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
+                style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
               >
                 <button
                   onClick={() => { onPreview(voice); setMenuOpen(false); }}
@@ -2764,7 +2764,7 @@ function VoicesTab({
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar voces..."
             className="w-full rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/20"
-            style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", color: "#d1d5db" }}
+            style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)", color: "#d1d5db" }}
           />
         </div>
         <button
@@ -2952,7 +2952,7 @@ function HistoryTab({ plan }: { plan: string }) {
             placeholder={t.history.searchPlaceholder}
             style={{
               width: "100%", paddingLeft: 36, paddingRight: 12, paddingTop: 9, paddingBottom: 9,
-              background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8,
+              background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8,
               color: "#d1d5db", fontSize: 13, outline: "none", boxSizing: "border-box",
             }}
           />
@@ -2962,7 +2962,7 @@ function HistoryTab({ plan }: { plan: string }) {
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-            background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", color: "#9ca3af", cursor: "pointer",
+            background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)", color: "#9ca3af", cursor: "pointer",
           }}
           title="Actualizar"
         >
@@ -3004,8 +3004,8 @@ function HistoryTab({ plan }: { plan: string }) {
                       <div
                         key={gen.id}
                         style={{
-                          background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                          border: isError ? "1px solid rgba(239,68,68,0.2)" : isProcessing ? "1px solid rgba(255,255,255,0.08)" : "1px solid #1a1a1a",
+                          background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
+                          border: isError ? "1px solid rgba(239,68,68,0.2)" : isProcessing ? "1px solid rgba(255,255,255,0.12)" : "1px solid #1a1a1a",
                           borderRadius: 10,
                           padding: 14, position: "relative",
                           transition: "opacity 0.3s, transform 0.3s",
@@ -3083,7 +3083,7 @@ function HistoryTab({ plan }: { plan: string }) {
                               style={{
                                 display: "flex", alignItems: "center", justifyContent: "center",
                                 width: 26, height: 26, borderRadius: "50%",
-                                background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: "#9ca3af", border: "none",
+                                background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", color: "#9ca3af", border: "none",
                                 cursor: downloadingId === gen.id ? "default" : "pointer",
                               }}
                               title={t.history.download}
@@ -3099,7 +3099,7 @@ function HistoryTab({ plan }: { plan: string }) {
                             style={{
                               display: "flex", alignItems: "center", justifyContent: "center",
                               width: 26, height: 26, borderRadius: "50%",
-                              background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: "#9ca3af", border: "none", cursor: "pointer",
+                              background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", color: "#9ca3af", border: "none", cursor: "pointer",
                             }}
                             title="Copiar enlace"
                           >
@@ -3113,7 +3113,7 @@ function HistoryTab({ plan }: { plan: string }) {
                               style={{
                                 display: "flex", alignItems: "center", justifyContent: "center",
                                 width: 26, height: 26, borderRadius: "50%",
-                                background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: "#9ca3af", border: "none", cursor: "pointer",
+                                background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", color: "#9ca3af", border: "none", cursor: "pointer",
                               }}
                             >
                               <MoreHorizontal size={13} />
@@ -3166,7 +3166,7 @@ function HistoryTab({ plan }: { plan: string }) {
             disabled={page <= 1}
             style={{
               padding: "5px 12px", borderRadius: 6, fontSize: 12, cursor: page <= 1 ? "not-allowed" : "pointer",
-              background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", color: page <= 1 ? "#444444" : "#9ca3af",
+              background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)", color: page <= 1 ? "#444444" : "#9ca3af",
             }}
           >Anterior</button>
           <span style={{ fontSize: 12, color: "#6b7280" }}>{page} / {totalPages}</span>
@@ -3175,7 +3175,7 @@ function HistoryTab({ plan }: { plan: string }) {
             disabled={page >= totalPages}
             style={{
               padding: "5px 12px", borderRadius: 6, fontSize: 12, cursor: page >= totalPages ? "not-allowed" : "pointer",
-              background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", color: page >= totalPages ? "#444444" : "#9ca3af",
+              background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)", color: page >= totalPages ? "#444444" : "#9ca3af",
             }}
           >{t.history.nextPage.replace(' →', '')} →</button>
         </div>
@@ -3310,7 +3310,7 @@ function BillingTab({
       </div>
 
       {/* ── Info banner ── */}
-      <div style={{ borderRadius: "12px", border: plan === "lifetime" ? "1px solid rgba(245,158,11,0.25)" : "1px solid #1a1a1a", background: plan === "lifetime" ? "rgba(245,158,11,0.04)" : "rgba(255,255,255,0.04)", padding: "14px 16px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "28px" }}>
+      <div style={{ borderRadius: "12px", border: plan === "lifetime" ? "1px solid rgba(245,158,11,0.25)" : "1px solid #1a1a1a", background: plan === "lifetime" ? "rgba(245,158,11,0.04)" : "rgba(255,255,255,0.08)", padding: "14px 16px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "28px" }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: "16px", flexWrap: "wrap" }}>
           <div>
             <p style={{ fontSize: "11px", color: "#444444", marginBottom: "3px" }}>Caracteres disponibles</p>
@@ -3333,7 +3333,7 @@ function BillingTab({
             </>
           ) : renewalDateLabel ? (
             <>
-              <div style={{ width: "1px", height: "32px", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", flexShrink: 0 }} />
+              <div style={{ width: "1px", height: "32px", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", flexShrink: 0 }} />
               <div>
                 <p style={{ fontSize: "11px", color: "#444444", marginBottom: "3px" }}>
                   {plan === "free" ? "Próxima recarga" : "Próxima renovación"}
@@ -3363,7 +3363,7 @@ function BillingTab({
         ) : plan !== "free" ? (
           <button
             onClick={() => setShowManage(true)}
-            style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#d1d5db", fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+            style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "#d1d5db", fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
           >
             Gestionar suscripción →
           </button>
@@ -3372,9 +3372,9 @@ function BillingTab({
 
       {/* ── Monthly / Annual toggle ── */}
       {plan === "lifetime" ? null : <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px" }}>
-        <div style={{ position: "relative", display: "inline-grid", gridTemplateColumns: "1fr 1fr", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "3px" }}>
+        <div style={{ position: "relative", display: "inline-grid", gridTemplateColumns: "1fr 1fr", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "3px" }}>
           {/* Sliding pill */}
-          <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "7px", pointerEvents: "none", transition: "transform 0.2s ease", transform: `translateX(${billing === "annual" ? "100%" : "0%"})` }} />
+          <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", borderRadius: "7px", pointerEvents: "none", transition: "transform 0.2s ease", transform: `translateX(${billing === "annual" ? "100%" : "0%"})` }} />
           <button
             onClick={() => setBilling("monthly")}
             style={{ position: "relative", zIndex: 1, padding: "7px 22px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, background: "transparent", color: billing === "monthly" ? "#e5e7eb" : "#444444", transition: "color 0.2s ease" }}
@@ -3445,7 +3445,7 @@ function BillingTab({
               style={{
                 borderRadius: "16px",
                 border: `1px solid ${borderColor}`,
-                background: isCurrent ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.04)",
+                background: isCurrent ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)",
                 padding: "22px 16px 18px",
                 display: "flex",
                 flexDirection: "column",
@@ -3538,10 +3538,10 @@ function BillingTab({
                   disabled={isCurrent}
                   style={
                     isCurrent
-                      ? { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#444444", fontSize: "13px", fontWeight: 600, marginBottom: "16px", cursor: "not-allowed" }
+                      ? { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "#444444", fontSize: "13px", fontWeight: 600, marginBottom: "16px", cursor: "not-allowed" }
                       : p.popular
                       ? { width: "100%", padding: "10px", borderRadius: "8px", border: "none", cursor: "pointer", background: "#ffffff", color: "#000000", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
-                      : { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.10)", cursor: "pointer", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: "#e5e7eb", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
+                      : { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.10)", cursor: "pointer", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", color: "#e5e7eb", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
                   }
                 >
                   {isCurrent
@@ -3557,7 +3557,7 @@ function BillingTab({
               )}
 
               {/* Divider */}
-              <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", marginBottom: "14px" }} />
+              <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", marginBottom: "14px" }} />
 
               {/* Features */}
               <ul style={{ listStyle: "none", padding: 0, margin: 0, flex: 1 }}>
@@ -3568,7 +3568,7 @@ function BillingTab({
                       display: "flex", alignItems: "flex-start", gap: "10px",
                       fontSize: "13px", lineHeight: 1.6, color: "rgba(255,255,255,0.80)",
                       paddingTop: "10px", paddingBottom: "10px",
-                      borderBottom: i < p.features.length - 1 ? "1px solid rgba(255,255,255,0.07)" : "none",
+                      borderBottom: i < p.features.length - 1 ? "1px solid rgba(255,255,255,0.12)" : "none",
                     }}
                   >
                     <FeatureTick />
@@ -3607,8 +3607,8 @@ function BillingTab({
           <div
             key={pack.key}
             style={{
-              background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
+              border: "1px solid rgba(255,255,255,0.12)",
               borderRadius: "12px",
               padding: "24px",
               display: "flex",
@@ -3635,7 +3635,7 @@ function BillingTab({
             {/* CTA */}
             <button
               onClick={() => router.push(`/checkout/credits-${pack.key}?type=credits`)}
-              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.10)", cursor: "pointer", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: "#e5e7eb", fontSize: "13px", fontWeight: 600 }}
+              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.10)", cursor: "pointer", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", color: "#e5e7eb", fontSize: "13px", fontWeight: 600 }}
             >
               {t.billing.buyBtn}
             </button>
@@ -4050,7 +4050,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
               <button onClick={onBilling} style={{ padding: "6px 14px", borderRadius: "8px", background: "#ffffff", color: "#000000", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0 }}>{t.translate.seePlans}</button>
             </div>
           ) : (
-            <div className="mt-4 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="mt-4 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}>
               <p className="text-xs" style={{ color: "#4a6fa8" }}>{t.translate.freeRemaining.replace('{used}', String(FREE_LIMIT - freeRemaining)).replace('{total}', String(FREE_LIMIT))}</p>
             </div>
           )
@@ -4062,7 +4062,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 
           {/* Upload bar */}
           <div
-            style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", padding: "12px 16px", border: `1px solid ${dragging ? "rgba(255,255,255,0.2)" : "#222"}`, transition: "border-color 0.15s" }}
+            style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", borderRadius: "10px", padding: "12px 16px", border: `1px solid ${dragging ? "rgba(255,255,255,0.2)" : "#222"}`, transition: "border-color 0.15s" }}
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
@@ -4123,8 +4123,8 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 onChange={(e) => setTargetLang(e.target.value)}
                 style={{
                   width: "100%",
-                  background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                  border: "1px solid rgba(255,255,255,0.08)",
+                  background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
+                  border: "1px solid rgba(255,255,255,0.12)",
                   borderRadius: "10px",
                   padding: "10px 36px 10px 14px",
                   color: "#e5e7eb",
@@ -4136,7 +4136,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 }}
               >
                 {TRANSLATE_LANGS.map((lang) => (
-                  <option key={lang.code} value={lang.code} style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+                  <option key={lang.code} value={lang.code} style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)" }}>
                     {TRANSLATE_LANG_LABELS[lang.code] ?? lang.label}
                   </option>
                 ))}
@@ -4148,7 +4148,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           {/* Voice section */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555", letterSpacing: "0.06em" }}>{t.translate.voiceForAudio}</p>
-            <div className="flex p-0.5 rounded-lg gap-0.5 mb-2.5" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="flex p-0.5 rounded-lg gap-0.5 mb-2.5" style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)" }}>
               {(["model", "reference"] as const).map((subTab) => (
                 <button
                   key={subTab}
@@ -4165,7 +4165,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
               <button
                 onClick={() => setShowBrowser(true)}
                 className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all hover:border-white/20"
-                style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}
+                style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)" }}
               >
                 <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.06)" }}>
                   <Mic size={12} style={{ color: "#888" }} />
@@ -4179,7 +4179,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             ) : (
               <div>
                 {referenceFile ? (
-                  <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl" style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)" }}>
                     <Mic2 size={14} style={{ color: "#a78bfa", flexShrink: 0 }} />
                     <div className="flex-1 text-left min-w-0">
                       <p className="text-sm font-medium text-white truncate">{referenceFile.name}</p>
@@ -4193,7 +4193,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                   <div
                     onClick={() => refInputRef.current?.click()}
                     className="w-full flex flex-col items-center gap-2 px-4 py-5 rounded-xl cursor-pointer transition-all hover:border-white/15"
-                    style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px dashed rgba(255,255,255,0.08)" }}
+                    style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px dashed rgba(255,255,255,0.08)" }}
                   >
                     <Mic2 size={18} style={{ color: "#444" }} />
                     <p className="text-sm" style={{ color: "#666" }}>{t.translate.uploadVoiceRef}</p>
@@ -4249,11 +4249,11 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 
           {/* Result */}
           {result && (
-            <div className="rounded-2xl border p-6 space-y-5" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderColor: "rgba(255,255,255,0.08)" }}>
+            <div className="rounded-2xl border p-6 space-y-5" style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", borderColor: "rgba(255,255,255,0.12)" }}>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#4ade80" }} />
                 <p className="text-sm font-semibold text-white">Audio traducido al {result.targetLanguageName}</p>
-                <span className="ml-auto text-xs px-2 py-0.5 rounded-full" style={{ color: "#888888", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <span className="ml-auto text-xs px-2 py-0.5 rounded-full" style={{ color: "#888888", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)" }}>
                   {result.charCost.toLocaleString("es-ES")} créditos · {result.durationSeconds.toFixed(1)}s
                 </span>
               </div>
@@ -4311,11 +4311,11 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 </button>
               </div>
               <div className="grid gap-3">
-                <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)" }}>
                   <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555" }}>Transcripción (español)</p>
                   <p className="text-sm leading-relaxed" style={{ color: "#9ca3af" }}>{result.transcribedText}</p>
                 </div>
-                <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)" }}>
                   <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555" }}>Traducción ({result.targetLanguageName})</p>
                   <p className="text-sm leading-relaxed" style={{ color: "#9ca3af" }}>{result.translatedText}</p>
                 </div>
@@ -4345,10 +4345,10 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 onChange={(e) => setHistorySearch(e.target.value)}
                 placeholder={t.translate.searchPlaceholder}
                 className="pl-8 pr-3 py-1.5 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-white/20"
-                style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", color: "#e5e7eb", width: "180px" }}
+                style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)", color: "#e5e7eb", width: "180px" }}
               />
             </div>
-            <button onClick={fetchHistory} className="p-2 rounded-lg transition-colors hover:bg-white/5" style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#888888", background: "transparent", cursor: "pointer" }}>
+            <button onClick={fetchHistory} className="p-2 rounded-lg transition-colors hover:bg-white/5" style={{ border: "1px solid rgba(255,255,255,0.12)", color: "#888888", background: "transparent", cursor: "pointer" }}>
               <RefreshCw size={13} className={loadingHistory ? "animate-spin" : ""} />
             </button>
           </div>
@@ -4387,7 +4387,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                       style={{ padding: "12px 16px" }}
                     >
                       {/* Language flag */}
-                      <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "18px" }}>
+                      <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "18px" }}>
                         {getLanguageFlag(task.targetLanguage)}
                       </div>
 
@@ -4428,7 +4428,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                           {task.expiresAt && new Date(task.expiresAt) > new Date() && (
                             <>
                               <span>·</span>
-                              <span style={{ color: "rgba(255,255,255,0.15)" }}>
+                              <span style={{ color: "rgba(255,255,255,0.20)" }}>
                                 Expira en {Math.ceil((new Date(task.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))}d
                               </span>
                             </>
@@ -4505,7 +4505,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                           </>
                         )}
                         {task.status === 'expired' && (
-                          <span className="text-xs px-2" style={{ color: "rgba(255,255,255,0.15)" }}>Expirado</span>
+                          <span className="text-xs px-2" style={{ color: "rgba(255,255,255,0.20)" }}>Expirado</span>
                         )}
                       </div>
                     </div>
@@ -4680,7 +4680,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
       <div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: "#fff", margin: 0 }}>{t.transcribe.title}</h2>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", padding: "2px 7px", borderRadius: 4, background: "rgba(255,255,255,0.08)", color: "#bbbbbb", border: "1px solid rgba(255,255,255,0.15)" }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", padding: "2px 7px", borderRadius: 4, background: "rgba(255,255,255,0.08)", color: "#bbbbbb", border: "1px solid rgba(255,255,255,0.20)" }}>
             BETA
           </span>
         </div>
@@ -4696,7 +4696,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
           <button onClick={onBilling} style={{ padding: "5px 12px", borderRadius: 7, background: "#ffffff", color: "#000000", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer", flexShrink: 0 }}>{t.transcribe.seePlans}</button>
         </div>
       ) : (
-        <div style={{ padding: "8px 14px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+        <div style={{ padding: "8px 14px", borderRadius: 8, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}>
           <p style={{ fontSize: 12, color: "#4a6fa8", margin: 0 }}>
             {t.transcribe.freeRemaining.replace('{remaining}', String(Math.max(0, FREE_LIMIT - transcriptionUsed))).replace('{total}', String(FREE_LIMIT))}
           </p>
@@ -4712,7 +4712,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t.transcribe.searchPlaceholder}
-            style={{ width: "100%", paddingLeft: 36, paddingRight: 12, paddingTop: 9, paddingBottom: 9, background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, color: "#d1d5db", fontSize: 13, outline: "none", boxSizing: "border-box" }}
+            style={{ width: "100%", paddingLeft: 36, paddingRight: 12, paddingTop: 9, paddingBottom: 9, background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, color: "#d1d5db", fontSize: 13, outline: "none", boxSizing: "border-box" }}
           />
         </div>
         <button
@@ -4721,13 +4721,13 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
         >
           {t.transcribe.createTask}
         </button>
-        <button onClick={fetchTasks} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 8, background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", color: "#9ca3af", cursor: "pointer", flexShrink: 0 }} title="Actualizar">
+        <button onClick={fetchTasks} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 8, background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)", color: "#9ca3af", cursor: "pointer", flexShrink: 0 }} title="Actualizar">
           <RefreshCw size={14} />
         </button>
       </div>
 
       {/* Table */}
-      <div style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, overflow: "hidden" }}>
+      <div style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
@@ -4745,7 +4745,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                 <tr key={i}>
                   {[1, 2, 3, 4, 5, 6].map((j) => (
                     <td key={j} style={tdStyle}>
-                      <div style={{ height: 14, borderRadius: 4, background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", animation: "pulse 2s infinite", width: j === 1 ? "70%" : "40%" }} />
+                      <div style={{ height: 14, borderRadius: 4, background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", animation: "pulse 2s infinite", width: j === 1 ? "70%" : "40%" }} />
                     </td>
                   ))}
                 </tr>
@@ -4778,7 +4778,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                     {/* File */}
                     <td style={tdStyle}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: 6, background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 6, background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                           <FileAudio size={14} style={{ color: "#ffffff" }} />
                         </div>
                         <div style={{ minWidth: 0 }}>
@@ -4848,7 +4848,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
           style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) { setShowCreate(false); setFile(null); setCreateError(null); } }}
         >
-          <div style={{ width: "100%", maxWidth: 480, background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
+          <div style={{ width: "100%", maxWidth: 480, background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
             {/* Modal header */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               <div>
@@ -4906,7 +4906,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
               </div>
 
               {/* Info */}
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 12px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 12px", borderRadius: 8, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}>
                 <span style={{ color: "#ffffff", fontSize: 13, flexShrink: 0, marginTop: 1 }}>ℹ</span>
                 <p style={{ margin: 0, fontSize: 12, color: "#6b7280", lineHeight: 1.5 }}>
                   {t.transcribe.infoNote}
@@ -4948,10 +4948,10 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
           style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setViewerTask(null); }}
         >
-          <div style={{ width: "100%", maxWidth: 620, maxHeight: "85vh", display: "flex", flexDirection: "column", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
+          <div style={{ width: "100%", maxWidth: 620, maxHeight: "85vh", display: "flex", flexDirection: "column", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
             {/* Header */}
             <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <FileAudio size={16} style={{ color: "#ffffff" }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -4976,13 +4976,13 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
             <div style={{ display: "flex", gap: 10, padding: "14px 20px", borderTop: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
               <button
                 onClick={() => { if (!viewerTask.transcriptionText) return; navigator.clipboard.writeText(viewerTask.transcriptionText); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: copied ? "rgba(74,222,128,0.15)" : "rgba(255,255,255,0.04)", color: copied ? "#4ade80" : "#aaaaaa", border: `1px solid ${copied ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.15)"}`, cursor: "pointer" }}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: copied ? "rgba(74,222,128,0.15)" : "rgba(255,255,255,0.08)", color: copied ? "#4ade80" : "#aaaaaa", border: `1px solid ${copied ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.20)"}`, cursor: "pointer" }}
               >
                 <Copy size={12} />{copied ? t.transcribe.copied : t.transcribe.copyText}
               </button>
               <button
                 onClick={() => handleDownload(viewerTask)}
-                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: "#9ca3af", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer" }}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", color: "#9ca3af", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer" }}
               >
                 <Download size={12} /> {t.transcribe.downloadTxt}
               </button>
@@ -5052,12 +5052,12 @@ function WithdrawModal({ balance, onClose, onSuccess }: { balance: number; onClo
     }
   }
 
-  const inputSt = { background: "#000000", border: "1px solid rgba(255,255,255,0.08)", color: "#e5e7eb", borderRadius: "10px", padding: "10px 14px", width: "100%", fontSize: "14px", outline: "none" };
+  const inputSt = { background: "#000000", border: "1px solid rgba(255,255,255,0.12)", color: "#e5e7eb", borderRadius: "10px", padding: "10px 14px", width: "100%", fontSize: "14px", outline: "none" };
   const labelSt = { display: "block", fontSize: "12px", fontWeight: 600 as const, color: "#888888", marginBottom: "6px" };
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
-      <div style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", width: "100%", maxWidth: "420px", padding: "28px", position: "relative" }}>
+      <div style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px", width: "100%", maxWidth: "420px", padding: "28px", position: "relative" }}>
         <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", color: "#6b7280", fontSize: "18px", lineHeight: 1 }}>✕</button>
 
         <h2 style={{ color: "#fff", fontSize: "18px", fontWeight: 700, margin: "0 0 4px" }}>Retirar en efectivo</h2>
@@ -5069,8 +5069,8 @@ function WithdrawModal({ balance, onClose, onSuccess }: { balance: number; onClo
           {/* Method toggle */}
           <div>
             <label style={labelSt}>Método de pago</label>
-            <div style={{ position: "relative", background: "#000000", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "3px", display: "flex" }}>
-              <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "5px", transition: "transform 0.2s ease", transform: `translateX(${method === "transfer" ? "100%" : "0%"})`, border: "1px solid rgba(255,255,255,0.08)" }} />
+            <div style={{ position: "relative", background: "#000000", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", padding: "3px", display: "flex" }}>
+              <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", borderRadius: "5px", transition: "transform 0.2s ease", transform: `translateX(${method === "transfer" ? "100%" : "0%"})`, border: "1px solid rgba(255,255,255,0.12)" }} />
               {(["paypal", "transfer"] as const).map((m) => (
                 <button
                   key={m}
@@ -5326,7 +5326,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
           <div>
             <p style={{ fontSize: 12, color: "#888888", marginBottom: 8 }}>Tu enlace único:</p>
             <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-              <div style={{ flex: 1, padding: "9px 14px", borderRadius: 10, background: "transparent", border: "1px solid rgba(255,255,255,0.08)", fontSize: 13, fontFamily: "monospace", color: "#aaaaaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ flex: 1, padding: "9px 14px", borderRadius: 10, background: "transparent", border: "1px solid rgba(255,255,255,0.12)", fontSize: 13, fontFamily: "monospace", color: "#aaaaaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {loading ? "—" : (referralLink || "—")}
               </div>
               <button
@@ -5334,7 +5334,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
                 disabled={!referralLink}
                 style={{
                   display: "flex", alignItems: "center", gap: 6, padding: "9px 14px",
-                  borderRadius: 10, fontSize: 12, fontWeight: 600, border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 10, fontSize: 12, fontWeight: 600, border: "1px solid rgba(255,255,255,0.12)",
                   background: "transparent", cursor: referralLink ? "pointer" : "not-allowed",
                   color: copied ? "#4ade80" : "#9ca3af", flexShrink: 0, transition: "color 0.15s",
                   opacity: referralLink ? 1 : 0.4,
@@ -5399,7 +5399,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
             </button>
 
             {openRedeem === "plan" && (
-              <div style={{ marginTop: 8, padding: "14px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", marginBottom: 8 }}>
+              <div style={{ marginTop: 8, padding: "14px", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", marginBottom: 8 }}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
                   {REDEEM_PLANS.map(p => (
                     <button
@@ -5410,7 +5410,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
                         cursor: "pointer", transition: "all 0.15s",
                         ...(selectedPlan === p.key
                           ? { background: "rgba(255,255,255,0.1)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.2)" }
-                          : { background: "transparent", color: "#6b7280", border: "1px solid rgba(255,255,255,0.08)" }),
+                          : { background: "transparent", color: "#6b7280", border: "1px solid rgba(255,255,255,0.12)" }),
                       }}
                     >
                       {p.label} <span style={{ opacity: 0.7 }}>${p.price}</span>
@@ -5440,7 +5440,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
             </button>
 
             {openRedeem === "chars" && (
-              <div style={{ marginTop: 8, padding: "14px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div style={{ marginTop: 8, padding: "14px", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)" }}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
                   {REDEEM_PACKS.map(p => (
                     <button
@@ -5451,7 +5451,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
                         cursor: "pointer", transition: "all 0.15s",
                         ...(selectedPack === p.key
                           ? { background: "rgba(139,92,246,0.2)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.4)" }
-                          : { background: "transparent", color: "#6b7280", border: "1px solid rgba(255,255,255,0.08)" }),
+                          : { background: "transparent", color: "#6b7280", border: "1px solid rgba(255,255,255,0.12)" }),
                       }}
                     >
                       {p.label} <span style={{ opacity: 0.7 }}>${p.price}</span>
@@ -5486,7 +5486,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
             <p style={{ fontSize: 13, fontWeight: 600, color: "#fff", marginBottom: 14 }}>Historial de recompensas</p>
             {loading ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {[1, 2].map(i => <div key={i} style={{ height: 48, borderRadius: 10, background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }} />)}
+                {[1, 2].map(i => <div key={i} style={{ height: 48, borderRadius: 10, background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)" }} />)}
               </div>
             ) : referrals.length === 0 ? (
               <div style={{ textAlign: "center", padding: "32px 0" }}>
@@ -5497,7 +5497,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {referrals.map((r, i) => (
-                  <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderRadius: 10, background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderRadius: 10, background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#000000", flexShrink: 0 }}>{i + 1}</div>
                       <div>
@@ -5810,7 +5810,7 @@ function TeamTab({
   if (!team) {
     return (
       <div className="max-w-md mx-auto py-10 space-y-4">
-        <div className="rounded-2xl p-8 text-center space-y-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+        <div className="rounded-2xl p-8 text-center space-y-3" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}>
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto" style={{ background: "rgba(255,255,255,0.06)" }}>
             <Users size={26} className="text-white" />
           </div>
@@ -5819,7 +5819,7 @@ function TeamTab({
             Crea un equipo para distribuir créditos mensuales entre tus miembros automáticamente.
           </p>
         </div>
-        <div className="rounded-2xl p-6 space-y-4" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+        <div className="rounded-2xl p-6 space-y-4" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}>
           <label className="block text-xs uppercase tracking-wider font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>
             Nombre del equipo
           </label>
@@ -6009,7 +6009,7 @@ function TeamTab({
         {activeSubTab === "Uso" && (
           <>
             {/* Owner row */}
-            <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2.5">
                   <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-white/10 text-white">P</div>
@@ -6035,7 +6035,7 @@ function TeamTab({
                   const pct = percentages[member.id] ?? 0;
                   const chars = Math.floor(ENTERPRISE_CREDITS * pct / 100);
                   return (
-                    <div key={member.id} className="rounded-xl p-4 space-y-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                    <div key={member.id} className="rounded-xl p-4 space-y-3" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
                           <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-white/10 text-white">
@@ -6134,7 +6134,7 @@ function TeamTab({
                     style={{
                       borderRadius: "16px",
                       border: `1px solid ${borderColor}`,
-                      background: isCurrent ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.02)",
+                      background: isCurrent ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.02)",
                       padding: "20px 16px 16px",
                       display: "flex",
                       flexDirection: "column",
@@ -6197,7 +6197,7 @@ function TeamTab({
                         ? { border: "1px solid rgba(255,255,255,0.1)", background: "transparent", color: "rgba(255,255,255,0.25)" }
                         : p.popular
                         ? { background: "#ffffff", color: "#000000" }
-                        : { border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "#e5e7eb" }}
+                        : { border: "1px solid rgba(255,255,255,0.20)", background: "rgba(255,255,255,0.06)", color: "#e5e7eb" }}
                     >
                       {isCurrent ? "Plan actual" : plan !== "free" ? `Cambiar a ${p.name}` : "Suscribirse"}
                     </button>
@@ -6232,7 +6232,7 @@ function TeamTab({
           <div className="space-y-5">
             {/* Payment method */}
             {invoicePm && (
-              <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}>
                 <div className="w-10 h-7 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}>
                   <CreditCard size={14} className="text-white" />
                 </div>
@@ -6308,7 +6308,7 @@ function TeamTab({
       {/* ── Delete confirmation modal ── */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.8)" }}>
-          <div className="rounded-2xl p-6 w-full max-w-sm space-y-4" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <div className="rounded-2xl p-6 w-full max-w-sm space-y-4" style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)" }}>
             <h3 className="text-base font-bold text-white">¿Eliminar el equipo &ldquo;{team.name}&rdquo;?</h3>
             <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
               Los créditos asignados a los miembros se devolverán automáticamente a tu cuenta. Los miembros perderán acceso inmediatamente.
@@ -6388,14 +6388,14 @@ function NicheChannelCard({ ch }: { ch: NicheChannelRow }) {
 
   return (
     <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "16px", display: "flex", flexDirection: "column", gap: "12px", transition: "border-color 0.15s, background 0.15s", cursor: "default" }}
-      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.04)"; (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.1)"; }}
+      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.08)"; (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.1)"; }}
       onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.02)"; (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.06)"; }}
     >
       {/* Header: thumbnail + title */}
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         {ch.thumbnail && !imgError ? (
           <img src={ch.thumbnail} alt={ch.title} onError={() => setImgError(true)}
-            style={{ width: "44px", height: "44px", borderRadius: "10px", objectFit: "cover", flexShrink: 0, background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }} />
+            style={{ width: "44px", height: "44px", borderRadius: "10px", objectFit: "cover", flexShrink: 0, background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)" }} />
         ) : (
           <div style={{ width: "44px", height: "44px", borderRadius: "10px", flexShrink: 0, background: `hsl(${hue},40%,18%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, color: `hsl(${hue},60%,65%)` }}>
             {initials}
@@ -6534,7 +6534,7 @@ function NicheFinderTab() {
   }
 
   const selectStyle: React.CSSProperties = {
-    fontSize: "12px", color: "#9ca3af", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)",
+    fontSize: "12px", color: "#9ca3af", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)",
     borderRadius: "8px", padding: "6px 10px", outline: "none", cursor: "pointer",
   };
 
@@ -6544,7 +6544,7 @@ function NicheFinderTab() {
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-1">
           <h1 className="text-xl font-bold text-white">Niche Finder</h1>
-          <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "6px", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: "#9ca3af" }}>BETA</span>
+          <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "6px", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", color: "#9ca3af" }}>BETA</span>
         </div>
         <p className="text-sm" style={{ color: "#888" }}>Descubre nichos rentables de YouTube con datos reales de canales</p>
       </div>
@@ -6558,7 +6558,7 @@ function NicheFinderTab() {
             value={search}
             onChange={e => handleSearch(e.target.value)}
             placeholder="Buscar nicho, keyword..."
-            style={{ width: "100%", paddingLeft: "32px", paddingRight: "12px", paddingTop: "7px", paddingBottom: "7px", fontSize: "12px", color: "#e5e7eb", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", outline: "none" }}
+            style={{ width: "100%", paddingLeft: "32px", paddingRight: "12px", paddingTop: "7px", paddingBottom: "7px", fontSize: "12px", color: "#e5e7eb", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", outline: "none" }}
           />
         </div>
 
@@ -6817,7 +6817,7 @@ export default function DashboardPage() {
       {/* Mobile drawer */}
       <div
         className={`fixed inset-y-0 left-0 z-50 flex flex-col lg:hidden transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
-        style={{ width: "260px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRight: "1px solid rgba(255,255,255,0.06)" }}
+        style={{ width: "260px", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", borderRight: "1px solid rgba(255,255,255,0.06)" }}
       >
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onClose={() => setSidebarOpen(false)} plan={plan} memberInfo={memberInfo} />
       </div>
@@ -6852,7 +6852,7 @@ export default function DashboardPage() {
                       setSidebarOpen(s => !s);
                     }
                   }}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)", background: "transparent", cursor: "pointer", color: "#888888", flexShrink: 0 }}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.12)", background: "transparent", cursor: "pointer", color: "#888888", flexShrink: 0 }}
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect y="2" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="7.25" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="12.5" width="16" height="1.5" rx="0.75" fill="currentColor"/></svg>
                 </button>
