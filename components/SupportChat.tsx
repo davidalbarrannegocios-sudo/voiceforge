@@ -151,7 +151,9 @@ export function SupportChat({ open, onClose }: { open: boolean; onClose: () => v
       style={{
         position: "fixed", top: 0, right: 0, height: "100vh", width: "380px",
         zIndex: 50, display: "flex", flexDirection: "column",
-        background: "#09090b",
+        background: "rgba(9,9,11,0.85)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
         borderLeft: "1px solid rgba(255,255,255,0.08)",
         transform: open ? "translateX(0)" : "translateX(100%)",
         transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)",

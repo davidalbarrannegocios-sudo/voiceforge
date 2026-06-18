@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare, Loader, FileText } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare, Loader, FileText, TrendingUp, ExternalLink, Filter, Shield, Music } from "lucide-react";
 import { DialogueEditor } from "@/components/DialogueEditor";
 import { ImageVideoEditor, type ImageHistoryItem } from "@/components/ImageVideoEditor";
 import { Image as ImageIcon } from "lucide-react";
@@ -27,6 +27,7 @@ import { NoCreditsModal } from "@/components/NoCreditsModal";
 import { downloadAudio, getProxiedUrl, getAudioBlobUrl, generateAudioFilename } from "@/lib/downloadAudio";
 import { SupportChat } from "@/components/SupportChat";
 import { EliteTextPanel } from "@/components/EliteTextPanel";
+import { WhatsNewPopup } from "@/components/WhatsNewPopup";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface Voice {
@@ -43,12 +44,12 @@ interface Voice {
   isPublic?: boolean;
 }
 
-type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral" | "translate" | "transcribe" | "team" | "dialogue" | "imagevideo";
+type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral" | "translate" | "transcribe" | "team" | "dialogue" | "imagevideo" | "nichefinder";
 
 /* ─── Sidebar ─────────────────────────────────────────────── */
 type NavSection = {
   label?: string;
-  items: { key: Tab; label: string; Icon: React.ElementType }[];
+  items: { key: Tab; label: string; Icon: React.ElementType; href?: string }[];
 };
 
 function Sidebar({
@@ -101,11 +102,12 @@ function Sidebar({
     {
       label: t.nav.products,
       items: [
-        { key: "generate",   label: t.nav.generate,   Icon: Type },
-        { key: "dialogue",   label: t.nav.textToDialogue, Icon: MessageSquare },
-        { key: "transcribe", label: t.nav.transcribe,  Icon: FileAudio },
-        { key: "translate",  label: t.nav.translate,   Icon: Globe },
-        { key: "history",    label: t.nav.history,     Icon: Clock },
+        { key: "generate",    label: t.nav.generate,        Icon: Type },
+        { key: "dialogue",    label: t.nav.textToDialogue,  Icon: MessageSquare },
+        { key: "transcribe",  label: t.nav.transcribe,      Icon: FileAudio },
+        { key: "translate",   label: t.nav.translate,       Icon: Globe },
+        { key: "history",     label: t.nav.history,         Icon: Clock },
+        { key: "nichefinder", label: "Niche Finder", Icon: TrendingUp, href: "/descubrir" },
       ],
     },
     {
@@ -131,7 +133,7 @@ function Sidebar({
           flexShrink: 0,
           position: "sticky",
           top: 0,
-          borderRight: "1px solid #1a1a1a",
+          borderRight: "1px solid rgba(255,255,255,0.06)",
           transition: collapsed
             ? "width 0.3s cubic-bezier(0.4,0,0.2,1) 0.12s"
             : "width 0.3s cubic-bezier(0.4,0,0.2,1)",
@@ -256,34 +258,31 @@ function Sidebar({
               </p>
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              {section.items.map(({ key, label, Icon }) => {
+              {section.items.map(({ key, label, Icon, href }) => {
                 const isActive = activeTab === key;
                 const textTransition = collapsed && desktop
                   ? "opacity 0.12s ease, max-width 0s ease 0.12s"
                   : "max-width 0s ease, opacity 0.2s ease 0.28s";
-                return (
-                  <button
-                    key={key}
-                    onClick={() => handleNav(key)}
-                    title={collapsed && desktop ? label : undefined}
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "flex-start",
-                      gap: "10px",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      fontSize: "13px",
-                      fontWeight: 500,
-                      textAlign: "left",
-                      border: "none",
-                      cursor: "pointer",
-                      transition: "background 0.15s",
-                      background: isActive ? "rgba(255,255,255,0.06)" : "transparent",
-                      color: isActive ? "#aaaaaa" : "#555555",
-                    }}
-                  >
+                const itemStyle: React.CSSProperties = {
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-start",
+                  gap: "10px",
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  textAlign: "left",
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "background 0.15s",
+                  background: isActive ? "rgba(255,255,255,0.06)" : "transparent",
+                  color: isActive ? "#aaaaaa" : "#555555",
+                  textDecoration: "none",
+                };
+                const inner = (
+                  <>
                     <Icon size={15} style={{ color: isActive ? "#aaaaaa" : "#444444", flexShrink: 0 }} />
                     <span style={{
                       flex: 1,
@@ -299,6 +298,25 @@ function Sidebar({
                       opacity: isActive && !(collapsed && desktop) ? 1 : 0,
                       transition: textTransition,
                     }} />
+                  </>
+                );
+                return href ? (
+                  <Link
+                    key={key}
+                    href={href}
+                    title={collapsed && desktop ? label : undefined}
+                    style={itemStyle}
+                  >
+                    {inner}
+                  </Link>
+                ) : (
+                  <button
+                    key={key}
+                    onClick={() => handleNav(key)}
+                    title={collapsed && desktop ? label : undefined}
+                    style={itemStyle}
+                  >
+                    {inner}
                   </button>
                 );
               })}
@@ -361,7 +379,7 @@ function Sidebar({
                 <button
                   onClick={() => setLeaveConfirm(false)}
                   disabled={leaving}
-                  style={{ flex: 1, padding: "5px 0", borderRadius: "7px", border: "1px solid #222222", background: "transparent", color: "#555555", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
+                  style={{ flex: 1, padding: "5px 0", borderRadius: "7px", border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#555555", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
                 >
                   Cancelar
                 </button>
@@ -376,7 +394,7 @@ function Sidebar({
             </div>
           ) : (
             <>
-              <div style={{ background: "#111111", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "10px 12px", display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "10px 12px", display: "flex", alignItems: "center", gap: "10px" }}>
                 <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <Users size={14} style={{ color: "#ffffff" }} />
                 </div>
@@ -420,10 +438,10 @@ function Sidebar({
               cursor: "pointer",
               position: "relative",
               overflow: "hidden",
-              background: "#111111",
+              background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.background = "#111111"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "#111111"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
           >
             <div
               aria-hidden="true"
@@ -674,7 +692,7 @@ function HomeTab({
           </div>
         ) : recentGenerations.length === 0 ? (
           <div className="text-center py-8 text-sm rounded-xl"
-               style={{ color: "#444444", border: "1px dashed #222222" }}>
+               style={{ color: "#444444", border: "1px dashed rgba(255,255,255,0.08)" }}>
             {t.home.noGenerationsYet}{' '}
             <button onClick={() => setActiveTab('generate')}
                     className="underline transition-colors"
@@ -745,7 +763,7 @@ function HomeTab({
           </div>
         ) : clonedVoices.length === 0 ? (
           <div className="text-center py-8 text-sm rounded-xl"
-               style={{ color: "#444444", border: "1px dashed #222222" }}>
+               style={{ color: "#444444", border: "1px dashed rgba(255,255,255,0.08)" }}>
             {t.home.noClonedVoicesYet}{' '}
             <button onClick={() => setActiveTab('voices')}
                     className="underline transition-colors"
@@ -808,7 +826,7 @@ function CompactSlider({
   return (
     <div
       className="flex items-center gap-3 px-3.5"
-      style={{ background: "#111111", borderRadius: "10px", height: "40px" }}
+      style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", height: "40px" }}
     >
       <span className="text-xs font-medium flex-shrink-0 w-20" style={{ color: "#888888" }}>{label}</span>
       <div className="flex-1 relative flex items-center" style={{ height: "4px" }}>
@@ -855,7 +873,7 @@ function M1Slider({
   const decimals = step < 0.1 ? 2 : step < 1 ? 2 : 0;
   const isDefault = value === defaultValue;
   return (
-    <div style={{ background: "#111111", borderRadius: "10px", padding: "8px 14px", display: "flex", flexDirection: "column", gap: "5px" }}>
+    <div style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", padding: "8px 14px", display: "flex", flexDirection: "column", gap: "5px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>{label}</span>
         <span style={{ fontSize: "11px", fontFamily: "monospace", color: isDefault ? "#e5e7eb" : "#aaaaaa" }}>{value.toFixed(decimals)}</span>
@@ -881,15 +899,19 @@ function M1Slider({
 function GenerateTab({
   voices,
   onGenerated,
-  selectedVoice,
-  onVoiceChange,
+  selectedProVoice,
+  onProVoiceChange,
+  selectedTurboVoice,
+  onTurboVoiceChange,
   plan,
   externalText,
 }: {
   voices: Voice[];
   onGenerated: () => void;
-  selectedVoice: SelectedVoice | null;
-  onVoiceChange: (v: SelectedVoice | null) => void;
+  selectedProVoice: SelectedVoice | null;
+  onProVoiceChange: (v: SelectedVoice | null) => void;
+  selectedTurboVoice: SelectedVoice | null;
+  onTurboVoiceChange: (v: SelectedVoice | null) => void;
   plan: string;
   externalText?: string | null;
 }) {
@@ -911,6 +933,8 @@ function GenerateTab({
   const [temperature, setTemperature] = useState<number>(() => { try { const s = localStorage.getItem("elitelabs_fish_settings"); return s ? (JSON.parse(s).temperature ?? 0.9) : 0.9; } catch { return 0.9; } });
   const [topP, setTopP] = useState<number>(() => { try { const s = localStorage.getItem("elitelabs_fish_settings"); return s ? (JSON.parse(s).topP ?? 0.9) : 0.9; } catch { return 0.9; } });
   const [selectedModel, setSelectedModel] = useState<string>(() => { try { return localStorage.getItem("elitelabs_selected_model") ?? "speech-1.6"; } catch { return "speech-1.6"; } });
+  const selectedVoice = selectedModel === "turbo" ? selectedTurboVoice : selectedProVoice;
+  const onVoiceChange = (v: SelectedVoice | null) => selectedModel === "turbo" ? onTurboVoiceChange(v) : onProVoiceChange(v);
   const [turboAdminStatus, setTurboAdminStatus] = useState("active");
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   const modelDropdownRef = useRef<HTMLDivElement>(null);
@@ -922,11 +946,20 @@ function GenerateTab({
   const [m1LangOverride, setM1LangOverride] = useState(false);
   const [m1OutputFormat, setM1OutputFormat] = useState("mp3_44100_128");
   const [m1SpeakerBoost, setM1SpeakerBoost] = useState(true);
-  const [m1ModelId, setM1ModelId] = useState<string>(() => { try { return localStorage.getItem("elitelabs_turbo_model") ?? "eleven_multilingual_v2_5"; } catch { return "eleven_multilingual_v2_5"; } });
+  const [m1ModelId, setM1ModelId] = useState<string>(() => { try { const stored = localStorage.getItem("elitelabs_turbo_model"); return (stored === "eleven_multilingual_v2_5" || !stored) ? "eleven_multilingual_v2" : stored; } catch { return "eleven_multilingual_v2"; } });
   const [m1OutDropOpen, setM1OutDropOpen] = useState(false);
   const [m1ModelDropOpen, setM1ModelDropOpen] = useState(false);
   const m1OutDropRef = useRef<HTMLDivElement>(null);
   const m1ModelDropRef = useRef<HTMLDivElement>(null);
+  const [turboProvider, setTurboProvider] = useState<"elevenlabs" | "stealth" | "minimax">(() => {
+    try { return (localStorage.getItem("elitelabs_turbo_provider") as "elevenlabs" | "stealth" | "minimax") || "elevenlabs"; }
+    catch { return "elevenlabs"; }
+  });
+  const [stealthTemperature, setStealthTemperature] = useState(1.1);
+  const [stealthSpeakingRate, setStealthSpeakingRate] = useState(1.0);
+  const [stealthModel, setStealthModel] = useState("1.5");
+  const [minimaxPitch, setMinimaxPitch] = useState(0);
+  const [minimaxVolume, setMinimaxVolume] = useState(1.0);
   const [previewing, setPreviewing] = useState<"idle" | "loading" | "playing">("idle");
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const [tagsOpen, setTagsOpen] = useState(false);
@@ -939,7 +972,8 @@ function GenerateTab({
   const [elapsed, setElapsed] = useState(0);
 
   const charCost = calculateCharCost(text.length);
-  const displayCost = selectedModel === "turbo" ? Math.ceil(charCost / 2) : charCost;
+  const isStealthPro = selectedModel === "turbo" && turboProvider === "stealth" && stealthModel === "2.0";
+  const displayCost = selectedModel === "turbo" ? Math.ceil(charCost / 2) * (isStealthPro ? 2 : 1) : charCost;
   const clonedVoices = voices.filter((v) => !v.isSystem);
   const estimatedSeconds = Math.max(5, Math.ceil(text.trim().length / 120));
   const progress = submitting ? Math.min(92, (elapsed / estimatedSeconds) * 100) : 0;
@@ -1019,6 +1053,12 @@ function GenerateTab({
   useEffect(() => {
     try { localStorage.setItem("elitelabs_turbo_model", m1ModelId); } catch { /* ignore */ }
   }, [m1ModelId]);
+
+  useEffect(() => {
+    try { localStorage.setItem("elitelabs_turbo_provider", turboProvider); } catch { /* ignore */ }
+    onTurboVoiceChange(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turboProvider]);
 
   useEffect(() => {
     const cached = localStorage.getItem("turboStatusCache");
@@ -1114,22 +1154,29 @@ function GenerateTab({
     setSubmitting(true);
     try {
       if (selectedModel === "turbo") {
-        // Turbo (ElevenLabs) — synchronous, waits for audio
+        // Turbo (Algrow: ElevenLabs / Stealth / MiniMax) — async job, same pattern as PRO
         const turboBody = {
           text,
           voice_id: selectedVoice?.referenceId ?? undefined,
           voiceName: selectedVoice?.name ?? "Voz por defecto",
-          provider: "elevenlabs",
-          model_id: m1ModelId,
-          voice_settings: {
+          provider: turboProvider,
+          ...(turboProvider === "elevenlabs" && {
+            model_id: m1ModelId,
             stability: m1Stability,
             similarity_boost: m1Similarity,
             style: m1StyleExag,
-            use_speaker_boost: m1SpeakerBoost,
-          },
-          speed: m1Speed,
-          language_code: m1LangOverride ? "auto" : undefined,
-          output_format: m1OutputFormat,
+            speed: m1Speed,
+          }),
+          ...(turboProvider === "stealth" && {
+            temperature: stealthTemperature,
+            speaking_rate: stealthSpeakingRate,
+            stealth_model: stealthModel,
+          }),
+          ...(turboProvider === "minimax" && {
+            speed: m1Speed,
+            pitch: minimaxPitch,
+            volume: minimaxVolume,
+          }),
         };
         const res = await fetch("/api/generate-ai33", {
           method: "POST",
@@ -1139,7 +1186,26 @@ function GenerateTab({
         const data = await res.json();
         if (res.status === 402) { setSubmitting(false); setShowNoCredits(true); return; }
         if (!res.ok) throw new Error(data.error || "Error al generar");
-        window.dispatchEvent(new CustomEvent("audio-history-changed"));
+
+        const { jobId } = data as { jobId: string };
+        const jobEntry = {
+          jobId,
+          voiceName: selectedVoice?.name ?? "Voz por defecto",
+          voiceId: selectedVoice?.referenceId ?? "default",
+          text: text.slice(0, 80),
+          createdAt: Date.now(),
+        };
+
+        // Persist so polling survives navigation/reload
+        try {
+          const stored = JSON.parse(localStorage.getItem("pendingTtsJobs") || "[]");
+          stored.push(jobEntry);
+          localStorage.setItem("pendingTtsJobs", JSON.stringify(stored));
+        } catch { /* ignore */ }
+
+        // Notify AudioHistoryList to show spinner card and start polling
+        window.dispatchEvent(new CustomEvent("tts-job-created", { detail: jobEntry }));
+
         onGenerated();
         setText("");
         setRightTab("historial");
@@ -1245,13 +1311,13 @@ function GenerateTab({
   const voiceGender = selectedVoice?.tags ? getGender(selectedVoice.tags) : null;
 
   return (
-    <div className="flex flex-col" style={{ minHeight: "calc(100vh - 88px)", overflow: "auto" }}>
+    <div className="flex flex-col" style={{ minHeight: "min(calc(100vh - 88px), 100%)", overflow: "auto" }}>
 
       {/* ── Unified two-column container ── */}
-      <div className="flex flex-col lg:flex-row" style={{ flex: 1, minHeight: 0, maxHeight: "calc(100vh - 120px)", background: "#000000", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", overflow: "hidden" }}>
+      <div className="flex flex-col lg:flex-row generate-tab-container" style={{ flex: 1, minHeight: 0, background: "#000000", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", overflow: "hidden" }}>
 
         {/* ── LEFT COLUMN ── */}
-        <div className="flex-1 min-w-0 flex flex-col min-h-64 lg:min-h-0 border-b lg:border-b-0" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+        <div className="flex-1 min-w-0 flex flex-col min-h-[280px] lg:min-h-0 border-b lg:border-b-0" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
 
           {/* Left header: avatar + voice name → opens browser */}
           <button
@@ -1267,7 +1333,7 @@ function GenerateTab({
           {/* Tags toolbar — only for Fish Audio (M2) models */}
           {selectedModel !== "turbo" && (
             <div ref={tagsAreaRef} style={{ position: "relative", padding: "0 12px 6px", flexShrink: 0 }}>
-              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+              <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
                 <button
                   onClick={() => setTagsOpen(o => !o)}
                   style={{ display: "flex", alignItems: "center", gap: "4px", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, background: tagsOpen ? "rgba(255,255,255,0.08)" : "transparent", border: "1px solid rgba(255,255,255,0.12)", color: "#9ca3af", cursor: "pointer" }}
@@ -1337,7 +1403,7 @@ function GenerateTab({
               </div>
 
               {tagsOpen && (
-                <div className="tags-panel glass-menu" style={{ position: "absolute", top: "calc(100% + 4px)", left: "12px", zIndex: 50, padding: "14px 16px", minWidth: "340px", maxWidth: "520px", maxHeight: "60vh", overflowY: "auto" }}>
+                <div className="tags-panel glass-menu" style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 50, padding: "14px 16px", minWidth: "280px", maxWidth: "520px", maxHeight: "55vh", overflowY: "auto" }}>
                   {TAG_GROUPS.map((group, gi) => (
                     <div key={group.label} style={{ marginBottom: gi < TAG_GROUPS.length - 1 ? "12px" : "10px" }}>
                       <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#555555", marginBottom: "8px" }}>{group.label}</p>
@@ -1393,9 +1459,9 @@ function GenerateTab({
                 {formError}
               </div>
             )}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <span style={{ fontSize: "13px", color: "#6b7280" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", flexWrap: "wrap", gap: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+                <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>
                   {text.length.toLocaleString("es-ES")} {t.generate.characters}
                   {text.length > 0 && <span style={{ marginLeft: "6px", fontSize: "11px", color: "#444444" }}>· {displayCost.toLocaleString("es-ES")} {t.generate.credits}</span>}
                 </span>
@@ -1437,11 +1503,11 @@ function GenerateTab({
         </div>
 
         {/* ── RIGHT COLUMN ── */}
-        <div className="w-full lg:w-72 flex-shrink-0 flex flex-col min-h-0">
+        <div className="w-full lg:w-72 flex-shrink-0 flex flex-col min-h-0 border-t lg:border-t-0 lg:border-l" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
 
           {/* Sliding pill tab toggle */}
           <div style={{ padding: "12px", flexShrink: 0 }}>
-            <div style={{ position: "relative", display: "flex", background: "#111111", borderRadius: "8px", padding: "4px" }}>
+            <div style={{ position: "relative", display: "flex", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "8px", padding: "4px" }}>
               <div style={{ position: "absolute", top: "4px", bottom: "4px", left: "4px", width: "calc(50% - 4px)", background: "#222222", borderRadius: "6px", transform: rightTab === "ajustes" ? "translateX(0)" : "translateX(100%)", transition: "transform 200ms ease-out" }} />
               <button onClick={() => setRightTab("ajustes")} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: rightTab === "ajustes" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>{t.generate.settingsTab}</button>
               <button onClick={() => setRightTab("historial")} style={{ position: "relative", zIndex: 10, flex: 1, padding: "6px 0", fontSize: "12px", fontWeight: 500, textAlign: "center", color: rightTab === "historial" ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>{t.generate.historyTab}</button>
@@ -1457,7 +1523,7 @@ function GenerateTab({
 
                 <button
                   onClick={() => setShowBrowser(true)}
-                  style={{ width: "100%", textAlign: "left", background: "#111111", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "12px", cursor: "pointer" }}
+                  style={{ width: "100%", textAlign: "left", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "12px", cursor: "pointer" }}
                   onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)")}
                   onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
                 >
@@ -1495,7 +1561,7 @@ function GenerateTab({
                 <div style={{ position: "relative" }} ref={modelDropdownRef}>
                   <button
                     onClick={() => setModelDropdownOpen((o) => !o)}
-                    style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", background: "#111111", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
+                    style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", fontSize: "13px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
                       <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -1512,15 +1578,13 @@ function GenerateTab({
                     <div className="glass-menu" style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "4px", padding: "4px" }}>
                       {([
                         { value: "speech-1.6", sub: "Nuestro modelo insignia",                    disabled: false },
-                        { value: "speech-1.5", sub: "Heredado",                                    disabled: false },
-                        { value: "turbo",      sub: "Voces premium · 2x rendimiento de caracteres", disabled: turboDisabled },
+                        { value: "turbo",      sub: "ElevenLabs: 10 chars = 5 chars, gasta solo el 50% de tus caracteres", disabled: turboDisabled },
                       ]).map(({ value, sub, disabled }) => (
                         <button
                           key={value}
                           disabled={disabled}
                           onClick={() => {
                             if (disabled) return;
-                            if (value === "turbo" || selectedModel === "turbo") onVoiceChange(null);
                             setSelectedModel(value);
                             setModelDropdownOpen(false);
                           }}
@@ -1560,7 +1624,7 @@ function GenerateTab({
                     </>
                   )}
                   {/* Normalización de volumen */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#111111", borderRadius: "10px", height: "40px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", height: "40px" }}>
                     <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>{selectedModel === "speech-1.5" ? "Norm. texto" : "Norm. de volumen"}</span>
                     <div style={{ position: "relative", display: "flex", background: "#000000", borderRadius: "6px", padding: "2px" }}>
                       <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#222222", borderRadius: "4px", transform: normalize ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
@@ -1570,7 +1634,7 @@ function GenerateTab({
                   </div>
                   {/* Pro-only controls */}
                   {selectedModel === "speech-1.6" && (<>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#111111", borderRadius: "10px", height: "40px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", height: "40px" }}>
                       <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>Norm. de texto</span>
                       <div style={{ position: "relative", display: "flex", background: "#000000", borderRadius: "6px", padding: "2px" }}>
                         <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#222222", borderRadius: "4px", transform: proNormText ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
@@ -1578,7 +1642,7 @@ function GenerateTab({
                         <button onClick={() => setProNormText(true)}  style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color:  proNormText ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>Sí</button>
                       </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#111111", borderRadius: "10px", height: "40px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", height: "40px" }}>
                       <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>Calidad MP3</span>
                       <div style={{ position: "relative", display: "flex", background: "#000000", borderRadius: "6px", padding: "2px" }}>
                         <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#222222", borderRadius: "4px", transform: proHighBitrate ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
@@ -1594,112 +1658,193 @@ function GenerateTab({
               </div>
               )}
 
-              {/* CONTROLES DE AUDIO — Turbo (ElevenLabs) */}
+              {/* CONTROLES DE AUDIO — Turbo (ElevenLabs / Stealth / MiniMax) */}
               {selectedModel === "turbo" && (
               <div>
                 <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", marginBottom: "8px" }}>Controles de Audio</p>
+
+                {/* Provider selector */}
+                <div style={{ display: "flex", gap: "6px", marginBottom: "8px" }}>
+                  {([
+                    { id: "elevenlabs" as const, label: "ElevenLabs", Icon: Zap },
+                    { id: "stealth"    as const, label: "Stealth",    Icon: Shield },
+                    { id: "minimax"   as const, label: "MiniMax",    Icon: Music },
+                  ]).map(({ id, label, Icon }) => (
+                    <button
+                      key={id}
+                      onClick={() => setTurboProvider(id)}
+                      style={{
+                        flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "5px",
+                        padding: "6px 0", borderRadius: "8px", fontSize: "12px", fontWeight: 500,
+                        cursor: "pointer",
+                        background: turboProvider === id ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.05)",
+                        border: turboProvider === id ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent",
+                        color: turboProvider === id ? "#ffffff" : "#6b7280",
+                        transition: "all 150ms",
+                      }}
+                    >
+                      <Icon size={12} />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <M1Slider label="Speed"              leftLabel="Slower"        rightLabel="Faster"       value={m1Speed}     onChange={setM1Speed}     min={0.7}  max={1.2}  step={0.01} defaultValue={1.0} />
-                  <M1Slider label="Stability"          leftLabel="More variable" rightLabel="More stable"  value={m1Stability} onChange={setM1Stability} min={0}    max={1}    step={0.01} defaultValue={0.5} />
-                  <M1Slider label="Similarity"         leftLabel="Low"           rightLabel="High"         value={m1Similarity} onChange={setM1Similarity} min={0} max={1}    step={0.01} defaultValue={0.75} />
-                  <M1Slider label="Style Exaggeration" leftLabel="None"          rightLabel="Exaggerated"  value={m1StyleExag} onChange={setM1StyleExag} min={0}    max={1}    step={0.01} defaultValue={0} />
 
-                  {/* Language Override toggle */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#111111", borderRadius: "10px", height: "40px" }}>
-                    <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>Language Override</span>
-                    <div style={{ position: "relative", display: "flex", background: "#000000", borderRadius: "6px", padding: "2px" }}>
-                      <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#222222", borderRadius: "4px", transform: m1LangOverride ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
-                      <button onClick={() => setM1LangOverride(false)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: !m1LangOverride ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>Off</button>
-                      <button onClick={() => setM1LangOverride(true)}  style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color:  m1LangOverride ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>On</button>
-                    </div>
-                  </div>
+                  {/* ── ElevenLabs controls ── */}
+                  {turboProvider === "elevenlabs" && (<>
+                    <M1Slider label="Speed"              leftLabel="Slower"        rightLabel="Faster"       value={m1Speed}     onChange={setM1Speed}     min={0.7}  max={1.2}  step={0.01} defaultValue={1.0} />
+                    <M1Slider label="Stability"          leftLabel="More variable" rightLabel="More stable"  value={m1Stability} onChange={setM1Stability} min={0}    max={1}    step={0.01} defaultValue={0.5} />
+                    <M1Slider label="Similarity"         leftLabel="Low"           rightLabel="High"         value={m1Similarity} onChange={setM1Similarity} min={0} max={1}    step={0.01} defaultValue={0.75} />
+                    <M1Slider label="Style Exaggeration" leftLabel="None"          rightLabel="Exaggerated"  value={m1StyleExag} onChange={setM1StyleExag} min={0}    max={1}    step={0.01} defaultValue={0} />
 
-                  {/* ElevenLabs Model selector */}
-                  <div style={{ position: "relative" }} ref={m1ModelDropRef}>
-                    <button
-                      onClick={() => setM1ModelDropOpen((o) => !o)}
-                      style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", height: "40px", fontSize: "12px", background: "#111111", border: "none", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
-                    >
-                      <span style={{ fontWeight: 500, color: "#888888" }}>Modelo</span>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ fontSize: "11px", color: m1ModelId !== "eleven_multilingual_v2_5" ? "#aaaaaa" : "#6b7280" }}>
-                          {m1ModelId === "eleven_multilingual_v2_5" ? "Multilingual v2.5" : m1ModelId === "eleven_multilingual_v2" ? "Multilingual v2" : m1ModelId === "eleven_turbo_v2_5" ? "Turbo v2.5" : "Flash v2.5"}
-                        </span>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", transform: m1ModelDropOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
-                      </div>
-                    </button>
-                    {m1ModelDropOpen && (
-                      <div className="glass-menu" style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "2px", padding: "4px" }}>
-                        {([
-                          { value: "eleven_multilingual_v2_5", label: "Multilingual v2.5", sub: "Recomendado" },
-                          { value: "eleven_multilingual_v2",   label: "Multilingual v2",   sub: "" },
-                          { value: "eleven_turbo_v2_5",        label: "Turbo v2.5",         sub: "Más rápido" },
-                          { value: "eleven_flash_v2_5",        label: "Flash v2.5",         sub: "Más económico" },
-                        ] as const).map(({ value, label, sub }) => (
-                          <button key={value} onClick={() => { setM1ModelId(value); setM1ModelDropOpen(false); }}
-                            style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", fontSize: "12px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: m1ModelId === value ? "#e2e2f0" : "#6b7280", cursor: "pointer" }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
-                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                          >
-                            <span>{label}{sub ? <span style={{ color: "#444", marginLeft: "6px", fontSize: "11px" }}>{sub}</span> : null}</span>
-                            {m1ModelId === value && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Output Format dropdown */}
-                  <div style={{ position: "relative" }} ref={m1OutDropRef}>
-                    <button
-                      onClick={() => setM1OutDropOpen((o) => !o)}
-                      style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", height: "40px", fontSize: "12px", background: "#111111", border: "none", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
-                    >
-                      <span style={{ fontWeight: 500, color: "#888888" }}>Output Format</span>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ fontSize: "11px", color: m1OutputFormat !== "mp3_44100_128" ? "#aaaaaa" : "#6b7280" }}>
-                          {m1OutputFormat === "mp3_44100_128" ? "MP3 44.1kHz 128k" : m1OutputFormat === "mp3_44100_192" ? "MP3 44.1kHz 192k" : m1OutputFormat === "pcm_16000" ? "PCM 16kHz" : m1OutputFormat === "pcm_22050" ? "PCM 22kHz" : "PCM 44.1kHz"}
-                        </span>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", transform: m1OutDropOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
-                      </div>
-                    </button>
-                    {m1OutDropOpen && (
-                      <div className="glass-menu" style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "2px", padding: "4px" }}>
-                        {([
-                          { value: "mp3_44100_128", label: "MP3 44.1 kHz (128kbps)" },
-                          { value: "mp3_44100_192", label: "MP3 44.1 kHz (192kbps)" },
-                          { value: "pcm_16000",     label: "PCM 16kHz" },
-                          { value: "pcm_22050",     label: "PCM 22kHz" },
-                          { value: "pcm_44100",     label: "PCM 44.1kHz" },
-                        ] as const).map(({ value, label }) => (
-                          <button key={value} onClick={() => { setM1OutputFormat(value); setM1OutDropOpen(false); }}
-                            style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", fontSize: "12px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: m1OutputFormat === value ? "#e2e2f0" : "#6b7280", cursor: "pointer" }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
-                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                          >
-                            {label}
-                            {m1OutputFormat === value && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Speaker Boost toggle + Reset */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "#111111", borderRadius: "10px", height: "40px" }}>
-                    <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>Speaker Boost</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    {/* Language Override toggle */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", height: "40px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>Language Override</span>
                       <div style={{ position: "relative", display: "flex", background: "#000000", borderRadius: "6px", padding: "2px" }}>
-                        <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#222222", borderRadius: "4px", transform: m1SpeakerBoost ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
-                        <button onClick={() => setM1SpeakerBoost(false)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: !m1SpeakerBoost ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>Off</button>
-                        <button onClick={() => setM1SpeakerBoost(true)}  style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color:  m1SpeakerBoost ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>On</button>
+                        <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#222222", borderRadius: "4px", transform: m1LangOverride ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
+                        <button onClick={() => setM1LangOverride(false)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: !m1LangOverride ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>Off</button>
+                        <button onClick={() => setM1LangOverride(true)}  style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color:  m1LangOverride ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>On</button>
                       </div>
-                      <button
-                        onClick={() => { setM1Speed(1.0); setM1Stability(0.5); setM1Similarity(0.75); setM1StyleExag(0); setM1LangOverride(false); setM1OutputFormat("mp3_44100_128"); setM1SpeakerBoost(true); setM1ModelId("eleven_multilingual_v2_5"); }}
-                        style={{ fontSize: "11px", color: "#6b7280", background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
-                      >Reset values</button>
                     </div>
-                  </div>
+
+                    {/* ElevenLabs Model selector */}
+                    <div style={{ position: "relative" }} ref={m1ModelDropRef}>
+                      <button
+                        onClick={() => setM1ModelDropOpen((o) => !o)}
+                        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", height: "40px", fontSize: "12px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "none", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
+                      >
+                        <span style={{ fontWeight: 500, color: "#888888" }}>Modelo</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <span style={{ fontSize: "11px", color: m1ModelId !== "eleven_multilingual_v2_5" ? "#aaaaaa" : "#6b7280" }}>
+                            {m1ModelId === "eleven_multilingual_v2_5" ? "Multilingual v2.5" : m1ModelId === "eleven_multilingual_v2" ? "Multilingual v2" : m1ModelId === "eleven_turbo_v2_5" ? "Turbo v2.5" : "Flash v2.5"}
+                          </span>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", transform: m1ModelDropOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
+                        </div>
+                      </button>
+                      {m1ModelDropOpen && (
+                        <div className="glass-menu" style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "2px", padding: "4px" }}>
+                          {([
+                            { value: "eleven_multilingual_v2_5", label: "Multilingual v2.5", sub: "Recomendado" },
+                            { value: "eleven_multilingual_v2",   label: "Multilingual v2",   sub: "" },
+                            { value: "eleven_turbo_v2_5",        label: "Turbo v2.5",         sub: "Más rápido" },
+                            { value: "eleven_flash_v2_5",        label: "Flash v2.5",         sub: "Más económico" },
+                          ] as const).map(({ value, label, sub }) => (
+                            <button key={value} onClick={() => { setM1ModelId(value); setM1ModelDropOpen(false); }}
+                              style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", fontSize: "12px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: m1ModelId === value ? "#e2e2f0" : "#6b7280", cursor: "pointer" }}
+                              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                            >
+                              <span>{label}{sub ? <span style={{ color: "#444", marginLeft: "6px", fontSize: "11px" }}>{sub}</span> : null}</span>
+                              {m1ModelId === value && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Output Format dropdown */}
+                    <div style={{ position: "relative" }} ref={m1OutDropRef}>
+                      <button
+                        onClick={() => setM1OutDropOpen((o) => !o)}
+                        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", height: "40px", fontSize: "12px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "none", borderRadius: "10px", color: "#e2e2f0", cursor: "pointer" }}
+                      >
+                        <span style={{ fontWeight: 500, color: "#888888" }}>Output Format</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <span style={{ fontSize: "11px", color: m1OutputFormat !== "mp3_44100_128" ? "#aaaaaa" : "#6b7280" }}>
+                            {m1OutputFormat === "mp3_44100_128" ? "MP3 44.1kHz 128k" : m1OutputFormat === "mp3_44100_192" ? "MP3 44.1kHz 192k" : m1OutputFormat === "pcm_16000" ? "PCM 16kHz" : m1OutputFormat === "pcm_22050" ? "PCM 22kHz" : "PCM 44.1kHz"}
+                          </span>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6b7280", transform: m1OutDropOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}><polyline points="6 9 12 15 18 9" /></svg>
+                        </div>
+                      </button>
+                      {m1OutDropOpen && (
+                        <div className="glass-menu" style={{ position: "absolute", left: 0, right: 0, zIndex: 20, marginTop: "2px", padding: "4px" }}>
+                          {([
+                            { value: "mp3_44100_128", label: "MP3 44.1 kHz (128kbps)" },
+                            { value: "mp3_44100_192", label: "MP3 44.1 kHz (192kbps)" },
+                            { value: "pcm_16000",     label: "PCM 16kHz" },
+                            { value: "pcm_22050",     label: "PCM 22kHz" },
+                            { value: "pcm_44100",     label: "PCM 44.1kHz" },
+                          ] as const).map(({ value, label }) => (
+                            <button key={value} onClick={() => { setM1OutputFormat(value); setM1OutDropOpen(false); }}
+                              style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", fontSize: "12px", textAlign: "left", background: "transparent", border: "none", borderRadius: "8px", color: m1OutputFormat === value ? "#e2e2f0" : "#6b7280", cursor: "pointer" }}
+                              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                            >
+                              {label}
+                              {m1OutputFormat === value && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Speaker Boost toggle + Reset */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", height: "40px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>Speaker Boost</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <div style={{ position: "relative", display: "flex", background: "#000000", borderRadius: "6px", padding: "2px" }}>
+                          <div style={{ position: "absolute", top: "2px", bottom: "2px", left: "2px", width: "calc(50% - 2px)", background: "#222222", borderRadius: "4px", transform: m1SpeakerBoost ? "translateX(100%)" : "translateX(0)", transition: "transform 200ms ease-out" }} />
+                          <button onClick={() => setM1SpeakerBoost(false)} style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color: !m1SpeakerBoost ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>Off</button>
+                          <button onClick={() => setM1SpeakerBoost(true)}  style={{ position: "relative", zIndex: 10, padding: "2px 10px", fontSize: "11px", fontWeight: 500, color:  m1SpeakerBoost ? "#fff" : "#6b7280", background: "none", border: "none", cursor: "pointer", transition: "color 200ms ease-out" }}>On</button>
+                        </div>
+                        <button
+                          onClick={() => { setM1Speed(1.0); setM1Stability(0.5); setM1Similarity(0.75); setM1StyleExag(0); setM1LangOverride(false); setM1OutputFormat("mp3_44100_128"); setM1SpeakerBoost(true); setM1ModelId("eleven_multilingual_v2_5"); }}
+                          style={{ fontSize: "11px", color: "#6b7280", background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
+                        >Reset values</button>
+                      </div>
+                    </div>
+                  </>)}
+
+                  {/* ── Stealth controls ── */}
+                  {turboProvider === "stealth" && (<>
+                    <M1Slider label="Temperature"   leftLabel="Neutral"  rightLabel="Expressive" value={stealthTemperature}  onChange={setStealthTemperature}  min={0.5} max={2.0} step={0.1} defaultValue={1.1} />
+                    <M1Slider label="Speaking Rate"  leftLabel="Slower"   rightLabel="Faster"     value={stealthSpeakingRate} onChange={setStealthSpeakingRate} min={0.5} max={2.0} step={0.1} defaultValue={1.0} />
+
+                    {/* Stealth Model selector */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", height: "40px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: 500, color: "#888888" }}>Stealth Model</span>
+                      <div style={{ display: "flex", gap: "4px" }}>
+                        {([
+                          { id: "1.5", label: "1.5 Standard" },
+                          { id: "2.0", label: "2.0 Pro (2x chars)" },
+                        ] as const).map(({ id, label }) => (
+                          <button
+                            key={id}
+                            onClick={() => setStealthModel(id)}
+                            style={{
+                              padding: "3px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 500,
+                              cursor: "pointer",
+                              background: stealthModel === id ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.04)",
+                              border: stealthModel === id ? "1px solid rgba(255,255,255,0.3)" : "1px solid transparent",
+                              color: stealthModel === id ? "#ffffff" : "#6b7280",
+                            }}
+                          >{label}</button>
+                        ))}
+                      </div>
+                    </div>
+                    {stealthModel === "2.0" && (
+                      <p style={{ fontSize: "11px", color: "#f59e0b", padding: "4px 14px 0" }}>
+                        Stealth 2.0 consume el doble de caracteres
+                      </p>
+                    )}
+                    <button
+                      onClick={() => { setStealthTemperature(1.1); setStealthSpeakingRate(1.0); setStealthModel("1.5"); }}
+                      style={{ marginTop: "6px", fontSize: "11px", color: "#6b7280", background: "none", border: "none", cursor: "pointer", alignSelf: "flex-start" }}
+                    >Reset values</button>
+                  </>)}
+
+                  {/* ── MiniMax controls ── */}
+                  {turboProvider === "minimax" && (<>
+                    <M1Slider label="Speed"  leftLabel="Slower"  rightLabel="Faster"    value={m1Speed}     onChange={setM1Speed}     min={0.5} max={2.0} step={0.1} defaultValue={1.0} />
+                    <M1Slider label="Pitch"  leftLabel="Lower"   rightLabel="Higher"    value={minimaxPitch} onChange={setMinimaxPitch} min={-12} max={12}  step={1}   defaultValue={0} />
+                    <M1Slider label="Volume" leftLabel="Quieter" rightLabel="Louder"    value={minimaxVolume} onChange={setMinimaxVolume} min={0.1} max={10.0} step={0.1} defaultValue={1.0} />
+                    <button
+                      onClick={() => { setM1Speed(1.0); setMinimaxPitch(0); setMinimaxVolume(1.0); }}
+                      style={{ marginTop: "6px", fontSize: "11px", color: "#6b7280", background: "none", border: "none", cursor: "pointer", alignSelf: "flex-start" }}
+                    >Reset values</button>
+                  </>)}
+
                 </div>
               </div>
               )}
@@ -1721,9 +1866,14 @@ function GenerateTab({
           onSelect={onVoiceChange}
           onClose={() => setShowBrowser(false)}
           plan={plan}
-          voiceListEndpoint={selectedModel === "turbo" ? "/api/ai33-voices-eleven" : undefined}
-
-          showExternalFilters={selectedModel === "turbo"}
+          voiceListEndpoint={
+            selectedModel === "turbo"
+              ? turboProvider === "elevenlabs" ? "/api/ai33-voices-eleven"
+              : turboProvider === "stealth"    ? "/api/voices/stealth"
+              : undefined
+              : undefined
+          }
+          showExternalFilters={selectedModel === "turbo" && turboProvider === "elevenlabs"}
           defaultLanguage={selectedModel === "turbo" ? "en" : "es"}
         />
       )}
@@ -1813,6 +1963,10 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
   const [publicConfirmed, setPublicConfirmed] = useState(false);
   const [loading, setLoading]             = useState(false);
   const [error, setError]                 = useState<string | null>(null);
+  const [cloneModel, setCloneModel]       = useState<"s2-pro" | "s1">("s2-pro");
+  const [enhanceAudio, setEnhanceAudio]   = useState(true);
+  const [generateSample, setGenerateSample] = useState(true);
+  const [sampleUrl, setSampleUrl]         = useState<string | null>(null);
 
   const totalDuration = audioFiles.reduce((sum, f) => sum + f.duration, 0);
   const allAnalyzed   = audioFiles.length > 0 && audioFiles.every((f) => f.analyzed);
@@ -1877,15 +2031,22 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
     setLoading(true);
     try {
       const fd = new FormData();
-      fd.append("audio",      audioFiles[0].file);
-      fd.append("voice_name", voiceName.trim());
-      fd.append("language",   language);
-      fd.append("gender",     gender);
+      fd.append("audio",           audioFiles[0].file);
+      fd.append("voice_name",      voiceName.trim());
+      fd.append("language",        language);
+      fd.append("gender",          gender);
+      fd.append("model",           cloneModel);
+      fd.append("enhance_audio",   String(enhanceAudio));
+      fd.append("generate_sample", String(generateSample));
       const res  = await fetch("/api/clone", { method: "POST", body: fd });
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        throw new Error("La página está desactualizada. Por favor recarga la página (Ctrl+Shift+R) e inténtalo de nuevo.");
+      }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al clonar");
-      onCloned();
-      onClose();
+      if (data.sampleUrl) setSampleUrl(data.sampleUrl);
+      else { onCloned(); onClose(); }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
@@ -1895,7 +2056,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)" }}>
-      <div className="w-full max-w-lg rounded-2xl p-6 overflow-y-auto" style={{ background: "#111111", border: "1px solid #222222", maxHeight: "90vh" }}>
+      <div className="w-full max-w-lg rounded-2xl p-6 overflow-y-auto" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", maxHeight: "90vh" }}>
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -1945,7 +2106,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
               </div>
               <p className="text-sm font-semibold text-white mb-1">Instant Voice Clone</p>
               <p className="text-xs mb-4" style={{ color: "#666" }}>Only 10 seconds of audio needed!</p>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "#1a1a1a", border: "1px solid #333", color: "#aaa" }}>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.10)", color: "#aaa" }}>
                 <Upload size={12} /> Upload files
               </span>
               <p className="text-xs mt-3" style={{ color: "#3a3a3a" }}>MP3 · WAV · M4A · FLAC · MP4 · MOV · WEBM · Max 50MB</p>
@@ -2008,9 +2169,9 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
             {audioFiles.length > 0 && (
               <div className="space-y-2 mb-4">
                 {audioFiles.map((af) => (
-                  <div key={af.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid #1e1e1e" }}>
+                  <div key={af.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#1a1a1a" }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                         <FileAudio size={14} style={{ color: "#666" }} />
                       </div>
                       <div className="min-w-0">
@@ -2038,7 +2199,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
 
             {/* Action buttons */}
             <div className="flex gap-3 mt-2">
-              <button onClick={onClose} className="px-4 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ background: "#1a1a1a", border: "1px solid #222", color: "#555" }}>
+              <button onClick={onClose} className="px-4 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", color: "#555" }}>
                 Cancel
               </button>
               {!allAnalyzed ? (
@@ -2046,7 +2207,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
                   onClick={handleAnalyze}
                   disabled={audioFiles.length === 0 || analyzing}
                   className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  style={{ background: "#1a1a1a", border: "1px solid #333", color: "#ccc" }}
+                  style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.10)", color: "#ccc" }}
                 >
                   {analyzing ? <><SpinnerIcon className="animate-spin h-4 w-4" /> Analyzing…</> : "Analyze audio"}
                 </button>
@@ -2092,7 +2253,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
                 onChange={(e) => setVoiceName(e.target.value)}
                 placeholder="e.g. My Voice"
                 className="w-full rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-white/10"
-                style={{ background: "#0a0a0a", border: "1px solid #222" }}
+                style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}
               />
             </div>
 
@@ -2107,7 +2268,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
                 placeholder="Describe this voice…"
                 rows={2}
                 className="w-full rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-white/10 resize-none"
-                style={{ background: "#0a0a0a", border: "1px solid #222" }}
+                style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}
               />
             </div>
 
@@ -2126,7 +2287,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
                       onClick={() => toggleTag(tag)}
                       className="px-2.5 py-1 rounded-full text-xs font-medium transition-all"
                       style={{
-                        background: active ? "rgba(139,92,246,0.18)" : "#1a1a1a",
+                        background: active ? "rgba(139,92,246,0.18)" : "rgba(255,255,255,0.06)",
                         border: `1px solid ${active ? "#8b5cf6" : "#2a2a2a"}`,
                         color: active ? "#c4b5fd" : "#555",
                       }}
@@ -2142,7 +2303,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div>
                 <label className="text-sm font-medium text-gray-300 mb-2 block">Gender</label>
-                <div className="grid grid-cols-3 gap-1 p-1 rounded-xl" style={{ background: "#0a0a0a", border: "1px solid #1e1e1e" }}>
+                <div className="grid grid-cols-3 gap-1 p-1 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)" }}>
                   {(["masculine","feminine","neutral"] as const).map((g) => (
                     <button key={g} type="button" onClick={() => setGender(g)}
                       className="py-1.5 rounded-lg text-xs font-medium transition-all"
@@ -2155,7 +2316,7 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-300 mb-2 block">Age</label>
-                <div className="grid grid-cols-3 gap-1 p-1 rounded-xl" style={{ background: "#0a0a0a", border: "1px solid #1e1e1e" }}>
+                <div className="grid grid-cols-3 gap-1 p-1 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)" }}>
                   {(["young","adult","senior"] as const).map((a) => (
                     <button key={a} type="button" onClick={() => setAge(a)}
                       className="py-1.5 rounded-lg text-xs font-medium transition-all"
@@ -2174,8 +2335,80 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
               <CustomSelect options={CLONE_LANGUAGE_OPTIONS} value={language} onChange={setLanguage} />
             </div>
 
+            {/* Model selector */}
+            <div style={{ marginBottom: "16px" }}>
+              <p style={{ fontSize: "12px", color: "#555", fontWeight: 600, marginBottom: "8px", letterSpacing: "0.06em" }}>MODELO</p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                {([["s2-pro", "Elite PRO", "Mejor calidad"], ["s1", "Elite Legacy", "Más rápido"]] as const).map(([val, label, desc]) => (
+                  <button
+                    key={val}
+                    onClick={() => setCloneModel(val)}
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      border: `1px solid ${cloneModel === val ? "rgba(255,255,255,0.4)" : "#222"}`,
+                      background: cloneModel === val ? "rgba(255,255,255,0.06)" : "transparent",
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    <p style={{ fontSize: "13px", fontWeight: 600, color: cloneModel === val ? "#fff" : "#666", margin: 0 }}>{label}</p>
+                    <p style={{ fontSize: "11px", color: "#444", margin: 0 }}>{desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Enhance audio toggle */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              <div>
+                <p style={{ fontSize: "13px", color: "#fff", fontWeight: 500, margin: 0 }}>Mejorar calidad de audio</p>
+                <p style={{ fontSize: "11px", color: "#444", margin: 0 }}>Procesa el audio de referencia para optimizar el clon</p>
+              </div>
+              <button
+                onClick={() => setEnhanceAudio(p => !p)}
+                style={{
+                  width: "40px", height: "22px", borderRadius: "999px", border: "none", cursor: "pointer",
+                  background: enhanceAudio ? "#ffffff" : "#333",
+                  position: "relative", flexShrink: 0, transition: "background 0.2s",
+                }}
+              >
+                <span style={{
+                  position: "absolute", top: "3px",
+                  left: enhanceAudio ? "20px" : "3px",
+                  width: "16px", height: "16px", borderRadius: "50%",
+                  background: enhanceAudio ? "#000" : "#888",
+                  transition: "left 0.2s",
+                }} />
+              </button>
+            </div>
+
+            {/* Generate sample toggle */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              <div>
+                <p style={{ fontSize: "13px", color: "#fff", fontWeight: 500, margin: 0 }}>Generar muestra automática</p>
+                <p style={{ fontSize: "11px", color: "#444", margin: 0 }}>Escucha tu voz clonada antes de guardarla</p>
+              </div>
+              <button
+                onClick={() => setGenerateSample(p => !p)}
+                style={{
+                  width: "40px", height: "22px", borderRadius: "999px", border: "none", cursor: "pointer",
+                  background: generateSample ? "#ffffff" : "#333",
+                  position: "relative", flexShrink: 0, transition: "background 0.2s",
+                }}
+              >
+                <span style={{
+                  position: "absolute", top: "3px",
+                  left: generateSample ? "20px" : "3px",
+                  width: "16px", height: "16px", borderRadius: "50%",
+                  background: generateSample ? "#000" : "#888",
+                  transition: "left 0.2s",
+                }} />
+              </button>
+            </div>
+
             {/* Visibility */}
-            <div className="mb-5 p-4 rounded-xl" style={{ background: "#0a0a0a", border: "1px solid #1e1e1e" }}>
+            <div className="mb-5 p-4 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)" }}>
               <label className="text-sm font-medium text-gray-300 mb-3 block">Visibility</label>
               <div className="grid grid-cols-2 gap-2 mb-3">
                 <button type="button" onClick={() => { setIsPublic(false); setPublicConfirmed(false); }}
@@ -2211,8 +2444,29 @@ function CloneModal({ onClose, onCloned }: { onClose: () => void; onCloned: () =
 
             {error && <p className="text-xs mb-3" style={{ color: "#f87171" }}>{error}</p>}
 
+            {sampleUrl && (
+              <div style={{ marginTop: "16px", padding: "16px", borderRadius: "12px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <p style={{ fontSize: "12px", color: "#888", marginBottom: "10px", fontWeight: 600 }}>Vista previa del clon generada automáticamente:</p>
+                <audio controls src={sampleUrl} style={{ width: "100%", marginBottom: "12px" }} />
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    onClick={() => { onCloned(); onClose(); }}
+                    style={{ flex: 1, padding: "10px", borderRadius: "8px", background: "#ffffff", color: "#000", fontWeight: 700, fontSize: "13px", border: "none", cursor: "pointer" }}
+                  >
+                    Guardar voz
+                  </button>
+                  <button
+                    onClick={() => { setSampleUrl(null); }}
+                    style={{ padding: "10px 14px", borderRadius: "8px", background: "transparent", color: "#888", fontWeight: 600, fontSize: "13px", border: "1px solid rgba(255,255,255,0.10)", cursor: "pointer" }}
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-3">
-              <button onClick={() => setStep(1)} className="px-4 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ background: "#1a1a1a", border: "1px solid #222", color: "#555" }}>
+              <button onClick={() => setStep(1)} className="px-4 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", color: "#555" }}>
                 ←
               </button>
               <button
@@ -2280,7 +2534,7 @@ function VoiceCard({
   return (
     <div
       className="rounded-xl border p-3 transition-colors"
-      style={{ background: hovered ? "#191919" : "#111111", borderColor: hovered ? "#222222" : "#1a1a1a" }}
+      style={{ background: hovered ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderColor: hovered ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)" }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => { setHovered(false); setMenuOpen(false); }}
     >
@@ -2350,7 +2604,7 @@ function VoiceCard({
             {menuOpen && (
               <div
                 className="absolute right-0 bottom-full mb-1.5 rounded-xl py-1 z-20 min-w-[150px]"
-                style={{ background: "#1a1a1a", border: "1px solid #222222", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
+                style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
               >
                 <button
                   onClick={() => { onPreview(voice); setMenuOpen(false); }}
@@ -2371,7 +2625,7 @@ function VoiceCard({
                 </button>
                 {onToggleVisibility && (
                   <>
-                    <div style={{ height: "1px", background: "#222222", margin: "2px 0" }} />
+                    <div style={{ height: "1px", background: "rgba(255,255,255,0.08)", margin: "2px 0" }} />
                     <button
                       onClick={() => { onToggleVisibility(voice.id, !voice.isPublic); setMenuOpen(false); }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors"
@@ -2384,7 +2638,7 @@ function VoiceCard({
                     </button>
                   </>
                 )}
-                <div style={{ height: "1px", background: "#222222", margin: "2px 0" }} />
+                <div style={{ height: "1px", background: "rgba(255,255,255,0.08)", margin: "2px 0" }} />
                 <button
                   onClick={() => { onDelete(voice.id); setMenuOpen(false); }}
                   disabled={isDeleting}
@@ -2510,14 +2764,14 @@ function VoicesTab({
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar voces..."
             className="w-full rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/20"
-            style={{ background: "#111111", border: "1px solid #1a1a1a", color: "#d1d5db" }}
+            style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", color: "#d1d5db" }}
           />
         </div>
         <button
           onClick={() => !atLimit && setShowModal(true)}
           disabled={atLimit}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-black flex-shrink-0 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ background: "#ffffff" }}
+          className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-black flex-shrink-0 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{ background: "#ffffff", borderRadius: "10px" }}
         >
           <span className="text-base leading-none">+</span>
           {t.voices.cloneNew}
@@ -2698,7 +2952,7 @@ function HistoryTab({ plan }: { plan: string }) {
             placeholder={t.history.searchPlaceholder}
             style={{
               width: "100%", paddingLeft: 36, paddingRight: 12, paddingTop: 9, paddingBottom: 9,
-              background: "#111111", border: "1px solid #1a1a1a", borderRadius: 8,
+              background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8,
               color: "#d1d5db", fontSize: 13, outline: "none", boxSizing: "border-box",
             }}
           />
@@ -2708,7 +2962,7 @@ function HistoryTab({ plan }: { plan: string }) {
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-            background: "#111111", border: "1px solid #1a1a1a", color: "#9ca3af", cursor: "pointer",
+            background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", color: "#9ca3af", cursor: "pointer",
           }}
           title="Actualizar"
         >
@@ -2722,7 +2976,7 @@ function HistoryTab({ plan }: { plan: string }) {
           <div style={{ textAlign: "center", paddingTop: 80, color: "#444444", fontSize: 14 }}>Cargando...</div>
         ) : groups.length === 0 ? (
           <div style={{ textAlign: "center", paddingTop: 80 }}>
-            <Clock size={40} style={{ margin: "0 auto 12px", color: "#222222" }} />
+            <Clock size={40} style={{ margin: "0 auto 12px", color: "rgba(255,255,255,0.08)" }} />
             <p style={{ color: "#6b7280", fontSize: 14, fontWeight: 500 }}>Sin generaciones</p>
             <p style={{ color: "#444444", fontSize: 12, marginTop: 4 }}>Tus audios generados aparecerán aquí</p>
           </div>
@@ -2750,7 +3004,7 @@ function HistoryTab({ plan }: { plan: string }) {
                       <div
                         key={gen.id}
                         style={{
-                          background: "#111111",
+                          background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
                           border: isError ? "1px solid rgba(239,68,68,0.2)" : isProcessing ? "1px solid rgba(255,255,255,0.08)" : "1px solid #1a1a1a",
                           borderRadius: 10,
                           padding: 14, position: "relative",
@@ -2805,7 +3059,7 @@ function HistoryTab({ plan }: { plan: string }) {
                             style={{
                               display: "flex", alignItems: "center", gap: 4,
                               padding: "4px 9px", borderRadius: 20,
-                              background: isPlaying ? "rgba(255,255,255,0.08)" : "#1a1a1a",
+                              background: isPlaying ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.06)",
                               border: isPlaying ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent",
                               color: isPlaying ? "#aaaaaa" : "#9ca3af",
                               fontSize: 11, cursor: gen.audioUrl ? "pointer" : "not-allowed",
@@ -2829,7 +3083,7 @@ function HistoryTab({ plan }: { plan: string }) {
                               style={{
                                 display: "flex", alignItems: "center", justifyContent: "center",
                                 width: 26, height: 26, borderRadius: "50%",
-                                background: "#1a1a1a", color: "#9ca3af", border: "none",
+                                background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: "#9ca3af", border: "none",
                                 cursor: downloadingId === gen.id ? "default" : "pointer",
                               }}
                               title={t.history.download}
@@ -2845,7 +3099,7 @@ function HistoryTab({ plan }: { plan: string }) {
                             style={{
                               display: "flex", alignItems: "center", justifyContent: "center",
                               width: 26, height: 26, borderRadius: "50%",
-                              background: "#1a1a1a", color: "#9ca3af", border: "none", cursor: "pointer",
+                              background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: "#9ca3af", border: "none", cursor: "pointer",
                             }}
                             title="Copiar enlace"
                           >
@@ -2859,7 +3113,7 @@ function HistoryTab({ plan }: { plan: string }) {
                               style={{
                                 display: "flex", alignItems: "center", justifyContent: "center",
                                 width: 26, height: 26, borderRadius: "50%",
-                                background: "#1a1a1a", color: "#9ca3af", border: "none", cursor: "pointer",
+                                background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: "#9ca3af", border: "none", cursor: "pointer",
                               }}
                             >
                               <MoreHorizontal size={13} />
@@ -2875,7 +3129,7 @@ function HistoryTab({ plan }: { plan: string }) {
                               >
                                 <button
                                   onClick={() => handleDelete(gen.id)}
-                                  onMouseEnter={(e) => { e.currentTarget.style.background = "#1a1a1a"; }}
+                                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
                                   onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                                   style={{
                                     display: "flex", alignItems: "center", gap: 8,
@@ -2912,7 +3166,7 @@ function HistoryTab({ plan }: { plan: string }) {
             disabled={page <= 1}
             style={{
               padding: "5px 12px", borderRadius: 6, fontSize: 12, cursor: page <= 1 ? "not-allowed" : "pointer",
-              background: "#111111", border: "1px solid #1a1a1a", color: page <= 1 ? "#444444" : "#9ca3af",
+              background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", color: page <= 1 ? "#444444" : "#9ca3af",
             }}
           >Anterior</button>
           <span style={{ fontSize: 12, color: "#6b7280" }}>{page} / {totalPages}</span>
@@ -2921,7 +3175,7 @@ function HistoryTab({ plan }: { plan: string }) {
             disabled={page >= totalPages}
             style={{
               padding: "5px 12px", borderRadius: 6, fontSize: 12, cursor: page >= totalPages ? "not-allowed" : "pointer",
-              background: "#111111", border: "1px solid #1a1a1a", color: page >= totalPages ? "#444444" : "#9ca3af",
+              background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", color: page >= totalPages ? "#444444" : "#9ca3af",
             }}
           >{t.history.nextPage.replace(' →', '')} →</button>
         </div>
@@ -3056,8 +3310,8 @@ function BillingTab({
       </div>
 
       {/* ── Info banner ── */}
-      <div style={{ borderRadius: "12px", border: plan === "lifetime" ? "1px solid rgba(245,158,11,0.25)" : "1px solid #1a1a1a", background: plan === "lifetime" ? "rgba(245,158,11,0.04)" : "#111111", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "28px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "24px", flexWrap: "wrap" }}>
+      <div style={{ borderRadius: "12px", border: plan === "lifetime" ? "1px solid rgba(245,158,11,0.25)" : "1px solid #1a1a1a", background: plan === "lifetime" ? "rgba(245,158,11,0.04)" : "rgba(255,255,255,0.04)", padding: "14px 16px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "28px" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "16px", flexWrap: "wrap" }}>
           <div>
             <p style={{ fontSize: "11px", color: "#444444", marginBottom: "3px" }}>Caracteres disponibles</p>
             <p style={{ fontSize: "17px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "baseline", gap: "6px" }}>
@@ -3079,7 +3333,7 @@ function BillingTab({
             </>
           ) : renewalDateLabel ? (
             <>
-              <div style={{ width: "1px", height: "32px", background: "#1a1a1a", flexShrink: 0 }} />
+              <div style={{ width: "1px", height: "32px", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", flexShrink: 0 }} />
               <div>
                 <p style={{ fontSize: "11px", color: "#444444", marginBottom: "3px" }}>
                   {plan === "free" ? "Próxima recarga" : "Próxima renovación"}
@@ -3109,7 +3363,7 @@ function BillingTab({
         ) : plan !== "free" ? (
           <button
             onClick={() => setShowManage(true)}
-            style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #222222", background: "transparent", color: "#d1d5db", fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+            style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#d1d5db", fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
           >
             Gestionar suscripción →
           </button>
@@ -3118,9 +3372,9 @@ function BillingTab({
 
       {/* ── Monthly / Annual toggle ── */}
       {plan === "lifetime" ? null : <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px" }}>
-        <div style={{ position: "relative", display: "inline-grid", gridTemplateColumns: "1fr 1fr", background: "#111111", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "3px" }}>
+        <div style={{ position: "relative", display: "inline-grid", gridTemplateColumns: "1fr 1fr", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "3px" }}>
           {/* Sliding pill */}
-          <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#1a1a1a", borderRadius: "7px", pointerEvents: "none", transition: "transform 0.2s ease", transform: `translateX(${billing === "annual" ? "100%" : "0%"})` }} />
+          <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "7px", pointerEvents: "none", transition: "transform 0.2s ease", transform: `translateX(${billing === "annual" ? "100%" : "0%"})` }} />
           <button
             onClick={() => setBilling("monthly")}
             style={{ position: "relative", zIndex: 1, padding: "7px 22px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, background: "transparent", color: billing === "monthly" ? "#e5e7eb" : "#444444", transition: "color 0.2s ease" }}
@@ -3145,7 +3399,7 @@ function BillingTab({
           <p style={{ fontSize: 13, fontWeight: 700, color: "#f59e0b", marginBottom: 14, letterSpacing: "0.05em" }}>
             ♾ PLAN ELITE VITALICIO · ACCESO COMPLETO
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 24px" }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: "10px 24px" }}>
             {[
               "20.000.000 créditos por pago",
               "Voces clonadas ilimitadas",
@@ -3171,7 +3425,7 @@ function BillingTab({
       )}
 
       {/* ── Plan cards (4 in a row) — hidden for lifetime ── */}
-      {plan !== "lifetime" && <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 w-full">
+      {plan !== "lifetime" && <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
         {BILLING_PLANS.map((p) => {
           const isLegacyUser = plan === "starter" || plan === "enterprise";
           const isCurrent = plan === p.key;
@@ -3181,7 +3435,7 @@ function BillingTab({
           const effectiveMonthly = (discount && p.price > 0)
             ? Math.round(monthlyPrice * (1 - discount.percentage / 100) * 100) / 100
             : monthlyPrice;
-          const borderColor = isCurrent ? (planBadge?.color ?? "#888888") : p.popular ? "#333333" : "#1a1a1a";
+          const borderColor = isCurrent ? (planBadge?.color ?? "#888888") : p.popular ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.06)";
           const isDowngrade = plan !== "free" && p.key === "free";
           const annualSavings = p.price > 0 ? Math.round((p.price * 12 - p.annualTotal) * 100) / 100 : 0;
 
@@ -3191,7 +3445,7 @@ function BillingTab({
               style={{
                 borderRadius: "16px",
                 border: `1px solid ${borderColor}`,
-                background: isCurrent ? "rgba(255,255,255,0.03)" : "#0a0a0a",
+                background: isCurrent ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.04)",
                 padding: "22px 16px 18px",
                 display: "flex",
                 flexDirection: "column",
@@ -3271,7 +3525,7 @@ function BillingTab({
 
               {/* CTA button */}
               {isLegacyUser ? (
-                <div style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #1a1a1a", background: "transparent", color: "#444444", fontSize: "12px", fontWeight: 500, marginBottom: "16px", textAlign: "center" }}>
+                <div style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)", background: "transparent", color: "#444444", fontSize: "12px", fontWeight: 500, marginBottom: "16px", textAlign: "center" }}>
                   Disponible para nuevas suscripciones
                 </div>
               ) : (
@@ -3284,10 +3538,10 @@ function BillingTab({
                   disabled={isCurrent}
                   style={
                     isCurrent
-                      ? { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #222222", background: "transparent", color: "#444444", fontSize: "13px", fontWeight: 600, marginBottom: "16px", cursor: "not-allowed" }
+                      ? { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#444444", fontSize: "13px", fontWeight: 600, marginBottom: "16px", cursor: "not-allowed" }
                       : p.popular
                       ? { width: "100%", padding: "10px", borderRadius: "8px", border: "none", cursor: "pointer", background: "#ffffff", color: "#000000", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
-                      : { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #333333", cursor: "pointer", background: "#1a1a1a", color: "#e5e7eb", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
+                      : { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.10)", cursor: "pointer", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: "#e5e7eb", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }
                   }
                 >
                   {isCurrent
@@ -3303,7 +3557,7 @@ function BillingTab({
               )}
 
               {/* Divider */}
-              <div style={{ height: "1px", background: "#1a1a1a", marginBottom: "14px" }} />
+              <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", marginBottom: "14px" }} />
 
               {/* Features */}
               <ul style={{ listStyle: "none", padding: 0, margin: 0, flex: 1 }}>
@@ -3341,7 +3595,7 @@ function BillingTab({
         <p style={{ fontSize: "13px", color: "#444444" }}>{t.billing.extraCreditsDesc}</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 w-full">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 w-full">
         {/* Empty first column — aligns the 4 packs under plans 2–5 */}
         <div className="hidden lg:block" />
         {[
@@ -3353,7 +3607,7 @@ function BillingTab({
           <div
             key={pack.key}
             style={{
-              background: "#0a0a0a",
+              background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
               border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: "12px",
               padding: "24px",
@@ -3381,7 +3635,7 @@ function BillingTab({
             {/* CTA */}
             <button
               onClick={() => router.push(`/checkout/credits-${pack.key}?type=credits`)}
-              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #333333", cursor: "pointer", background: "#1a1a1a", color: "#e5e7eb", fontSize: "13px", fontWeight: 600 }}
+              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.10)", cursor: "pointer", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: "#e5e7eb", fontSize: "13px", fontWeight: 600 }}
             >
               {t.billing.buyBtn}
             </button>
@@ -3419,6 +3673,7 @@ interface TranslateResult {
 interface TTranslateTask {
   id: string;
   fileName: string;
+  originalName?: string;
   targetLanguage: string;
   targetLanguageName: string;
   status: string;
@@ -3450,6 +3705,17 @@ function getLanguageFlag(lang: string): string {
   return flags[lang?.toLowerCase?.().slice(0, 2)] ?? '🌐';
 }
 
+function getTranslateDisplayName(task: TTranslateTask): string {
+  const raw = task.originalName || task.fileName || '';
+  const name = raw.replace(/\.[^/.]+$/, '');
+  // Technical names look like: 1781120518163-mbxih7-audio-...
+  if (name && !/^\d{10,}-[a-z0-9]+-/.test(name)) return name;
+  const date = task.createdAt
+    ? new Date(task.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
+    : '';
+  return `Audio traducido${date ? ' · ' + date : ''}`;
+}
+
 function getLanguageName(lang: string): string {
   const names: Record<string, string> = {
     es: 'Español', en: 'Inglés', fr: 'Francés', de: 'Alemán',
@@ -3458,6 +3724,25 @@ function getLanguageName(lang: string): string {
     nl: 'Neerlandés', pl: 'Polaco', tr: 'Turco', sv: 'Sueco',
   };
   return names[lang?.toLowerCase?.().slice(0, 2)] ?? lang ?? '—';
+}
+
+function groupTranslationsByDate(items: TTranslateTask[]): { label: string; items: TTranslateTask[] }[] {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const map = new Map<string, TTranslateTask[]>();
+  for (const item of items) {
+    const d = new Date(item.createdAt);
+    const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const diffDays = Math.round((today.getTime() - day.getTime()) / 86400000);
+    let label: string;
+    if (diffDays === 0) label = 'HOY';
+    else if (diffDays === 1) label = 'AYER';
+    else if (diffDays <= 6) label = day.toLocaleDateString('es-ES', { weekday: 'long' }).toUpperCase();
+    else label = day.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).toUpperCase();
+    if (!map.has(label)) map.set(label, []);
+    map.get(label)!.push(item);
+  }
+  return Array.from(map.entries()).map(([label, items]) => ({ label, items }));
 }
 
 function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling, selectedVoice, onVoiceChange }: {
@@ -3476,7 +3761,6 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
     ko: t.translate.langKo, ar: t.translate.langAr, ru: t.translate.langRu,
     pt: t.translate.langPt,
   };
-  const [innerTab, setInnerTab] = useState<"convert" | "history">("convert");
 
   // Convert state
   const [file, setFile] = useState<File | null>(null);
@@ -3582,9 +3866,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
     } catch { /* ignore */ } finally { setLoadingHistory(false); }
   }
 
-  useEffect(() => {
-    if (innerTab === "history") fetchHistory();
-  }, [innerTab]);
+  useEffect(() => { fetchHistory(); }, []);
 
   async function uploadInChunks(f: File, label: string): Promise<string> {
     const CHUNK_SIZE = 5 * 1024 * 1024; // 5 MB — safely under Railway's ~8 MB limit
@@ -3635,12 +3917,8 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
         referenceFileKey = await uploadInChunks(referenceFile, "Subiendo referencia...");
       }
 
-      // ── Paso 2: traducir (servidor descarga de R2 internamente) ──
+      // ── Paso 2: crear tarea async y obtener taskId ──
       setStepLabel(t.translate.stepTranscribing);
-      stepTimers.current = [
-        setTimeout(() => setStepLabel(t.translate.stepTranslating), 9000),
-        setTimeout(() => setStepLabel(t.translate.stepGenerating), 18000),
-      ];
 
       const res = await fetch("/api/translate", {
         method: "POST",
@@ -3652,10 +3930,89 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           referenceFileKey,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error desconocido");
-      setResult(data);
-      onGenerated();
+      const initData = await res.json();
+      if (!res.ok) throw new Error(initData.error || "Error desconocido");
+
+      const { taskId } = initData;
+
+      // Immediately show as processing in history
+      const pendingItem: TTranslateTask = {
+        id: taskId,
+        fileName: file.name,
+        targetLanguage: targetLang,
+        targetLanguageName: TRANSLATE_LANGS.find(l => l.code === targetLang)?.label ?? targetLang,
+        status: "processing",
+        createdAt: new Date().toISOString(),
+        audioUrl: null,
+        creditsUsed: 0,
+        durationSeconds: null,
+        errorMessage: null,
+        expiresAt: null,
+      };
+      setHistoryTasks(prev => [pendingItem, ...prev]);
+
+      // ── Paso 3: polling hasta completar ──
+      const STEP_LABELS = [
+        { after: 9000, label: t.translate.stepTranslating },
+        { after: 18000, label: t.translate.stepGenerating },
+      ];
+      stepTimers.current = STEP_LABELS.map(({ after, label }) =>
+        setTimeout(() => setStepLabel(label), after)
+      );
+
+      const POLL_INTERVAL = 2000;
+      const MAX_POLLS = 300; // 10 minutes max
+      let polls = 0;
+
+      await new Promise<void>((resolve, reject) => {
+        const interval = setInterval(async () => {
+          polls++;
+          if (polls > MAX_POLLS) {
+            clearInterval(interval);
+            reject(new Error("La traducción tardó demasiado. Intenta de nuevo."));
+            return;
+          }
+          try {
+            const statusRes = await fetch(`/api/translate/status?taskId=${taskId}`);
+            const statusData = await statusRes.json();
+            if (!statusRes.ok) {
+              clearInterval(interval);
+              reject(new Error(statusData.error || "Error al consultar estado"));
+              return;
+            }
+            if (statusData.status === "completed") {
+              clearInterval(interval);
+              setHistoryTasks(prev => prev.map(h =>
+                h.id === taskId
+                  ? { ...h, status: "completed", audioUrl: statusData.audioUrl, creditsUsed: statusData.creditsUsed, durationSeconds: statusData.durationSeconds, errorMessage: null }
+                  : h
+              ));
+              setResult({
+                audioUrl: statusData.audioUrl,
+                durationSeconds: statusData.durationSeconds,
+                transcribedText: statusData.transcribedText,
+                translatedText: statusData.translatedText,
+                targetLanguageName: statusData.targetLanguageName,
+                charCost: statusData.creditsUsed,
+              });
+              onGenerated();
+              resolve();
+            } else if (statusData.status === "error") {
+              clearInterval(interval);
+              setHistoryTasks(prev => prev.map(h =>
+                h.id === taskId
+                  ? { ...h, status: "error", errorMessage: statusData.errorMessage }
+                  : h
+              ));
+              reject(new Error(statusData.errorMessage || "Error en traducción"));
+            }
+          } catch (e) {
+            clearInterval(interval);
+            reject(e);
+          }
+        }, POLL_INTERVAL);
+      });
+
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
@@ -3671,14 +4028,16 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
   );
 
   return (
-    <div className="max-w-2xl">
+    <div style={{ width: "100%" }}>
       {/* ── Header ── */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
           <h1 className="text-xl font-bold text-white">{t.translate.title}</h1>
-          <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.05em", padding: "2px 8px", borderRadius: "9999px", background: "rgba(139,92,246,0.15)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.3)" }}>
-            PREVIEW
-          </span>
+          {new Date() < new Date('2026-09-10') && (
+            <span style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.05em", padding: "2px 8px", borderRadius: "6px", background: "#2a2a2a", color: "#9ca3af" }}>
+              NUEVO
+            </span>
+          )}
         </div>
         <p className="text-sm" style={{ color: "#888888" }}>
           {t.translate.subtitle}
@@ -3697,31 +4056,13 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           )
         )}
 
-        {/* Inner tabs */}
-        <div className="flex mt-5" style={{ borderBottom: "1px solid #222222" }}>
-          {(["convert", "history"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setInnerTab(tab)}
-              className="relative pb-3 px-1 mr-6 text-sm font-medium transition-colors"
-              style={{ color: innerTab === tab ? "#fff" : "#888888", background: "none", border: "none", cursor: "pointer" }}
-            >
-              {tab === "convert" ? t.translate.convertTab : t.translate.historyTab}
-              {innerTab === tab && (
-                <span style={{ position: "absolute", bottom: -1, left: 0, right: 0, height: "2px", background: "#ffffff", borderRadius: "2px 2px 0 0" }} />
-              )}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {/* ── Convertir tab ── */}
-      {innerTab === "convert" && (
-        <div className="space-y-4">
+      <div className="space-y-4">
 
           {/* Upload bar */}
           <div
-            style={{ background: "#111", borderRadius: "10px", padding: "12px 16px", border: `1px solid ${dragging ? "rgba(255,255,255,0.2)" : "#222"}`, transition: "border-color 0.15s" }}
+            style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", padding: "12px 16px", border: `1px solid ${dragging ? "rgba(255,255,255,0.2)" : "#222"}`, transition: "border-color 0.15s" }}
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
@@ -3750,7 +4091,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 <button
                   onClick={() => inputRef.current?.click()}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:bg-white/10 flex-shrink-0"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid #333", color: "#bbb" }}
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)", color: "#bbb" }}
                 >
                   <Upload size={11} /> {t.translate.chooseFile}
                 </button>
@@ -3782,8 +4123,8 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 onChange={(e) => setTargetLang(e.target.value)}
                 style={{
                   width: "100%",
-                  background: "#111",
-                  border: "1px solid #222",
+                  background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+                  border: "1px solid rgba(255,255,255,0.08)",
                   borderRadius: "10px",
                   padding: "10px 36px 10px 14px",
                   color: "#e5e7eb",
@@ -3795,7 +4136,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 }}
               >
                 {TRANSLATE_LANGS.map((lang) => (
-                  <option key={lang.code} value={lang.code} style={{ background: "#111" }}>
+                  <option key={lang.code} value={lang.code} style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                     {TRANSLATE_LANG_LABELS[lang.code] ?? lang.label}
                   </option>
                 ))}
@@ -3807,7 +4148,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           {/* Voice section */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555", letterSpacing: "0.06em" }}>{t.translate.voiceForAudio}</p>
-            <div className="flex p-0.5 rounded-lg gap-0.5 mb-2.5" style={{ background: "#111111", border: "1px solid #222222" }}>
+            <div className="flex p-0.5 rounded-lg gap-0.5 mb-2.5" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}>
               {(["model", "reference"] as const).map((subTab) => (
                 <button
                   key={subTab}
@@ -3824,7 +4165,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
               <button
                 onClick={() => setShowBrowser(true)}
                 className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all hover:border-white/20"
-                style={{ background: "#111111", border: "1px solid #222222" }}
+                style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}
               >
                 <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.06)" }}>
                   <Mic size={12} style={{ color: "#888" }} />
@@ -3838,7 +4179,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             ) : (
               <div>
                 {referenceFile ? (
-                  <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl" style={{ background: "#111111", border: "1px solid #222222" }}>
+                  <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}>
                     <Mic2 size={14} style={{ color: "#a78bfa", flexShrink: 0 }} />
                     <div className="flex-1 text-left min-w-0">
                       <p className="text-sm font-medium text-white truncate">{referenceFile.name}</p>
@@ -3852,7 +4193,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                   <div
                     onClick={() => refInputRef.current?.click()}
                     className="w-full flex flex-col items-center gap-2 px-4 py-5 rounded-xl cursor-pointer transition-all hover:border-white/15"
-                    style={{ background: "#111111", border: "1px dashed #222222" }}
+                    style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px dashed rgba(255,255,255,0.08)" }}
                   >
                     <Mic2 size={18} style={{ color: "#444" }} />
                     <p className="text-sm" style={{ color: "#666" }}>{t.translate.uploadVoiceRef}</p>
@@ -3908,11 +4249,11 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 
           {/* Result */}
           {result && (
-            <div className="rounded-2xl border p-6 space-y-5" style={{ background: "#111111", borderColor: "#222222" }}>
+            <div className="rounded-2xl border p-6 space-y-5" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderColor: "rgba(255,255,255,0.08)" }}>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#4ade80" }} />
                 <p className="text-sm font-semibold text-white">Audio traducido al {result.targetLanguageName}</p>
-                <span className="ml-auto text-xs px-2 py-0.5 rounded-full" style={{ color: "#888888", background: "#111111", border: "1px solid #222222" }}>
+                <span className="ml-auto text-xs px-2 py-0.5 rounded-full" style={{ color: "#888888", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}>
                   {result.charCost.toLocaleString("es-ES")} créditos · {result.durationSeconds.toFixed(1)}s
                 </span>
               </div>
@@ -3970,11 +4311,11 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 </button>
               </div>
               <div className="grid gap-3">
-                <div className="rounded-xl p-4" style={{ background: "#111111", border: "1px solid #222222" }}>
+                <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555" }}>Transcripción (español)</p>
                   <p className="text-sm leading-relaxed" style={{ color: "#9ca3af" }}>{result.transcribedText}</p>
                 </div>
-                <div className="rounded-xl p-4" style={{ background: "#111111", border: "1px solid #222222" }}>
+                <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#555" }}>Traducción ({result.targetLanguageName})</p>
                   <p className="text-sm leading-relaxed" style={{ color: "#9ca3af" }}>{result.translatedText}</p>
                 </div>
@@ -3982,7 +4323,6 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             </div>
           )}
         </div>
-      )}
 
       {/* Hidden audio for history playback */}
       <audio
@@ -3993,164 +4333,189 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
         className="hidden"
       />
 
-      {/* ── Historial tab ── */}
-      {innerTab === "history" && (
-        <div>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="relative flex-1 max-w-xs">
-              <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#444444", pointerEvents: "none" }} />
+      {/* ── Traducciones recientes ── */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold" style={{ color: "#888" }}>Traducciones recientes</h2>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#444444", pointerEvents: "none" }} />
               <input
                 value={historySearch}
                 onChange={(e) => setHistorySearch(e.target.value)}
                 placeholder={t.translate.searchPlaceholder}
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-white/20"
-                style={{ background: "#111111", border: "1px solid #222222", color: "#e5e7eb" }}
+                className="pl-8 pr-3 py-1.5 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-white/20"
+                style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", color: "#e5e7eb", width: "180px" }}
               />
             </div>
-            <button onClick={fetchHistory} className="p-2.5 rounded-xl transition-colors hover:bg-white/5" style={{ border: "1px solid #222222", color: "#888888", background: "transparent", cursor: "pointer" }}>
-              <RefreshCw size={14} className={loadingHistory ? "animate-spin" : ""} />
+            <button onClick={fetchHistory} className="p-2 rounded-lg transition-colors hover:bg-white/5" style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#888888", background: "transparent", cursor: "pointer" }}>
+              <RefreshCw size={13} className={loadingHistory ? "animate-spin" : ""} />
             </button>
           </div>
+        </div>
 
-          {loadingHistory ? (
-            <div className="flex items-center justify-center py-16">
-              <svg className="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24" style={{ color: "#ffffff" }}>
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            </div>
-          ) : filteredHistory.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Globe size={32} style={{ color: "#222222", marginBottom: "12px" }} />
-              <p className="text-sm font-medium" style={{ color: "#6b7280" }}>
-                {historySearch ? "No se encontraron traducciones" : "Sin traducciones aún"}
-              </p>
-              {!historySearch && <p className="text-xs mt-1" style={{ color: "#444444" }}>Las traducciones que realices aparecerán aquí</p>}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {filteredHistory.map((task: TTranslateTask) => (
-                <div
-                  key={task.id}
-                  className={`group flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all cursor-default ${
-                    activeTranslationId === task.id
-                      ? 'border-white/20 bg-white/[0.06]'
-                      : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/10'
-                  }`}
-                >
-                  {/* Icono idioma */}
-                  <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center flex-shrink-0 text-lg">
-                    {getLanguageFlag(task.targetLanguage)}
-                  </div>
+        {loadingHistory ? (
+          <div className="flex flex-col gap-2">
+            {[1, 2, 3].map(i => (
+              <div key={i} style={{ height: "64px", borderRadius: "12px", background: "rgba(255,255,255,0.03)", animation: "pulse 2s infinite" }} />
+            ))}
+          </div>
+        ) : filteredHistory.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Globe size={32} style={{ color: "rgba(255,255,255,0.08)", marginBottom: "12px" }} />
+            <p className="text-sm font-medium" style={{ color: "#6b7280" }}>
+              {historySearch ? "No se encontraron traducciones" : "Sin traducciones aún"}
+            </p>
+            {!historySearch && <p className="text-xs mt-1" style={{ color: "#444444" }}>Las traducciones que realices aparecerán aquí</p>}
+          </div>
+        ) : (
+          <div>
+            {groupTranslationsByDate(filteredHistory).map((group, gi) => (
+              <div key={group.label}>
+                <p style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "8px", marginTop: gi === 0 ? "0" : "20px" }}>
+                  {group.label}
+                </p>
+                <div className="space-y-2">
+                  {group.items.map((task: TTranslateTask) => (
+                    <div
+                      key={task.id}
+                      className={`flex items-center gap-3 rounded-xl border transition-all cursor-default ${
+                        activeTranslationId === task.id
+                          ? 'border-white/20 bg-white/[0.06]'
+                          : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/10'
+                      }`}
+                      style={{ padding: "12px 16px" }}
+                    >
+                      {/* Language flag */}
+                      <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "18px" }}>
+                        {getLanguageFlag(task.targetLanguage)}
+                      </div>
 
-                  {/* Info principal */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-sm text-white/80 font-medium truncate max-w-[280px]">
-                        {task.fileName?.replace(/\.[^/.]+$/, '') ?? 'Audio'}
-                      </span>
-                      <span className={`flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                        task.status === 'completed'
-                          ? 'bg-emerald-500/10 text-emerald-400'
-                          : task.status === 'expired'
-                            ? 'bg-white/5 text-white/20'
-                            : 'bg-amber-500/10 text-amber-400'
-                      }`}>
-                        <span className={`w-1 h-1 rounded-full ${
-                          task.status === 'completed' ? 'bg-emerald-400'
-                          : task.status === 'expired' ? 'bg-white/20'
-                          : 'bg-amber-400 animate-pulse'
-                        }`} />
-                        {task.status === 'completed' ? 'Completado'
-                         : task.status === 'expired' ? 'Expirado'
-                         : 'Procesando'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-white/30">
-                      <span>{getLanguageName(task.targetLanguage)}</span>
-                      <span>·</span>
-                      <span>
-                        {task.createdAt
-                          ? new Date(task.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
-                          : '—'}
-                      </span>
-                      {task.expiresAt && new Date(task.expiresAt) > new Date() && (
-                        <>
-                          <span>·</span>
-                          <span className="text-white/20">
-                            Expira en {Math.ceil((new Date(task.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))}d
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-sm font-medium truncate" style={{ color: "rgba(255,255,255,0.8)" }}>
+                            {getTranslateDisplayName(task)}
                           </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
+                          <span className={`flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                            task.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400'
+                            : task.status === 'error' ? 'bg-red-500/10 text-red-400'
+                            : task.status === 'expired' ? 'bg-white/5 text-white/20'
+                            : 'bg-amber-500/10 text-amber-400'
+                          }`}>
+                            <span className={`w-1 h-1 rounded-full ${
+                              task.status === 'completed' ? 'bg-emerald-400'
+                              : task.status === 'error' ? 'bg-red-400'
+                              : task.status === 'expired' ? 'bg-white/20'
+                              : 'bg-amber-400 animate-pulse'
+                            }`} />
+                            {task.status === 'completed' ? 'Completado'
+                             : task.status === 'error' ? 'Error'
+                             : task.status === 'expired' ? 'Expirado'
+                             : 'Procesando'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
+                          <span>{task.targetLanguageName || getLanguageName(task.targetLanguage)}</span>
+                          <span>·</span>
+                          <span>{task.createdAt ? new Date(task.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '—'}</span>
+                          {task.durationSeconds && (
+                            <>
+                              <span>·</span>
+                              <span>{Math.floor(task.durationSeconds / 60)}:{String(Math.floor(task.durationSeconds % 60)).padStart(2, '0')}</span>
+                            </>
+                          )}
+                          {task.expiresAt && new Date(task.expiresAt) > new Date() && (
+                            <>
+                              <span>·</span>
+                              <span style={{ color: "rgba(255,255,255,0.15)" }}>
+                                Expira en {Math.ceil((new Date(task.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))}d
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        {task.status === 'error' && task.errorMessage && (
+                          <p className="text-xs mt-0.5 truncate" style={{ color: "rgba(239,68,68,0.7)" }}>{task.errorMessage}</p>
+                        )}
+                      </div>
 
-                  {/* Barra de progreso inline cuando está activo */}
-                  {activeTranslationId === task.id && task.audioUrl && (
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <div
-                        className="w-24 h-1 bg-white/10 rounded-full cursor-pointer"
-                        onClick={e => {
-                          if (!historyAudioRef.current) return
-                          const rect = e.currentTarget.getBoundingClientRect()
-                          const pct = (e.clientX - rect.left) / rect.width
-                          historyAudioRef.current.currentTime = pct * (historyAudioRef.current.duration || 0)
-                        }}
-                      >
+                      {/* Progress bar when playing */}
+                      {activeTranslationId === task.id && task.audioUrl && (
                         <div
-                          className="h-full bg-white/50 rounded-full"
-                          style={{
-                            width: historyAudioRef.current?.duration
-                              ? `${(historyAudioRef.current.currentTime / historyAudioRef.current.duration) * 100}%`
-                              : '0%'
+                          className="flex-shrink-0 h-1 rounded-full cursor-pointer"
+                          style={{ width: "80px", background: "rgba(255,255,255,0.1)" }}
+                          onClick={e => {
+                            if (!historyAudioRef.current) return;
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const pct = (e.clientX - rect.left) / rect.width;
+                            historyAudioRef.current.currentTime = pct * (historyAudioRef.current.duration || 0);
                           }}
-                        />
+                        >
+                          <div
+                            className="h-full rounded-full"
+                            style={{
+                              background: "rgba(255,255,255,0.5)",
+                              width: historyAudioRef.current?.duration
+                                ? `${(historyAudioRef.current.currentTime / historyAudioRef.current.duration) * 100}%`
+                                : '0%'
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {task.status === 'processing' && (
+                          <div style={{ width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <svg className="animate-spin" style={{ width: "14px", height: "14px", color: "#f59e0b" }} fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                          </div>
+                        )}
+                        {task.audioUrl && task.status === 'completed' && (
+                          <>
+                            <button
+                              onClick={() => {
+                                if (!historyAudioRef.current) return;
+                                if (activeTranslationId === task.id && isHistoryPlaying) {
+                                  historyAudioRef.current.pause();
+                                  setIsHistoryPlaying(false);
+                                  setActiveTranslationId(null);
+                                } else {
+                                  historyAudioRef.current.src = task.audioUrl!;
+                                  historyAudioRef.current.play();
+                                  setActiveTranslationId(task.id);
+                                }
+                              }}
+                              style={{ width: "32px", height: "32px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", transition: "all 0.15s" }}
+                              className="hover:bg-white/[0.08] hover:text-white"
+                            >
+                              {activeTranslationId === task.id && isHistoryPlaying
+                                ? <Pause style={{ width: "14px", height: "14px" }} />
+                                : <Play style={{ width: "14px", height: "14px", marginLeft: "1px" }} />}
+                            </button>
+                            <button
+                              onClick={e => { e.stopPropagation(); downloadAudio(task.audioUrl!, `${getTranslateDisplayName(task).replace(/[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\s·-]/g, '').trim()}-${task.targetLanguage}.mp3`); }}
+                              style={{ width: "32px", height: "32px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", transition: "all 0.15s" }}
+                              className="hover:bg-white/[0.08] hover:text-white"
+                            >
+                              <Download style={{ width: "14px", height: "14px" }} />
+                            </button>
+                          </>
+                        )}
+                        {task.status === 'expired' && (
+                          <span className="text-xs px-2" style={{ color: "rgba(255,255,255,0.15)" }}>Expirado</span>
+                        )}
                       </div>
                     </div>
-                  )}
-
-                  {/* Acciones */}
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    {task.audioUrl && task.status === 'completed' && (
-                      <>
-                        <button
-                          onClick={() => {
-                            if (!historyAudioRef.current) return
-                            if (activeTranslationId === task.id && isHistoryPlaying) {
-                              historyAudioRef.current.pause()
-                              setIsHistoryPlaying(false)
-                              setActiveTranslationId(null)
-                            } else {
-                              historyAudioRef.current.src = task.audioUrl!
-                              historyAudioRef.current.play()
-                              setActiveTranslationId(task.id)
-                            }
-                          }}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/40 hover:text-white transition-colors"
-                        >
-                          {activeTranslationId === task.id && isHistoryPlaying
-                            ? <Pause className="w-3.5 h-3.5" />
-                            : <Play className="w-3.5 h-3.5 ml-0.5" />}
-                        </button>
-                        <button
-                          onClick={e => { e.stopPropagation(); downloadAudio(task.audioUrl!, `${task.fileName?.replace(/\.[^/.]+$/, '') ?? 'traduccion'}-${task.targetLanguage}.mp3`); }}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-white/40 hover:text-white transition-colors"
-                          style={{ background: "none", border: "none", cursor: "pointer" }}
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                        </button>
-                      </>
-                    )}
-                    {task.status === 'expired' && (
-                      <span className="text-xs text-white/15 px-2">Expirado</span>
-                    )}
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {showBrowser && (
         <VoiceBrowser
@@ -4347,7 +4712,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t.transcribe.searchPlaceholder}
-            style={{ width: "100%", paddingLeft: 36, paddingRight: 12, paddingTop: 9, paddingBottom: 9, background: "#111111", border: "1px solid #1a1a1a", borderRadius: 8, color: "#d1d5db", fontSize: 13, outline: "none", boxSizing: "border-box" }}
+            style={{ width: "100%", paddingLeft: 36, paddingRight: 12, paddingTop: 9, paddingBottom: 9, background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, color: "#d1d5db", fontSize: 13, outline: "none", boxSizing: "border-box" }}
           />
         </div>
         <button
@@ -4356,16 +4721,16 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
         >
           {t.transcribe.createTask}
         </button>
-        <button onClick={fetchTasks} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 8, background: "#111111", border: "1px solid #1a1a1a", color: "#9ca3af", cursor: "pointer", flexShrink: 0 }} title="Actualizar">
+        <button onClick={fetchTasks} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 8, background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", color: "#9ca3af", cursor: "pointer", flexShrink: 0 }} title="Actualizar">
           <RefreshCw size={14} />
         </button>
       </div>
 
       {/* Table */}
-      <div style={{ background: "#111111", border: "1px solid #1a1a1a", borderRadius: 12, overflow: "hidden" }}>
+      <div style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ borderBottom: "1px solid #1a1a1a" }}>
+            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               <th style={thStyle}>{t.transcribe.colFile}</th>
               <th style={thStyle}>{t.transcribe.colUpdated}</th>
               <th style={thStyle}>{t.transcribe.colStatus}</th>
@@ -4380,7 +4745,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                 <tr key={i}>
                   {[1, 2, 3, 4, 5, 6].map((j) => (
                     <td key={j} style={tdStyle}>
-                      <div style={{ height: 14, borderRadius: 4, background: "#1a1a1a", animation: "pulse 2s infinite", width: j === 1 ? "70%" : "40%" }} />
+                      <div style={{ height: 14, borderRadius: 4, background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", animation: "pulse 2s infinite", width: j === 1 ? "70%" : "40%" }} />
                     </td>
                   ))}
                 </tr>
@@ -4388,7 +4753,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
             ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={6} style={{ ...tdStyle, textAlign: "center", padding: "48px 16px", color: "#444444" }}>
-                  <FileAudio size={32} style={{ margin: "0 auto 10px", color: "#222222" }} />
+                  <FileAudio size={32} style={{ margin: "0 auto 10px", color: "rgba(255,255,255,0.08)" }} />
                   <p style={{ margin: 0, fontWeight: 500, color: "#666666" }}>{search ? t.transcribe.noResults : t.transcribe.noTasks}</p>
                   {!search && <p style={{ margin: "4px 0 0", fontSize: 12 }}>{t.transcribe.noTasksHint}</p>}
                 </td>
@@ -4413,7 +4778,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                     {/* File */}
                     <td style={tdStyle}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: 6, background: "#111111", border: "1px solid #1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 6, background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                           <FileAudio size={14} style={{ color: "#ffffff" }} />
                         </div>
                         <div style={{ minWidth: 0 }}>
@@ -4483,9 +4848,9 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
           style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) { setShowCreate(false); setFile(null); setCreateError(null); } }}
         >
-          <div style={{ width: "100%", maxWidth: 480, background: "#111111", border: "1px solid #1a1a1a", borderRadius: 16, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
+          <div style={{ width: "100%", maxWidth: 480, background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
             {/* Modal header */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: "1px solid #1a1a1a" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#fff" }}>{t.transcribe.createTaskTitle}</h3>
                 <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6b7280" }}>{t.transcribe.modalSubtitle}</p>
@@ -4502,7 +4867,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
                 onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
                 onDragLeave={() => setDragging(false)}
                 onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
-                style={{ border: `2px dashed ${dragging ? "#ffffff" : "#1a1a1a"}`, borderRadius: 12, padding: "28px 20px", textAlign: "center", cursor: "pointer", background: dragging ? "rgba(255,255,255,0.03)" : "#000000", transition: "all 0.15s" }}
+                style={{ border: `2px dashed ${dragging ? "#ffffff" : "rgba(255,255,255,0.06)"}`, borderRadius: 12, padding: "28px 20px", textAlign: "center", cursor: "pointer", background: dragging ? "rgba(255,255,255,0.03)" : "#000000", transition: "all 0.15s" }}
               >
                 <input ref={fileInputRef} type="file" className="hidden" accept=".mp3,.wav,.m4a,.flac,.mp4,.mov,.webm,audio/*,video/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
                 {file ? (
@@ -4557,7 +4922,7 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
 
               {/* Actions */}
               <div style={{ display: "flex", gap: 10 }}>
-                <button onClick={() => { setShowCreate(false); setFile(null); setCreateError(null); }} style={{ flex: 1, padding: "10px", borderRadius: 8, background: "transparent", border: "1px solid #1a1a1a", color: "#9ca3af", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
+                <button onClick={() => { setShowCreate(false); setFile(null); setCreateError(null); }} style={{ flex: 1, padding: "10px", borderRadius: 8, background: "transparent", border: "1px solid rgba(255,255,255,0.06)", color: "#9ca3af", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
                   {t.transcribe.cancelBtn}
                 </button>
                 <button
@@ -4583,10 +4948,10 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
           style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setViewerTask(null); }}
         >
-          <div style={{ width: "100%", maxWidth: 620, maxHeight: "85vh", display: "flex", flexDirection: "column", background: "#111111", border: "1px solid #1a1a1a", borderRadius: 16, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
+          <div style={{ width: "100%", maxWidth: 620, maxHeight: "85vh", display: "flex", flexDirection: "column", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
             {/* Header */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", borderBottom: "1px solid #1a1a1a", flexShrink: 0 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 8, background: "#111111", border: "1px solid #1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <FileAudio size={16} style={{ color: "#ffffff" }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -4608,16 +4973,16 @@ function TranscribeTab({ onTranscribed, plan, transcriptionUsed, onBilling }: {
             </div>
 
             {/* Actions */}
-            <div style={{ display: "flex", gap: 10, padding: "14px 20px", borderTop: "1px solid #1a1a1a", flexShrink: 0 }}>
+            <div style={{ display: "flex", gap: 10, padding: "14px 20px", borderTop: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
               <button
                 onClick={() => { if (!viewerTask.transcriptionText) return; navigator.clipboard.writeText(viewerTask.transcriptionText); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: copied ? "rgba(74,222,128,0.15)" : "#111111", color: copied ? "#4ade80" : "#aaaaaa", border: `1px solid ${copied ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.15)"}`, cursor: "pointer" }}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: copied ? "rgba(74,222,128,0.15)" : "rgba(255,255,255,0.04)", color: copied ? "#4ade80" : "#aaaaaa", border: `1px solid ${copied ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.15)"}`, cursor: "pointer" }}
               >
                 <Copy size={12} />{copied ? t.transcribe.copied : t.transcribe.copyText}
               </button>
               <button
                 onClick={() => handleDownload(viewerTask)}
-                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: "#111111", color: "#9ca3af", border: "1px solid #1a1a1a", cursor: "pointer" }}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: "#9ca3af", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer" }}
               >
                 <Download size={12} /> {t.transcribe.downloadTxt}
               </button>
@@ -4687,12 +5052,12 @@ function WithdrawModal({ balance, onClose, onSuccess }: { balance: number; onClo
     }
   }
 
-  const inputSt = { background: "#000000", border: "1px solid #222222", color: "#e5e7eb", borderRadius: "10px", padding: "10px 14px", width: "100%", fontSize: "14px", outline: "none" };
+  const inputSt = { background: "#000000", border: "1px solid rgba(255,255,255,0.08)", color: "#e5e7eb", borderRadius: "10px", padding: "10px 14px", width: "100%", fontSize: "14px", outline: "none" };
   const labelSt = { display: "block", fontSize: "12px", fontWeight: 600 as const, color: "#888888", marginBottom: "6px" };
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
-      <div style={{ background: "#111111", border: "1px solid #222222", borderRadius: "20px", width: "100%", maxWidth: "420px", padding: "28px", position: "relative" }}>
+      <div style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", width: "100%", maxWidth: "420px", padding: "28px", position: "relative" }}>
         <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", color: "#6b7280", fontSize: "18px", lineHeight: 1 }}>✕</button>
 
         <h2 style={{ color: "#fff", fontSize: "18px", fontWeight: 700, margin: "0 0 4px" }}>Retirar en efectivo</h2>
@@ -4704,8 +5069,8 @@ function WithdrawModal({ balance, onClose, onSuccess }: { balance: number; onClo
           {/* Method toggle */}
           <div>
             <label style={labelSt}>Método de pago</label>
-            <div style={{ position: "relative", background: "#000000", border: "1px solid #222222", borderRadius: "8px", padding: "3px", display: "flex" }}>
-              <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "#1a1a1a", borderRadius: "5px", transition: "transform 0.2s ease", transform: `translateX(${method === "transfer" ? "100%" : "0%"})`, border: "1px solid #222222" }} />
+            <div style={{ position: "relative", background: "#000000", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "3px", display: "flex" }}>
+              <div style={{ position: "absolute", top: "3px", left: "3px", width: "calc(50% - 3px)", height: "calc(100% - 6px)", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "5px", transition: "transform 0.2s ease", transform: `translateX(${method === "transfer" ? "100%" : "0%"})`, border: "1px solid rgba(255,255,255,0.08)" }} />
               {(["paypal", "transfer"] as const).map((m) => (
                 <button
                   key={m}
@@ -4791,6 +5156,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
   const [referrals, setReferrals] = useState<ReferralEntry[]>([]);
   const [referralBalance, setReferralBalance] = useState(0);
   const [referralEarned, setReferralEarned] = useState(0);
+  const [referralPending, setReferralPending] = useState(0);
   const [referralSignups, setReferralSignups] = useState(0);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -4816,6 +5182,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
       setReferrals(data.referrals ?? []);
       setReferralBalance(data.referralBalance ?? 0);
       setReferralEarned(data.referralEarned ?? 0);
+      setReferralPending(data.referralPending ?? 0);
       setReferralSignups(data.referralCount ?? 0);
       setCanWithdraw(data.canWithdraw ?? false);
     } finally {
@@ -4900,14 +5267,14 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
   const redeemRowBtn = (active: boolean): React.CSSProperties => ({
     width: "100%", textAlign: "center" as const, padding: "10px 14px",
     borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 500,
-    background: active ? "#1a1a1a" : "transparent",
-    border: `1px solid ${active ? "#3a3a5e" : "#222222"}`,
+    background: active ? "rgba(255,255,255,0.06)" : "transparent",
+    border: `1px solid ${active ? "#3a3a5e" : "rgba(255,255,255,0.08)"}`,
     color: active ? "#e5e7eb" : "#9ca3af",
     transition: "all 0.15s",
   });
 
   return (
-    <div style={{ maxWidth: "56rem", margin: "0 auto" }}>
+    <div style={{ maxWidth: "100%", width: "100%" }}>
       {showWithdrawModal && (
         <WithdrawModal
           balance={referralBalance}
@@ -4926,7 +5293,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
       </h1>
 
       {/* ── SECCIÓN 1 ───────────────────────────────────────── */}
-      <div style={{ paddingBottom: 36, marginBottom: 36, borderBottom: "1px solid #1a1a1a" }}>
+      <div style={{ paddingBottom: 36, marginBottom: 36, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
 
         {/* Section header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22, gap: 12 }}>
@@ -4959,7 +5326,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
           <div>
             <p style={{ fontSize: 12, color: "#888888", marginBottom: 8 }}>Tu enlace único:</p>
             <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-              <div style={{ flex: 1, padding: "9px 14px", borderRadius: 10, background: "transparent", border: "1px solid #222222", fontSize: 13, fontFamily: "monospace", color: "#aaaaaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ flex: 1, padding: "9px 14px", borderRadius: 10, background: "transparent", border: "1px solid rgba(255,255,255,0.08)", fontSize: 13, fontFamily: "monospace", color: "#aaaaaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {loading ? "—" : (referralLink || "—")}
               </div>
               <button
@@ -4967,7 +5334,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
                 disabled={!referralLink}
                 style={{
                   display: "flex", alignItems: "center", gap: 6, padding: "9px 14px",
-                  borderRadius: 10, fontSize: 12, fontWeight: 600, border: "1px solid #222222",
+                  borderRadius: 10, fontSize: 12, fontWeight: 600, border: "1px solid rgba(255,255,255,0.08)",
                   background: "transparent", cursor: referralLink ? "pointer" : "not-allowed",
                   color: copied ? "#4ade80" : "#9ca3af", flexShrink: 0, transition: "color 0.15s",
                   opacity: referralLink ? 1 : 0.4,
@@ -4979,7 +5346,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
             </div>
 
             {/* Balance stats */}
-            <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 32, flexWrap: "wrap" }}>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                   <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", display: "inline-block", flexShrink: 0 }} />
@@ -4989,14 +5356,25 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
                   {loading ? <span style={{ color: "#444444" }}>—</span> : centsToUSD(referralBalance)}
                 </p>
               </div>
-              <div style={{ width: 1, height: 40, background: "#222222", flexShrink: 0 }} />
+              <div style={{ width: 1, height: 40, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#f59e0b", display: "inline-block", flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, color: "#888888" }}>Pendiente</span>
+                </div>
+                <p style={{ fontSize: 22, fontWeight: 800, color: "#f59e0b", lineHeight: 1 }}>
+                  {loading ? <span style={{ color: "#444444" }}>—</span> : centsToUSD(referralPending)}
+                </p>
+                <p style={{ fontSize: 10, color: "#555555", marginTop: 3 }}>Disponible en 7 días si no hay reembolso</p>
+              </div>
+              <div style={{ width: 1, height: 40, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
               <div>
                 <p style={{ fontSize: 11, color: "#888888", marginBottom: 4 }}>Créditos Totales Ganados</p>
                 <p style={{ fontSize: 22, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
                   {loading ? <span style={{ color: "#444444" }}>—</span> : centsToUSD(referralEarned)}
                 </p>
               </div>
-              <div style={{ width: 1, height: 40, background: "#222222", flexShrink: 0 }} />
+              <div style={{ width: 1, height: 40, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
               <div>
                 <p style={{ fontSize: 11, color: "#888888", marginBottom: 4 }}>Registrados con tu enlace</p>
                 <p style={{ fontSize: 22, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
@@ -5021,7 +5399,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
             </button>
 
             {openRedeem === "plan" && (
-              <div style={{ marginTop: 8, padding: "14px", background: "#111111", borderRadius: 10, border: "1px solid #222222", marginBottom: 8 }}>
+              <div style={{ marginTop: 8, padding: "14px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", marginBottom: 8 }}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
                   {REDEEM_PLANS.map(p => (
                     <button
@@ -5032,7 +5410,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
                         cursor: "pointer", transition: "all 0.15s",
                         ...(selectedPlan === p.key
                           ? { background: "rgba(255,255,255,0.1)", color: "#aaaaaa", border: "1px solid rgba(255,255,255,0.2)" }
-                          : { background: "transparent", color: "#6b7280", border: "1px solid #222222" }),
+                          : { background: "transparent", color: "#6b7280", border: "1px solid rgba(255,255,255,0.08)" }),
                       }}
                     >
                       {p.label} <span style={{ opacity: 0.7 }}>${p.price}</span>
@@ -5062,7 +5440,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
             </button>
 
             {openRedeem === "chars" && (
-              <div style={{ marginTop: 8, padding: "14px", background: "#111111", borderRadius: 10, border: "1px solid #222222" }}>
+              <div style={{ marginTop: 8, padding: "14px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)" }}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
                   {REDEEM_PACKS.map(p => (
                     <button
@@ -5073,7 +5451,7 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
                         cursor: "pointer", transition: "all 0.15s",
                         ...(selectedPack === p.key
                           ? { background: "rgba(139,92,246,0.2)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.4)" }
-                          : { background: "transparent", color: "#6b7280", border: "1px solid #222222" }),
+                          : { background: "transparent", color: "#6b7280", border: "1px solid rgba(255,255,255,0.08)" }),
                       }}
                     >
                       {p.label} <span style={{ opacity: 0.7 }}>${p.price}</span>
@@ -5108,18 +5486,18 @@ function ReferralTab({ onClaimed }: { onClaimed: () => void }) {
             <p style={{ fontSize: 13, fontWeight: 600, color: "#fff", marginBottom: 14 }}>Historial de recompensas</p>
             {loading ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {[1, 2].map(i => <div key={i} style={{ height: 48, borderRadius: 10, background: "#1a1a1a" }} />)}
+                {[1, 2].map(i => <div key={i} style={{ height: 48, borderRadius: 10, background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }} />)}
               </div>
             ) : referrals.length === 0 ? (
               <div style={{ textAlign: "center", padding: "32px 0" }}>
-                <Gift size={24} style={{ color: "#222222", marginBottom: 8 }} />
+                <Gift size={24} style={{ color: "rgba(255,255,255,0.08)", marginBottom: 8 }} />
                 <p style={{ fontSize: 13, color: "#6b7280" }}>Aún no tienes referidos</p>
                 <p style={{ fontSize: 12, color: "#444444", marginTop: 4 }}>Comparte tu enlace y empieza a ganar</p>
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {referrals.map((r, i) => (
-                  <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderRadius: 10, background: "#111111", border: "1px solid #1a1a1a" }}>
+                  <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderRadius: 10, background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.06)" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#000000", flexShrink: 0 }}>{i + 1}</div>
                       <div>
@@ -5930,7 +6308,7 @@ function TeamTab({
       {/* ── Delete confirmation modal ── */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.8)" }}>
-          <div className="rounded-2xl p-6 w-full max-w-sm space-y-4" style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <div className="rounded-2xl p-6 w-full max-w-sm space-y-4" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)" }}>
             <h3 className="text-base font-bold text-white">¿Eliminar el equipo &ldquo;{team.name}&rdquo;?</h3>
             <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
               Los créditos asignados a los miembros se devolverán automáticamente a tu cuenta. Los miembros perderán acceso inmediatamente.
@@ -5959,6 +6337,302 @@ function TeamTab({
   );
 }
 
+/* ─── Niche Finder Tab ────────────────────────────────────── */
+interface NicheChannelRow {
+  id: string;
+  ytChannelId: string;
+  title: string;
+  description?: string | null;
+  username?: string | null;
+  thumbnail?: string | null;
+  category?: string | null;
+  format?: string | null;
+  outlierScore?: number | null;
+  isFaceless?: boolean | null;
+  isAiChannel?: boolean | null;
+  isMonetized?: boolean | null;
+  quality?: string | null;
+  tags: string[];
+  subscribers?: number | null;
+  monthlyRevenue?: number | null;
+  monthlyViews?: number | null;
+  rpm?: number | null;
+  uploadsPerWeek?: number | null;
+  avgVideoLength?: number | null;
+  totalVideos?: number | null;
+  createdAt?: string | null;
+}
+
+function fmtNum(n: number | null | undefined): string {
+  if (n == null) return "—";
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+  return String(n);
+}
+
+function fmtMoney(n: number | null | undefined): string {
+  if (n == null) return "—";
+  if (n >= 1_000_000) return "$" + (n / 1_000_000).toFixed(1) + "M/mo";
+  if (n >= 1_000) return "$" + (n / 1_000).toFixed(0) + "K/mo";
+  return "$" + n.toFixed(0) + "/mo";
+}
+
+function NicheChannelCard({ ch }: { ch: NicheChannelRow }) {
+  const [imgError, setImgError] = useState(false);
+
+  const initials = ch.title.slice(0, 2).toUpperCase();
+  const hue = ch.ytChannelId.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
+
+  const outlier = ch.outlierScore ?? 0;
+  const outlierColor = outlier >= 3 ? "#a78bfa" : outlier >= 2 ? "#60a5fa" : outlier >= 1 ? "#34d399" : "#6b7280";
+
+  return (
+    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "16px", display: "flex", flexDirection: "column", gap: "12px", transition: "border-color 0.15s, background 0.15s", cursor: "default" }}
+      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.04)"; (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.1)"; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.02)"; (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.06)"; }}
+    >
+      {/* Header: thumbnail + title */}
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        {ch.thumbnail && !imgError ? (
+          <img src={ch.thumbnail} alt={ch.title} onError={() => setImgError(true)}
+            style={{ width: "44px", height: "44px", borderRadius: "10px", objectFit: "cover", flexShrink: 0, background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }} />
+        ) : (
+          <div style={{ width: "44px", height: "44px", borderRadius: "10px", flexShrink: 0, background: `hsl(${hue},40%,18%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, color: `hsl(${hue},60%,65%)` }}>
+            {initials}
+          </div>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: "13px", fontWeight: 600, color: "#e5e7eb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "2px" }}>{ch.title}</p>
+          {ch.username && <p style={{ fontSize: "11px", color: "#6b7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>@{ch.username}</p>}
+        </div>
+        <a
+          href={`https://youtube.com/channel/${ch.ytChannelId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ flexShrink: 0, color: "#6b7280", display: "flex", alignItems: "center", padding: "4px" }}
+          onClick={e => e.stopPropagation()}
+        >
+          <ExternalLink size={13} />
+        </a>
+      </div>
+
+      {/* Badges */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+        {ch.category && (
+          <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "99px", background: "rgba(167,139,250,0.1)", color: "#a78bfa", fontWeight: 500 }}>{ch.category}</span>
+        )}
+        {ch.format && (
+          <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "99px", background: "rgba(96,165,250,0.1)", color: "#60a5fa", fontWeight: 500 }}>{ch.format}</span>
+        )}
+        {ch.isFaceless && (
+          <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "99px", background: "rgba(52,211,153,0.08)", color: "#34d399", fontWeight: 500 }}>Faceless</span>
+        )}
+        {ch.isAiChannel && (
+          <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "99px", background: "rgba(251,191,36,0.1)", color: "#fbbf24", fontWeight: 500 }}>AI</span>
+        )}
+      </div>
+
+      {/* Stats grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+        <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: "8px", padding: "8px 10px" }}>
+          <p style={{ fontSize: "10px", color: "#6b7280", marginBottom: "2px" }}>Suscriptores</p>
+          <p style={{ fontSize: "13px", fontWeight: 600, color: "#e5e7eb" }}>{fmtNum(ch.subscribers)}</p>
+        </div>
+        <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: "8px", padding: "8px 10px" }}>
+          <p style={{ fontSize: "10px", color: "#6b7280", marginBottom: "2px" }}>Ingresos/mes</p>
+          <p style={{ fontSize: "13px", fontWeight: 600, color: ch.monthlyRevenue ? "#34d399" : "#6b7280" }}>{fmtMoney(ch.monthlyRevenue)}</p>
+        </div>
+        <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: "8px", padding: "8px 10px" }}>
+          <p style={{ fontSize: "10px", color: "#6b7280", marginBottom: "2px" }}>Vistas/mes</p>
+          <p style={{ fontSize: "13px", fontWeight: 600, color: "#e5e7eb" }}>{fmtNum(ch.monthlyViews)}</p>
+        </div>
+        <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: "8px", padding: "8px 10px" }}>
+          <p style={{ fontSize: "10px", color: "#6b7280", marginBottom: "2px" }}>RPM</p>
+          <p style={{ fontSize: "13px", fontWeight: 600, color: "#e5e7eb" }}>{ch.rpm != null ? `$${ch.rpm.toFixed(2)}` : "—"}</p>
+        </div>
+      </div>
+
+      {/* Footer: outlier score + uploads */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "4px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+          <span style={{ fontSize: "13px" }}>⚡</span>
+          <span style={{ fontSize: "12px", fontWeight: 700, color: outlierColor }}>
+            {outlier.toFixed(1)}
+          </span>
+          <span style={{ fontSize: "10px", color: "#4b5563" }}>outlier</span>
+        </div>
+        {ch.uploadsPerWeek != null && (
+          <span style={{ fontSize: "11px", color: "#6b7280" }}>{ch.uploadsPerWeek.toFixed(1)}x/sem</span>
+        )}
+        {ch.totalVideos != null && (
+          <span style={{ fontSize: "11px", color: "#6b7280" }}>{ch.totalVideos} vídeos</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function NicheFinderTab() {
+  const [channels, setChannels] = useState<NicheChannelRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(1);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [formats, setFormats] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("");
+  const [format, setFormat] = useState("");
+  const [sortBy, setSortBy] = useState("outlierScore");
+  const [page, setPage] = useState(1);
+
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  async function fetchChannels(params: { search?: string; category?: string; format?: string; sortBy?: string; page?: number } = {}) {
+    setLoading(true);
+    try {
+      const q = new URLSearchParams({
+        search: params.search ?? search,
+        category: params.category ?? category,
+        format: params.format ?? format,
+        sortBy: params.sortBy ?? sortBy,
+        page: String(params.page ?? page),
+      });
+      const res = await fetch(`/api/niche-channels?${q}`);
+      const data = await res.json();
+      setChannels(data.channels ?? []);
+      setTotal(data.total ?? 0);
+      setPages(data.pages ?? 1);
+      if (data.categories?.length) setCategories(data.categories);
+      if (data.formats?.length) setFormats(data.formats);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { fetchChannels(); }, []);
+
+  function handleSearch(val: string) {
+    setSearch(val);
+    setPage(1);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => fetchChannels({ search: val, page: 1 }), 350);
+  }
+
+  function handleFilter(key: string, val: string) {
+    const next = { category, format, sortBy, page: 1, [key]: val };
+    if (key === "category") setCategory(val);
+    if (key === "format") setFormat(val);
+    if (key === "sortBy") setSortBy(val);
+    setPage(1);
+    fetchChannels(next);
+  }
+
+  function handlePage(p: number) {
+    setPage(p);
+    fetchChannels({ page: p });
+  }
+
+  const selectStyle: React.CSSProperties = {
+    fontSize: "12px", color: "#9ca3af", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: "8px", padding: "6px 10px", outline: "none", cursor: "pointer",
+  };
+
+  return (
+    <div style={{ width: "100%" }}>
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-1">
+          <h1 className="text-xl font-bold text-white">Niche Finder</h1>
+          <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "6px", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: "#9ca3af" }}>BETA</span>
+        </div>
+        <p className="text-sm" style={{ color: "#888" }}>Descubre nichos rentables de YouTube con datos reales de canales</p>
+      </div>
+
+      {/* Filters bar */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
+        {/* Search */}
+        <div style={{ position: "relative", flex: "1 1 200px", maxWidth: "320px" }}>
+          <Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#444", pointerEvents: "none" }} />
+          <input
+            value={search}
+            onChange={e => handleSearch(e.target.value)}
+            placeholder="Buscar nicho, keyword..."
+            style={{ width: "100%", paddingLeft: "32px", paddingRight: "12px", paddingTop: "7px", paddingBottom: "7px", fontSize: "12px", color: "#e5e7eb", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", outline: "none" }}
+          />
+        </div>
+
+        {/* Category filter */}
+        <select value={category} onChange={e => handleFilter("category", e.target.value)} style={selectStyle}>
+          <option value="">Todas las categorías</option>
+          {categories.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+
+        {/* Format filter */}
+        <select value={format} onChange={e => handleFilter("format", e.target.value)} style={selectStyle}>
+          <option value="">Todos los formatos</option>
+          {formats.map(f => <option key={f} value={f}>{f}</option>)}
+        </select>
+
+        {/* Sort */}
+        <select value={sortBy} onChange={e => handleFilter("sortBy", e.target.value)} style={selectStyle}>
+          <option value="outlierScore">⚡ Outlier Score</option>
+          <option value="monthlyRevenue">💰 Ingresos/mes</option>
+          <option value="subscribers">👥 Suscriptores</option>
+          <option value="monthlyViews">👁 Vistas/mes</option>
+          <option value="rpm">💵 RPM</option>
+        </select>
+
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px" }}>
+          <span style={{ fontSize: "12px", color: "#6b7280" }}>
+            {loading ? "Cargando..." : `${total.toLocaleString("es-ES")} canales`}
+          </span>
+        </div>
+      </div>
+
+      {/* Grid */}
+      {loading ? (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "12px" }}>
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} style={{ height: "220px", borderRadius: "14px", background: "rgba(255,255,255,0.03)", animation: "pulse 2s infinite" }} />
+          ))}
+        </div>
+      ) : channels.length === 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 0", gap: "12px", textAlign: "center" }}>
+          <TrendingUp size={40} style={{ color: "#222" }} />
+          <p style={{ fontSize: "14px", fontWeight: 500, color: "#6b7280" }}>No se encontraron canales</p>
+          <p style={{ fontSize: "12px", color: "#444" }}>Prueba con otros filtros o añade canales desde el panel admin</p>
+        </div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "12px" }}>
+          {channels.map(ch => <NicheChannelCard key={ch.id} ch={ch} />)}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {pages > 1 && !loading && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "28px" }}>
+          <button
+            onClick={() => handlePage(page - 1)}
+            disabled={page <= 1}
+            style={{ padding: "6px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: 500, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: page <= 1 ? "#444" : "#e5e7eb", cursor: page <= 1 ? "default" : "pointer" }}
+          >
+            ← Anterior
+          </button>
+          <span style={{ fontSize: "12px", color: "#6b7280" }}>Pág. {page} / {pages}</span>
+          <button
+            onClick={() => handlePage(page + 1)}
+            disabled={page >= pages}
+            style={{ padding: "6px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: 500, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: page >= pages ? "#444" : "#e5e7eb", cursor: page >= pages ? "default" : "pointer" }}
+          >
+            Siguiente →
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Avatar with progress ring ──────────────────────────── */
 /* ─── Main Dashboard ──────────────────────────────────────── */
 export default function DashboardPage() {
@@ -5969,6 +6643,33 @@ export default function DashboardPage() {
   function setActiveTab(tab: Tab) { router.push(`/dashboard?tab=${tab}`); }
   const [credits, setCredits] = useState<number | null>(null);
   const [imageHistory, setImageHistory] = useState<ImageHistoryItem[]>([]);
+
+  useEffect(() => {
+    if (activeTab !== "imagevideo") return;
+    fetch("/api/image/history")
+      .then(r => r.json())
+      .then(data => {
+        try {
+          const imgs = data?.images;
+          if (!imgs || !Array.isArray(imgs)) return;
+          setImageHistory(imgs.map((img: Record<string, string>) => ({
+            id: img.id ?? "",
+            type: (img.type ?? "image") as "image" | "video",
+            prompt: img.prompt ?? "",
+            model: img.model ?? "",
+            aspectRatio: img.aspectRatio ?? "1:1",
+            images: img.type === "video" ? [] : [img.imageUrl].filter(Boolean),
+            videoUrl: img.type === "video" ? img.imageUrl : undefined,
+            createdAt: new Date(img.createdAt ?? Date.now()),
+            expiresAt: new Date(img.expiresAt ?? Date.now()),
+            provider: (img.model?.startsWith("grok") ? "xai" : "bfl") as "bfl" | "xai",
+          })));
+        } catch (e) {
+          console.error("[imageHistory] parse error:", e);
+        }
+      })
+      .catch(e => console.error("[imageHistory] load error:", e));
+  }, [activeTab]);
   const [extraCredits, setExtraCredits] = useState<number>(0);
   const [plan, setPlan] = useState<string>("free");
   const [effectivePlan, setEffectivePlan] = useState<string>("free");
@@ -5977,7 +6678,8 @@ export default function DashboardPage() {
   const [voices, setVoices] = useState<Voice[]>([]);
   const DEFAULT_PRO_VOICE: SelectedVoice = { referenceId: "bf322df2096a46f18c579d0baa36f41d", name: "Adrian", isCloned: false };
   const DEFAULT_TURBO_VOICE: SelectedVoice = { referenceId: "9Ft9sm9dzvprPILZmLJl", name: "Adrian EN", isCloned: false };
-  const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(DEFAULT_PRO_VOICE);
+  const [selectedProVoice, setSelectedProVoice] = useState<SelectedVoice | null>(DEFAULT_PRO_VOICE);
+  const [selectedTurboVoice, setSelectedTurboVoice] = useState<SelectedVoice | null>(DEFAULT_TURBO_VOICE);
   const [translateVoice, setTranslateVoice] = useState<SelectedVoice | null>(null);
   const [supportOpen, setSupportOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
@@ -6039,31 +6741,38 @@ export default function DashboardPage() {
     }).catch(() => {});
   }, [user?.id]);
 
-  // Restore selected voice from localStorage once userId is available
+  // Restore selected voices from localStorage once userId is available
   useEffect(() => {
     if (!user?.id) return;
     try {
-      const saved = localStorage.getItem(`vf_selected_voice_${user.id}`);
-      if (saved) {
-        const parsed = JSON.parse(saved) as SelectedVoice;
-        setSelectedVoice(parsed);
-      } else {
-        setSelectedVoice(DEFAULT_PRO_VOICE);
-      }
+      const savedPro = localStorage.getItem(`vf_selected_voice_pro_${user.id}`);
+      setSelectedProVoice(savedPro ? (JSON.parse(savedPro) as SelectedVoice) : DEFAULT_PRO_VOICE);
     } catch {
-      setSelectedVoice(DEFAULT_PRO_VOICE);
+      setSelectedProVoice(DEFAULT_PRO_VOICE);
+    }
+    try {
+      const savedTurbo = localStorage.getItem(`vf_selected_voice_turbo_${user.id}`);
+      setSelectedTurboVoice(savedTurbo ? (JSON.parse(savedTurbo) as SelectedVoice) : DEFAULT_TURBO_VOICE);
+    } catch {
+      setSelectedTurboVoice(DEFAULT_TURBO_VOICE);
     }
   }, [user?.id]);
 
-  // Persist selected voice to localStorage whenever it changes
+  // Persist pro voice to localStorage whenever it changes
   useEffect(() => {
-    if (!user?.id || !selectedVoice) return;
+    if (!user?.id || !selectedProVoice) return;
     try {
-      localStorage.setItem(`vf_selected_voice_${user.id}`, JSON.stringify(selectedVoice));
-    } catch {
-      // ignore quota errors
-    }
-  }, [selectedVoice, user?.id]);
+      localStorage.setItem(`vf_selected_voice_pro_${user.id}`, JSON.stringify(selectedProVoice));
+    } catch { /* ignore quota errors */ }
+  }, [selectedProVoice, user?.id]);
+
+  // Persist turbo voice to localStorage whenever it changes
+  useEffect(() => {
+    if (!user?.id || !selectedTurboVoice) return;
+    try {
+      localStorage.setItem(`vf_selected_voice_turbo_${user.id}`, JSON.stringify(selectedTurboVoice));
+    } catch { /* ignore quota errors */ }
+  }, [selectedTurboVoice, user?.id]);
 
   const successPlan     = searchParams.get("plan");
   const creditsBought   = searchParams.get("creditsBought");
@@ -6078,7 +6787,7 @@ export default function DashboardPage() {
   }, [lifetimeSuccess, fetchCredits]);
 
   function handleUseVoice(voice: SelectedVoice) {
-    setSelectedVoice(voice);
+    setSelectedProVoice(voice);
     setActiveTab("generate");
   }
 
@@ -6108,7 +6817,7 @@ export default function DashboardPage() {
       {/* Mobile drawer */}
       <div
         className={`fixed inset-y-0 left-0 z-50 flex flex-col lg:hidden transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
-        style={{ width: "260px", background: "#111111", borderRight: "1px solid #1a1a1a" }}
+        style={{ width: "260px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRight: "1px solid rgba(255,255,255,0.06)" }}
       >
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onClose={() => setSidebarOpen(false)} plan={plan} memberInfo={memberInfo} />
       </div>
@@ -6127,16 +6836,23 @@ export default function DashboardPage() {
             voices:     { title: tt.tabs.voices,      Icon: Mic2 },
             referral:   { title: tt.tabs.referral,    Icon: Gift },
             team:       { title: tt.nav.team,          Icon: Users },
-            imagevideo: { title: tt.nav.imageVideo,    Icon: ImageIcon },
+            imagevideo:   { title: tt.nav.imageVideo,    Icon: ImageIcon },
+            nichefinder:  { title: "Niche Finder",       Icon: TrendingUp },
           };
           const { title, Icon } = TAB_META[activeTab] ?? { title: "", Icon: Home };
           return (
             <div style={{ height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", position: "sticky", top: 0, zIndex: 200, background: "#000000", flexShrink: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                {/* Hamburger — collapses desktop sidebar / opens mobile drawer */}
+                {/* Hamburger — desktop: collapses sidebar / mobile: opens drawer */}
                 <button
-                  onClick={() => { toggleSidebar(); setSidebarOpen(s => !s); }}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #222222", background: "transparent", cursor: "pointer", color: "#888888", flexShrink: 0 }}
+                  onClick={() => {
+                    if (typeof window !== "undefined" && window.innerWidth >= 1024) {
+                      toggleSidebar();
+                    } else {
+                      setSidebarOpen(s => !s);
+                    }
+                  }}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)", background: "transparent", cursor: "pointer", color: "#888888", flexShrink: 0 }}
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect y="2" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="7.25" width="16" height="1.5" rx="0.75" fill="currentColor"/><rect y="12.5" width="16" height="1.5" rx="0.75" fill="currentColor"/></svg>
                 </button>
@@ -6255,8 +6971,10 @@ export default function DashboardPage() {
               <GenerateTab
                 voices={voices}
                 onGenerated={fetchCredits}
-                selectedVoice={selectedVoice}
-                onVoiceChange={setSelectedVoice}
+                selectedProVoice={selectedProVoice}
+                onProVoiceChange={setSelectedProVoice}
+                selectedTurboVoice={selectedTurboVoice}
+                onTurboVoiceChange={setSelectedTurboVoice}
                 plan={effectivePlan}
                 externalText={pendingNarrateText}
               />
@@ -6311,9 +7029,11 @@ export default function DashboardPage() {
                 onNavigateToBilling={() => setActiveTab("billing")}
               />
             )}
+            {activeTab === "nichefinder" && <NicheFinderTab />}
           </div>
         )}{/* end page content */}
       </main>
+      <WhatsNewPopup />
     </div>
   );
 }

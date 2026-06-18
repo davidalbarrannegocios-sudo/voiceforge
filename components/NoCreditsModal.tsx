@@ -251,8 +251,8 @@ export function NoCreditsModal({ isOpen, onClose, currentPlan }: NoCreditsModalP
                   key={plan.id}
                   style={{
                     borderRadius: '16px', padding: '20px 14px 16px',
-                    border: plan.popular ? '1px solid rgba(255,255,255,0.2)' : '1px solid #1a1a1a',
-                    background: '#0a0a0a',
+                    border: plan.popular ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.06)',
+                    background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
                     display: 'flex', flexDirection: 'column', position: 'relative',
                   }}
                 >
@@ -311,11 +311,11 @@ export function NoCreditsModal({ isOpen, onClose, currentPlan }: NoCreditsModalP
                     onMouseLeave={() => setHoveredPlan(null)}
                     style={{
                       width: '100%', padding: '9px', borderRadius: '8px',
-                      border: plan.popular ? 'none' : '1px solid #333333',
+                      border: plan.popular ? 'none' : '1px solid rgba(255,255,255,0.10)',
                       cursor: 'pointer',
                       background: plan.popular
                         ? (hoveredPlan === plan.id ? '#e5e5e5' : '#ffffff')
-                        : (hoveredPlan === plan.id ? '#222222' : '#1a1a1a'),
+                        : (hoveredPlan === plan.id ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.06)'),
                       color: plan.popular ? '#000000' : '#e5e7eb',
                       fontSize: '13px', fontWeight: 600, marginBottom: '14px',
                       transition: 'all 0.15s',
@@ -325,7 +325,7 @@ export function NoCreditsModal({ isOpen, onClose, currentPlan }: NoCreditsModalP
                   </button>
 
                   {/* Divider */}
-                  <div style={{ height: '1px', background: '#1a1a1a', marginBottom: '12px' }} />
+                  <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', marginBottom: '12px' }} />
 
                   {/* Features */}
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
