@@ -121,6 +121,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
   const pickerRef    = useRef<HTMLDivElement>(null)
   const langRef      = useRef<HTMLDivElement>(null)
   const prevLanguage = useRef(language)
+  const pollingActive = useRef(false)
 
   // ─── Derived ────────────────────────────────────────────────────────────────
 
@@ -272,18 +273,18 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
     return () => document.removeEventListener('mousedown', h)
   }, [showLangPicker])
 
-  // ─── Generate ────────────────────────────────────────────────────────────────
+  // ─── Generate (async: fire-and-forget + polling) ─────────────────────────────
 
   async function handleGenerate() {
     if (!canGenerate) return
-    setIsGenerating(true); setAudioUrl(null); setError(null); setGenerationProgress(0)
+    setIsGenerating(true); setAudioUrl(null); setError(null); setGenerationProgress(5)
+    pollingActive.current = true
+
     const filteredLines = lines.filter(l => l.text.trim())
     const estimatedMs = filteredLines.length * 3500
-    const startTime = Date.now()
-    const interval = setInterval(() => {
-      setGenerationProgress(Math.min(88, Math.round(((Date.now() - startTime) / estimatedMs) * 100)))
-    }, 400)
+
     try {
+      // Step 1: Start job — returns immediately with jobId
       const res = await fetch('/api/dialogue/generate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -295,17 +296,56 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
         }),
       })
       const data = await res.json()
-      clearInterval(interval)
       if (!res.ok) { setError(data.error ?? 'Error al generar'); return }
-      setGenerationProgress(100)
-      setAudioUrl(data.audioUrl)
-      setIsPlaying(false); setCurrentTime(0); setDuration(0)
-      onCreditsUpdate(data.creditsRemaining)
-      setGenerationHistory(prev => [{ url: data.audioUrl, format: outputFormat, createdAt: Date.now() }, ...prev].slice(0, 5))
-    } catch {
-      clearInterval(interval)
+
+      const { jobId, creditsRemaining } = data
+      onCreditsUpdate(creditsRemaining)
+
+      // Step 2: Poll /api/dialogue/status/{jobId} every 3 s, max 10 min
+      const MAX_ATTEMPTS = 200
+      const startTime = Date.now()
+
+      for (let i = 0; i < MAX_ATTEMPTS; i++) {
+        await new Promise(r => setTimeout(r, 3000))
+        if (!pollingActive.current) return
+
+        // Animate progress based on elapsed time vs estimate
+        const elapsed = Date.now() - startTime
+        setGenerationProgress(Math.min(90, Math.round(10 + (elapsed / estimatedMs) * 80)))
+
+        try {
+          const statusRes = await fetch(`/api/dialogue/status/${jobId}`)
+          if (!statusRes.ok) continue
+          const statusData = await statusRes.json()
+
+          if (statusData.status === 'done') {
+            setGenerationProgress(100)
+            setAudioUrl(statusData.audioUrl)
+            setIsPlaying(false); setCurrentTime(0); setDuration(0)
+            setGenerationHistory(prev =>
+              [{ url: statusData.audioUrl, format: outputFormat, createdAt: Date.now() }, ...prev].slice(0, 5)
+            )
+            return
+          }
+
+          if (statusData.status === 'error') {
+            setError(statusData.error ?? 'Error al generar')
+            return
+          }
+          // pending | processing → keep polling
+        } catch {
+          // Network error during poll — continue
+        }
+      }
+
+      // Timeout after 10 min
       setError(t.dialogue.networkError)
-    } finally { setIsGenerating(false) }
+    } catch {
+      setError(t.dialogue.networkError)
+    } finally {
+      setIsGenerating(false)
+      pollingActive.current = false
+    }
   }
 
   // ─── Example ─────────────────────────────────────────────────────────────────
