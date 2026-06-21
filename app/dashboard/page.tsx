@@ -3944,7 +3944,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al detectar hablantes");
       setUtterances(data.utterances ?? []);
-      setSpeakerCount(data.speakersDetected ?? 1);
+      setSpeakerCount(data.speakerCount ?? data.speakersDetected ?? 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
