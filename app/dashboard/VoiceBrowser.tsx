@@ -144,6 +144,32 @@ function langFlag(code: string): string {
   return LANG_TO_FLAG[code.toLowerCase()] ?? code.toLowerCase();
 }
 
+function getLangFlag(locale: string): string {
+  if (!locale) return "";
+  const parts = locale.toUpperCase().split("-");
+
+  let countryCode: string;
+  if (parts.length >= 2) {
+    countryCode = parts[1];
+  } else {
+    const lang = parts[0].toLowerCase();
+    const langToCountry: Record<string, string> = {
+      "en": "US", "es": "ES", "fr": "FR", "de": "DE", "it": "IT",
+      "pt": "BR", "ja": "JP", "ko": "KR", "zh": "CN", "ar": "SA",
+      "ru": "RU", "nl": "NL", "pl": "PL", "tr": "TR", "sv": "SE",
+      "da": "DK", "no": "NO", "fi": "FI", "cs": "CZ", "ro": "RO",
+      "hu": "HU", "el": "GR", "uk": "UA", "vi": "VN", "th": "TH",
+      "id": "ID", "ms": "MY", "hi": "IN", "ca": "ES", "hr": "HR",
+    };
+    countryCode = langToCountry[lang] ?? "UN";
+  }
+
+  if (countryCode.length !== 2 || countryCode === "UN") return "🌐";
+  return Array.from(countryCode)
+    .map((c) => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65))
+    .join("");
+}
+
 const ACCENT_FLAGS: Record<string, string> = {
   american: "us", british: "gb", australian: "au", canadian: "ca",
   irish: "ie", scottish: "gb-sct",
@@ -766,20 +792,23 @@ function VoiceCard({
           {/* Avatar with play overlay */}
           <div className="relative flex-shrink-0 group/avatar">
             <VoiceAvatar name={voice.title} coverImage={voice.cover_image ?? undefined} size="xl" id={voice._id} />
-            <button
-              onClick={(e) => { e.stopPropagation(); onPreview(voice._id, sampleUrl); }}
-              disabled={isPreviewLoading}
-              className="absolute inset-0 flex items-center justify-center rounded-xl opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-200 disabled:cursor-not-allowed"
-              style={{ background: "rgba(0,0,0,0.55)" }}
+            <div
+              className="absolute inset-0 flex items-center justify-center rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             >
-              {isPreviewLoading ? (
-                <div style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
-              ) : isPreviewing ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>
-              )}
-            </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onPreview(voice._id, sampleUrl); }}
+                disabled={isPreviewLoading}
+                style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: isPreviewLoading ? "not-allowed" : "pointer" }}
+              >
+                {isPreviewLoading ? (
+                  <div style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+                ) : isPreviewing ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>
+                )}
+              </button>
+            </div>
           </div>
           <div className="flex-1 min-w-0 pt-0.5">
             <div className="flex items-center gap-1.5 mb-0.5 pr-8">
@@ -798,8 +827,7 @@ function VoiceCard({
         <div className="flex items-center gap-1 flex-wrap mb-2">
           {voice.languages.slice(0, 2).map((l) => (
             <span key={l} className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium" style={pillStyle}>
-              <span className={`fi fi-${langFlag(l)}`} style={{ width: "14px", height: "11px", display: "inline-block", borderRadius: "2px" }} />
-              <span>{l.toUpperCase()}</span>
+              <span>{getLangFlag(l)} {l.toUpperCase()}</span>
             </span>
           ))}
           {g && (
@@ -1315,17 +1343,16 @@ export function VoiceBrowser({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center sm:p-4"
       style={{ background: "rgba(0,0,0,0.8)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="w-[90vw] max-w-5xl relative"
+        className="w-full sm:w-[90vw] sm:max-w-5xl relative voice-browser-modal"
         style={{
-          height: "88vh",
+          height: "100dvh",
           border: "1px solid rgba(255, 255, 255, 0.07)",
           boxShadow: "0 25px 50px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 0.5px rgba(255,255,255,0.06)",
-          borderRadius: "16px",
           overflow: "hidden",
         }}
       >
@@ -1341,7 +1368,7 @@ export function VoiceBrowser({
         {/* Content — position:fixed inside here stays viewport-relative */}
         <div className="flex flex-col" style={{ position: "relative", zIndex: 1, height: "100%" }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
           <h2 className="text-base font-bold text-white">Seleccionar voz</h2>
           <button
             onClick={onClose}
@@ -1358,7 +1385,7 @@ export function VoiceBrowser({
 
         {/* Tabs */}
         {!isExternalSource && (
-          <div className="flex border-b px-6 flex-shrink-0" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+          <div className="flex border-b px-4 sm:px-6 flex-shrink-0" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
             {TABS.map(({ key, label }) => (
               <button
                 key={key}
@@ -1382,7 +1409,7 @@ export function VoiceBrowser({
 
             {/* ── Explore tab ── */}
             {tab === "explore" && (
-              <div className="px-6 py-4">
+              <div className="px-4 sm:px-6 py-4">
                 {/* Total count for external sources */}
                 {isExternalSource && externalServerTotal > 0 && (
                   <div className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.35)" }}>
@@ -1390,7 +1417,7 @@ export function VoiceBrowser({
                   </div>
                 )}
                 {/* Search + controls row */}
-                <div className="flex gap-3 mb-4">
+                <div className="flex flex-wrap gap-3 mb-4">
                   {/* Search */}
                   <div className="flex-1 relative">
                     <svg
@@ -1565,7 +1592,14 @@ export function VoiceBrowser({
                         <span className="text-sm" style={{ color: "#666666" }}>Cargando más voces...</span>
                       </div>
                     )}
-                    {!loading && publicVoices.length < externalServerTotal && (
+                    {!loading && debouncedSearch && (
+                      <div className="flex justify-center mt-6 pb-2">
+                        <span className="text-sm" style={{ color: "#666666" }}>
+                          {`${publicVoices.length.toLocaleString()} voces encontradas`}
+                        </span>
+                      </div>
+                    )}
+                    {!loading && !debouncedSearch && publicVoices.length < externalServerTotal && (
                       <div className="flex justify-center mt-6 pb-2">
                         <button
                           onClick={() => setPage((p) => p + 1)}
@@ -1607,7 +1641,7 @@ export function VoiceBrowser({
 
             {/* ── Recent tab ── */}
             {tab === "recent" && (
-              <div className="px-6 py-4">
+              <div className="px-4 sm:px-6 py-4">
                 {filteredRecent.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-24" style={{ color: "#666666" }}>
                     <svg className="mb-4" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1644,7 +1678,7 @@ export function VoiceBrowser({
 
             {/* ── Default voices tab ── */}
             {tab === "default" && (
-              <div className="px-6 py-4">
+              <div className="px-4 sm:px-6 py-4">
                 <p className="text-xs mb-4" style={{ color: "#666666" }}>Voces de calidad curadas y siempre disponibles.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-2">
                   {DEFAULT_VOICES.map((voice) => (
@@ -1665,7 +1699,7 @@ export function VoiceBrowser({
 
             {/* ── Favorites tab ── */}
             {tab === "favorites" && (
-              <div className="px-6 py-4">
+              <div className="px-4 sm:px-6 py-4">
                 {favoriteVoices.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-24" style={{ color: "#666666" }}>
                     <HeartIcon filled={false} />
@@ -1720,7 +1754,7 @@ export function VoiceBrowser({
 
             {/* ── Cloned tab ── */}
             {tab === "cloned" && (
-              <div className="px-6 py-4">
+              <div className="px-4 sm:px-6 py-4">
                 {/* Default option */}
                 <button
                   onClick={() => handleSelect(null)}

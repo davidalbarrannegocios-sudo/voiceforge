@@ -454,6 +454,7 @@ export default function VoicesClient() {
                   <div
                     className="glass-menu py-2 min-w-[190px]"
                     style={{ position: "fixed", top: dropdownPos.top, left: dropdownPos.left, zIndex: 9999 }}
+                    onMouseDown={(e) => e.stopPropagation()}
                   >
                     {LANGUAGES.map((l) => (
                       <button

@@ -5,17 +5,18 @@ export const runtime = "nodejs";
 
 type ServiceStatus = "good" | "overloaded";
 
-async function probe(url: string, apiKey: string, init: RequestInit): Promise<ServiceStatus> {
+async function probeAlgrow(apiKey: string): Promise<ServiceStatus> {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch(url, {
-      ...init,
-      headers: { ...(init.headers ?? {}), "xi-api-key": apiKey },
+    const res = await fetch("https://api.algrow.online/api/health", {
+      headers: { Authorization: `Bearer ${apiKey}` },
       signal: controller.signal,
     });
     clearTimeout(timer);
-    return res.ok ? "good" : "overloaded";
+    if (!res.ok) return "overloaded";
+    const data = await res.json() as { status?: string };
+    return data.status === "healthy" ? "good" : "overloaded";
   } catch {
     return "overloaded";
   }
@@ -29,34 +30,28 @@ export async function GET() {
   // Manual override: trust admin status, skip external probe
   if (manualOverride || adminStatus !== "active") {
     const isDown = adminStatus !== "active";
+    const s: ServiceStatus = isDown ? "overloaded" : "good";
     return NextResponse.json(
-      { elevenlabs: isDown ? "overloaded" as ServiceStatus : "good" as ServiceStatus, minimax: "good" as ServiceStatus, isDown, adminStatus, manualOverride },
+      { elevenlabs: s, minimax: s, stealth: s, isDown, adminStatus, manualOverride },
       { headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=30" } }
     );
   }
 
-  const apiKey = process.env.SK_AI33_KEY;
+  const apiKey = process.env.ALGROW_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      { elevenlabs: "overloaded" as ServiceStatus, minimax: "overloaded" as ServiceStatus, isDown: true, adminStatus, manualOverride },
+      { elevenlabs: "overloaded" as ServiceStatus, minimax: "overloaded" as ServiceStatus, stealth: "overloaded" as ServiceStatus, isDown: true, adminStatus, manualOverride },
       { headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=30" } }
     );
   }
 
-  const [elevenlabs, minimax] = await Promise.all([
-    probe("https://api.ai33.pro/v2/voices", apiKey, { method: "GET" }),
-    probe("https://api.ai33.pro/v1m/voice/list", apiKey, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ page: 1, page_size: 1, tag_list: [] }),
-    }),
-  ]);
+  const status = await probeAlgrow(apiKey);
 
-  console.log(`[ai33-health] elevenlabs=${elevenlabs} minimax=${minimax} adminStatus=${adminStatus} manualOverride=${manualOverride}`);
+  console.log(`[ai33-health] algrow=${status} adminStatus=${adminStatus} manualOverride=${manualOverride}`);
 
-  const isDown = elevenlabs !== "good";
+  const isDown = status !== "good";
   return NextResponse.json(
-    { elevenlabs, minimax, isDown, adminStatus, manualOverride },
+    { elevenlabs: status, minimax: status, stealth: status, isDown, adminStatus, manualOverride },
     { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=60" } }
   );
 }

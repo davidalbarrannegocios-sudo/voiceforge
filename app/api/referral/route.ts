@@ -35,6 +35,7 @@ export async function GET() {
     totalEarned,
     referralBalance: user.referralBalance,
     referralEarned: user.referralEarned,
+    referralPending: user.referralPending,
     referralCount: allReferrals.length,
     referredSignupsCount: allReferrals.length,
     referredConversionsCount: allReferrals.filter((r) => r.status !== "pending").length,

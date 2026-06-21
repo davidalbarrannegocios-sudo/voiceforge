@@ -5,7 +5,7 @@ import { calculateCharCost } from "@/lib/utils";
 import { getEffectivePlan } from "@/lib/plan";
 import { deleteFromR2 } from "@/lib/r2";
 import { log } from "@/lib/logger";
-import { processTranslationInBackground } from "@/lib/translate-processor";
+import { processTranslationInBackground, processMultiSpeakerTranslationInBackground, DiarizedSegment } from "@/lib/translate-processor";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -23,14 +23,14 @@ export async function POST(req: Request) {
   if (!fishKey) return NextResponse.json({ error: "FISH_AUDIO_API_KEY no configurada" }, { status: 500 });
   if (!deeplKey) return NextResponse.json({ error: "DEEPL_API_KEY no configurada" }, { status: 500 });
 
-  let body: { fileKey: string; targetLang: string; referenceId?: string; referenceFileKey?: string };
+  let body: { fileKey: string; targetLang: string; referenceId?: string; referenceFileKey?: string; speakerMode?: "single" | "multi"; segments?: DiarizedSegment[] };
   try {
     body = await req.json();
   } catch (e) {
     return NextResponse.json({ error: "Body JSON inválido" }, { status: 400 });
   }
 
-  const { fileKey, targetLang, referenceId, referenceFileKey } = body;
+  const { fileKey, targetLang, referenceId, referenceFileKey, speakerMode = "single", segments } = body;
 
   if (!fileKey) return NextResponse.json({ error: "fileKey requerido" }, { status: 400 });
 
@@ -72,25 +72,40 @@ export async function POST(req: Request) {
       targetLanguage: targetLang,
       targetLanguageName: lang.name,
       status: "pending",
+      speakerMode,
     },
   });
 
-  console.log("[translate] task created:", task.id, "— firing background processor");
+  console.log("[translate] task created:", task.id, "mode:", speakerMode, "— firing background processor");
 
-  // Fire and forget — client polls for status
-  processTranslationInBackground({
-    taskId: task.id,
-    userId: user.id,
-    fileKey,
-    targetLang,
-    referenceId,
-    referenceFileKey,
-    fishKey,
-    deeplKey,
-    effectivePlan,
-    lang,
-    user,
-  }).catch(e => console.error("[translate] unhandled bg error:", e));
+  if (speakerMode === "multi") {
+    processMultiSpeakerTranslationInBackground({
+      taskId: task.id,
+      userId: user.id,
+      fileKey,
+      targetLang,
+      fishKey,
+      deeplKey,
+      effectivePlan,
+      lang,
+      user,
+      segments,
+    }).catch(e => console.error("[translate-multi] unhandled bg error:", e));
+  } else {
+    processTranslationInBackground({
+      taskId: task.id,
+      userId: user.id,
+      fileKey,
+      targetLang,
+      referenceId,
+      referenceFileKey,
+      fishKey,
+      deeplKey,
+      effectivePlan,
+      lang,
+      user,
+    }).catch(e => console.error("[translate] unhandled bg error:", e));
+  }
 
   return NextResponse.json({ taskId: task.id });
 }

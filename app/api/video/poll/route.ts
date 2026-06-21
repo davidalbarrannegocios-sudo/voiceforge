@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { prisma } from '@/lib/prisma'
+import { uploadImageToHetzner } from '@/lib/hetzner-images'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,6 +43,33 @@ export async function POST(req: NextRequest) {
     const video = data.video as { url?: string } | undefined
     const videoUrl = video?.url
     console.log('[xAI poll] done! videoUrl:', videoUrl)
+
+    if (videoUrl) {
+      try {
+        const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } })
+        if (dbUser) {
+          const key = `videos/${dbUser.id}/${Date.now()}.mp4`
+          const savedUrl = await uploadImageToHetzner(videoUrl, key, "video/mp4")
+          await prisma.sharedImage.create({
+            data: {
+              userId: dbUser.id,
+              prompt: "Video generado",
+              model: "grok-imagine-video",
+              aspectRatio: "16:9",
+              storageKey: key,
+              imageUrl: savedUrl,
+              type: "video",
+              creditsUsed: 0,
+              expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+            }
+          })
+          return NextResponse.json({ status: 'Ready', videoUrl: savedUrl })
+        }
+      } catch (e) {
+        console.error('[xAI poll] save error:', e)
+      }
+    }
+
     return NextResponse.json({ status: 'Ready', videoUrl })
   }
 

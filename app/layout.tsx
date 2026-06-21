@@ -6,6 +6,7 @@ import { AffiliateRefTracker } from "@/components/AffiliateRefTracker";
 import { LanguageProvider } from "@/app/dashboard/LanguageContext";
 import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
+import { UpdateBanner } from "@/components/UpdateBanner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -128,6 +129,7 @@ export default function RootLayout({
             <CookieBanner />
             {children}
           </LanguageProvider>
+          <UpdateBanner />
         </body>
       </html>
     </ClerkProvider>

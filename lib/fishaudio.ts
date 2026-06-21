@@ -278,20 +278,23 @@ export async function fishAudioGenerateBuffer({
   text,
   referenceId,
   model = 'speech-1.6',
+  normalize = true,
 }: {
   text: string
   referenceId?: string
   model?: string
+  normalize?: boolean
 }): Promise<Buffer> {
   const apiKey = getApiKey()
   const chunks = splitTextIntoChunks(text)
   const audioBuffers = await Promise.all(
     chunks.map((chunk, i) => {
+      const chunkHasTags = /\[[^\]]+\]|\([^)]+\)/.test(chunk)
       const payload: Record<string, unknown> = {
         text: chunk,
         format: 'mp3',
         mp3_bitrate: 128,
-        normalize: true,
+        normalize: chunkHasTags ? false : normalize,
         latency: 'balanced',
         chunk_length: 200,
       }
@@ -304,14 +307,21 @@ export async function fishAudioGenerateBuffer({
 
 export interface CloneResult {
   model_id: string;
+  sampleUrl?: string;
 }
 
 export async function fishAudioClone({
   audioBuffer,
   voiceName,
+  model = "s2-pro",
+  enhanceAudio = true,
+  generateSample = false,
 }: {
   audioBuffer: Buffer;
   voiceName: string;
+  model?: string;
+  enhanceAudio?: boolean;
+  generateSample?: boolean;
 }): Promise<CloneResult> {
   const apiKey = getApiKey();
 
@@ -320,13 +330,14 @@ export async function fishAudioClone({
   form.append("title", voiceName);
   form.append("train_mode", "fast");
   form.append("visibility", "private");
+  form.append("enhance_audio_quality", String(enhanceAudio));
   form.append("voices", new Blob([new Uint8Array(audioBuffer)], { type: "audio/wav" }), "reference.wav");
 
-  console.log(`[FishAudio] creating voice model "${voiceName}" (${audioBuffer.length} bytes)`);
+  console.log(`[FishAudio] creating voice model "${voiceName}" model=${model} enhance=${enhanceAudio} sample=${generateSample} (${audioBuffer.length} bytes)`);
 
   const res = await fetch(`${FISH_AUDIO_BASE}/model`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}` },
+    headers: { Authorization: `Bearer ${apiKey}`, model },
     body: form,
   });
 
@@ -339,5 +350,12 @@ export async function fishAudioClone({
   if (!data._id) throw new Error(`Fish Audio did not return a model ID: ${JSON.stringify(data)}`);
 
   console.log(`[FishAudio] voice model created: ${data._id}`);
-  return { model_id: data._id };
+
+  let sampleUrl: string | undefined;
+  if (generateSample && data.samples?.[0]?.audio) {
+    sampleUrl = data.samples[0].audio;
+    console.log(`[FishAudio] sample URL returned: ${sampleUrl}`);
+  }
+
+  return { model_id: data._id, sampleUrl };
 }

@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
   const res = NextResponse.json({ ok: true, discount });
 
-  const maxAge = 30 * 24 * 60 * 60;
+  const maxAge = 365 * 24 * 60 * 60;
   res.cookies.set("affiliateRef", code, { httpOnly: true, maxAge, path: "/", sameSite: "lax" });
   res.cookies.set("referralCode", code, { httpOnly: true, maxAge, path: "/", sameSite: "lax" });
 

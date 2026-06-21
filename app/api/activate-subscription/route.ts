@@ -68,6 +68,8 @@ export async function POST(req: Request) {
           },
         });
         console.log("[activate-subscription] Suscripción actualizada (proration):", user.stripeSubscriptionId, "→", planKey);
+        const cookieStore = await cookies();
+        cookieStore.delete("affiliateRef");
         return NextResponse.json({ success: true, subscriptionId: user.stripeSubscriptionId, status: "active" });
       }
     }
@@ -89,12 +91,30 @@ export async function POST(req: Request) {
     if (affiliateRef) {
       const coupon = await stripe.coupons.create({
         percent_off: 10,
-        duration: "once",
+        duration: "forever",
         name: "Descuento afiliado 10%",
         metadata: { affiliateRef },
       });
       couponId = coupon.id;
       console.log("[activate-subscription] Discount coupon created:", couponId, "for affiliateRef:", affiliateRef);
+    }
+
+    // Ensure referredBy is set before Stripe fires invoice.paid
+    let effectiveReferredBy = user.referredBy;
+    const refCode = cookieStore.get("referralCode")?.value;
+    if (refCode && !effectiveReferredBy) {
+      const referrer = await prisma.user.findUnique({ where: { referralCode: refCode } });
+      if (referrer && referrer.id !== user.id) {
+        const alreadyExists = await prisma.referral.findFirst({ where: { referrerId: referrer.id, referredId: user.id } });
+        if (!alreadyExists) {
+          await prisma.$transaction([
+            prisma.user.update({ where: { id: user.id }, data: { referredBy: referrer.id } }),
+            prisma.referral.create({ data: { referrerId: referrer.id, referredId: user.id, status: "pending" } }),
+          ]);
+          effectiveReferredBy = referrer.id;
+          console.log("[activate-subscription] referredBy guardado antes del pago:", referrer.id);
+        }
+      }
     }
 
     // Create subscription — first payment charged immediately
@@ -125,6 +145,31 @@ export async function POST(req: Request) {
         },
       });
       console.log("[activate-subscription] Plan actualizado en DB:", planKey, "periodEnd:", periodEnd, "interval:", billingInterval);
+      cookieStore.delete("affiliateRef");
+
+      // Referral commission on first subscription
+      const finalReferredBy = effectiveReferredBy;
+      if (finalReferredBy) {
+        const referrer = await prisma.user.findUnique({ where: { id: finalReferredBy }, select: { referralEarned: true } });
+        const alreadyRewarded = await prisma.pendingReferralReward.findFirst({ where: { referredId: user.id } });
+        if (referrer && !alreadyRewarded) {
+          const planPrices: Record<string, number> = { creator: 800, plus: 2600, pro: 4900, elite: 31500 };
+          const commission = Math.round((planPrices[planKey] ?? 0) * 0.05);
+          if (commission > 0) {
+            const pendingUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+            await prisma.$transaction([
+              prisma.pendingReferralReward.create({
+                data: { referrerId: finalReferredBy, referredId: user.id, amount: commission, pendingUntil },
+              }),
+              prisma.user.update({
+                where: { id: finalReferredBy },
+                data: { referralPending: { increment: commission } },
+              }),
+            ]);
+            console.log("[activate-subscription] referral commission pending:", { referrer: finalReferredBy, commission, pendingUntil });
+          }
+        }
+      }
     }
 
     return NextResponse.json({ success: true, subscriptionId: subscription.id, status: subscription.status });

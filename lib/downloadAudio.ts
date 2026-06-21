@@ -30,23 +30,13 @@ export async function getAudioBlobUrl(url: string): Promise<string> {
 
 export async function downloadAudio(url: string, filename: string) {
   try {
-    const fetchUrl = needsProxy(url)
-      ? `/api/download-audio?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`
-      : url;
-
-    const response = await fetch(fetchUrl);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const blob = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = blobUrl;
-    a.download = filename || "audio.mp3";
+    a.href = `/api/download-audio?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(blobUrl);
-  } catch (error) {
-    console.error("Error descargando audio:", error);
+  } catch (e) {
+    console.error("descargando audio:", e);
   }
 }

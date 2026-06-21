@@ -2,7 +2,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calculateCharCost } from "@/lib/utils";
-import { FREE_VOICE_IDS } from "@/lib/free-voice-ids";
+
 import { getEffectivePlan } from "@/lib/plan";
 import { log } from "@/lib/logger";
 
@@ -49,10 +49,7 @@ export async function POST(req: Request) {
     const fromPlan = Math.min(user.credits, charCost);
     const fromExtra = charCost - fromPlan;
 
-    let effectiveReferenceId: string | undefined = reference_id || undefined;
-    if (effectivePlan === "free" && effectiveReferenceId && !FREE_VOICE_IDS.has(effectiveReferenceId)) {
-      effectiveReferenceId = undefined;
-    }
+    const effectiveReferenceId: string | undefined = reference_id || undefined;
 
     const resolvedVoiceName = (voiceName as string | undefined) ?? "Voz por defecto";
 
@@ -86,6 +83,7 @@ export async function POST(req: Request) {
     ]);
 
     log("info", "tts-job", `created jobId=${job.id} userId=${user.id} chars=${trimmed.length}`, { jobId: job.id, userId: user.id, chars: trimmed.length, voiceName: resolvedVoiceName }, user.id);
+    log("info", "credits", "credits deducted", { userId: user.id, chars: trimmed.length, creditsUsed: charCost, voiceName: resolvedVoiceName, plan: user.plan }, user.id);
 
     return NextResponse.json({
       jobId: job.id,

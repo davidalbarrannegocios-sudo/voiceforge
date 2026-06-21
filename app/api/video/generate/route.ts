@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
+import { log } from '@/lib/logger'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -67,6 +68,7 @@ export async function POST(req: NextRequest) {
     where: { id: dbUser.id },
     data: { credits: { decrement: fromPlan }, extraCredits: { decrement: fromExtra } },
   })
+  log('info', 'credits', 'credits deducted', { userId: dbUser.id, creditsUsed: totalVideoCredits, plan: dbUser.plan, type: 'video' }, dbUser.id)
 
   return NextResponse.json({
     taskId: data.request_id,

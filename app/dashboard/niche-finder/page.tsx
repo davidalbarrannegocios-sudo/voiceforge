@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import { DollarSign, Lock } from "lucide-react";
 
 /* ─── Types ─────────────────────────────────────────────────── */
 interface NicheChannel {
@@ -35,6 +36,7 @@ interface ApiResponse {
   pages: number;
   categories: string[];
   formats: string[];
+  seed: number;
   error?: string;
 }
 
@@ -142,28 +144,21 @@ function ChannelCard({ ch }: { ch: NicheChannel }) {
   );
 }
 
-/* ─── Table view ─────────────────────────────────────────────── */
-type SortKey = "outlierScore" | "subscribers" | "monthlyRevenue" | "rpm" | "totalVideos" | "monthlyViews";
-
-const TABLE_COLS: { key: SortKey | null; label: string; width: string }[] = [
-  { key: null,             label: "Canal",        width: "220px" },
-  { key: "outlierScore",   label: "Outlier",      width: "80px" },
-  { key: "subscribers",    label: "Subs",         width: "80px" },
-  { key: "monthlyRevenue", label: "Ingresos/mes", width: "100px" },
-  { key: "rpm",            label: "RPM",          width: "70px" },
-  { key: "totalVideos",    label: "Vídeos",       width: "70px" },
-  { key: "monthlyViews",   label: "Views/mes",    width: "85px" },
-  { key: null,             label: "Monetizado",   width: "90px" },
-  { key: null,             label: "Categoría",    width: "120px" },
-  { key: null,             label: "",             width: "36px" },
+/* ─── Table view (order is random — column headers are labels only) ── */
+const TABLE_COLS = [
+  { label: "Canal",        width: "220px" },
+  { label: "Outlier",      width: "80px" },
+  { label: "Subs",         width: "80px" },
+  { label: "Ingresos/mes", width: "100px" },
+  { label: "RPM",          width: "70px" },
+  { label: "Vídeos",       width: "70px" },
+  { label: "Views/mes",    width: "85px" },
+  { label: "Monetizado",   width: "90px" },
+  { label: "Categoría",    width: "120px" },
+  { label: "",             width: "36px" },
 ];
 
-function TableView({ channels, sortBy, sortOrder, onSort }: {
-  channels: NicheChannel[];
-  sortBy: SortKey;
-  sortOrder: "asc" | "desc";
-  onSort: (key: SortKey) => void;
-}) {
+function TableView({ channels }: { channels: NicheChannel[] }) {
   return (
     <div style={{ overflowX: "auto", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "860px" }}>
@@ -172,10 +167,9 @@ function TableView({ channels, sortBy, sortOrder, onSort }: {
             {TABLE_COLS.map((col, i) => (
               <th
                 key={i}
-                onClick={() => col.key && onSort(col.key)}
-                style={{ padding: "10px 12px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: col.key === sortBy ? "#e5e7eb" : "#4b5563", textTransform: "uppercase", letterSpacing: "0.06em", cursor: col.key ? "pointer" : "default", whiteSpace: "nowrap", width: col.width, userSelect: "none" }}
+                style={{ padding: "10px 12px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "#4b5563", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap", width: col.width }}
               >
-                {col.label}{col.key === sortBy ? (sortOrder === "desc" ? " ↓" : " ↑") : ""}
+                {col.label}
               </th>
             ))}
           </tr>
@@ -249,49 +243,57 @@ export default function NicheFinderPage() {
   const [pages, setPages]           = useState(1);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading]       = useState(true);
+  const [reloading, setReloading]   = useState(false);
   const [forbidden, setForbidden]   = useState(false);
   const [view, setView]             = useState<"cards" | "table">("cards");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [search, setSearch]         = useState("");
   const [category, setCategory]     = useState("");
-  const [sortBy, setSortBy]         = useState<SortKey>("outlierScore");
-  const [sortOrder, setSortOrder]   = useState<"asc" | "desc">("desc");
   const [page, setPage]             = useState(1);
   const [ranges, setRanges]         = useState<Record<string, string>>({});
-  const [isMonetized, setIsMonetized] = useState("");
+  const [onlyMonetized, setOnlyMonetized] = useState(false);
 
+  // Seed is stored in a ref so it doesn't cause re-renders and avoids stale closures
+  const seedRef     = useRef<number | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const catsFetched = useRef(false);
 
-  const buildParams = useCallback((overrides: Record<string, string | number> = {}) => {
-    const p: Record<string, string> = {
-      search, category, sortBy, sortOrder, page: String(page),
-      ...Object.fromEntries(Object.entries(ranges).filter(([, v]) => v !== "")),
-      ...(isMonetized ? { isMonetized } : {}),
-      ...Object.fromEntries(Object.entries(overrides).map(([k, v]) => [k, String(v)])),
-    };
-    return new URLSearchParams(p).toString();
-  }, [search, category, sortBy, sortOrder, page, ranges, isMonetized]);
-
-  const fetchChannels = useCallback(async (overrides: Record<string, string | number> = {}) => {
+  const fetchChannels = useCallback(async (
+    overrides: Record<string, string | number> = {},
+    clearSeed = false,
+  ) => {
     setLoading(true);
     try {
-      const res  = await fetch(`/api/niche-channels?${buildParams(overrides)}`);
+      if (clearSeed) seedRef.current = null;
+
+      const params: Record<string, string> = {
+        search, category, page: String(page),
+        ...Object.fromEntries(Object.entries(ranges).filter(([, v]) => v !== "")),
+        ...(onlyMonetized ? { isMonetized: "true" } : {}),
+        // Carry the current seed for consistent pagination; omit to let server generate one
+        ...(seedRef.current !== null ? { seed: String(seedRef.current) } : {}),
+        ...Object.fromEntries(Object.entries(overrides).map(([k, v]) => [k, String(v)])),
+      };
+
+      const res  = await fetch(`/api/niche-channels?${new URLSearchParams(params)}`);
       const data: ApiResponse = await res.json();
       if (res.status === 403) { setForbidden(true); return; }
       setForbidden(false);
       setChannels(data.channels ?? []);
       setTotal(data.total ?? 0);
       setPages(data.pages ?? 1);
+      // Save the seed returned by the server for subsequent pagination calls
+      if (typeof data.seed === "number") seedRef.current = data.seed;
       if (!catsFetched.current && data.categories?.length) {
         setCategories(data.categories);
         catsFetched.current = true;
       }
     } finally {
       setLoading(false);
+      setReloading(false);
     }
-  }, [buildParams]);
+  }, [search, category, page, ranges, onlyMonetized]);
 
   useEffect(() => { fetchChannels(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -302,24 +304,10 @@ export default function NicheFinderPage() {
     searchTimer.current = setTimeout(() => fetchChannels({ search: val, page: 1 }), 350);
   }
 
-  function handleSelect(key: string, val: string) {
-    if (key === "category") setCategory(val);
-    if (key === "sortBy")   setSortBy(val as SortKey);
+  function handleCategory(val: string) {
+    setCategory(val);
     setPage(1);
-    fetchChannels({ [key]: val, page: 1 });
-  }
-
-  function handleSortToggle() {
-    const next = sortOrder === "desc" ? "asc" : "desc";
-    setSortOrder(next);
-    setPage(1);
-    fetchChannels({ sortOrder: next, page: 1 });
-  }
-
-  function handleTableSort(key: SortKey) {
-    const next = sortBy === key ? (sortOrder === "desc" ? "asc" : "desc") : "desc";
-    setSortBy(key); setSortOrder(next); setPage(1);
-    fetchChannels({ sortBy: key, sortOrder: next, page: 1 });
+    fetchChannels({ category: val, page: 1 });
   }
 
   function handleRangeChange(key: string, val: string) {
@@ -328,12 +316,20 @@ export default function NicheFinderPage() {
 
   function applyRanges() { setPage(1); fetchChannels({ page: 1 }); }
 
-  function handleMonetized(val: string) {
-    setIsMonetized(val); setPage(1);
-    fetchChannels({ isMonetized: val, page: 1 });
+  function handleMonetizedToggle() {
+    const next = !onlyMonetized;
+    setOnlyMonetized(next);
+    setPage(1);
+    fetchChannels({ isMonetized: next ? "true" : "", page: 1 });
   }
 
   function handlePage(p: number) { setPage(p); fetchChannels({ page: p }); }
+
+  function handleReload() {
+    setReloading(true);
+    setPage(1);
+    fetchChannels({ page: 1 }, true /* clearSeed → new random order */);
+  }
 
   const selStyle: React.CSSProperties = {
     fontSize: "12px", color: "#9ca3af", background: "#111", border: "1px solid #222",
@@ -348,16 +344,60 @@ export default function NicheFinderPage() {
 
   /* ── Forbidden ── */
   if (forbidden) {
+    const DUMMY_CARDS = [
+      { title: "Finanzas personales", category: "Finanzas", subs: "42 K", revenue: "3.200 €", rpm: "18,4 €", score: 2.8, color: "#1e3a5f" },
+      { title: "IA y productividad", category: "Tecnología", subs: "87 K", revenue: "5.600 €", rpm: "12,1 €", score: 3.5, color: "#2d1b4e" },
+      { title: "Cocina vegana fácil", category: "Lifestyle", subs: "134 K", revenue: "2.900 €", rpm: "7,3 €", score: 1.9, color: "#1a3d2b" },
+      { title: "Inversión en bolsa", category: "Finanzas", subs: "61 K", revenue: "4.100 €", rpm: "22,7 €", score: 3.1, color: "#3d2a1a" },
+      { title: "Meditación y mindfulness", category: "Bienestar", subs: "29 K", revenue: "1.800 €", rpm: "9,5 €", score: 2.2, color: "#1a2d3d" },
+      { title: "Programación en Python", category: "Educación", subs: "198 K", revenue: "6.400 €", rpm: "11,8 €", score: 4.1, color: "#2d1a3d" },
+      { title: "Viajes en furgoneta", category: "Viajes", subs: "73 K", revenue: "2.100 €", rpm: "6,2 €", score: 1.7, color: "#3d1a1a" },
+      { title: "Criptomonedas y Web3", category: "Finanzas", subs: "55 K", revenue: "7.800 €", rpm: "31,2 €", score: 2.6, color: "#1a3d3a" },
+      { title: "Desarrollo personal", category: "Educación", subs: "112 K", revenue: "3.500 €", rpm: "8,9 €", score: 2.0, color: "#2d3d1a" },
+    ];
+
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "20px", padding: "80px 24px", textAlign: "center" }}>
-        <div style={{ fontSize: "48px" }}>🔒</div>
-        <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#e5e7eb", margin: 0 }}>Función exclusiva para planes de pago</h2>
-        <p style={{ fontSize: "14px", color: "#6b7280", maxWidth: "400px", margin: 0 }}>
-          El Buscador de Nichos con datos de más de 300 canales monetizados está disponible en los planes Starter, Pro, Elite y Enterprise.
-        </p>
-        <Link href="/dashboard?tab=billing" style={{ padding: "10px 24px", borderRadius: "10px", background: "#ffffff", color: "#000", fontSize: "14px", fontWeight: 600, textDecoration: "none" }}>
-          Ver planes
-        </Link>
+      <div style={{ position: "relative", minHeight: "100vh", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {/* Blurred teaser background */}
+        <div style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none", filter: "blur(10px)", opacity: 0.45, padding: "32px", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", alignContent: "start" }}>
+          {DUMMY_CARDS.map((card, i) => (
+            <div key={i} style={{ borderRadius: "12px", overflow: "hidden", background: "#18181b", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div style={{ height: "100px", background: `linear-gradient(135deg, ${card.color} 0%, #0a0a0b 100%)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: "rgba(255,255,255,0.12)" }} />
+              </div>
+              <div style={{ padding: "12px" }}>
+                <div style={{ fontSize: "13px", fontWeight: 600, color: "#e5e7eb", marginBottom: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{card.title}</div>
+                <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "8px" }}>{card.category}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#9ca3af" }}>
+                  <span>{card.subs} subs</span>
+                  <span style={{ color: "#4ade80", fontWeight: 600 }}>{card.revenue}/mes</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#9ca3af", marginTop: "4px" }}>
+                  <span>RPM {card.rpm}</span>
+                  <span style={{ color: "#facc15" }}>★ {card.score}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Dark overlay */}
+        <div style={{ position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none", background: "rgba(0,0,0,0.20)" }} />
+
+        {/* Paywall content */}
+        <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", gap: "20px", textAlign: "center", padding: "40px 32px", maxWidth: "520px", borderRadius: "16px", background: "rgba(9,9,11,0.6)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(12px)" }}>
+          <Lock size={48} style={{ color: "#9ca3af", opacity: 0.8 }} />
+          <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#e5e7eb", margin: 0 }}>Función exclusiva para planes de pago</h2>
+          <p style={{ fontSize: "14px", color: "#9ca3af", maxWidth: "440px", margin: 0, lineHeight: 1.7 }}>
+            El Buscador de Nichos utiliza datos del proveedor NexLev, integrados directamente en Elite Labs. Accede a canales monetizados sin pagar la suscripción de NexLev por separado: te ahorras más de 30&nbsp;$/mes obteniendo las mismas funcionalidades dentro de tu plan.
+          </p>
+          <p style={{ fontSize: "12px", color: "#6b7280", margin: 0 }}>
+            Disponible en los planes Starter, Pro, Elite y Enterprise.
+          </p>
+          <Link href="/pricing" style={{ padding: "10px 28px", borderRadius: "10px", background: "#ffffff", color: "#000", fontSize: "14px", fontWeight: 600, textDecoration: "none" }}>
+            Ver planes
+          </Link>
+        </div>
       </div>
     );
   }
@@ -369,13 +409,29 @@ export default function NicheFinderPage() {
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
           <h1 style={{ fontSize: "20px", fontWeight: 700, color: "#ffffff", margin: 0 }}>Buscador de Nichos</h1>
           <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 7px", borderRadius: "5px", background: "#1a1a1a", color: "#6b7280" }}>BETA</span>
-          <div style={{ marginLeft: "auto", display: "flex", gap: "6px" }}>
+          <div style={{ marginLeft: "auto", display: "flex", gap: "6px", alignItems: "center" }}>
+            {/* Reload button */}
+            <button
+              onClick={handleReload}
+              disabled={loading}
+              title="Nuevo barajado aleatorio"
+              style={{ display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: 500, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#9ca3af", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.5 : 1 }}
+            >
+              <svg
+                width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                style={reloading ? { animation: "spin 0.7s linear infinite" } : undefined}
+              >
+                <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              Recargar
+            </button>
             <button onClick={() => setView("cards")} style={btnStyle(view === "cards")}>⊞ Tarjetas</button>
             <button onClick={() => setView("table")} style={btnStyle(view === "table")}>☰ Tabla</button>
           </div>
         </div>
         <p style={{ fontSize: "13px", color: "#6b7280", margin: 0 }}>
-          Descubre nichos rentables de YouTube con datos reales · {loading ? "…" : numFmt.format(total)} canales
+          Descubre nichos rentables de YouTube
         </p>
       </div>
 
@@ -387,29 +443,28 @@ export default function NicheFinderPage() {
             style={{ width: "100%", paddingLeft: "32px", paddingRight: "12px", paddingTop: "7px", paddingBottom: "7px", fontSize: "12px", color: "#e5e7eb", background: "#111", border: "1px solid #222", borderRadius: "8px", outline: "none", boxSizing: "border-box" }} />
         </div>
 
-        <select value={category} onChange={e => handleSelect("category", e.target.value)} style={selStyle}>
+        <select value={category} onChange={e => handleCategory(e.target.value)} style={selStyle}>
           <option value="">Todas las categorías</option>
           {categories.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
 
-        <select value={sortBy} onChange={e => handleSelect("sortBy", e.target.value)} style={selStyle}>
-          <option value="outlierScore">⚡ Outlier Score</option>
-          <option value="monthlyRevenue">💰 Ingresos/mes</option>
-          <option value="subscribers">👥 Suscriptores</option>
-          <option value="monthlyViews">👁 Vistas/mes</option>
-          <option value="rpm">💵 RPM</option>
-          <option value="totalVideos">🎬 Vídeos totales</option>
-        </select>
-
-        <button onClick={handleSortToggle} style={{ ...selStyle, cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
-          {sortOrder === "desc" ? "↓ Mayor primero" : "↑ Menor primero"}
-        </button>
-
-        <div style={{ display: "flex", gap: "4px" }}>
-          {[["", "Todos"], ["true", "💰 Monetizados"], ["false", "Sin monetizar"]].map(([val, label]) => (
-            <button key={val} onClick={() => handleMonetized(val)} style={btnStyle(isMonetized === val)}>{label}</button>
-          ))}
-        </div>
+        <label
+          style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", padding: "6px 10px", borderRadius: "8px", fontSize: "12px", fontWeight: 500, background: onlyMonetized ? "rgba(74,222,128,0.08)" : "rgba(255,255,255,0.04)", border: onlyMonetized ? "1px solid rgba(74,222,128,0.25)" : "1px solid rgba(255,255,255,0.08)", color: onlyMonetized ? "#4ade80" : "#9ca3af", userSelect: "none" }}
+        >
+          <input
+            type="checkbox"
+            checked={onlyMonetized}
+            onChange={handleMonetizedToggle}
+            style={{ display: "none" }}
+          />
+          <span style={{ width: "14px", height: "14px", borderRadius: "3px", border: onlyMonetized ? "1.5px solid #4ade80" : "1.5px solid #444", background: onlyMonetized ? "#4ade80" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+            {onlyMonetized && (
+              <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><polyline points="1,3.5 3.5,6 8,1" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            )}
+          </span>
+          <DollarSign size={12} />
+          Solo monetizados
+        </label>
 
         <button onClick={() => setFiltersOpen(o => !o)} style={{ ...selStyle, display: "flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
@@ -469,7 +524,7 @@ export default function NicheFinderPage() {
           {channels.map(ch => <ChannelCard key={ch.id} ch={ch} />)}
         </div>
       ) : (
-        <TableView channels={channels} sortBy={sortBy} sortOrder={sortOrder} onSort={handleTableSort} />
+        <TableView channels={channels} />
       )}
 
       {/* Pagination */}
@@ -483,7 +538,10 @@ export default function NicheFinderPage() {
         </div>
       )}
 
-      <style>{`@keyframes pulse { 0%,100%{opacity:.6} 50%{opacity:.3} }`}</style>
+      <style>{`
+        @keyframes pulse { 0%,100%{opacity:.6} 50%{opacity:.3} }
+        @keyframes spin  { to{transform:rotate(360deg)} }
+      `}</style>
     </div>
   );
 }

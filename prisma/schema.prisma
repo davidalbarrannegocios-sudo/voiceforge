@@ -236,6 +236,8 @@ model TranslationTask {
   updatedAt          DateTime  @updatedAt
   expiresAt          DateTime?
   r2Key              String?
+  speakerMode        String    @default("single")
+  speakerCount       Int?
   user               User      @relation(fields: [userId], references: [id])
 
   @@index([userId, createdAt(sort: Desc)])

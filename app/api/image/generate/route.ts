@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
+import { log } from '@/lib/logger'
+import { uploadImageToHetzner } from '@/lib/hetzner-images'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -104,9 +106,29 @@ export async function POST(req: NextRequest) {
       where: { id: dbUser.id },
       data: { credits: { decrement: fromPlan }, extraCredits: { decrement: fromExtra } },
     })
+    log('info', 'credits', 'credits deducted', { userId: dbUser.id, creditsUsed: totalCredits, plan: dbUser.plan, type: 'image-xai' }, dbUser.id)
+
+    const savedImages = await Promise.all(images.map(async (img, i) => {
+      const key = `images/${dbUser.id}/${Date.now()}_${i}.png`
+      const url = await uploadImageToHetzner(img, key)
+      await prisma.sharedImage.create({
+        data: {
+          userId: dbUser.id,
+          prompt,
+          model,
+          aspectRatio,
+          storageKey: key,
+          imageUrl: url,
+          type: 'image',
+          creditsUsed: creditsPerImage,
+          expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        },
+      })
+      return url
+    }))
 
     return NextResponse.json({
-      images,
+      images: savedImages,
       creditsUsed: totalCredits,
       creditsRemaining: totalAvailable - totalCredits,
     })
@@ -150,6 +172,7 @@ export async function POST(req: NextRequest) {
     where: { id: dbUser.id },
     data: { credits: { decrement: fromPlan }, extraCredits: { decrement: fromExtra } },
   })
+  log('info', 'credits', 'credits deducted', { userId: dbUser.id, creditsUsed: totalCredits, plan: dbUser.plan, type: 'image-bfl' }, dbUser.id)
 
   return NextResponse.json({
     jobs,

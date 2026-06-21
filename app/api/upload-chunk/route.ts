@@ -1,6 +1,6 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { uploadToR2, downloadFromR2, deleteFromR2 } from "@/lib/r2";
+import { uploadToR2, downloadRawFromR2, deleteFromR2 } from "@/lib/r2";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   const parts: Buffer[] = [];
   for (let i = 0; i < totalChunks; i++) {
     const key = `uploads/chunks/${userId}/${uploadId}/${String(i).padStart(5, "0")}`;
-    const part = await downloadFromR2(key);
+    const part = await downloadRawFromR2(key);
     parts.push(part);
   }
   const assembled = Buffer.concat(parts);

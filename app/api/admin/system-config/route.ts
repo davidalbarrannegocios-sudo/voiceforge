@@ -7,11 +7,33 @@ export const runtime = "nodejs";
 const VALID_STATUSES = ["active", "maintenance", "disabled"] as const;
 type TurboStatus = (typeof VALID_STATUSES)[number];
 
+function serializeConfig(config: {
+  elitelabsTurboStatus: string;
+  elitelabsTurboManualOverride: boolean;
+  registrationOpen: boolean;
+  maintenanceMessage: string;
+  maintenanceMessageActive: boolean;
+  planCredits: string;
+}) {
+  return {
+    elitelabsTurboStatus: config.elitelabsTurboStatus as TurboStatus,
+    elitelabsTurboManualOverride: config.elitelabsTurboManualOverride,
+    registrationOpen: config.registrationOpen,
+    maintenanceMessage: config.maintenanceMessage,
+    maintenanceMessageActive: config.maintenanceMessageActive,
+    planCredits: config.planCredits,
+  };
+}
+
 export async function GET() {
   const config = await prisma.systemConfig.findUnique({ where: { id: "singleton" } });
   return NextResponse.json({
     elitelabsTurboStatus: (config?.elitelabsTurboStatus ?? "active") as TurboStatus,
     elitelabsTurboManualOverride: config?.elitelabsTurboManualOverride ?? false,
+    registrationOpen: config?.registrationOpen ?? true,
+    maintenanceMessage: config?.maintenanceMessage ?? "",
+    maintenanceMessageActive: config?.maintenanceMessageActive ?? false,
+    planCredits: config?.planCredits ?? "{}",
   });
 }
 
@@ -24,19 +46,37 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { elitelabsTurboStatus, elitelabsTurboManualOverride } = await req.json();
-  if (!VALID_STATUSES.includes(elitelabsTurboStatus)) {
-    return NextResponse.json({ error: "Estado inválido" }, { status: 400 });
+  const body = await req.json();
+  const updateData: Record<string, unknown> = {};
+
+  if (body.elitelabsTurboStatus !== undefined) {
+    if (!VALID_STATUSES.includes(body.elitelabsTurboStatus)) {
+      return NextResponse.json({ error: "Estado inválido" }, { status: 400 });
+    }
+    updateData.elitelabsTurboStatus = body.elitelabsTurboStatus;
+  }
+  if (body.elitelabsTurboManualOverride !== undefined) updateData.elitelabsTurboManualOverride = !!body.elitelabsTurboManualOverride;
+  if (body.registrationOpen !== undefined) updateData.registrationOpen = !!body.registrationOpen;
+  if (body.maintenanceMessage !== undefined) updateData.maintenanceMessage = String(body.maintenanceMessage);
+  if (body.maintenanceMessageActive !== undefined) updateData.maintenanceMessageActive = !!body.maintenanceMessageActive;
+  if (body.planCredits !== undefined) {
+    updateData.planCredits = typeof body.planCredits === "string" ? body.planCredits : JSON.stringify(body.planCredits);
   }
 
   const config = await prisma.systemConfig.upsert({
     where: { id: "singleton" },
-    update: { elitelabsTurboStatus, elitelabsTurboManualOverride: !!elitelabsTurboManualOverride },
-    create: { id: "singleton", elitelabsTurboStatus, elitelabsTurboManualOverride: !!elitelabsTurboManualOverride },
+    update: updateData,
+    create: {
+      id: "singleton",
+      elitelabsTurboStatus: "active",
+      elitelabsTurboManualOverride: false,
+      registrationOpen: true,
+      maintenanceMessage: "",
+      maintenanceMessageActive: false,
+      planCredits: "{}",
+      ...updateData,
+    },
   });
 
-  return NextResponse.json({
-    elitelabsTurboStatus: config.elitelabsTurboStatus,
-    elitelabsTurboManualOverride: config.elitelabsTurboManualOverride,
-  });
+  return NextResponse.json(serializeConfig(config));
 }

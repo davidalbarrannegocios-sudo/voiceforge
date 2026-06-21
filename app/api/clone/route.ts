@@ -5,7 +5,9 @@ import { fishAudioClone } from "@/lib/fishaudio";
 import { PLAN_VOICE_SLOTS } from "@/lib/stripe";
 import { getEffectivePlan } from "@/lib/plan";
 
-const CLONE_COST = 10;
+export const runtime = "nodejs";
+export const maxDuration = 120;
+
 
 export async function POST(req: Request) {
   const clerkUser = await currentUser();
@@ -16,6 +18,9 @@ export async function POST(req: Request) {
   const voiceName = formData.get("voice_name") as string | null;
   const language = (formData.get("language") as string | null) ?? "es";
   const gender = (formData.get("gender") as string | null) ?? "masculine";
+  const model = (formData.get("model") as string | null) ?? "s2-pro";
+  const enhanceAudio = formData.get("enhance_audio") !== "false";
+  const generateSample = formData.get("generate_sample") !== "false";
 
   if (!file) return NextResponse.json({ error: "Audio requerido" }, { status: 400 });
   if (!voiceName || voiceName.trim().length === 0)
@@ -44,43 +49,32 @@ export async function POST(req: Request) {
     );
   }
 
-  if (user.credits < CLONE_COST) {
-    return NextResponse.json(
-      { error: "Créditos insuficientes. La clonación cuesta 10 créditos." },
-      { status: 402 }
-    );
-  }
 
   const audioBuffer = Buffer.from(await file.arrayBuffer());
 
   let result;
   try {
-    result = await fishAudioClone({ audioBuffer, voiceName: voiceName.trim() });
+    result = await fishAudioClone({ audioBuffer, voiceName: voiceName.trim(), model, enhanceAudio, generateSample });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[/api/clone] Fish Audio error:", message);
     return NextResponse.json({ error: message }, { status: 502 });
   }
 
-  const [updatedUser, clonedVoice] = await prisma.$transaction([
-    prisma.user.update({
-      where: { id: user.id },
-      data: { credits: { decrement: CLONE_COST } },
-    }),
-    prisma.clonedVoice.create({
-      data: {
-        userId: user.id,
-        name: voiceName.trim(),
-        referenceAudioUrl: result.model_id,
-        language,
-        gender,
-      },
-    }),
-  ]);
+  const clonedVoice = await prisma.clonedVoice.create({
+    data: {
+      userId: user.id,
+      name: voiceName.trim(),
+      referenceAudioUrl: result.model_id,
+      language,
+      gender,
+    },
+  });
 
   return NextResponse.json({
     voiceId: clonedVoice.id,
     name: clonedVoice.name,
-    creditsRemaining: updatedUser.credits,
+    creditsRemaining: user.credits,
+    sampleUrl: result.sampleUrl ?? null,
   });
 }

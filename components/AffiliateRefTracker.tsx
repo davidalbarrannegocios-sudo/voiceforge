@@ -13,7 +13,7 @@ function AffiliateRefTrackerInner() {
     fetch(`/api/referral/check?code=${encodeURIComponent(code)}`)
       .then(r => r.json())
       .then(data => {
-        const maxAge = 30 * 24 * 60 * 60;
+        const maxAge = 365 * 24 * 60 * 60;
         // Client-readable cookie for discount display on any page without auth
         document.cookie = `ref_code=${encodeURIComponent(code)}; max-age=${maxAge}; path=/`;
         if (data.hasDiscount) {
@@ -23,6 +23,11 @@ function AffiliateRefTrackerInner() {
             label: data.label,
           }))}; max-age=${maxAge}; path=/`;
         }
+        fetch('/api/set-affiliate-ref', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        }).catch(() => {});
       })
       .catch(() => {});
   }, [searchParams]);

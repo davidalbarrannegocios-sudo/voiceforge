@@ -2,9 +2,10 @@ import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getEffectivePlan } from "@/lib/plan";
+import { log } from "@/lib/logger";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
+// No maxDuration — returns immediately; Algrow generation runs as fire-and-forget background task
 
 function getExpiresAt(plan: string): Date {
   const now = new Date();
@@ -14,94 +15,172 @@ function getExpiresAt(plan: string): Date {
   return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 }
 
-async function ai33Poll(
-  taskId: string,
+async function algrowPoll(
+  jobId: string,
   apiKey: string,
-  signal: AbortSignal
 ): Promise<{ audio_url: string; duration_seconds: number }> {
   const MAX_ATTEMPTS = 60;
   const POLL_INTERVAL_MS = 2000;
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    if (signal.aborted) throw new Error("Generación cancelada");
-
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
 
-    const pollRes = await fetch(`https://api.ai33.pro/v1/task/${taskId}`, {
-      headers: { "xi-api-key": apiKey },
-      signal,
+    const pollRes = await fetch(`https://api.algrow.online/api/job-status/${jobId}`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
     });
 
     if (!pollRes.ok) {
-      if (attempt === MAX_ATTEMPTS) throw new Error(`ai33.pro polling error ${pollRes.status} tras ${MAX_ATTEMPTS} intentos`);
+      if (attempt === MAX_ATTEMPTS) throw new Error(`Algrow polling error ${pollRes.status} tras ${MAX_ATTEMPTS} intentos`);
       continue;
     }
 
-    const taskData = (await pollRes.json()) as {
-      status: string;
-      metadata?: { audio_url?: string; duration_seconds?: number };
-    };
+    const data = await pollRes.json() as { status: string; audio_url?: string; error?: string };
 
-    if (taskData.status === "done") {
-      const audioUrl = taskData.metadata?.audio_url;
-      if (!audioUrl) throw new Error("ai33.pro: tarea completada pero la respuesta no incluye audio_url");
-      return { audio_url: audioUrl, duration_seconds: taskData.metadata?.duration_seconds ?? 0 };
+    if (data.status === "completed") {
+      if (!data.audio_url) throw new Error("Algrow: job completado pero sin audio_url");
+      return { audio_url: data.audio_url, duration_seconds: 0 };
     }
 
-    if (taskData.status === "error" || taskData.status === "failed") {
-      throw new Error(`ai33.pro: la tarea falló en el servidor remoto (status=${taskData.status})`);
+    if (data.status === "failed") {
+      throw new Error(`Algrow: job fallido — ${data.error ?? "error desconocido"}`);
     }
+    // pending | processing → keep polling
   }
 
-  throw new Error(`ai33.pro: timeout tras ${MAX_ATTEMPTS} intentos (${(MAX_ATTEMPTS * POLL_INTERVAL_MS) / 1000}s)`);
+  throw new Error(`Algrow: timeout tras ${MAX_ATTEMPTS} intentos (${(MAX_ATTEMPTS * POLL_INTERVAL_MS) / 1000}s)`);
 }
 
-async function ai33Generate(
+interface GenerateOptions {
+  model_id?: string;
+  stability?: number;
+  similarity_boost?: number;
+  style?: number;
+  speed?: number;
+  temperature?: number;
+  speaking_rate?: number;
+  stealth_model?: string;
+  pitch?: number;
+  volume?: number;
+}
+
+async function algrowGenerate(
   voiceId: string,
   text: string,
-  provider: "elevenlabs" | "minimax",
+  provider: "elevenlabs" | "stealth" | "minimax",
   apiKey: string,
-  signal: AbortSignal,
-  modelId: string = "eleven_multilingual_v2_5"
+  options: GenerateOptions = {},
 ): Promise<{ audio_url: string; duration_seconds: number }> {
-  let ttsRes: Response;
+  const form = new FormData();
+  form.append("script", text);
+  form.append("voice_id", voiceId);
+  form.append("provider", provider);
 
-  if (provider === "minimax") {
-    ttsRes = await fetch("https://api.ai33.pro/v1m/task/text-to-speech", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "xi-api-key": apiKey },
-      body: JSON.stringify({
-        text,
-        model: "speech-2.6-hd",
-        voice_setting: { voice_id: voiceId, vol: 1, pitch: 0, speed: 1 },
-      }),
-      signal,
-    });
-  } else {
-    ttsRes = await fetch(`https://api.ai33.pro/v1/text-to-speech/${voiceId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "xi-api-key": apiKey },
-      body: JSON.stringify({ text, model_id: modelId }),
-      signal,
-    });
+  if (provider === "elevenlabs") {
+    if (options.model_id != null)          form.append("model_id",          options.model_id);
+    if (options.stability != null)         form.append("stability",          String(options.stability));
+    if (options.similarity_boost != null)  form.append("similarity_boost",   String(options.similarity_boost));
+    if (options.style != null)             form.append("style",              String(options.style));
+    if (options.speed != null)             form.append("speed",              String(options.speed));
+  } else if (provider === "stealth") {
+    form.append("temperature",   String(options.temperature   ?? 1.1));
+    form.append("speaking_rate", String(options.speaking_rate ?? 1.0));
+    form.append("stealth_model", String(options.stealth_model ?? "1.5"));
+  } else if (provider === "minimax") {
+    if (options.speed != null) form.append("speed",  String(options.speed));
+    form.append("pitch",  String(options.pitch  ?? 0));
+    form.append("volume", String(options.volume ?? 1.0));
   }
+
+  const ttsRes = await fetch("https://api.algrow.online/api/generate-simple", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}` },
+    body: form,
+  });
 
   if (!ttsRes.ok) {
     const errText = await ttsRes.text();
-    throw new Error(`ai33.pro error ${ttsRes.status}: ${errText}`);
+    throw new Error(`Algrow error ${ttsRes.status}: ${errText}`);
   }
 
-  const { task_id } = (await ttsRes.json()) as { task_id: string };
-  if (!task_id) throw new Error("ai33.pro no devolvió task_id");
+  const { job_id } = await ttsRes.json() as { success: boolean; job_id: string };
+  if (!job_id) throw new Error("Algrow no devolvió job_id");
 
-  return ai33Poll(task_id, apiKey, signal);
+  return algrowPoll(job_id, apiKey);
+}
+
+async function processJobInBackground(
+  jobId: string,
+  userId: string,
+  voiceId: string,
+  voiceName: string,
+  text: string,
+  provider: "elevenlabs" | "stealth" | "minimax",
+  apiKey: string,
+  modelId: string,
+  fromPlan: number,
+  fromExtra: number,
+  effectivePlan: string,
+  options: GenerateOptions = {},
+) {
+  await prisma.generationJob.update({
+    where: { id: jobId },
+    data: { status: "processing" },
+  });
+
+  try {
+    const result = await algrowGenerate(voiceId, text, provider, apiKey, { ...options, model_id: modelId });
+    const expiresAt = getExpiresAt(effectivePlan);
+
+    await prisma.$transaction([
+      prisma.generationJob.update({
+        where: { id: jobId },
+        data: { status: "done", audioUrl: result.audio_url },
+      }),
+      prisma.generation.create({
+        data: {
+          userId,
+          status: "done",
+          text,
+          voiceId,
+          voiceName,
+          audioUrl: result.audio_url,
+          durationSeconds: result.duration_seconds,
+          creditsUsed: fromPlan + fromExtra,
+          expiresAt,
+        },
+      }),
+    ]);
+
+    console.log(`[generate-ai33] bg done jobId=${jobId}`);
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error(`[generate-ai33] bg error jobId=${jobId}:`, errMsg);
+
+    await prisma.$transaction([
+      prisma.generationJob.update({
+        where: { id: jobId },
+        data: { status: "error", errorMsg: errMsg },
+      }),
+      prisma.user.update({
+        where: { id: userId },
+        data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } },
+      }),
+    ]);
+    log("info", "credits", "credits refunded — generation error", { userId, creditsRefunded: fromPlan + fromExtra, fromPlan, fromExtra, jobId }, userId);
+  }
 }
 
 export async function POST(req: Request) {
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const { text, voice_id, voiceName, provider = "elevenlabs", model_id = "eleven_multilingual_v2_5" } = await req.json();
+  const {
+    text, voice_id, voiceName,
+    provider = "elevenlabs", model_id = "eleven_multilingual_v2",
+    stability, similarity_boost, style, speed,
+    temperature, speaking_rate, stealth_model,
+    pitch, volume,
+  } = await req.json();
 
   if (!text || typeof text !== "string" || text.trim().length === 0) {
     return NextResponse.json({ error: "Texto requerido" }, { status: 400 });
@@ -109,17 +188,21 @@ export async function POST(req: Request) {
 
   const trimmed = text.trim();
   const voiceId = (voice_id as string | undefined) || "default";
-  const resolvedProvider = (provider === "minimax" ? "minimax" : "elevenlabs") as "elevenlabs" | "minimax";
+  const resolvedVoiceName = (voiceName as string | undefined) ?? "Voz por defecto";
+  const resolvedProvider = (["elevenlabs", "stealth", "minimax"].includes(provider) ? provider : "elevenlabs") as "elevenlabs" | "stealth" | "minimax";
 
-  const apiKey = process.env.SK_AI33_KEY;
-  if (!apiKey) return NextResponse.json({ error: "SK_AI33_KEY no configurada" }, { status: 500 });
+  const apiKey = process.env.ALGROW_API_KEY;
+  if (!apiKey) return NextResponse.json({ error: "ALGROW_API_KEY no configurada" }, { status: 500 });
 
   try {
     const user = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
     if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
     const effectivePlan = await getEffectivePlan(user.id, user.plan);
-    const charCost = Math.ceil(trimmed.length * 0.5); // 0.5 créditos por carácter (vs 1 en EliteLabs)
+
+    // Stealth 2.0 costs 2x characters
+    const isStealthPro = resolvedProvider === "stealth" && stealth_model === "2.0";
+    const charCost = Math.ceil(trimmed.length * 0.5 * (isStealthPro ? 2 : 1));
     const totalAvailable = user.credits + user.extraCredits;
 
     if (totalAvailable < charCost) {
@@ -129,78 +212,49 @@ export async function POST(req: Request) {
       );
     }
 
-    const fromPlan  = Math.min(user.credits, charCost);
+    const fromPlan = Math.min(user.credits, charCost);
     const fromExtra = charCost - fromPlan;
-    const expiresAt = getExpiresAt(effectivePlan);
 
     const [, job] = await prisma.$transaction([
       prisma.user.update({
         where: { id: user.id },
         data: { credits: { decrement: fromPlan }, extraCredits: { decrement: fromExtra } },
       }),
-      prisma.job.create({
+      prisma.generationJob.create({
         data: {
           userId: user.id,
-          status: "processing",
+          status: "pending",
           text: trimmed,
           voiceId,
-          voiceName: (voiceName as string | undefined) ?? "Voz por defecto",
+          voiceName: resolvedVoiceName,
           creditsUsed: charCost,
-          expiresAt,
+          fromPlan,
+          fromExtra,
+          fishParams: { provider: resolvedProvider, model_id: model_id as string },
         },
       }),
     ]);
 
-    console.log(`[generate-ai33] jobId=${job.id} provider=${resolvedProvider} chars=${trimmed.length} voiceId=${voiceId}`);
+    console.log(`[generate-ai33] created jobId=${job.id} provider=${resolvedProvider} chars=${trimmed.length} voiceId=${voiceId}`);
+    log("info", "credits", "credits deducted", { userId: user.id, chars: trimmed.length, creditsUsed: charCost, voiceName: resolvedVoiceName, plan: user.plan }, user.id);
 
-    let result: { audio_url: string; duration_seconds: number };
-    try {
-      result = await ai33Generate(voiceId, trimmed, resolvedProvider, apiKey, req.signal, model_id as string);
-    } catch (err) {
-      const isAbort = req.signal.aborted;
-      const errMsg = isAbort ? "Generación cancelada" : (err instanceof Error ? err.message : String(err));
-      if (!isAbort) console.error(`[generate-ai33] failed:`, errMsg);
-      await prisma.$transaction([
-        prisma.user.update({
-          where: { id: user.id },
-          data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } },
-        }),
-        prisma.job.update({ where: { id: job.id }, data: { status: "failed", error: errMsg } }),
-      ]);
-      return NextResponse.json(
-        { error: isAbort ? "Generación cancelada" : "Error al generar audio", detail: errMsg },
-        { status: 500 }
-      );
-    }
+    const bgOptions: GenerateOptions = { stability, similarity_boost, style, speed, temperature, speaking_rate, stealth_model, pitch, volume };
 
-    await prisma.$transaction([
-      prisma.job.update({
-        where: { id: job.id },
-        data: { status: "completed", audioUrl: result.audio_url, durationSeconds: result.duration_seconds },
-      }),
-      prisma.generation.create({
-        data: {
-          userId: user.id,
-          text: trimmed,
-          voiceId,
-          audioUrl: result.audio_url,
-          durationSeconds: result.duration_seconds,
-          creditsUsed: charCost,
-          expiresAt,
-        },
-      }),
-    ]);
+    // Fire and forget — Algrow generation runs in background; client receives jobId immediately
+    processJobInBackground(
+      job.id, user.id, voiceId, resolvedVoiceName, trimmed,
+      resolvedProvider, apiKey, model_id as string,
+      fromPlan, fromExtra, effectivePlan, bgOptions,
+    ).catch((err) => console.error("[generate-ai33] unhandled bg error:", err));
 
     return NextResponse.json({
       jobId: job.id,
-      audioUrl: result.audio_url,
-      durationSeconds: result.duration_seconds,
       charCost,
       charsRemaining: totalAvailable - charCost,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[generate-ai33] unhandled error:", message);
+    console.error("[generate-ai33] error:", message);
     return NextResponse.json({ error: "Error interno", detail: message }, { status: 500 });
   }
 }

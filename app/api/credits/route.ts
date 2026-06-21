@@ -114,6 +114,27 @@ export async function GET() {
     user = await prisma.user.update({ where: { id: user.id }, data: { referralCode } });
   }
 
+  // Backfill referredBy for existing users who registered before the affiliate cookie was set
+  if (!user.referredBy) {
+    const cookieStore = await cookies();
+    const referralCookie = cookieStore.get("referralCode")?.value;
+    if (referralCookie) {
+      const referrer = await prisma.user.findUnique({ where: { referralCode: referralCookie } });
+      if (referrer && referrer.id !== user.id) {
+        const alreadyExists = await prisma.referral.findFirst({ where: { referrerId: referrer.id, referredId: user.id } });
+        if (!alreadyExists) {
+          await prisma.$transaction([
+            prisma.user.update({ where: { id: user.id }, data: { referredBy: referrer.id } }),
+            prisma.referral.create({ data: { referrerId: referrer.id, referredId: user.id, status: "pending" } }),
+          ]);
+          user = { ...user, referredBy: referrer.id };
+          console.log(`[credits] backfilled referredBy for user=${user.id} → referrer=${referrer.id}`);
+        }
+        cookieStore.delete("referralCode");
+      }
+    }
+  }
+
   // Lazy backfill: paid plan but planExpiresAt missing → fetch from Stripe and save
   if (user.plan !== "free" && !user.planExpiresAt && user.stripeSubscriptionId) {
     try {

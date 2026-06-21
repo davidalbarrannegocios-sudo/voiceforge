@@ -1516,7 +1516,7 @@ function TurboEngineCard({
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
             <span style={{ fontWeight: 700, fontSize: "15px", color: "#fff" }}>Elite Labs Turbo</span>
-            <span style={{ fontSize: "10px", fontWeight: 500, padding: "1px 7px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.4)" }}>ElevenLabs · ai33.pro</span>
+            <span style={{ fontSize: "10px", fontWeight: 500, padding: "1px 7px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.4)" }}>ElevenLabs · algrow.online</span>
           </div>
           {effectiveHealth?.elevenlabs && effectiveHealth.elevenlabs !== "unknown" && (
             <p style={{ fontSize: "11px", color: "#555" }}>Modelo: <span style={{ color: "#888", fontWeight: 600 }}>{effectiveHealth.elevenlabs}</span></p>

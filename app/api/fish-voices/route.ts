@@ -172,7 +172,7 @@ export async function GET(req: Request) {
 
   const res = await fetch(`https://api.fish.audio/model?${params}`, {
     headers: { Authorization: `Bearer ${apiKey}` },
-    next: { revalidate: 300 },
+    cache: "no-store",
   });
 
   if (!res.ok) {

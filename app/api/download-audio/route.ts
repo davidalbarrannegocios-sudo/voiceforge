@@ -31,16 +31,24 @@ export async function GET(request: NextRequest) {
   try {
     const upstream = await fetch(url);
     if (!upstream.ok) throw new Error(`Upstream ${upstream.status}`);
-    const buffer = await upstream.arrayBuffer();
+
     const contentType = upstream.headers.get("content-type") || "audio/mpeg";
-    return new NextResponse(buffer, {
-      headers: {
-        "Content-Type": contentType,
-        "Content-Disposition": `attachment; filename="${filename}"`,
-        "Content-Length": buffer.byteLength.toString(),
-        "Cache-Control": "no-store",
-      },
-    });
+    const contentLength = upstream.headers.get("content-length");
+
+    const safeFilename = filename.replace(/[^a-zA-Z0-9._\-\s]/g, "_");
+    const encodedFilename = encodeURIComponent(safeFilename);
+
+    const headers: Record<string, string> = {
+      "Content-Type": contentType,
+      "Content-Disposition": `attachment; filename="${safeFilename}"; filename*=UTF-8''${encodedFilename}`,
+      "Cache-Control": "no-store",
+    };
+
+    if (contentLength) {
+      headers["Content-Length"] = contentLength;
+    }
+
+    return new NextResponse(upstream.body, { headers });
   } catch (error) {
     console.error("[download-audio]", error);
     return new NextResponse("Error downloading audio", { status: 500 });

@@ -1,8 +1,8 @@
 import * as deepl from "deepl-node";
 import { prisma } from "@/lib/prisma";
-import { fishAudioGenerate, fishAudioClone, convertToMp3 } from "@/lib/fishaudio";
+import { fishAudioGenerate, fishAudioClone, fishAudioGenerateBuffer, convertToMp3 } from "@/lib/fishaudio";
 import { calculateCharCost } from "@/lib/utils";
-import { downloadRawFromR2, deleteFromR2, keyFromPublicUrl } from "@/lib/r2";
+import { downloadRawFromR2, deleteFromR2, keyFromPublicUrl, uploadToR2 } from "@/lib/r2";
 import { log } from "@/lib/logger";
 
 const RETENTION_DAYS: Record<string, number> = {
@@ -150,6 +150,212 @@ export async function processTranslationInBackground(params: TranslateParams) {
 
   } catch (e) {
     console.error("[translate-bg] ERROR:", e);
+    await fail(String(e));
+  }
+}
+
+export interface DiarizedSegment {
+  speaker: string;
+  text: string;
+  start: number;
+  end: number;
+}
+
+export function mergeSegmentsBySpeaker(segments: DiarizedSegment[]): DiarizedSegment[] {
+  if (!segments.length) return [];
+  const merged: DiarizedSegment[] = [];
+  for (const seg of segments) {
+    const last = merged[merged.length - 1];
+    if (last && last.speaker === seg.speaker) {
+      last.text += " " + seg.text;
+      last.end = seg.end;
+    } else {
+      merged.push({ ...seg });
+    }
+  }
+  return merged;
+}
+
+interface MultiSpeakerParams {
+  taskId: string;
+  userId: string;
+  fileKey: string;
+  targetLang: string;
+  fishKey: string;
+  deeplKey: string;
+  effectivePlan: string;
+  lang: { name: string; deeplCode: string };
+  user: { id: string; credits: number; extraCredits: number; plan: string; transcriptionUsed: number };
+  segments?: DiarizedSegment[];
+}
+
+export async function processMultiSpeakerTranslationInBackground(params: MultiSpeakerParams) {
+  const { taskId, userId, fileKey, fishKey, deeplKey, effectivePlan, lang, user } = params;
+
+  await prisma.translationTask.update({ where: { id: taskId }, data: { status: "processing" } });
+
+  async function cleanup() {
+    await deleteFromR2(fileKey).catch(e => console.error("[translate-multi] cleanup failed:", e));
+  }
+
+  async function fail(errorMessage: string) {
+    await prisma.translationTask.update({ where: { id: taskId }, data: { status: "error", errorMessage } });
+    await cleanup();
+  }
+
+  try {
+    // Step 1: Download and convert to MP3
+    const rawBuffer = await downloadRawFromR2(fileKey);
+    if (rawBuffer.length > 50 * 1024 * 1024) {
+      return await fail("El audio es demasiado largo. Por favor divide el audio en fragmentos de máximo 8 minutos.");
+    }
+    const mp3Buffer = await convertToMp3(rawBuffer);
+
+    // Step 2: Get diarized segments (from preview or via ASR)
+    let segments = params.segments && params.segments.length > 0 ? params.segments : null;
+
+    if (!segments) {
+      const asrForm = new FormData();
+      asrForm.append("audio", new Blob([new Uint8Array(mp3Buffer)], { type: "audio/mpeg" }), "audio.mp3");
+      asrForm.append("identify_speakers", "true");
+
+      const asrRes = await fetch("https://api.fish.audio/v1/asr", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${fishKey}` },
+        body: asrForm,
+      });
+
+      if (!asrRes.ok) {
+        const err = await asrRes.text();
+        return await fail(`Error en transcripción (${asrRes.status}): ${err}`);
+      }
+
+      const asrData = await asrRes.json();
+      const rawSegments: DiarizedSegment[] = asrData.segments ?? [];
+      const fullText: string = asrData.text?.trim() ?? "";
+
+      if (!fullText) return await fail("No se detectó texto en el audio");
+
+      segments = rawSegments.length > 0
+        ? mergeSegmentsBySpeaker(rawSegments)
+        : [{ speaker: "SPEAKER_0", text: fullText, start: 0, end: 0 }];
+    }
+
+    if (!segments.length) return await fail("No se detectaron segmentos de audio");
+
+    // Step 3: Translate each segment with DeepL
+    const translator = new deepl.Translator(deeplKey);
+    const translatedSegments: (DiarizedSegment & { translatedText: string })[] = [];
+
+    for (const seg of segments) {
+      try {
+        const result = await translator.translateText(
+          seg.text, null, lang.deeplCode as deepl.TargetLanguageCode
+        ) as deepl.TextResult;
+        translatedSegments.push({ ...seg, translatedText: result.text.trim() });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Error en traducción con DeepL";
+        return await fail(msg);
+      }
+    }
+
+    // Step 4: Build TTS text with speaker tokens
+    const ttsText = translatedSegments
+      .map(seg => `(${seg.speaker}) ${seg.translatedText}`)
+      .join("\n");
+
+    const fullTranscription = segments.map(s => `(${s.speaker}) ${s.text}`).join("\n");
+    const fullTranslation = translatedSegments.map(s => `(${s.speaker}) ${s.translatedText}`).join("\n");
+    const uniqueSpeakers = [...new Set(segments.map(s => s.speaker))];
+    const speakerCount = uniqueSpeakers.length;
+
+    // Step 5: Credit calculation (based on pure translated content)
+    const pureTranslatedLength = translatedSegments.reduce((sum, s) => sum + s.translatedText.length, 0);
+    const translateMultiplier = effectivePlan === "enterprise" ? 1.1 : 1.2;
+    const charCost = Math.ceil(calculateCharCost(pureTranslatedLength) * translateMultiplier);
+
+    const freshUser = await prisma.user.findUnique({ where: { id: userId } });
+    if (!freshUser) return await fail("Usuario no encontrado");
+
+    const totalAvailable = freshUser.credits + freshUser.extraCredits;
+    if (totalAvailable < charCost) {
+      return await fail(`Créditos insuficientes. Necesitas ${charCost} para ${pureTranslatedLength} caracteres.`);
+    }
+
+    const fromPlan = Math.min(freshUser.credits, charCost);
+    const fromExtra = charCost - fromPlan;
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        credits: { decrement: fromPlan },
+        extraCredits: { decrement: fromExtra },
+        ...(effectivePlan === "free" && { transcriptionUsed: { increment: 1 } }),
+      },
+    });
+    log("info", "credits", "multi-speaker credits deducted", { userId, chars: pureTranslatedLength, creditsUsed: charCost, plan: effectivePlan, speakerCount }, userId);
+
+    // Step 6: Clone original audio as multi-speaker reference
+    let referenceId: string;
+    try {
+      const cloneResult = await fishAudioClone({
+        audioBuffer: mp3Buffer,
+        voiceName: `multi-ref-${taskId.slice(-8)}`,
+        model: "s2-pro",
+      });
+      referenceId = cloneResult.model_id;
+    } catch (e) {
+      await prisma.user.update({ where: { id: userId }, data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } } });
+      const msg = e instanceof Error ? e.message : "Error al crear referencia de voz";
+      return await fail(msg);
+    }
+
+    // Step 7: Fish Audio TTS with s2-pro + speaker tokens
+    let audioBuffer: Buffer;
+    try {
+      audioBuffer = await fishAudioGenerateBuffer({
+        text: ttsText,
+        referenceId,
+        model: "s2-pro",
+        normalize: false, // preserve speaker tokens
+      });
+    } catch (e) {
+      await prisma.user.update({ where: { id: userId }, data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } } });
+      const msg = e instanceof Error ? e.message : "Error al generar audio multi-hablante";
+      return await fail(msg);
+    }
+
+    // Step 8: Upload to translations/multi/{userId}/{timestamp}.mp3
+    const timestamp = Date.now();
+    const key = `translations/multi/${userId}/${timestamp}.mp3`;
+    const audioUrl = await uploadToR2(key, audioBuffer, "audio/mpeg");
+    const duration_seconds = Math.round((audioBuffer.length * 8) / 128_000 * 10) / 10;
+    const r2Key = keyFromPublicUrl(audioUrl);
+
+    const retentionDays = RETENTION_DAYS[effectivePlan] ?? 3;
+    const expiresAt = new Date(Date.now() + retentionDays * 24 * 60 * 60 * 1000);
+
+    await prisma.translationTask.update({
+      where: { id: taskId },
+      data: {
+        status: "completed",
+        creditsUsed: charCost,
+        durationSeconds: duration_seconds,
+        audioUrl,
+        r2Key,
+        expiresAt,
+        transcribedText: fullTranscription,
+        translatedText: fullTranslation,
+        speakerMode: "multi",
+        speakerCount,
+      },
+    });
+
+    await cleanup();
+    console.log("[translate-multi] done taskId:", taskId, "speakers:", speakerCount, "url:", audioUrl);
+
+  } catch (e) {
+    console.error("[translate-multi] ERROR:", e);
     await fail(String(e));
   }
 }

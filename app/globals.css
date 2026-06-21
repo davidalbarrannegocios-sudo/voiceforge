@@ -34,6 +34,7 @@ body {
   color: var(--text-primary);
   font-family: var(--font-inter), Inter, system-ui, sans-serif;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* Custom audio player */
@@ -369,3 +370,18 @@ input[type="range"]::-moz-range-thumb {
   to { transform: rotate(360deg); }
 }
 
+
+/* ── Generate tab — max-height only on desktop ── */
+@media (min-width: 1024px) {
+  .generate-tab-container {
+    max-height: calc(100vh - 120px);
+  }
+}
+
+/* ── VoiceBrowser — restore rounded corners + height on sm+ ── */
+@media (min-width: 640px) {
+  .voice-browser-modal {
+    height: 88vh;
+    border-radius: 16px;
+  }
+}

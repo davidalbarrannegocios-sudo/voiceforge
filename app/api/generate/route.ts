@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { fishAudioGenerate } from "@/lib/fishaudio";
 import { calculateCharCost } from "@/lib/utils";
-import { FREE_VOICE_IDS } from "@/lib/free-voice-ids";
+import { log } from "@/lib/logger";
+
 import { getEffectivePlan } from "@/lib/plan";
 
 export const runtime = "nodejs";
@@ -51,10 +52,7 @@ export async function POST(req: Request) {
     const fromExtra = charCost - fromPlan;
 
     // Free plan: only allow voices from the free tier
-    let effectiveReferenceId: string | undefined = reference_id || undefined;
-    if (effectivePlan === "free" && effectiveReferenceId && !FREE_VOICE_IDS.has(effectiveReferenceId)) {
-      effectiveReferenceId = undefined;
-    }
+    const effectiveReferenceId: string | undefined = reference_id || undefined;
 
     const expiresAt = getExpiresAt(effectivePlan);
     const resolvedVoiceName = (voiceName as string | undefined) ?? "Voz por defecto";
@@ -90,6 +88,7 @@ export async function POST(req: Request) {
     ]);
 
     console.log(`[generate] generationId=${generation.id} jobId=${job.id} chars=${trimmed.length} plan=${user.plan}`);
+    log("info", "credits", "credits deducted", { userId: user.id, chars: trimmed.length, creditsUsed: charCost, voiceName: resolvedVoiceName, plan: user.plan }, user.id);
 
     // ── Step 2: call Fish Audio (no client signal — completes even if client disconnects) ──
     let result;
@@ -134,7 +133,7 @@ export async function POST(req: Request) {
         }),
       ]);
 
-      console.log(`[generate] Créditos devueltos: plan=${fromPlan} extra=${fromExtra} usuario=${user.id}`);
+      log("info", "credits", "credits refunded — generation error", { userId: user.id, creditsRefunded: charCost, fromPlan, fromExtra }, user.id);
       return NextResponse.json({
         error: "Error al generar el audio. Tus créditos han sido devueltos automáticamente.",
         detail: errMsg,

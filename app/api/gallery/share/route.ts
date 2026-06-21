@@ -44,10 +44,11 @@ export async function POST(req: NextRequest) {
       prompt,
       model,
       aspectRatio,
-      r2Key,
+      storageKey: r2Key,
       imageUrl: mediaUrl,
       type: mediaType,
       creditsUsed,
+      expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
     },
   })
 

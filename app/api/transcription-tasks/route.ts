@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { calculateCharCost } from "@/lib/utils";
 import { getEffectivePlan } from "@/lib/plan";
 import { convertToMp3 } from "@/lib/fishaudio";
+import { log } from "@/lib/logger";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -136,6 +137,7 @@ export async function POST(req: Request) {
         },
       }),
     ]);
+    log("info", "credits", "credits deducted", { userId: user.id, creditsUsed: charCost, plan: effectivePlan, type: "transcription-task" }, user.id);
 
     return NextResponse.json({ task: updatedTask });
   } catch (e) {

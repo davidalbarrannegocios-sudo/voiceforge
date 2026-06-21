@@ -260,7 +260,7 @@ export default function LandingPage() {
           </Link>
 
           {/* Center links — desktop pill */}
-          <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2" style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "999px", padding: "6px 20px" }}>
+          <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderRadius: "999px", padding: "4px 16px" }}>
             {/* Products — mega menu */}
             <div
               className="relative"
@@ -379,7 +379,7 @@ export default function LandingPage() {
           </nav>
 
           {/* Right: hamburger (mobile) + auth */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <button
               className="md:hidden p-2"
               onClick={() => setMobileNavOpen(!mobileNavOpen)}
@@ -394,12 +394,12 @@ export default function LandingPage() {
               </svg>
             </button>
 
-            <LanguageSelector />
+            <div className="hidden md:flex"><LanguageSelector /></div>
             {isLoaded && isSignedIn ? (
               <>
                 <Link
                   href="/dashboard"
-                  className="text-sm font-semibold text-black px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5"
+                  className="text-sm font-semibold text-black px-3 py-1.5 md:px-4 md:py-2 rounded-lg transition-all hover:-translate-y-0.5"
                   style={{ background: "#ffffff" }}
                 >
                   {t.nav.dashboard}
@@ -408,12 +408,12 @@ export default function LandingPage() {
               </>
             ) : (
               <>
-                <Link href="/sign-in" className="text-sm text-gray-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-transparent hover:border-white/10">
+                <Link href="/sign-in" className="text-sm text-gray-300 hover:text-white transition-colors px-2 py-1 md:px-3 md:py-1.5 rounded-lg">
                   {t.nav.signIn}
                 </Link>
                 <Link
                   href="/sign-up"
-                  className="text-sm font-semibold text-black px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5"
+                  className="text-sm font-semibold text-black px-3 py-1.5 md:px-4 md:py-2 rounded-lg transition-all hover:-translate-y-0.5 whitespace-nowrap"
                   style={{ background: "#ffffff" }}
                 >
                   {t.landing.startFree}
@@ -485,10 +485,10 @@ export default function LandingPage() {
       <main>
 
         {/* ── Hero ───────────────────────────────────────────────── */}
-        <section className="pt-20 md:pt-32 pb-20">
+        <section className="pt-20 md:pt-32 pb-8 md:pb-20">
 
           {/* Heading */}
-          <div className="max-w-5xl mx-auto px-4 mb-10">
+          <div className="max-w-5xl mx-auto px-4 mb-5 md:mb-10">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 md:gap-10">
               {/* Left: title */}
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight tracking-tight">
@@ -524,7 +524,7 @@ export default function LandingPage() {
           {/* Demo widget */}
           <div className="max-w-5xl mx-auto px-4">
             <div
-              className="p-4 sm:p-6 md:px-10 md:pt-8 md:pb-6"
+              className="p-3 sm:p-4 md:px-10 md:pt-8 md:pb-6"
               style={{
                 background: "linear-gradient(160deg,#0d1117 0%,#0f172a 60%,#0d1117 100%)",
                 borderRadius: "20px",
@@ -533,7 +533,7 @@ export default function LandingPage() {
               }}
             >
               {/* Tab pills */}
-              <div className="flex justify-center mb-6">
+              <div className="mb-4 md:mb-6 overflow-x-auto scrollbar-hide flex justify-center">
                 <div
                   style={{
                     position: "relative",
@@ -542,6 +542,7 @@ export default function LandingPage() {
                     padding: "4px",
                     display: "grid",
                     gridTemplateColumns: "1fr 1fr 1fr",
+                    minWidth: "max-content",
                   }}
                 >
                   <div
@@ -565,12 +566,10 @@ export default function LandingPage() {
                       <button
                         key={key}
                         onClick={() => setDemoTab(key)}
-                        className="px-2 sm:px-5 text-[11px] sm:text-[13px]"
+                        className="px-2 sm:px-5 text-[11px] sm:text-[13px] py-1.5 md:py-[7px]"
                         style={{
                           position: "relative",
                           zIndex: 1,
-                          paddingTop: "7px",
-                          paddingBottom: "7px",
                           fontWeight: active ? 600 : 500,
                           color: active ? "#111827" : "rgba(255,255,255,0.4)",
                           borderRadius: "100px",
@@ -627,103 +626,126 @@ export default function LandingPage() {
                     </Link>
                   </div>
                 ) : (
-                <div className="flex flex-col md:flex-row" style={{ minHeight: "240px" }}>
+                <div style={{ padding: "24px 20px 20px" }}>
+                  {/* Voice carousel */}
+                  <div style={{ display: "flex", gap: "12px", overflowX: "auto", scrollbarWidth: "none", paddingBottom: "4px", justifyContent: "center", flexWrap: "wrap" }}>
+                    {demoVoices.map((voice) => {
+                      const active = selectedVoice === voice._id;
+                      return (
+                        <button
+                          key={voice._id}
+                          onClick={() => { setSelectedVoice(voice._id); setDemoAudioUrl(null); }}
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            gap: "8px",
+                            background: "transparent",
+                            border: "none",
+                            cursor: "pointer",
+                            padding: "4px",
+                            borderRadius: "16px",
+                            transition: "transform 0.15s ease",
+                            transform: active ? "scale(1.05)" : "scale(1)",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <div style={{
+                            width: "72px",
+                            height: "72px",
+                            borderRadius: "16px",
+                            overflow: "hidden",
+                            border: active ? "2px solid #ffffff" : "2px solid transparent",
+                            transition: "border-color 0.15s ease",
+                            boxShadow: active ? "0 0 0 3px rgba(255,255,255,0.15)" : "none",
+                          }}>
+                            <VoiceAvatarGenerative seed={voice._id} size={72} />
+                          </div>
+                          <span style={{
+                            fontSize: "11px",
+                            fontWeight: active ? 600 : 400,
+                            color: active ? "#ffffff" : "rgba(255,255,255,0.45)",
+                            transition: "color 0.15s ease",
+                            whiteSpace: "nowrap",
+                            maxWidth: "80px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}>
+                            {voice.title}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
 
-                  {/* Left: voice list */}
-                  <div
-                    className="flex-shrink-0 flex flex-col w-full md:w-[280px] border-b md:border-b-0 md:border-r max-h-44 md:max-h-none"
-                    style={{ background: "#111111", borderColor: "#1a1a1a" }}
-                  >
-                    <div className="flex-1 overflow-y-auto" style={{ padding: "8px" }}>
-                      {demoVoices.length === 0
-                        ? Array.from({ length: 5 }).map((_, i) => (
-                            <div key={i} className="animate-pulse rounded-xl mb-0.5" style={{ height: "44px", background: "#1a1a1a" }} />
-                          ))
-                        : demoVoices.map((voice) => {
-                            const active = selectedVoice === voice._id;
-                            return (
-                              <button
-                                key={voice._id}
-                                onClick={() => { setSelectedVoice(voice._id); setDemoAudioUrl(null); }}
-                                className="w-full flex items-center gap-2.5 rounded-xl transition-all text-left"
-                                style={{
-                                  height: "44px",
-                                  padding: "0 10px",
-                                  background: active ? "#1a1a1a" : "transparent",
-                                }}
-                              >
-                                <VoiceAvatarGenerative seed={voice._id} size={30} />
-                                <span
-                                  className="truncate font-medium"
-                                  style={{ fontSize: "13px", color: active ? "#e5e7eb" : "#666666" }}
-                                >
-                                  {voice.title}
-                                </span>
-                              </button>
-                            );
-                          })}
+                  <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "18px 0" }} />
+
+                  <textarea
+                    value={demoText}
+                    onChange={(e) => setDemoText(e.target.value.slice(0, 30000))}
+                    placeholder={t.hero.demoPlaceholder}
+                    rows={3}
+                    style={{
+                      width: "100%",
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: "12px",
+                      padding: "12px 16px",
+                      color: "#e5e7eb",
+                      fontSize: "14px",
+                      lineHeight: 1.6,
+                      outline: "none",
+                      resize: "none",
+                      fontFamily: "inherit",
+                    }}
+                  />
+
+                  {demoAudioUrl && (
+                    <div style={{ marginTop: "12px" }}>
+                      <AudioPlayer src={demoAudioUrl} filename="elitelabs-demo.mp3" />
                     </div>
-                    {/* 2M+ footer */}
-                    <div style={{ padding: "10px 18px", borderTop: "1px solid #1a1a1a", flexShrink: 0 }}>
-                      <Link
-                        href="/dashboard"
-                        className="transition-colors hover:text-gray-300"
-                        style={{ fontSize: "12px", color: "#666666" }}
-                      >
+                  )}
+
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "14px", gap: "12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)" }}>
+                        {demoText.length}/30000 characters
+                      </span>
+                      <Link href="/voices" style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", textDecoration: "none" }}>
                         {t.hero.voiceCount}
                       </Link>
                     </div>
-                  </div>
-
-                  {/* Right: textarea + footer */}
-                  <div className="flex-1 flex flex-col min-w-0" style={{ background: "#111111" }}>
-                    <textarea
-                      value={demoText}
-                      onChange={(e) => setDemoText(e.target.value.slice(0, 30000))}
-                      placeholder={t.hero.demoPlaceholder}
-                      className="w-full outline-none resize-none leading-relaxed placeholder-[#666666]"
+                    <button
+                      onClick={handleGenerateDemo}
+                      disabled={demoLoading || !demoText.trim()}
                       style={{
-                        flex: 1,
-                        padding: "20px 22px",
-                        fontSize: "14px",
-                        color: "#e5e7eb",
-                        background: "transparent",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "9px 20px",
+                        borderRadius: "10px",
+                        background: demoLoading || !demoText.trim() ? "rgba(255,255,255,0.1)" : "#ffffff",
+                        color: demoLoading || !demoText.trim() ? "rgba(255,255,255,0.3)" : "#000000",
+                        fontWeight: 600,
+                        fontSize: "13px",
+                        border: "none",
+                        cursor: demoLoading || !demoText.trim() ? "not-allowed" : "pointer",
+                        transition: "all 0.15s ease",
+                        whiteSpace: "nowrap",
                       }}
-                    />
-
-                    {demoAudioUrl && (
-                      <div style={{ padding: "0 22px 12px" }}>
-                        <AudioPlayer src={demoAudioUrl} filename="elitelabs-demo.mp3" />
-                      </div>
-                    )}
-
-                    {/* Card footer */}
-                    <div
-                      className="flex items-center gap-3 flex-shrink-0"
-                      style={{ padding: "12px 22px", borderTop: "1px solid #1a1a1a" }}
                     >
-                      <span className="flex-1" style={{ fontSize: "12px", color: "#666666" }}>
-                        {demoText.length}/30000 characters
-                      </span>
-                      <button
-                        onClick={handleGenerateDemo}
-                        disabled={demoLoading || !demoText.trim()}
-                        className="flex items-center gap-1.5 font-semibold text-white transition-all hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
-                        style={{ fontSize: "13px", padding: "9px 18px", borderRadius: "8px", background: "#111", border: "1px solid #222222" }}
-                      >
-                        {demoLoading ? (
-                          <>
-                            <svg className="animate-spin" style={{ width: "12px", height: "12px" }} fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                            </svg>
-                            {t.hero.generating}
-                          </>
-                        ) : (
-                          <><PlayIcon /> {t.hero.generatePlay}</>
-                        )}
-                      </button>
-                    </div>
+                      {demoLoading ? (
+                        <>
+                          <div style={{ width: "14px", height: "14px", border: "2px solid rgba(0,0,0,0.3)", borderTopColor: "#000", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                          {t.hero.generating}
+                        </>
+                      ) : (
+                        <>
+                          <PlayIcon />
+                          {t.hero.generatePlay}
+                        </>
+                      )}
+                    </button>
                   </div>
 
                 </div>
@@ -731,10 +753,10 @@ export default function LandingPage() {
               </div>
 
               {/* Bottom footer bar */}
-              <div className="flex items-center justify-between" style={{ paddingTop: "18px" }}>
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between" style={{ paddingTop: "12px" }}>
+                <div className="flex items-center gap-1.5 md:gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse flex-shrink-0" />
-                  <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>
+                  <span className="text-[10px] md:text-[12px]" style={{ color: "rgba(255,255,255,0.3)" }}>
                     {t.hero.poweredBy}
                   </span>
                 </div>

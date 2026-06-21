@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { prisma } from '@/lib/prisma'
+import { uploadImageToHetzner } from '@/lib/hetzner-images'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -8,7 +10,7 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { polling_url } = await req.json()
+  const { polling_url, prompt, model, aspectRatio, creditsUsed: creditsPerImage } = await req.json()
   if (!polling_url) return NextResponse.json({ error: 'No polling_url' }, { status: 400 })
 
   const BFL_KEY = process.env.BFL_API_KEY!
@@ -26,14 +28,29 @@ export async function POST(req: NextRequest) {
   console.log('[poll] BFL status:', data.status, 'res status:', res.status)
 
   if (data.status === 'Ready') {
-    const imgRes = await fetch(data.result.sample)
-    const imgBuffer = await imgRes.arrayBuffer()
-    const base64 = Buffer.from(imgBuffer).toString('base64')
+    const key = `images/${userId}/${Date.now()}.jpg`
+    const url = await uploadImageToHetzner(data.result.sample, key, 'image/jpeg')
 
-    return NextResponse.json({
-      status: 'Ready',
-      image: `data:image/jpeg;base64,${base64}`,
-    })
+    if (prompt && model) {
+      const dbUser = await prisma.user.findUnique({ where: { clerkId: userId }, select: { id: true } })
+      if (dbUser) {
+        await prisma.sharedImage.create({
+          data: {
+            userId: dbUser.id,
+            prompt: prompt ?? '',
+            model: model ?? '',
+            aspectRatio: aspectRatio ?? '1:1',
+            storageKey: key,
+            imageUrl: url,
+            type: 'image',
+            creditsUsed: creditsPerImage ?? 0,
+            expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+          },
+        })
+      }
+    }
+
+    return NextResponse.json({ status: 'Ready', image: url })
   }
 
   if (data.status === 'Error' || data.status === 'Failed') {

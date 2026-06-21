@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calculateCharCost } from "@/lib/utils";
 import { getEffectivePlan } from "@/lib/plan";
+import { log } from "@/lib/logger";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -82,6 +83,7 @@ export async function POST(req: Request) {
       ...(effectivePlan === "free" && { transcriptionUsed: { increment: 1 } }),
     },
   });
+  log("info", "credits", "credits deducted", { userId: user.id, creditsUsed: charCost, plan: effectivePlan, type: "transcription" }, user.id);
 
   return NextResponse.json({
     transcribedText,

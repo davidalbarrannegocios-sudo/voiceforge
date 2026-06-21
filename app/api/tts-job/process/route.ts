@@ -6,7 +6,7 @@ import { getEffectivePlan } from "@/lib/plan";
 import { log } from "@/lib/logger";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 function getExpiresAt(plan: string): Date {
   const now = new Date();
@@ -78,6 +78,7 @@ export async function POST(req: Request) {
         },
       }),
     ]);
+    log("info", "credits", "credits refunded — generation error", { userId: job.userId, creditsRefunded: job.creditsUsed, jobId: job.id }, job.userId);
 
     return NextResponse.json({ ok: false, error: errMsg }, { status: 500 });
   }

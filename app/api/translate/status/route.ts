@@ -24,5 +24,7 @@ export async function GET(req: NextRequest) {
     errorMessage: task.errorMessage,
     targetLanguageName: task.targetLanguageName,
     creditsUsed: task.creditsUsed,
+    speakerMode: task.speakerMode,
+    speakerCount: task.speakerCount,
   });
 }

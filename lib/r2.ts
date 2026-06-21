@@ -59,6 +59,13 @@ export async function downloadFromR2(key: string): Promise<Buffer> {
   return Buffer.from(await obj.Body.transformToByteArray());
 }
 
+export async function downloadRawFromR2(key: string): Promise<Buffer> {
+  const { GetObjectCommand } = await import("@aws-sdk/client-s3");
+  const obj = await audioClient.send(new GetObjectCommand({ Bucket: AUDIO_BUCKET, Key: key }));
+  if (!obj.Body) throw new Error(`Object ${key} has no body`);
+  return Buffer.from(await obj.Body.transformToByteArray());
+}
+
 export function getPublicUrl(key: string): string {
   return `${PUBLIC_URL}/${key}`;
 }

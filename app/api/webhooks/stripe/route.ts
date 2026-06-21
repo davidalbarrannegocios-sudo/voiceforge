@@ -84,16 +84,22 @@ export async function POST(req: Request) {
 
         log("info", "stripe-webhook", "credit pack purchased", { userId, credits });
 
-        // 5% referral commission on credit pack purchase
+        // 5% referral commission on credit pack purchase (held 7 days)
         if (session.amount_total && session.amount_total > 0) {
           const payer = await prisma.user.findUnique({ where: { id: userId }, select: { referredBy: true } });
           if (payer?.referredBy) {
             const commission = Math.floor(session.amount_total * 0.05);
-            await prisma.user.update({
-              where: { id: payer.referredBy },
-              data: { referralBalance: { increment: commission }, referralEarned: { increment: commission } },
-            });
-            log("info", "stripe-webhook", "referral commission (credit pack)", { referrer: payer.referredBy, commission });
+            const pendingUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+            await prisma.$transaction([
+              prisma.pendingReferralReward.create({
+                data: { referrerId: payer.referredBy, referredId: userId, amount: commission, pendingUntil },
+              }),
+              prisma.user.update({
+                where: { id: payer.referredBy },
+                data: { referralPending: { increment: commission } },
+              }),
+            ]);
+            log("info", "stripe-webhook", "referral commission pending (credit pack)", { referrer: payer.referredBy, commission, pendingUntil });
           }
         }
 
@@ -138,17 +144,23 @@ export async function POST(req: Request) {
 
       log("info", "stripe-webhook", "subscription activated", { userId, plan: planKey, credits }, userId);
 
-      // 5% referral commission on first subscription payment
+      // 5% referral commission on first subscription payment (held 7 days)
       const subAmount = sub.items.data[0]?.plan?.amount ?? 0;
       if (subAmount > 0) {
         const subscriber = await prisma.user.findUnique({ where: { id: userId }, select: { referredBy: true } });
         if (subscriber?.referredBy) {
           const commission = Math.floor(subAmount * 0.05);
-          await prisma.user.update({
-            where: { id: subscriber.referredBy },
-            data: { referralBalance: { increment: commission }, referralEarned: { increment: commission } },
-          });
-          log("info", "stripe-webhook", "referral commission (subscription)", { referrer: subscriber.referredBy, commission });
+          const pendingUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+          await prisma.$transaction([
+            prisma.pendingReferralReward.create({
+              data: { referrerId: subscriber.referredBy, referredId: userId, amount: commission, pendingUntil },
+            }),
+            prisma.user.update({
+              where: { id: subscriber.referredBy },
+              data: { referralPending: { increment: commission } },
+            }),
+          ]);
+          log("info", "stripe-webhook", "referral commission pending (subscription)", { referrer: subscriber.referredBy, commission, pendingUntil });
         }
       }
     } catch (error) {
@@ -230,14 +242,20 @@ export async function POST(req: Request) {
 
     log("info", "stripe-webhook", "credits updated on invoice.paid", { userId: user.id, plan: user.plan, reason: billingReason, credits: planCredits }, user.id);
 
-    // 5% referral commission on renewal
+    // 5% referral commission on renewal (held 7 days)
     if (invoice.amount_paid > 0 && user.referredBy) {
       const commission = Math.floor(invoice.amount_paid * 0.05);
-      await prisma.user.update({
-        where: { id: user.referredBy },
-        data: { referralBalance: { increment: commission }, referralEarned: { increment: commission } },
-      });
-      log("info", "stripe-webhook", "referral commission (renewal)", { referrer: user.referredBy, commission });
+      const pendingUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      await prisma.$transaction([
+        prisma.pendingReferralReward.create({
+          data: { referrerId: user.referredBy, referredId: user.id, amount: commission, pendingUntil },
+        }),
+        prisma.user.update({
+          where: { id: user.referredBy },
+          data: { referralPending: { increment: commission } },
+        }),
+      ]);
+      log("info", "stripe-webhook", "referral commission pending (renewal)", { referrer: user.referredBy, commission, pendingUntil });
     }
   }
 
@@ -309,7 +327,7 @@ export async function POST(req: Request) {
   // ── customer.subscription.updated ────────────────────────
   if (event.type === "customer.subscription.updated") {
     const sub = event.data.object as Stripe.Subscription;
-    const user = await prisma.user.findFirst({ where: { stripeSubscriptionId: sub.id } });
+    const user = await prisma.user.findFirst({ where: { stripeSubscriptionId: sub.id }, select: { id: true, plan: true, referredBy: true, referralEarned: true } });
     if (!user) return NextResponse.json({ received: true });
 
     const priceId = sub.items.data[0]?.price?.id;
@@ -337,6 +355,27 @@ export async function POST(req: Request) {
     await prisma.user.update({ where: { id: user.id }, data: updateData });
 
     log("info", "stripe-webhook", "subscription updated", { userId: user.id, plan: newPlan, billing: newBillingInterval }, user.id);
+
+    // Referral commission: only when upgrading from free → paid for the first time
+    const upgradingFromFree = (user.plan === "free" || user.plan == null) && newPlan !== "free";
+    const alreadyRewarded2 = await prisma.pendingReferralReward.findFirst({ where: { referredId: user.id } });
+    if (upgradingFromFree && user.referredBy && !alreadyRewarded2) {
+      const planPrices: Record<string, number> = { creator: 800, plus: 2600, pro: 4900, elite: 31500 };
+      const commission = Math.round((planPrices[newPlan] ?? 0) * 0.05);
+      if (commission > 0) {
+        const pendingUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        await prisma.$transaction([
+          prisma.pendingReferralReward.create({
+            data: { referrerId: user.referredBy, referredId: user.id, amount: commission, pendingUntil },
+          }),
+          prisma.user.update({
+            where: { id: user.referredBy },
+            data: { referralPending: { increment: commission } },
+          }),
+        ]);
+        log("info", "stripe-webhook", "referral commission pending (subscription update)", { referrer: user.referredBy, referredId: user.id, commission, pendingUntil });
+      }
+    }
   }
 
   // ── payment_intent.succeeded ──────────────────────────────
@@ -423,6 +462,59 @@ export async function POST(req: Request) {
     ]);
 
     log("info", "stripe-webhook", "credit pack via payment_intent.succeeded", { userId, credits });
+  }
+
+  // ── charge.refunded ──────────────────────────────────────
+  if (event.type === "charge.refunded") {
+    const charge = event.data.object as Stripe.Charge;
+    const customerId = typeof charge.customer === "string" ? charge.customer : charge.customer?.id;
+    if (!customerId) return NextResponse.json({ received: true });
+
+    const user = await prisma.user.findFirst({ where: { stripeCustomerId: customerId } });
+    if (!user) return NextResponse.json({ received: true });
+
+    if (user.stripeSubscriptionId) {
+      try {
+        await stripe.subscriptions.cancel(user.stripeSubscriptionId);
+      } catch (err) {
+        log("error", "stripe-webhook", "charge.refunded — subscription cancel error", { err: String(err), userId: user.id });
+      }
+    }
+
+    // Cancel any pending referral rewards for this payer
+    const pendingRewards = await prisma.pendingReferralReward.findMany({
+      where: { referredId: user.id },
+    });
+    if (pendingRewards.length > 0) {
+      const byReferrer = pendingRewards.reduce<Record<string, number>>((acc, r) => {
+        acc[r.referrerId] = (acc[r.referrerId] ?? 0) + r.amount;
+        return acc;
+      }, {});
+      await prisma.$transaction([
+        prisma.pendingReferralReward.deleteMany({ where: { referredId: user.id } }),
+        ...Object.entries(byReferrer).map(([referrerId, amount]) =>
+          prisma.user.update({
+            where: { id: referrerId },
+            data: { referralPending: { decrement: amount } },
+          })
+        ),
+      ]);
+      log("info", "stripe-webhook", "charge.refunded — pending rewards cancelled", { userId: user.id, rewards: pendingRewards.length });
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        plan: "free",
+        credits: 0,
+        extraCredits: 0,
+        planExpiresAt: null,
+        stripeSubscriptionId: null,
+      },
+    });
+
+    console.log("[webhook] charge.refunded — userId:", user.id);
+    log("info", "stripe-webhook", "charge.refunded — plan downgraded to free", { userId: user.id }, user.id);
   }
 
   return NextResponse.json({ received: true });
