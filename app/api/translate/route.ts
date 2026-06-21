@@ -5,7 +5,7 @@ import { calculateCharCost } from "@/lib/utils";
 import { getEffectivePlan } from "@/lib/plan";
 import { deleteFromR2 } from "@/lib/r2";
 import { log } from "@/lib/logger";
-import { processTranslationInBackground, processMultiSpeakerTranslationInBackground, DiarizedSegment } from "@/lib/translate-processor";
+import { processTranslationInBackground, processMultiSpeakerTranslationInBackground, DiarizedSegment, AssemblyAIUtterance } from "@/lib/translate-processor";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -23,14 +23,14 @@ export async function POST(req: Request) {
   if (!fishKey) return NextResponse.json({ error: "FISH_AUDIO_API_KEY no configurada" }, { status: 500 });
   if (!deeplKey) return NextResponse.json({ error: "DEEPL_API_KEY no configurada" }, { status: 500 });
 
-  let body: { fileKey: string; targetLang: string; referenceId?: string; referenceFileKey?: string; speakerMode?: "single" | "multi"; segments?: DiarizedSegment[] };
+  let body: { fileKey: string; targetLang: string; referenceId?: string; referenceFileKey?: string; speakerMode?: "single" | "multi"; utterances?: AssemblyAIUtterance[]; segments?: DiarizedSegment[] };
   try {
     body = await req.json();
   } catch (e) {
     return NextResponse.json({ error: "Body JSON inválido" }, { status: 400 });
   }
 
-  const { fileKey, targetLang, referenceId, referenceFileKey, speakerMode = "single", segments } = body;
+  const { fileKey, targetLang, referenceId, referenceFileKey, speakerMode = "single", utterances, segments } = body;
 
   if (!fileKey) return NextResponse.json({ error: "fileKey requerido" }, { status: 400 });
 
@@ -89,7 +89,8 @@ export async function POST(req: Request) {
       effectivePlan,
       lang,
       user,
-      segments,
+      utterances,   // AssemblyAI format (preferred)
+      segments,     // legacy fallback
     }).catch(e => console.error("[translate-multi] unhandled bg error:", e));
   } else {
     processTranslationInBackground({

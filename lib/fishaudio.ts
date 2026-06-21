@@ -228,8 +228,8 @@ export async function fishAudioGenerate({
   console.log(`[chunking] Total chars: ${text.length}, chunks: ${chunks.length}, batchSize: global-queue(max 15)`);
 
   const audioBuffers = await Promise.all(chunks.map((_, i) => {
-    // Disable text normalization when bracket/parenthesis tags are present — normalization can strip them
-    const chunkHasTags = /\[[^\]]+\]|\([^)]+\)/.test(chunks[i]);
+    // Disable normalization when role/speaker tags present — normalization can strip them
+    const chunkHasTags = /\[[^\]]+\]|\([^)]+\)|<\|[^|]+\|>/.test(chunks[i]);
     const payload: Record<string, unknown> = {
       text: chunks[i],
       format: "mp3",
@@ -289,7 +289,7 @@ export async function fishAudioGenerateBuffer({
   const chunks = splitTextIntoChunks(text)
   const audioBuffers = await Promise.all(
     chunks.map((chunk, i) => {
-      const chunkHasTags = /\[[^\]]+\]|\([^)]+\)/.test(chunk)
+      const chunkHasTags = /\[[^\]]+\]|\([^)]+\)|<\|[^|]+\|>/.test(chunk)
       const payload: Record<string, unknown> = {
         text: chunk,
         format: 'mp3',
