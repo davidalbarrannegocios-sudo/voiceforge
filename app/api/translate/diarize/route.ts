@@ -1,16 +1,50 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { execFile } from "child_process";
+import { writeFile, readFile, unlink } from "fs/promises";
+import { existsSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { randomUUID } from "crypto";
 
 export const runtime = "nodejs";
 export const maxDuration = 300; // 5 minutes — Deepgram is synchronous, no polling needed
 
-// Kept for backwards compatibility — other files may import this type
+// Kept for backwards compatibility — other files import this type
 export interface AssemblyAIUtterance {
   speaker: string;   // "A", "B", "C"...
   text: string;
   start: number;     // milliseconds
   end: number;       // milliseconds
   confidence?: number;
+}
+
+async function convertToWav(audioUrl: string): Promise<Buffer> {
+  const id = randomUUID();
+  const tmpInput = join(tmpdir(), `diarize_${id}_input`);
+  const tmpOutput = join(tmpdir(), `diarize_${id}_output.wav`);
+
+  try {
+    // Download audio from Hetzner
+    const res = await fetch(audioUrl);
+    if (!res.ok) throw new Error(`Failed to download audio (${res.status})`);
+    const buffer = Buffer.from(await res.arrayBuffer());
+    await writeFile(tmpInput, buffer);
+
+    // Convert to 16kHz mono WAV — best format for speech recognition
+    await new Promise<void>((resolve, reject) => {
+      execFile(
+        "ffmpeg",
+        ["-i", tmpInput, "-ar", "16000", "-ac", "1", "-f", "wav", "-y", tmpOutput],
+        (err) => (err ? reject(err) : resolve()),
+      );
+    });
+
+    return await readFile(tmpOutput);
+  } finally {
+    if (existsSync(tmpInput)) await unlink(tmpInput).catch(() => {});
+    if (existsSync(tmpOutput)) await unlink(tmpOutput).catch(() => {});
+  }
 }
 
 export async function POST(req: Request) {
@@ -38,10 +72,20 @@ export async function POST(req: Request) {
   const audioUrl = `${publicAudioBase}/${fileKey}`;
   const language = audioLanguage ?? "es";
 
-  console.log(`[diarize] Deepgram request — url=${audioUrl} lang=${language} speakersExpected=${speakersExpected ?? "auto"}`);
+  console.log(`[diarize] converting to WAV — url=${audioUrl} lang=${language} speakersExpected=${speakersExpected ?? "auto"}`);
+
+  // Convert to WAV first — Deepgram handles ogg/opus from WhatsApp poorly as-is
+  let wavBuffer: Buffer;
+  try {
+    wavBuffer = await convertToWav(audioUrl);
+    console.log(`[diarize] WAV ready — ${wavBuffer.length} bytes`);
+  } catch (e) {
+    console.error("[diarize] WAV conversion failed:", e);
+    return NextResponse.json({ error: `Error al convertir audio: ${e instanceof Error ? e.message : String(e)}` }, { status: 500 });
+  }
 
   const params = new URLSearchParams({
-    model: "nova-3",
+    model: "nova-2",   // better diarization support than nova-3
     diarize: "true",
     punctuate: "true",
     language,
@@ -71,9 +115,9 @@ export async function POST(req: Request) {
         method: "POST",
         headers: {
           "Authorization": `Token ${apiKey}`,
-          "Content-Type": "application/json",
+          "Content-Type": "audio/wav",
         },
-        body: JSON.stringify({ url: audioUrl }),
+        body: new Uint8Array(wavBuffer),
         signal: controller.signal,
       }
     );
