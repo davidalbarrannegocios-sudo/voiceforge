@@ -4157,24 +4157,33 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 
           {/* Speaker mode toggle */}
           <div className="flex p-0.5 rounded-lg gap-0.5" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}>
-            {(["single", "multi"] as const).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => {
-                  setSpeakerMode(mode);
-                  setSpeakersExpected("auto");
-                  setUtterances(null);
-                  setSpeakerCount(null);
-                  setPreviewFileKey(null);
-                  setAnalyzeStep(0);
-                  setError(null);
-                }}
-                className="flex-1 py-1.5 px-3 rounded-md text-xs font-medium transition-all"
-                style={{ background: speakerMode === mode ? "#1e1e1e" : "transparent", color: speakerMode === mode ? "#e5e7eb" : "#666", border: "none", cursor: "pointer" }}
-              >
-                {mode === "single" ? "Un hablante" : "Múltiples hablantes"}
-              </button>
-            ))}
+            {/* Single speaker — fully clickeable */}
+            <button
+              onClick={() => {
+                setSpeakerMode("single");
+                setSpeakersExpected("auto");
+                setUtterances(null);
+                setSpeakerCount(null);
+                setPreviewFileKey(null);
+                setAnalyzeStep(0);
+                setError(null);
+              }}
+              className="flex-1 py-1.5 px-3 rounded-md text-xs font-medium transition-all"
+              style={{ background: speakerMode === "single" ? "#1e1e1e" : "transparent", color: speakerMode === "single" ? "#e5e7eb" : "#666", border: "none", cursor: "pointer" }}
+            >
+              Un hablante
+            </button>
+            {/* Multi-speaker — Coming Soon, disabled */}
+            <button
+              disabled
+              className="flex-1 py-1.5 px-3 rounded-md text-xs font-medium flex items-center justify-center gap-1.5"
+              style={{ background: "transparent", color: "#444", border: "none", cursor: "not-allowed", opacity: 0.5, pointerEvents: "none" }}
+            >
+              Múltiples hablantes
+              <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.04em", background: "rgba(255,255,255,0.08)", color: "#666", borderRadius: "4px", padding: "1px 5px", whiteSpace: "nowrap" }}>
+                SOON
+              </span>
+            </button>
           </div>
 
           {/* Upload bar */}
