@@ -3687,21 +3687,12 @@ interface TTranslateTask {
   speakerCount?: number | null;
 }
 
-interface AssemblyAIUtterance {
-  speaker: string;   // "A", "B", "C"...
+interface SpeakerSegment {
+  speaker: string;
   text: string;
   start: number;
   end: number;
-  confidence?: number;
 }
-
-const SPEAKER_COLORS = [
-  { bg: "rgba(167,139,250,0.10)", border: "rgba(167,139,250,0.25)", text: "#a78bfa" },  // purple
-  { bg: "rgba(96,165,250,0.10)",  border: "rgba(96,165,250,0.25)",  text: "#60a5fa" },  // blue
-  { bg: "rgba(74,222,128,0.10)",  border: "rgba(74,222,128,0.25)",  text: "#4ade80" },  // green
-  { bg: "rgba(251,146,60,0.10)",  border: "rgba(251,146,60,0.25)",  text: "#fb923c" },  // orange
-  { bg: "rgba(251,113,133,0.10)", border: "rgba(251,113,133,0.25)", text: "#fb7185" },  // rose
-];
 
 const TRANSLATE_RETENTION: Record<string, number> = {
   free: 3, starter: 14, pro: 30, elite: 30, enterprise: 90,
@@ -3821,11 +3812,10 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 
   // Multi-speaker mode
   const [speakerMode, setSpeakerMode] = useState<"single" | "multi">("single");
-  const [utterances, setUtterances] = useState<AssemblyAIUtterance[] | null>(null);
+  const [previewSegments, setPreviewSegments] = useState<SpeakerSegment[] | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [speakerCount, setSpeakerCount] = useState<number | null>(null);
   const [previewFileKey, setPreviewFileKey] = useState<string | null>(null);
-  const [analyzeStep, setAnalyzeStep] = useState<number>(0); // 0=idle 1=uploading 2=detecting
 
   const clonedVoices = voices.filter((v) => !v.isSystem);
   const FREE_LIMIT = 2;
@@ -3926,30 +3916,27 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
     if (!file) return;
     if (file.size > 200 * 1024 * 1024) { setError("El archivo es demasiado grande. Máximo 200 MB."); return; }
     setPreviewLoading(true);
-    setAnalyzeStep(1); // uploading
     setError(null);
-    setUtterances(null);
+    setPreviewSegments(null);
     setSpeakerCount(null);
     setPreviewFileKey(null);
     try {
       const fk = await uploadInChunks(file, "Subiendo audio...");
       setPreviewFileKey(fk);
-      setAnalyzeStep(2); // detecting speakers
-      setStepLabel("Detectando hablantes...");
-      const res = await fetch("/api/translate/diarize", {
+      setStepLabel("Analizando hablantes...");
+      const res = await fetch("/api/translate/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fileKey: fk }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al detectar hablantes");
-      setUtterances(data.utterances ?? []);
-      setSpeakerCount(data.speakersDetected ?? 1);
+      if (!res.ok) throw new Error(data.error || "Error al analizar hablantes");
+      setPreviewSegments(data.segments ?? []);
+      setSpeakerCount(data.speakerCount ?? 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
       setPreviewLoading(false);
-      setAnalyzeStep(0);
       setStepLabel(null);
     }
   }
@@ -3961,8 +3948,8 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
       return;
     }
 
-    // Multi-speaker: go to analyze step first if no utterances yet
-    if (speakerMode === "multi" && !utterances) {
+    // Multi-speaker: go to analyze step first if no preview yet
+    if (speakerMode === "multi" && !previewSegments) {
       await handleAnalyze();
       return;
     }
@@ -3990,7 +3977,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
       }
 
       // ── Paso 2: crear tarea async y obtener taskId ──
-      setStepLabel(speakerMode === "multi" ? "Traduciendo segmentos en paralelo..." : t.translate.stepTranscribing);
+      setStepLabel(speakerMode === "multi" ? "Traduciendo segmentos..." : t.translate.stepTranscribing);
 
       const translateBody: Record<string, unknown> = {
         fileKey,
@@ -3998,7 +3985,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
         speakerMode,
       };
       if (speakerMode === "multi") {
-        translateBody.utterances = utterances;
+        translateBody.segments = previewSegments;
       } else {
         translateBody.referenceId = voiceSubTab === "model" ? (selectedVoice?.referenceId || undefined) : undefined;
         translateBody.referenceFileKey = referenceFileKey;
@@ -4035,7 +4022,8 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
       // ── Paso 3: polling hasta completar ──
       const STEP_LABELS = speakerMode === "multi"
         ? [
-            { after: 10000, label: "Generando audio multi-hablante..." },
+            { after: 8000,  label: "Clonando voces de referencia..." },
+            { after: 18000, label: t.translate.stepGenerating },
           ]
         : [
             { after: 9000,  label: t.translate.stepTranslating },
@@ -4082,7 +4070,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
               });
               // Reset multi-speaker preview state after successful translation
               if (speakerMode === "multi") {
-                setUtterances(null);
+                setPreviewSegments(null);
                 setSpeakerCount(null);
                 setPreviewFileKey(null);
               }
@@ -4158,10 +4146,9 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 key={mode}
                 onClick={() => {
                   setSpeakerMode(mode);
-                  setUtterances(null);
+                  setPreviewSegments(null);
                   setSpeakerCount(null);
                   setPreviewFileKey(null);
-                  setAnalyzeStep(0);
                   setError(null);
                 }}
                 className="flex-1 py-1.5 px-3 rounded-md text-xs font-medium transition-all"
@@ -4325,28 +4312,23 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           </div>
           )}
 
-          {/* Multi-speaker preview — AssemblyAI utterances by speaker */}
-          {speakerMode === "multi" && utterances && utterances.length > 0 && (
-            <div className="rounded-xl p-4 space-y-3" style={{ background: "rgba(167,139,250,0.04)", border: "1px solid rgba(167,139,250,0.15)" }}>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#a78bfa" }} />
+          {/* Multi-speaker preview */}
+          {speakerMode === "multi" && previewSegments && (
+            <div className="rounded-xl border p-4 space-y-3" style={{ background: "rgba(167,139,250,0.04)", border: "1px solid rgba(167,139,250,0.15)" }}>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full" style={{ background: "#a78bfa" }} />
                 <p className="text-sm font-semibold text-white">
-                  Se detectaron {speakerCount ?? [...new Set(utterances.map(u => u.speaker))].length} hablante{(speakerCount ?? 0) !== 1 ? "s" : ""}
+                  Se detectaron {speakerCount ?? previewSegments.length} hablante{(speakerCount ?? 0) !== 1 ? "s" : ""}
                 </p>
-                <span className="text-xs" style={{ color: "#555" }}>{utterances.length} segmentos</span>
               </div>
-              <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
-                {utterances.map((u, i) => {
-                  const speakerIdx = [...new Set(utterances.map(x => x.speaker))].sort().indexOf(u.speaker);
-                  const color = SPEAKER_COLORS[speakerIdx % SPEAKER_COLORS.length];
-                  const startSec = Math.floor(u.start / 1000);
-                  const mm = Math.floor(startSec / 60);
-                  const ss = String(startSec % 60).padStart(2, "0");
+              <div className="space-y-2">
+                {[...new Set(previewSegments.map(s => s.speaker))].map((speaker, idx) => {
+                  const segs = previewSegments.filter(s => s.speaker === speaker);
+                  const combinedText = segs.map(s => s.text).join(" ");
                   return (
-                    <div key={i} className="rounded-lg px-3 py-2 flex gap-2" style={{ background: color.bg, border: `1px solid ${color.border}` }}>
-                      <span className="text-[10px] font-bold flex-shrink-0 mt-0.5" style={{ color: color.text }}>{u.speaker}</span>
-                      <span className="text-xs leading-relaxed flex-1" style={{ color: "#d1d5db" }}>{u.text.length > 160 ? u.text.slice(0, 160) + "…" : u.text}</span>
-                      {u.start > 0 && <span className="text-[10px] flex-shrink-0 mt-0.5 font-mono" style={{ color: "#555" }}>{mm}:{ss}</span>}
+                    <div key={speaker} className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      <p className="text-xs font-semibold mb-1" style={{ color: "#a78bfa" }}>Hablante {idx + 1}</p>
+                      <p className="text-xs leading-relaxed" style={{ color: "#9ca3af" }}>{combinedText.length > 200 ? combinedText.slice(0, 200) + "…" : combinedText}</p>
                     </div>
                   );
                 })}
@@ -4368,26 +4350,15 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 
           {/* Submit */}
           <div className="flex flex-col items-end gap-1.5">
-            {/* Multi-speaker progress steps (4-step) */}
+            {/* Multi-speaker progress steps */}
             {speakerMode === "multi" && (loading || previewLoading) && (
               <div className="w-full flex items-center gap-0 mb-2 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(167,139,250,0.2)" }}>
-                {(["Subiendo audio", "Detectando hablantes", "Traduciendo", "Generando audio"] as const).map((step, i) => {
-                  // Steps 0-1 happen during analyze, steps 2-3 during translate
-                  const isDuringAnalyze = previewLoading;
-                  const isDuringTranslate = loading;
-                  const done = isDuringAnalyze
-                    ? (analyzeStep > i + 1)
-                    : isDuringTranslate
-                      ? i < 2  // first 2 steps already done
-                      : false;
-                  const active = isDuringAnalyze
-                    ? (analyzeStep === i + 1)
-                    : isDuringTranslate
-                      ? (i === 2 && !stepLabel?.includes("Generando")) || (i === 3 && stepLabel?.includes("Generando"))
-                      : false;
+                {["Transcribiendo...", "Traduciendo...", "Generando audio..."].map((step, i) => {
+                  const active = previewLoading ? i === 0 : (stepLabel?.includes("Traduciendo") ? i === 1 : stepLabel?.includes("Clonan") ? i === 1 : i === 2);
+                  const done = previewLoading ? false : (i === 0);
                   return (
-                    <div key={step} className="flex-1 py-1.5 text-center text-[10px] font-medium truncate px-1" style={{ background: done ? "rgba(167,139,250,0.18)" : active ? "rgba(167,139,250,0.08)" : "transparent", color: done ? "#a78bfa" : active ? "#c4b5fd" : "#444", borderRight: i < 3 ? "1px solid rgba(167,139,250,0.12)" : "none" }}>
-                      {done ? "✓ " : active ? "⟳ " : ""}{step}
+                    <div key={step} className="flex-1 py-1.5 text-center text-[10px] font-medium" style={{ background: done ? "rgba(167,139,250,0.15)" : active ? "rgba(167,139,250,0.08)" : "transparent", color: done ? "#a78bfa" : active ? "#c4b5fd" : "#444", borderRight: i < 2 ? "1px solid rgba(167,139,250,0.12)" : "none" }}>
+                      {done ? "✓ " : ""}{step}
                     </div>
                   );
                 })}
@@ -4407,9 +4378,9 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                   </svg>
                   {stepLabel ?? t.translate.starting}
                 </>
-              ) : speakerMode === "multi" && !utterances ? (
+              ) : speakerMode === "multi" && !previewSegments ? (
                 <>Analizar hablantes →</>
-              ) : speakerMode === "multi" && utterances ? (
+              ) : speakerMode === "multi" && previewSegments ? (
                 <>Traducir y generar audio →</>
               ) : (
                 <>Traducir →</>

@@ -154,16 +154,6 @@ export async function processTranslationInBackground(params: TranslateParams) {
   }
 }
 
-// Matches AssemblyAI utterance shape
-export interface AssemblyAIUtterance {
-  speaker: string;   // "A", "B", "C"...
-  text: string;
-  start: number;     // milliseconds
-  end: number;
-  confidence?: number;
-}
-
-// Kept for backwards-compat — the old Fish ASR preview endpoint still uses this
 export interface DiarizedSegment {
   speaker: string;
   text: string;
@@ -186,12 +176,6 @@ export function mergeSegmentsBySpeaker(segments: DiarizedSegment[]): DiarizedSeg
   return merged;
 }
 
-function buildSpeakerTokenText(utterances: (AssemblyAIUtterance & { translatedText: string })[]): string {
-  const speakers = [...new Set(utterances.map(u => u.speaker))].sort();
-  const idx: Record<string, number> = Object.fromEntries(speakers.map((s, i) => [s, i]));
-  return utterances.map(u => `<|speaker:${idx[u.speaker]}|>${u.translatedText}`).join("");
-}
-
 interface MultiSpeakerParams {
   taskId: string;
   userId: string;
@@ -202,13 +186,11 @@ interface MultiSpeakerParams {
   effectivePlan: string;
   lang: { name: string; deeplCode: string };
   user: { id: string; credits: number; extraCredits: number; plan: string; transcriptionUsed: number };
-  utterances?: AssemblyAIUtterance[];   // from AssemblyAI diarize step (preferred)
-  segments?: DiarizedSegment[];          // legacy fallback
+  segments?: DiarizedSegment[];
 }
 
 export async function processMultiSpeakerTranslationInBackground(params: MultiSpeakerParams) {
-  const { taskId, userId, fileKey, deeplKey, effectivePlan, lang } = params;
-  // fishKey not used here — Fish Audio key is read from env by fishaudio.ts
+  const { taskId, userId, fileKey, fishKey, deeplKey, effectivePlan, lang, user } = params;
 
   await prisma.translationTask.update({ where: { id: taskId }, data: { status: "processing" } });
 
@@ -222,53 +204,73 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
   }
 
   try {
-    // Step 1: Resolve utterances — prefer AssemblyAI format, fall back to DiarizedSegment
-    let utterances: AssemblyAIUtterance[];
+    // Step 1: Download and convert to MP3
+    const rawBuffer = await downloadRawFromR2(fileKey);
+    if (rawBuffer.length > 50 * 1024 * 1024) {
+      return await fail("El audio es demasiado largo. Por favor divide el audio en fragmentos de máximo 8 minutos.");
+    }
+    const mp3Buffer = await convertToMp3(rawBuffer);
 
-    if (params.utterances && params.utterances.length > 0) {
-      utterances = params.utterances;
-    } else if (params.segments && params.segments.length > 0) {
-      // Convert legacy DiarizedSegment to AssemblyAIUtterance (speaker letters A, B…)
-      const speakerMap = new Map<string, string>();
-      const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-      utterances = params.segments.map(seg => {
-        if (!speakerMap.has(seg.speaker)) speakerMap.set(seg.speaker, LETTERS[speakerMap.size] ?? seg.speaker);
-        return { speaker: speakerMap.get(seg.speaker)!, text: seg.text, start: seg.start, end: seg.end };
+    // Step 2: Get diarized segments (from preview or via ASR)
+    let segments = params.segments && params.segments.length > 0 ? params.segments : null;
+
+    if (!segments) {
+      const asrForm = new FormData();
+      asrForm.append("audio", new Blob([new Uint8Array(mp3Buffer)], { type: "audio/mpeg" }), "audio.mp3");
+      asrForm.append("identify_speakers", "true");
+
+      const asrRes = await fetch("https://api.fish.audio/v1/asr", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${fishKey}` },
+        body: asrForm,
       });
-    } else {
-      return await fail("No se proporcionaron segmentos de diarización. Usa el modo 'Un hablante' o analiza primero el audio.");
+
+      if (!asrRes.ok) {
+        const err = await asrRes.text();
+        return await fail(`Error en transcripción (${asrRes.status}): ${err}`);
+      }
+
+      const asrData = await asrRes.json();
+      const rawSegments: DiarizedSegment[] = asrData.segments ?? [];
+      const fullText: string = asrData.text?.trim() ?? "";
+
+      if (!fullText) return await fail("No se detectó texto en el audio");
+
+      segments = rawSegments.length > 0
+        ? mergeSegmentsBySpeaker(rawSegments)
+        : [{ speaker: "SPEAKER_0", text: fullText, start: 0, end: 0 }];
     }
 
-    if (!utterances.length) return await fail("No se detectaron segmentos de audio");
+    if (!segments.length) return await fail("No se detectaron segmentos de audio");
 
-    // Step 2: Translate all utterances in parallel with DeepL
+    // Step 3: Translate each segment with DeepL
     const translator = new deepl.Translator(deeplKey);
-    let translatedUtterances: (AssemblyAIUtterance & { translatedText: string })[];
+    const translatedSegments: (DiarizedSegment & { translatedText: string })[] = [];
 
-    try {
-      translatedUtterances = await Promise.all(
-        utterances.map(async u => {
-          const result = await translator.translateText(
-            u.text, null, lang.deeplCode as deepl.TargetLanguageCode
-          ) as deepl.TextResult;
-          return { ...u, translatedText: result.text.trim() };
-        })
-      );
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Error en traducción con DeepL";
-      return await fail(msg);
+    for (const seg of segments) {
+      try {
+        const result = await translator.translateText(
+          seg.text, null, lang.deeplCode as deepl.TargetLanguageCode
+        ) as deepl.TextResult;
+        translatedSegments.push({ ...seg, translatedText: result.text.trim() });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Error en traducción con DeepL";
+        return await fail(msg);
+      }
     }
 
-    // Step 3: Build Fish TTS text with <|speaker:N|> tokens
-    const ttsText = buildSpeakerTokenText(translatedUtterances);
-    const uniqueSpeakers = [...new Set(utterances.map(u => u.speaker))];
+    // Step 4: Build TTS text with speaker tokens
+    const ttsText = translatedSegments
+      .map(seg => `(${seg.speaker}) ${seg.translatedText}`)
+      .join("\n");
+
+    const fullTranscription = segments.map(s => `(${s.speaker}) ${s.text}`).join("\n");
+    const fullTranslation = translatedSegments.map(s => `(${s.speaker}) ${s.translatedText}`).join("\n");
+    const uniqueSpeakers = [...new Set(segments.map(s => s.speaker))];
     const speakerCount = uniqueSpeakers.length;
 
-    const fullTranscription = utterances.map(u => `[${u.speaker}] ${u.text}`).join("\n");
-    const fullTranslation = translatedUtterances.map(u => `[${u.speaker}] ${u.translatedText}`).join("\n");
-
-    // Step 4: Credits
-    const pureTranslatedLength = translatedUtterances.reduce((sum, u) => sum + u.translatedText.length, 0);
+    // Step 5: Credit calculation (based on pure translated content)
+    const pureTranslatedLength = translatedSegments.reduce((sum, s) => sum + s.translatedText.length, 0);
     const translateMultiplier = effectivePlan === "enterprise" ? 1.1 : 1.2;
     const charCost = Math.ceil(calculateCharCost(pureTranslatedLength) * translateMultiplier);
 
@@ -277,7 +279,7 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
 
     const totalAvailable = freshUser.credits + freshUser.extraCredits;
     if (totalAvailable < charCost) {
-      return await fail(`Créditos insuficientes. Necesitas ${charCost} créditos para ${pureTranslatedLength} caracteres.`);
+      return await fail(`Créditos insuficientes. Necesitas ${charCost} para ${pureTranslatedLength} caracteres.`);
     }
 
     const fromPlan = Math.min(freshUser.credits, charCost);
@@ -293,15 +295,7 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
     });
     log("info", "credits", "multi-speaker credits deducted", { userId, chars: pureTranslatedLength, creditsUsed: charCost, plan: effectivePlan, speakerCount }, userId);
 
-    // Step 5: Download audio + convert to MP3 for voice cloning reference
-    const rawBuffer = await downloadRawFromR2(fileKey);
-    if (rawBuffer.length > 50 * 1024 * 1024) {
-      await prisma.user.update({ where: { id: userId }, data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } } });
-      return await fail("El audio es demasiado largo. Por favor divide el audio en fragmentos de máximo 8 minutos.");
-    }
-    const mp3Buffer = await convertToMp3(rawBuffer);
-
-    // Step 6: Clone original audio as multi-speaker reference for Fish TTS S2
+    // Step 6: Clone original audio as multi-speaker reference
     let referenceId: string;
     try {
       const cloneResult = await fishAudioClone({
@@ -316,14 +310,14 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
       return await fail(msg);
     }
 
-    // Step 7: Fish Audio TTS S2 with <|speaker:N|> tokens
+    // Step 7: Fish Audio TTS with s2-pro + speaker tokens
     let audioBuffer: Buffer;
     try {
       audioBuffer = await fishAudioGenerateBuffer({
         text: ttsText,
         referenceId,
         model: "s2-pro",
-        normalize: false,
+        normalize: false, // preserve speaker tokens
       });
     } catch (e) {
       await prisma.user.update({ where: { id: userId }, data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } } });
@@ -331,7 +325,7 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
       return await fail(msg);
     }
 
-    // Step 8: Upload to Hetzner at translations/multi/{userId}/{timestamp}.mp3
+    // Step 8: Upload to translations/multi/{userId}/{timestamp}.mp3
     const timestamp = Date.now();
     const key = `translations/multi/${userId}/${timestamp}.mp3`;
     const audioUrl = await uploadToR2(key, audioBuffer, "audio/mpeg");
