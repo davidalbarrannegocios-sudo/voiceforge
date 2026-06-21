@@ -44,7 +44,8 @@ export async function POST(req: Request) {
   // Note: AssemblyAI uses lowercase 'authorization' header
   const transcriptPayload: Record<string, unknown> = {
     audio_url: audioUrl,
-    speaker_labels: true,   // CRITICAL: activates speaker diarization
+    speaker_labels: true,
+    speech_model: "best",
   };
   // If the user specified an exact speaker count, pass it to AssemblyAI to improve accuracy
   if (speakersExpected && speakersExpected >= 2) {
