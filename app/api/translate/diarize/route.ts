@@ -85,8 +85,10 @@ export async function POST(req: Request) {
   }
 
   const params = new URLSearchParams({
-    model: "nova-2",   // better diarization support than nova-3
+    model: "nova-2",
     diarize: "true",
+    utterances: "true",
+    multichannel: "false",
     punctuate: "true",
     language,
   });
