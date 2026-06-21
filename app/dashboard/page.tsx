@@ -3821,6 +3821,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 
   // Multi-speaker mode
   const [speakerMode, setSpeakerMode] = useState<"single" | "multi">("single");
+  const [speakersExpected, setSpeakersExpected] = useState<string>("auto");
   const [utterances, setUtterances] = useState<AssemblyAIUtterance[] | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [speakerCount, setSpeakerCount] = useState<number | null>(null);
@@ -3939,7 +3940,10 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
       const res = await fetch("/api/translate/diarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileKey: fk }),
+        body: JSON.stringify({
+          fileKey: fk,
+          speakersExpected: speakersExpected === "auto" ? null : parseInt(speakersExpected, 10),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al detectar hablantes");
@@ -4158,6 +4162,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 key={mode}
                 onClick={() => {
                   setSpeakerMode(mode);
+                  setSpeakersExpected("auto");
                   setUtterances(null);
                   setSpeakerCount(null);
                   setPreviewFileKey(null);
@@ -4262,6 +4267,41 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl text-xs leading-relaxed" style={{ background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.15)", color: "#9ca3af" }}>
               <span style={{ color: "#a78bfa", flexShrink: 0 }}>★</span>
               <span>En modo multi-hablante la voz se extrae directamente del audio original — no es necesario seleccionar un modelo de voz.</span>
+            </div>
+          )}
+
+          {/* Speaker count selector — only shown in multi-speaker mode */}
+          {speakerMode === "multi" && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#555", letterSpacing: "0.06em" }}>Número de hablantes</label>
+              <div style={{ position: "relative" }}>
+                <select
+                  value={speakersExpected}
+                  onChange={(e) => setSpeakersExpected(e.target.value)}
+                  style={{
+                    width: "100%",
+                    appearance: "none",
+                    WebkitAppearance: "none",
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.10)",
+                    borderRadius: "10px",
+                    padding: "8px 36px 8px 12px",
+                    color: "#e5e7eb",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    outline: "none",
+                  }}
+                >
+                  <option value="auto">Detectar automáticamente</option>
+                  <option value="2">2 hablantes</option>
+                  <option value="3">3 hablantes</option>
+                  <option value="4">4 hablantes</option>
+                  <option value="5">5 hablantes</option>
+                  <option value="6">6 hablantes</option>
+                </select>
+                <svg style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#555" }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", margin: 0 }}>Si conoces el número exacto, especificarlo mejora la precisión</p>
             </div>
           )}
           {speakerMode === "single" && (

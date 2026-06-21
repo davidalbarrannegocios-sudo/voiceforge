@@ -26,32 +26,38 @@ export async function POST(req: Request) {
 
   const publicAudioBase = process.env.HETZNER_AUDIO_PUBLIC_URL ?? "https://elitelabs-audio.fsn1.your-objectstorage.com";
 
-  let body: { fileKey: string };
+  let body: { fileKey: string; speakersExpected?: number | null };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Body JSON inválido" }, { status: 400 });
   }
 
-  const { fileKey } = body;
+  const { fileKey, speakersExpected } = body;
   if (!fileKey) return NextResponse.json({ error: "fileKey requerido" }, { status: 400 });
 
   // Build the public Hetzner URL that AssemblyAI will download
   const audioUrl = `${publicAudioBase}/${fileKey}`;
-  console.log(`[diarize] submitting to AssemblyAI — url=${audioUrl}`);
+  console.log(`[diarize] submitting to AssemblyAI — url=${audioUrl} speakersExpected=${speakersExpected ?? "auto"}`);
 
   // Step 1: Submit transcript request
   // Note: AssemblyAI uses lowercase 'authorization' header
+  const transcriptPayload: Record<string, unknown> = {
+    audio_url: audioUrl,
+    speaker_labels: true,   // CRITICAL: activates speaker diarization
+  };
+  // If the user specified an exact speaker count, pass it to AssemblyAI to improve accuracy
+  if (speakersExpected && speakersExpected >= 2) {
+    transcriptPayload.speakers_expected = speakersExpected;
+  }
+
   const submitRes = await fetch(`${ASSEMBLYAI_BASE}/v2/transcript`, {
     method: "POST",
     headers: {
       "authorization": apiKey,
       "content-type": "application/json",
     },
-    body: JSON.stringify({
-      audio_url: audioUrl,
-      speaker_labels: true,   // CRITICAL: activates speaker diarization
-    }),
+    body: JSON.stringify(transcriptPayload),
   });
 
   if (!submitRes.ok) {
