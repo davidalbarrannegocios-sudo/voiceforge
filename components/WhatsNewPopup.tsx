@@ -1,16 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLang } from "@/app/dashboard/LanguageContext";
 import { X } from "lucide-react";
-import DOMPurify from "isomorphic-dompurify";
-
-// Force safe link attributes after every sanitization pass (module-level, runs once)
-DOMPurify.addHook("afterSanitizeAttributes", (node) => {
-  if (node.tagName === "A") {
-    node.setAttribute("target", "_blank");
-    node.setAttribute("rel", "noopener noreferrer");
-  }
-});
+import type DOMPurifyType from "dompurify";
 
 interface Announcement {
   id: string;
@@ -23,8 +15,21 @@ export function WhatsNewPopup() {
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
+  // Loaded dynamically on client only to avoid bundling jsdom in the server build
+  const purifyRef = useRef<typeof DOMPurifyType | null>(null);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    import("dompurify").then(m => {
+      purifyRef.current = m.default;
+      purifyRef.current.addHook("afterSanitizeAttributes", (node) => {
+        if (node.tagName === "A") {
+          node.setAttribute("target", "_blank");
+          node.setAttribute("rel", "noopener noreferrer");
+        }
+      });
+    });
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!mounted) return;
@@ -60,10 +65,12 @@ export function WhatsNewPopup() {
   function renderContent(text: string) {
     return text.split("\n\n").map((block, i) => {
       const formatted = block.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-      const clean = DOMPurify.sanitize(formatted, {
-        ALLOWED_TAGS: ["strong", "b", "em", "i", "br", "a"],
-        ALLOWED_ATTR: ["href", "target", "rel"],
-      });
+      const clean = purifyRef.current
+        ? purifyRef.current.sanitize(formatted, {
+            ALLOWED_TAGS: ["strong", "b", "em", "i", "br", "a"],
+            ALLOWED_ATTR: ["href", "target", "rel"],
+          })
+        : formatted;
       return (
         <p
           key={i}
