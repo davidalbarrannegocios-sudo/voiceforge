@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
 
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 const S2_SYSTEM = `Eres un experto en síntesis de voz con IA. Tu tarea es añadir etiquetas de emoción a un texto para Fish Audio S2, usando la sintaxis de corchetes: [etiqueta].
 
@@ -45,6 +46,53 @@ REGLAS ESTRICTAS:
 4. Mantén el texto original exactamente igual, solo añade etiquetas al inicio de frases seleccionadas
 5. Responde SOLO con el texto modificado, sin explicaciones ni comentarios`;
 
+const MAX_CHUNK = 5000;
+
+function splitIntoChunks(text: string): string[] {
+  const chunks: string[] = [];
+  const paragraphs = text.split(/\n+/);
+  let current = "";
+
+  const flush = () => {
+    if (current.trim()) { chunks.push(current.trim()); current = ""; }
+  };
+
+  for (const para of paragraphs) {
+    if (para.length > MAX_CHUNK) {
+      // Large paragraph: split at sentence boundaries
+      flush();
+      // Split on sentence-ending punctuation followed by space or end
+      const sentences = para.split(/(?<=[.!?])\s+/);
+      let sentBuf = "";
+      for (const s of sentences) {
+        if (s.length > MAX_CHUNK) {
+          // Single sentence too long: hard split by chars
+          if (sentBuf) { chunks.push(sentBuf.trim()); sentBuf = ""; }
+          for (let i = 0; i < s.length; i += MAX_CHUNK) {
+            chunks.push(s.slice(i, i + MAX_CHUNK));
+          }
+        } else if (sentBuf && (sentBuf + " " + s).length > MAX_CHUNK) {
+          chunks.push(sentBuf.trim());
+          sentBuf = s;
+        } else {
+          sentBuf = sentBuf ? sentBuf + " " + s : s;
+        }
+      }
+      if (sentBuf.trim()) current = sentBuf;
+    } else {
+      const tentative = current ? current + "\n" + para : para;
+      if (tentative.length > MAX_CHUNK && current) {
+        flush();
+        current = para;
+      } else {
+        current = tentative;
+      }
+    }
+  }
+  flush();
+  return chunks;
+}
+
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -56,32 +104,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
   }
 
+  console.log("[auto-tag] input chars:", text.length, "model:", model);
+
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const isS2 = model !== "speech-1.5";
 
   try {
-    // Split long texts into chunks of ~3000 chars at paragraph boundaries
-    const MAX_CHUNK = 3000;
-    let chunks: string[] = [];
-    if (text.length <= MAX_CHUNK) {
-      chunks = [text];
-    } else {
-      const paragraphs = text.split(/\n+/);
-      let current = "";
-      for (const para of paragraphs) {
-        if ((current + "\n" + para).length > MAX_CHUNK && current.length > 0) {
-          chunks.push(current.trim());
-          current = para;
-        } else {
-          current = current ? current + "\n" + para : para;
-        }
-      }
-      if (current.trim()) chunks.push(current.trim());
-    }
+    const chunks = splitIntoChunks(text);
+    console.log("[auto-tag] chunks:", chunks.length, "sizes:", chunks.map(c => c.length));
 
-    // Process each chunk
     const taggedChunks: string[] = [];
-    for (const chunk of chunks) {
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
       const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 8096,
@@ -89,13 +123,24 @@ export async function POST(req: NextRequest) {
         messages: [{ role: "user", content: chunk }],
       });
       const raw = response.content[0].type === "text" ? response.content[0].text : chunk;
-      taggedChunks.push(raw);
+
+      // Safety: if model returned significantly less than input, use original chunk
+      if (raw.length < chunk.length * 0.9) {
+        console.warn(`[auto-tag] chunk ${i + 1}/${chunks.length}: output (${raw.length}) shorter than input (${chunk.length}) — using original`);
+        taggedChunks.push(chunk);
+      } else {
+        taggedChunks.push(raw);
+      }
     }
-    const raw = taggedChunks.join("\n\n");
-    const taggedText = raw
+
+    const joined = taggedChunks.join("\n\n");
+    const taggedText = joined
       .replace(/^(\[[^\]]+\])([^\s])/gm, "$1 $2")
       .replace(/^(\([^)]+\))([^\s])/gm, "$1 $2")
       .trim();
+
+    console.log("[auto-tag] input chars:", text.length, "output chars:", taggedText.length);
+
     return NextResponse.json({ taggedText });
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
