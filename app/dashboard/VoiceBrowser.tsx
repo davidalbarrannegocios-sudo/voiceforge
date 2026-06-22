@@ -745,6 +745,8 @@ function VoiceCard({
   onUse,
   isFavorite,
   onToggleFavorite,
+  userCredits,
+  previewCost,
 }: {
   voice: FishVoice;
   previewingId: string | null;
@@ -753,11 +755,14 @@ function VoiceCard({
   onUse: (voice: FishVoice) => void;
   isFavorite: boolean;
   onToggleFavorite: (voice: FishVoice) => void;
+  userCredits: number | null;
+  previewCost: number;
 }) {
   const g = getGender(voice.tags);
   const age = getAge(voice.tags);
   const isPreviewing = previewingId === voice._id;
   const isPreviewLoading = previewLoadingId === voice._id;
+  const canPreview = userCredits === null || userCredits >= previewCost;
 
   const pillStyle = { background: "rgba(255,255,255,0.05)", color: "#6b7280", border: "1px solid rgba(255,255,255,0.07)" };
   const authorName = voice.author?.nickname;
@@ -797,9 +802,10 @@ function VoiceCard({
               className="absolute inset-0 flex items-center justify-center rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             >
               <button
-                onClick={(e) => { e.stopPropagation(); onPreview(voice._id, sampleUrl); }}
-                disabled={isPreviewLoading}
-                style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: isPreviewLoading ? "not-allowed" : "pointer" }}
+                onClick={(e) => { e.stopPropagation(); if (canPreview) onPreview(voice._id, sampleUrl); }}
+                disabled={isPreviewLoading || !canPreview}
+                title={!canPreview ? "Sin créditos suficientes" : undefined}
+                style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: (isPreviewLoading || !canPreview) ? "not-allowed" : "pointer", opacity: !canPreview ? 0.4 : 1 }}
               >
                 {isPreviewLoading ? (
                   <div style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
@@ -858,6 +864,11 @@ function VoiceCard({
             </div>
           )}
         </div>
+
+        {/* Preview credit notice */}
+        <p className="text-xs text-white/40 mt-2">
+          ~{previewCost} créditos · Se descontarán de tu saldo
+        </p>
       </div>
 
     </div>
@@ -906,6 +917,13 @@ export function VoiceBrowser({
   const tierHasMoreRef = useRef(true);
   const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
   const [previewingId, setPreviewingId] = useState<string | null>(null);
+  const [userCredits, setUserCredits] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("/api/credits").then(r => r.json()).then(d => {
+      setUserCredits((d.characters ?? 0) + (d.extraCredits ?? 0));
+    }).catch(() => {});
+  }, []);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [filters, setFilters] = useState<AdvancedFilters>(EMPTY_FILTERS);
   const [appliedFilters, setAppliedFilters] = useState<AdvancedFilters>(EMPTY_FILTERS);
@@ -1236,7 +1254,9 @@ export function VoiceBrowser({
 
   useEffect(() => () => { audioRef.current?.pause(); }, []);
 
-  async function handlePreview(id: string, sampleUrl?: string) {
+  const PREVIEW_COST = 57;
+
+  async function handlePreview(id: string, _sampleUrl?: string) {
     if (previewingId === id) {
       audioRef.current?.pause();
       setPreviewingId(null);
@@ -1245,40 +1265,12 @@ export function VoiceBrowser({
     audioRef.current?.pause();
     setPreviewingId(null);
 
-    // Fast path: try each URL in order — sampleUrl may be stale (localStorage), so always try CDN too
-    const tryPlay = (url: string) =>
-      new Promise<boolean>((resolve) => {
-        const audio = new Audio(url);
-        let done = false;
-        const finish = (ok: boolean) => {
-          if (!done) { done = true; clearTimeout(tid); resolve(ok); }
-        };
-        audio.onerror = () => finish(false);
-        audio.onplaying = () => {
-          audio.onended = () => setPreviewingId(null);
-          audioRef.current = audio;
-          setPreviewingId(id);
-          finish(true);
-        };
-        audio.play().catch(() => finish(false));
-        // Only abort the URL attempt if playback hasn't started within 3 s
-        const tid = setTimeout(() => { audio.src = ""; finish(false); }, 3000);
-      });
-
-    const fastUrls = [
-      ...(sampleUrl ? [sampleUrl] : []),
-      `https://cdn.fish.audio/voices/${id}.mp3`,
-    ];
-    for (const url of fastUrls) {
-      if (await tryPlay(url)) return;
-    }
-
-    // Slow path: generate on-demand via TTS
     setPreviewLoadingId(id);
     try {
-      const res = await fetch(`/api/voice-preview/${id}`);
+      const res = await fetch(`/api/voice-preview/${id}`, { method: "POST" });
       if (!res.ok) return;
       const { audioUrl } = await res.json();
+      setUserCredits(prev => prev !== null ? Math.max(0, prev - PREVIEW_COST) : null);
       const audio = new Audio(getProxiedUrl(audioUrl));
       audio.onended = () => setPreviewingId(null);
       audioRef.current = audio;
@@ -1578,6 +1570,8 @@ export function VoiceBrowser({
                         onUse={handleVoiceClick}
                         isFavorite={favoriteIds.has(voice._id)}
                         onToggleFavorite={toggleFavorite}
+                        userCredits={userCredits}
+                        previewCost={PREVIEW_COST}
                       />
                     ))}
                   </div>
@@ -1668,6 +1662,8 @@ export function VoiceBrowser({
                         onUse={handleVoiceClick}
                         isFavorite={favoriteIds.has(voice._id)}
                         onToggleFavorite={toggleFavorite}
+                        userCredits={userCredits}
+                        previewCost={PREVIEW_COST}
                       />
                     ))}
                   </div>
@@ -1690,6 +1686,8 @@ export function VoiceBrowser({
                       onUse={handleVoiceClick}
                       isFavorite={favoriteIds.has(voice._id)}
                       onToggleFavorite={toggleFavorite}
+                      userCredits={userCredits}
+                      previewCost={PREVIEW_COST}
                     />
                   ))}
                 </div>
@@ -1743,6 +1741,8 @@ export function VoiceBrowser({
                           onUse={handleVoiceClick}
                           isFavorite={true}
                           onToggleFavorite={toggleFavorite}
+                          userCredits={userCredits}
+                          previewCost={PREVIEW_COST}
                         />
                       );
                     })}
@@ -1798,6 +1798,8 @@ export function VoiceBrowser({
                           onUse={() => voice.fishAudioModelId && handleSelect({ referenceId: voice.fishAudioModelId, name: voice.name, isCloned: true })}
                           isFavorite={false}
                           onToggleFavorite={() => {}}
+                          userCredits={userCredits}
+                          previewCost={PREVIEW_COST}
                         />
                       );
                     })}
