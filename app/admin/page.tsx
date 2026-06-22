@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { CustomSelect } from "@/components/CustomSelect";
+import { EliteLoader } from "@/components/ui/EliteLoader";
 import {
   LayoutDashboard, Users, CreditCard, Mic2, Ticket, Handshake, Wallet,
   BarChart2, Settings, RefreshCw, Check, X, AlertTriangle, Play, Pause,
@@ -373,7 +374,7 @@ function UserDetailModal({
           </button>
         </div>
         {loading ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "#555555" }}>Cargando...</div>
+          <div style={{ padding: "3rem", display: "flex", justifyContent: "center" }}><EliteLoader size={40} /></div>
         ) : detail ? (
           <div style={{ padding: "1.5rem" }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.75rem", marginBottom: "1.5rem" }}>
@@ -415,7 +416,7 @@ function UserDetailModal({
             <div style={{ marginBottom: "1.5rem", padding: "1rem", borderRadius: "0.75rem", background: "#000000", border: "1px solid rgba(255,255,255,0.08)" }}>
               <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#555555", marginBottom: "0.75rem" }}>Estado Stripe</p>
               {stripeSubLoading ? (
-                <p style={{ color: "#555555", fontSize: "0.8rem" }}>Consultando Stripe...</p>
+                <div style={{ display: "flex", justifyContent: "center", padding: "0.5rem 0" }}><EliteLoader size={24} /></div>
               ) : stripeSub?.noSubscription ? (
                 <p style={{ color: "#555555", fontSize: "0.8rem" }}>Sin suscripción en Stripe</p>
               ) : stripeSub?.error ? (
@@ -533,7 +534,7 @@ function UserDetailModal({
             )}
             {modalTab === "pagos" && (
               paymentsLoading ? (
-                <div style={{ padding: "2rem", textAlign: "center", color: "#555555" }}>Consultando Stripe...</div>
+                <div style={{ padding: "2rem", display: "flex", justifyContent: "center" }}><EliteLoader size={40} /></div>
               ) : payments === null ? null : payments.length === 0 ? (
                 <p style={{ color: "#555555", fontSize: "0.85rem", padding: "1rem 0" }}>Sin pagos registrados.</p>
               ) : (
@@ -571,7 +572,7 @@ function UserDetailModal({
             )}
             {modalTab === "accesos" && (
               sessionsLoading ? (
-                <div style={{ padding: "2rem", textAlign: "center", color: "#555555" }}>Cargando accesos...</div>
+                <div style={{ padding: "2rem", display: "flex", justifyContent: "center" }}><EliteLoader size={40} /></div>
               ) : !sessions || sessions.length === 0 ? (
                 <p style={{ color: "#555555", fontSize: "0.85rem", padding: "1rem 0" }}>Sin accesos registrados.</p>
               ) : (
@@ -2177,7 +2178,7 @@ function ConfigSection() {
   if (cfgLoading) return (
     <div>
       <p style={{ fontWeight: 800, fontSize: "20px", marginBottom: "20px", color: "#fff" }}>Configuración</p>
-      <div style={{ ...card, textAlign: "center", padding: "3rem", color: "rgba(255,255,255,0.25)" }}>Cargando configuración...</div>
+      <div style={{ ...card, display: "flex", justifyContent: "center", padding: "3rem" }}><EliteLoader size={40} /></div>
     </div>
   );
 
@@ -2396,7 +2397,7 @@ function LogsSection() {
 
       {/* Content */}
       {loading ? (
-        <div style={{ ...card, textAlign: "center", padding: "3rem", color: "rgba(255,255,255,0.25)" }}>Cargando logs...</div>
+        <div style={{ ...card, display: "flex", justifyContent: "center", padding: "3rem" }}><EliteLoader size={40} /></div>
       ) : logs.length === 0 ? (
         <div style={{ ...card, textAlign: "center", padding: "3rem", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
           <Monitor size={32} style={{ color: "rgba(255,255,255,0.08)" }} />
@@ -2458,7 +2459,7 @@ function CookiesSection() {
   return (
     <div>
       <h2 style={{color:'#fff',marginBottom:'1.5rem',fontSize:'1.25rem',fontWeight:700}}>Consentimientos de Cookies</h2>
-      {loading ? <p style={{color:'#888'}}>Cargando...</p> : (
+      {loading ? <div style={{display:'flex',justifyContent:'center',padding:'2rem'}}><EliteLoader size={32} /></div> : (
         <div style={{background:'#111111',border:'1px solid rgba(255,255,255,0.08)',borderRadius:'1rem',padding:0,overflow:'hidden'}}>
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:'13px'}}>
             <thead>
@@ -3047,7 +3048,7 @@ export default function AdminPage() {
   if (!isLoaded || authorized === null)
     return (
       <div style={{ minHeight: "100vh", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "#888888" }}>Cargando...</p>
+        <EliteLoader size={48} />
       </div>
     );
 
