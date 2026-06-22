@@ -262,7 +262,7 @@ function UserDetailModal({
       toast(e instanceof Error ? e.message : "Error cargando detalle", false);
       onClose();
     } finally { setLoading(false); }
-  }, [userId, toast, onClose]);
+  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchPayments = useCallback(async () => {
     setPaymentsLoading(true);
@@ -274,7 +274,7 @@ function UserDetailModal({
     } catch (e) {
       toast(e instanceof Error ? e.message : "Error cargando pagos", false);
     } finally { setPaymentsLoading(false); }
-  }, [userId, toast]);
+  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchStripeSub = useCallback(async () => {
     setStripeSubLoading(true);
