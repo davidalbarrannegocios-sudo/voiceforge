@@ -1488,25 +1488,24 @@ function GenerateTab({
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 {plan !== "free" && (
-                  <div className="relative flex items-center" style={{ opacity: (previewing === "loading" || !canPreview) ? 0.6 : 1 }}>
+                  <div
+                    className="relative flex items-center"
+                    style={{ borderRadius: "8px", overflow: "hidden", border: `1px solid ${previewing === "playing" ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`, background: previewing === "playing" ? "rgba(239,68,68,0.1)" : "rgba(255,255,255,0.05)", opacity: (previewing === "loading" || !canPreview) ? 0.6 : 1 }}
+                  >
                     <button
                       onClick={handlePreview}
                       disabled={previewing === "loading" || !canPreview}
                       title={!canPreview ? "Sin créditos suficientes" : undefined}
-                      style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 12px", borderRadius: "8px 0 0 8px", fontSize: "12px", fontWeight: 500, background: previewing === "playing" ? "rgba(239,68,68,0.1)" : "rgba(255,255,255,0.05)", border: `1px solid ${previewing === "playing" ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`, borderRight: "none", color: previewing === "playing" ? "#f87171" : (previewing === "loading" || !canPreview) ? "#6b7280" : "#aaaaaa", cursor: (previewing === "loading" || !canPreview) ? "not-allowed" : "pointer" }}
+                      style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 12px", fontSize: "12px", fontWeight: 500, color: previewing === "playing" ? "#f87171" : (previewing === "loading" || !canPreview) ? "#6b7280" : "#aaaaaa", cursor: (previewing === "loading" || !canPreview) ? "not-allowed" : "pointer", background: "transparent", border: "none" }}
                     >
                       {previewing === "loading" && <svg className="animate-spin" style={{ width: "12px", height: "12px" }} fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
                       {previewing === "idle" && `▶ ${t.generate.preview}`}
                       {previewing === "loading" && t.generate.generating}
                       {previewing === "playing" && t.generate.previewStop}
                     </button>
-                    <div className="relative group/preview-info">
-                      <button
-                        style={{ display: "flex", alignItems: "center", padding: "8px 8px", borderRadius: "0 8px 8px 0", background: previewing === "playing" ? "rgba(239,68,68,0.1)" : "rgba(255,255,255,0.05)", border: `1px solid ${previewing === "playing" ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`, borderLeft: "1px solid rgba(255,255,255,0.1)", cursor: "default" }}
-                        tabIndex={-1}
-                      >
-                        <Info style={{ width: "11px", height: "11px", color: "rgba(255,255,255,0.3)" }} />
-                      </button>
+                    <div style={{ width: "1px", alignSelf: "stretch", background: "rgba(255,255,255,0.12)", margin: "6px 0" }} />
+                    <div className="relative group/preview-info" style={{ padding: "8px 8px", cursor: "default", display: "flex", alignItems: "center" }}>
+                      <Info style={{ width: "11px", height: "11px", color: "rgba(255,255,255,0.3)" }} />
                       <div className="hidden group-hover/preview-info:block" style={{ position: "absolute", bottom: "calc(100% + 6px)", right: 0, background: "rgba(0,0,0,0.9)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "5px 9px", fontSize: "11px", color: "rgba(255,255,255,0.65)", whiteSpace: "nowrap", pointerEvents: "none", zIndex: 50 }}>
                         Se descontarán {TTS_PREVIEW_COST} créditos de tu saldo
                       </div>
