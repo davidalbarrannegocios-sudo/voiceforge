@@ -1488,21 +1488,26 @@ function GenerateTab({
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 {plan !== "free" && (
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <div className="relative flex items-center" style={{ opacity: (previewing === "loading" || !canPreview) ? 0.6 : 1 }}>
                     <button
                       onClick={handlePreview}
                       disabled={previewing === "loading" || !canPreview}
                       title={!canPreview ? "Sin créditos suficientes" : undefined}
-                      style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: 500, background: previewing === "playing" ? "rgba(239,68,68,0.1)" : "rgba(255,255,255,0.05)", border: `1px solid ${previewing === "playing" ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`, color: previewing === "playing" ? "#f87171" : (previewing === "loading" || !canPreview) ? "#6b7280" : "#aaaaaa", cursor: (previewing === "loading" || !canPreview) ? "not-allowed" : "pointer", opacity: (previewing === "loading" || !canPreview) ? 0.6 : 1 }}
+                      style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 12px", borderRadius: "8px 0 0 8px", fontSize: "12px", fontWeight: 500, background: previewing === "playing" ? "rgba(239,68,68,0.1)" : "rgba(255,255,255,0.05)", border: `1px solid ${previewing === "playing" ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`, borderRight: "none", color: previewing === "playing" ? "#f87171" : (previewing === "loading" || !canPreview) ? "#6b7280" : "#aaaaaa", cursor: (previewing === "loading" || !canPreview) ? "not-allowed" : "pointer" }}
                     >
                       {previewing === "loading" && <svg className="animate-spin" style={{ width: "12px", height: "12px" }} fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
                       {previewing === "idle" && `▶ ${t.generate.preview}`}
                       {previewing === "loading" && t.generate.generating}
                       {previewing === "playing" && t.generate.previewStop}
                     </button>
-                    <div style={{ position: "relative", display: "inline-flex" }} className="group/preview-info">
-                      <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.25)", cursor: "default", lineHeight: 1, userSelect: "none" }}>ℹ</span>
-                      <div className="group-hover/preview-info:opacity-100" style={{ opacity: 0, position: "absolute", bottom: "calc(100% + 6px)", left: "50%", transform: "translateX(-50%)", background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "5px 9px", fontSize: "11px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap", pointerEvents: "none", transition: "opacity 0.15s", zIndex: 50 }}>
+                    <div className="relative group/preview-info">
+                      <button
+                        style={{ display: "flex", alignItems: "center", padding: "8px 8px", borderRadius: "0 8px 8px 0", background: previewing === "playing" ? "rgba(239,68,68,0.1)" : "rgba(255,255,255,0.05)", border: `1px solid ${previewing === "playing" ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`, borderLeft: "1px solid rgba(255,255,255,0.1)", cursor: "default" }}
+                        tabIndex={-1}
+                      >
+                        <Info style={{ width: "11px", height: "11px", color: "rgba(255,255,255,0.3)" }} />
+                      </button>
+                      <div className="hidden group-hover/preview-info:block" style={{ position: "absolute", bottom: "calc(100% + 6px)", right: 0, background: "rgba(0,0,0,0.9)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "5px 9px", fontSize: "11px", color: "rgba(255,255,255,0.65)", whiteSpace: "nowrap", pointerEvents: "none", zIndex: 50 }}>
                         Se descontarán {TTS_PREVIEW_COST} créditos de tu saldo
                       </div>
                     </div>
