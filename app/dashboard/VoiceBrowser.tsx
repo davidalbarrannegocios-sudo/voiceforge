@@ -6,6 +6,7 @@ import { FREE_VOICE_IDS } from "@/lib/free-voice-ids";
 import { getProxiedUrl } from "@/lib/downloadAudio";
 import { CustomSelect } from "@/components/CustomSelect";
 import { VoiceAvatarGenerative } from "@/components/VoiceAvatarGenerative";
+import { EliteLoader } from "@/components/ui/EliteLoader";
 
 export interface SelectedVoice {
   referenceId: string;
@@ -1560,10 +1561,9 @@ export function VoiceBrowser({
 
                 {/* Voice list */}
                 {loading && publicVoices.length === 0 ? (
-                  <div className="rounded-xl overflow-hidden mt-2" style={{ border: "1px solid #1a1a1a" }}>
-                    {Array.from({ length: 8 }).map((_, i) => (
-                      <div key={i} className="h-[72px] animate-pulse" style={{ background: i % 2 === 0 ? "#0d0d0d" : "#0b0b0b", borderBottom: "1px solid #111111" }} />
-                    ))}
+                  <div className="flex flex-col items-center justify-center py-16 gap-4">
+                    <EliteLoader size={40} />
+                    <p className="text-white/40 text-sm">Cargando voces...</p>
                   </div>
                 ) : displayedVoices.length === 0 ? (
                   <p className="text-center py-16 text-sm" style={{ color: "#666666" }}>No se encontraron voces</p>
