@@ -1,12 +1,13 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { calculateCharCost } from "@/lib/utils";
+import { TTS_PREVIEW_TEXT } from "@/lib/preview-config";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const FISH_AUDIO_BASE = "https://api.fish.audio";
-const PREVIEW_TEXT = "Hola, esta es una muestra de cómo sonaré con tu configuración actual.";
 
 // In-memory rate limit: userId → last preview timestamp
 const lastPreview = new Map<string, number>();
@@ -31,16 +32,46 @@ export async function POST(req: Request) {
   }
   lastPreview.set(user.id, now);
 
+  // Credit check and deduction
+  const charCost = calculateCharCost(TTS_PREVIEW_TEXT.length);
+  const totalAvailable = user.credits + user.extraCredits;
+
+  console.log("[preview] userId:", user.id, "chars:", TTS_PREVIEW_TEXT.length, "disponibles:", totalAvailable);
+
+  if (totalAvailable < charCost) {
+    console.log("[preview] créditos insuficientes:", totalAvailable, "<", charCost);
+    return NextResponse.json(
+      { error: "Créditos insuficientes", charCost, charsAvailable: totalAvailable },
+      { status: 402 }
+    );
+  }
+
+  const fromPlan = Math.min(user.credits, charCost);
+  const fromExtra = charCost - fromPlan;
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { credits: { decrement: fromPlan }, extraCredits: { decrement: fromExtra } },
+  });
+
+  console.log("[preview] créditos descontados:", charCost, "(plan:", fromPlan, "+ extra:", fromExtra, ")");
+
   const { reference_id, prosody } = await req.json() as {
     reference_id?: string;
     prosody?: { speed?: number; volume?: number; pitch?: number };
   };
 
   const apiKey = process.env.FISH_AUDIO_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: "API key no configurada" }, { status: 500 });
+  if (!apiKey) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } },
+    });
+    return NextResponse.json({ error: "API key no configurada" }, { status: 500 });
+  }
 
   const payload: Record<string, unknown> = {
-    text: PREVIEW_TEXT,
+    text: TTS_PREVIEW_TEXT,
     format: "mp3",
     mp3_bitrate: 128,
     normalize: true,
@@ -71,6 +102,11 @@ export async function POST(req: Request) {
   });
 
   if (!res.ok) {
+    // Refund credits on Fish Audio error
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } },
+    });
     const errText = await res.text();
     console.error(`[preview] Fish Audio error (${res.status}):`, errText);
     return NextResponse.json({ error: "Error al generar la pre-escucha" }, { status: 502 });

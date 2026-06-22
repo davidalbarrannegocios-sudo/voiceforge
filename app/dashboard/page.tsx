@@ -29,6 +29,7 @@ import { downloadAudio, getProxiedUrl, getAudioBlobUrl, generateAudioFilename } 
 import { SupportChat } from "@/components/SupportChat";
 import { EliteTextPanel } from "@/components/EliteTextPanel";
 import { WhatsNewPopup } from "@/components/WhatsNewPopup";
+import { TTS_PREVIEW_COST } from "@/lib/preview-config";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface Voice {
@@ -906,6 +907,8 @@ function GenerateTab({
   onTurboVoiceChange,
   plan,
   externalText,
+  credits,
+  extraCredits,
 }: {
   voices: Voice[];
   onGenerated: () => void;
@@ -915,6 +918,8 @@ function GenerateTab({
   onTurboVoiceChange: (v: SelectedVoice | null) => void;
   plan: string;
   externalText?: string | null;
+  credits: number | null;
+  extraCredits: number;
 }) {
   const [text, setText] = useState("");
 
@@ -1271,6 +1276,8 @@ function GenerateTab({
     }
   }
 
+  const canPreview = credits === null || (credits + extraCredits) >= TTS_PREVIEW_COST;
+
   async function handlePreview() {
     if (previewing === "playing") {
       previewAudioRef.current?.pause();
@@ -1300,9 +1307,10 @@ function GenerateTab({
       const audio = new Audio(url);
       previewAudioRef.current = audio;
       setPreviewing("playing");
-      audio.onended = () => { setPreviewing("idle"); URL.revokeObjectURL(url); previewAudioRef.current = null; };
+      audio.onended = () => { setPreviewing("idle"); URL.revokeObjectURL(url); previewAudioRef.current = null; onGenerated(); };
       audio.onerror = () => { setPreviewing("idle"); URL.revokeObjectURL(url); previewAudioRef.current = null; };
       audio.play();
+      onGenerated();
     } catch {
       setFormError("Error al generar la pre-escucha");
       setPreviewing("idle");
@@ -1480,16 +1488,22 @@ function GenerateTab({
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 {plan !== "free" && (
-                  <button
-                    onClick={handlePreview}
-                    disabled={previewing === "loading"}
-                    style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: 500, background: previewing === "playing" ? "rgba(239,68,68,0.1)" : "rgba(255,255,255,0.05)", border: `1px solid ${previewing === "playing" ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`, color: previewing === "playing" ? "#f87171" : previewing === "loading" ? "#6b7280" : "#aaaaaa", cursor: previewing === "loading" ? "not-allowed" : "pointer", opacity: previewing === "loading" ? 0.6 : 1 }}
-                  >
-                    {previewing === "loading" && <svg className="animate-spin" style={{ width: "12px", height: "12px" }} fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
-                    {previewing === "idle" && `▶ ${t.generate.preview}`}
-                    {previewing === "loading" && t.generate.generating}
-                    {previewing === "playing" && t.generate.previewStop}
-                  </button>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "3px" }}>
+                    <button
+                      onClick={handlePreview}
+                      disabled={previewing === "loading" || !canPreview}
+                      title={!canPreview ? "Sin créditos suficientes" : undefined}
+                      style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: 500, background: previewing === "playing" ? "rgba(239,68,68,0.1)" : "rgba(255,255,255,0.05)", border: `1px solid ${previewing === "playing" ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`, color: previewing === "playing" ? "#f87171" : (previewing === "loading" || !canPreview) ? "#6b7280" : "#aaaaaa", cursor: (previewing === "loading" || !canPreview) ? "not-allowed" : "pointer", opacity: (previewing === "loading" || !canPreview) ? 0.6 : 1 }}
+                    >
+                      {previewing === "loading" && <svg className="animate-spin" style={{ width: "12px", height: "12px" }} fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
+                      {previewing === "idle" && `▶ ${t.generate.preview}`}
+                      {previewing === "loading" && t.generate.generating}
+                      {previewing === "playing" && t.generate.previewStop}
+                    </button>
+                    <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", margin: 0 }}>
+                      ~{TTS_PREVIEW_COST} créditos · Se descontarán de tu saldo
+                    </p>
+                  </div>
                 )}
                 <button
                   onClick={handleGenerate}
@@ -7211,6 +7225,8 @@ export default function DashboardPage() {
                 onTurboVoiceChange={setSelectedTurboVoice}
                 plan={effectivePlan}
                 externalText={pendingNarrateText}
+                credits={credits}
+                extraCredits={extraCredits}
               />
             )}
             {activeTab === "voices" && (
