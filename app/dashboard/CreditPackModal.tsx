@@ -254,7 +254,7 @@ export function CreditPackModal({
             </div>
           ) : !clientSecret || !paymentIntentId || !packInfo ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", padding: "32px 0" }}>
-              <EliteLoader size={36} />
+              <EliteLoader />
               <p style={{ fontSize: "13px", color: "#888888" }}>{t.billing.preparingPayment}</p>
             </div>
           ) : (

@@ -375,7 +375,7 @@ function UserDetailModal({
         </div>
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <EliteLoader size={40} />
+            <EliteLoader />
           </div>
         ) : detail ? (
           <div style={{ padding: "1.5rem" }}>
@@ -418,7 +418,7 @@ function UserDetailModal({
             <div style={{ marginBottom: "1.5rem", padding: "1rem", borderRadius: "0.75rem", background: "#000000", border: "1px solid rgba(255,255,255,0.08)" }}>
               <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#555555", marginBottom: "0.75rem" }}>Estado Stripe</p>
               {stripeSubLoading ? (
-                <div style={{ display: "flex", justifyContent: "center", padding: "0.5rem 0" }}><EliteLoader size={24} /></div>
+                <div style={{ display: "flex", justifyContent: "center", padding: "0.5rem 0" }}><EliteLoader /></div>
               ) : stripeSub?.noSubscription ? (
                 <p style={{ color: "#555555", fontSize: "0.8rem" }}>Sin suscripción en Stripe</p>
               ) : stripeSub?.error ? (
@@ -536,7 +536,7 @@ function UserDetailModal({
             )}
             {modalTab === "pagos" && (
               paymentsLoading ? (
-                <div style={{ padding: "2rem", display: "flex", justifyContent: "center" }}><EliteLoader size={40} /></div>
+                <div style={{ padding: "2rem", display: "flex", justifyContent: "center" }}><EliteLoader /></div>
               ) : payments === null ? null : payments.length === 0 ? (
                 <p style={{ color: "#555555", fontSize: "0.85rem", padding: "1rem 0" }}>Sin pagos registrados.</p>
               ) : (
@@ -574,7 +574,7 @@ function UserDetailModal({
             )}
             {modalTab === "accesos" && (
               sessionsLoading ? (
-                <div style={{ padding: "2rem", display: "flex", justifyContent: "center" }}><EliteLoader size={40} /></div>
+                <div style={{ padding: "2rem", display: "flex", justifyContent: "center" }}><EliteLoader /></div>
               ) : !sessions || sessions.length === 0 ? (
                 <p style={{ color: "#555555", fontSize: "0.85rem", padding: "1rem 0" }}>Sin accesos registrados.</p>
               ) : (
@@ -2180,7 +2180,7 @@ function ConfigSection() {
   if (cfgLoading) return (
     <div>
       <p style={{ fontWeight: 800, fontSize: "20px", marginBottom: "20px", color: "#fff" }}>Configuración</p>
-      <div style={{ ...card, display: "flex", justifyContent: "center", padding: "3rem" }}><EliteLoader size={40} /></div>
+      <div style={{ ...card, display: "flex", justifyContent: "center", padding: "3rem" }}><EliteLoader /></div>
     </div>
   );
 
@@ -2399,7 +2399,7 @@ function LogsSection() {
 
       {/* Content */}
       {loading ? (
-        <div style={{ ...card, display: "flex", justifyContent: "center", padding: "3rem" }}><EliteLoader size={40} /></div>
+        <div style={{ ...card, display: "flex", justifyContent: "center", padding: "3rem" }}><EliteLoader /></div>
       ) : logs.length === 0 ? (
         <div style={{ ...card, textAlign: "center", padding: "3rem", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
           <Monitor size={32} style={{ color: "rgba(255,255,255,0.08)" }} />
@@ -2461,7 +2461,7 @@ function CookiesSection() {
   return (
     <div>
       <h2 style={{color:'#fff',marginBottom:'1.5rem',fontSize:'1.25rem',fontWeight:700}}>Consentimientos de Cookies</h2>
-      {loading ? <div style={{display:'flex',justifyContent:'center',padding:'2rem'}}><EliteLoader size={32} /></div> : (
+      {loading ? <div style={{display:'flex',justifyContent:'center',padding:'2rem'}}><EliteLoader /></div> : (
         <div style={{background:'#111111',border:'1px solid rgba(255,255,255,0.08)',borderRadius:'1rem',padding:0,overflow:'hidden'}}>
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:'13px'}}>
             <thead>
@@ -3050,7 +3050,7 @@ export default function AdminPage() {
   if (!isLoaded || authorized === null)
     return (
       <div style={{ minHeight: "100vh", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <EliteLoader size={48} />
+        <EliteLoader />
       </div>
     );
 

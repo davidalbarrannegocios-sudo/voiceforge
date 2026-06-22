@@ -375,7 +375,7 @@ export function PaymentModal({
           </div>
         ) : !clientSecret || !customerId ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", padding: "72px 0" }}>
-            <EliteLoader size={36} />
+            <EliteLoader />
             <p style={{ fontSize: "13px", color: "#888888" }}>{t.billing.preparingPayment}</p>
           </div>
         ) : (

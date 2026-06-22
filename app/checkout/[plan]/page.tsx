@@ -859,7 +859,7 @@ function CheckoutContent() {
   if (!clientSecret || (!isCreditPack && !customerId)) {
     return (
       <div style={{ minHeight: "100vh", background: "#000000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px" }}>
-        <EliteLoader size={48} />
+        <EliteLoader />
         <p style={{ fontSize: "14px", color: "#555555" }}>Preparando formulario de pago...</p>
       </div>
     );
@@ -888,7 +888,7 @@ export default function CheckoutPage() {
     <Suspense
       fallback={
         <div style={{ minHeight: "100vh", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <EliteLoader size={48} />
+          <EliteLoader />
         </div>
       }
     >

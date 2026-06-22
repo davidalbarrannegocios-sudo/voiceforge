@@ -1,4 +1,4 @@
-export function EliteLoader({ size = 24 }: { size?: number }) {
+export function EliteLoader({ size = 20 }: { size?: number }) {
   const bars = [0.45, 1, 0.65, 1, 0.45]
 
   return (

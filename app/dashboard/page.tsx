@@ -1889,7 +1889,7 @@ function GenerateTab({
         <div className="fixed inset-0 z-[9999] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div className="relative bg-[#111] border border-white/10 rounded-2xl px-8 py-6 flex flex-col items-center gap-3 shadow-2xl">
-            <EliteLoader size={40} />
+            <EliteLoader />
             <p className="text-sm text-white/70 font-medium">Importando archivo...</p>
             <p className="text-xs text-white/30">Extrayendo texto</p>
           </div>
@@ -2974,7 +2974,7 @@ function HistoryTab({ plan }: { plan: string }) {
       {/* Scrollable body */}
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
         {loading ? (
-          <div style={{ display: "flex", justifyContent: "center", paddingTop: 80 }}><EliteLoader size={32} /></div>
+          <div style={{ display: "flex", justifyContent: "center", paddingTop: 80 }}><EliteLoader /></div>
         ) : groups.length === 0 ? (
           <div style={{ textAlign: "center", paddingTop: 80 }}>
             <Clock size={40} style={{ margin: "0 auto 12px", color: "rgba(255,255,255,0.08)" }} />
@@ -6036,7 +6036,7 @@ function TeamTab({
   if (loading) {
     return (
       <div className="py-16 flex justify-center">
-        <EliteLoader size={28} />
+        <EliteLoader />
       </div>
     );
   }
@@ -6487,7 +6487,7 @@ function TeamTab({
             {/* Invoices table */}
             {invoicesLoading ? (
               <div className="py-10 flex justify-center">
-                <EliteLoader size={28} />
+                <EliteLoader />
               </div>
             ) : invoices.length === 0 ? (
               <div className="py-12 text-center">

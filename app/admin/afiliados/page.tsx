@@ -551,7 +551,7 @@ export default function AdminAfiliados() {
 
         {/* Table */}
         {loading ? (
-          <div style={{ display: "flex", justifyContent: "center", padding: 60 }}><EliteLoader size={40} /></div>
+          <div style={{ display: "flex", justifyContent: "center", padding: 60 }}><EliteLoader /></div>
         ) : filtered.length === 0 ? (
           <div style={{ ...s.card, padding: 40, textAlign: "center", color: "#555" }}>
             No hay usuarios que coincidan con los filtros.

@@ -133,7 +133,7 @@ export default function AccountPage() {
 
   if (!isLoaded) {
     return (
-      <div style={{ padding: "40px 32px", display: "flex", justifyContent: "center" }}><EliteLoader size={40} /></div>
+      <div style={{ padding: "40px 32px", display: "flex", justifyContent: "center" }}><EliteLoader /></div>
     );
   }
 
