@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { EliteLoader } from '@/components/ui/EliteLoader'
 import {
   Play, Pause, Download, Loader2, X, Upload, Plus, Music2, GripVertical, Mic, ChevronDown,
 } from 'lucide-react'
@@ -827,7 +828,7 @@ export function DialogueEditor({ userVoices, plan, credits, onCreditsUpdate, lan
         <div className="fixed inset-0 z-[9999] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div className="relative bg-[#111] border border-white/10 rounded-2xl px-8 py-6 flex flex-col items-center gap-3 shadow-2xl">
-            <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            <EliteLoader size={40} />
             <p className="text-sm text-white/70 font-medium">{t.dialogue.importingFile}</p>
             <p className="text-xs text-white/30">{t.dialogue.extractingText}</p>
           </div>

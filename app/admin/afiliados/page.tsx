@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { EliteLoader } from "@/components/ui/EliteLoader";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, Copy, Check, RefreshCw, Edit2, Eye, Gift, Star,
@@ -550,7 +551,7 @@ export default function AdminAfiliados() {
 
         {/* Table */}
         {loading ? (
-          <div style={{ textAlign: "center", padding: 60, color: "#555" }}>Cargando...</div>
+          <div style={{ display: "flex", justifyContent: "center", padding: 60 }}><EliteLoader size={40} /></div>
         ) : filtered.length === 0 ? (
           <div style={{ ...s.card, padding: 40, textAlign: "center", color: "#555" }}>
             No hay usuarios que coincidan con los filtros.

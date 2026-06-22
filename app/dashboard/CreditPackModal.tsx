@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { EliteLoader } from "@/components/ui/EliteLoader";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { X, Zap } from "lucide-react";
@@ -253,11 +254,8 @@ export function CreditPackModal({
             </div>
           ) : !clientSecret || !paymentIntentId || !packInfo ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", padding: "32px 0" }}>
-              <svg style={{ color: "#aaaaaa" }} className="animate-spin h-7 w-7" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              <p style={{ fontSize: "13px", color: "#3a3a52" }}>{t.billing.preparingPayment}</p>
+              <EliteLoader size={36} />
+              <p style={{ fontSize: "13px", color: "#888888" }}>{t.billing.preparingPayment}</p>
             </div>
           ) : (
             <Elements stripe={stripePromise} options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { EliteLoader } from "@/components/ui/EliteLoader";
 import { User, Shield, Check, X } from "lucide-react";
 import { useLang } from "@/app/dashboard/LanguageContext";
 import { CustomSelect } from "@/components/CustomSelect";
@@ -132,7 +133,7 @@ export default function MiCuentaPage() {
 
   if (!isLoaded) {
     return (
-      <div style={{ padding: "40px 32px", color: "#6b7280" }}>Cargando...</div>
+      <div style={{ padding: "40px 32px", display: "flex", justifyContent: "center" }}><EliteLoader size={40} /></div>
     );
   }
 

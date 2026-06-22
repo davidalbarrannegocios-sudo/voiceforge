@@ -374,7 +374,10 @@ function UserDetailModal({
           </button>
         </div>
         {loading ? (
-          <div style={{ padding: "3rem", display: "flex", justifyContent: "center" }}><EliteLoader size={40} /></div>
+          <div className="flex flex-col items-center justify-center py-16 gap-4">
+            <EliteLoader size={40} />
+            <p className="text-white/40 text-sm">Cargando usuario...</p>
+          </div>
         ) : detail ? (
           <div style={{ padding: "1.5rem" }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.75rem", marginBottom: "1.5rem" }}>

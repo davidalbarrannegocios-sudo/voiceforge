@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import { EliteLoader } from "@/components/ui/EliteLoader";
 import { useParams, useRouter } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -308,12 +309,9 @@ function ApiRechargeContent() {
 
   if (!clientSecret) {
     return (
-      <div style={{ minHeight: "100vh", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "16px" }}>
-        <svg style={{ color: "#444444" }} className="animate-spin h-8 w-8" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-        <p style={{ fontSize: "14px", color: "#444444" }}>Preparando formulario de pago...</p>
+      <div style={{ minHeight: "100vh", background: "#000000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px" }}>
+        <EliteLoader size={48} />
+        <p style={{ fontSize: "14px", color: "#555555" }}>Preparando formulario de pago...</p>
       </div>
     );
   }
@@ -332,10 +330,7 @@ export default function ApiRechargePage() {
     <Suspense
       fallback={
         <div style={{ minHeight: "100vh", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <svg style={{ color: "#444444" }} className="animate-spin h-8 w-8" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
+          <EliteLoader size={48} />
         </div>
       }
     >

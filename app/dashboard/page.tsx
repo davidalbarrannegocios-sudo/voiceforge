@@ -8,6 +8,7 @@ import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare, Loader, FileText, TrendingUp, ExternalLink, Filter, Shield, Music } from "lucide-react";
 import { DialogueEditor } from "@/components/DialogueEditor";
+import { EliteLoader } from "@/components/ui/EliteLoader";
 import { ImageVideoEditor, type ImageHistoryItem } from "@/components/ImageVideoEditor";
 import { Image as ImageIcon } from "lucide-react";
 import { calculateCharCost, formatDate } from "@/lib/utils";
@@ -1888,7 +1889,7 @@ function GenerateTab({
         <div className="fixed inset-0 z-[9999] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div className="relative bg-[#111] border border-white/10 rounded-2xl px-8 py-6 flex flex-col items-center gap-3 shadow-2xl">
-            <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            <EliteLoader size={40} />
             <p className="text-sm text-white/70 font-medium">Importando archivo...</p>
             <p className="text-xs text-white/30">Extrayendo texto</p>
           </div>
@@ -2973,7 +2974,7 @@ function HistoryTab({ plan }: { plan: string }) {
       {/* Scrollable body */}
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
         {loading ? (
-          <div style={{ textAlign: "center", paddingTop: 80, color: "#444444", fontSize: 14 }}>Cargando...</div>
+          <div style={{ display: "flex", justifyContent: "center", paddingTop: 80 }}><EliteLoader size={32} /></div>
         ) : groups.length === 0 ? (
           <div style={{ textAlign: "center", paddingTop: 80 }}>
             <Clock size={40} style={{ margin: "0 auto 12px", color: "rgba(255,255,255,0.08)" }} />
@@ -6035,7 +6036,7 @@ function TeamTab({
   if (loading) {
     return (
       <div className="py-16 flex justify-center">
-        <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+        <EliteLoader size={28} />
       </div>
     );
   }
@@ -6486,7 +6487,7 @@ function TeamTab({
             {/* Invoices table */}
             {invoicesLoading ? (
               <div className="py-10 flex justify-center">
-                <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                <EliteLoader size={28} />
               </div>
             ) : invoices.length === 0 ? (
               <div className="py-12 text-center">
