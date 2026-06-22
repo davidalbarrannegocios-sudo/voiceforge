@@ -374,9 +374,8 @@ function UserDetailModal({
           </button>
         </div>
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-4">
+          <div className="flex items-center justify-center py-16">
             <EliteLoader size={40} />
-            <p className="text-white/40 text-sm">Cargando usuario...</p>
           </div>
         ) : detail ? (
           <div style={{ padding: "1.5rem" }}>

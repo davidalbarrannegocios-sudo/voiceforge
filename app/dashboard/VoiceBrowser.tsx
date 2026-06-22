@@ -1561,9 +1561,8 @@ export function VoiceBrowser({
 
                 {/* Voice list */}
                 {loading && publicVoices.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 gap-4">
+                  <div className="flex items-center justify-center py-16">
                     <EliteLoader size={40} />
-                    <p className="text-white/40 text-sm">Cargando voces...</p>
                   </div>
                 ) : displayedVoices.length === 0 ? (
                   <p className="text-center py-16 text-sm" style={{ color: "#666666" }}>No se encontraron voces</p>
@@ -1589,7 +1588,7 @@ export function VoiceBrowser({
                   <>
                     {loading && publicVoices.length > 0 && (
                       <div className="flex justify-center mt-4 pb-2">
-                        <span className="text-sm" style={{ color: "#666666" }}>Cargando más voces...</span>
+                        <EliteLoader size={28} />
                       </div>
                     )}
                     {!loading && debouncedSearch && (
