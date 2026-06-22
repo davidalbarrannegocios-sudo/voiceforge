@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { fishAudioGenerate } from "@/lib/fishaudio";
 import { calculateCharCost } from "@/lib/utils";
 
-export const PREVIEW_TEXT = "Hola, esta es una muestra de mi voz. Espero que te guste.";
-export const PREVIEW_COST = calculateCharCost(PREVIEW_TEXT.length);
+const PREVIEW_TEXT = "Hola, esta es una muestra de mi voz. Espero que te guste.";
+const PREVIEW_COST = calculateCharCost(PREVIEW_TEXT.length);
 
 export async function POST(
   _req: Request,
