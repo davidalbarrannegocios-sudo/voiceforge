@@ -79,7 +79,12 @@ export async function GET(
 
     return NextResponse.json({ user, generations, creditsByType });
   } catch (e) {
-    console.error("[admin/users/generations]", e);
+    const isClerkError = typeof e === "object" && e !== null && (e as { clerkError?: boolean }).clerkError === true;
+    if (isClerkError) {
+      console.error("[admin/users/generations] Clerk API error:", JSON.stringify(e, null, 2));
+      return NextResponse.json({ error: "Error de autenticación temporal" }, { status: 503 });
+    }
+    console.error("[admin/users/generations] Error:", e);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }
