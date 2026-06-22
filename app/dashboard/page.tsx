@@ -1488,7 +1488,7 @@ function GenerateTab({
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 {plan !== "free" && (
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "3px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <button
                       onClick={handlePreview}
                       disabled={previewing === "loading" || !canPreview}
@@ -1500,9 +1500,12 @@ function GenerateTab({
                       {previewing === "loading" && t.generate.generating}
                       {previewing === "playing" && t.generate.previewStop}
                     </button>
-                    <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", margin: 0 }}>
-                      ~{TTS_PREVIEW_COST} créditos · Se descontarán de tu saldo
-                    </p>
+                    <div style={{ position: "relative", display: "inline-flex" }} className="group/preview-info">
+                      <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.25)", cursor: "default", lineHeight: 1, userSelect: "none" }}>ℹ</span>
+                      <div className="group-hover/preview-info:opacity-100" style={{ opacity: 0, position: "absolute", bottom: "calc(100% + 6px)", left: "50%", transform: "translateX(-50%)", background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "5px 9px", fontSize: "11px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap", pointerEvents: "none", transition: "opacity 0.15s", zIndex: 50 }}>
+                        Se descontarán {TTS_PREVIEW_COST} créditos de tu saldo
+                      </div>
+                    </div>
                   </div>
                 )}
                 <button
