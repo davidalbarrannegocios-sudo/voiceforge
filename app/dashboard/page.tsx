@@ -1490,30 +1490,29 @@ function GenerateTab({
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 {plan !== "free" && (
                   <div
-                    className="relative flex items-center"
-                    style={{ borderRadius: "8px", overflow: "hidden", border: `1px solid ${previewing === "playing" ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`, background: previewing === "playing" ? "rgba(239,68,68,0.1)" : "rgba(255,255,255,0.05)", opacity: (previewing === "loading" || !canPreview) ? 0.6 : 1 }}
+                    style={{ display: "flex", alignItems: "center", borderRadius: "8px", border: `1px solid ${previewing === "playing" ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`, background: previewing === "playing" ? "rgba(239,68,68,0.1)" : "rgba(255,255,255,0.05)", opacity: (previewing === "loading" || !canPreview) ? 0.6 : 1 }}
                   >
                     <button
                       onClick={handlePreview}
                       disabled={previewing === "loading" || !canPreview}
                       title={!canPreview ? "Sin créditos suficientes" : undefined}
-                      style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 12px", fontSize: "12px", fontWeight: 500, color: previewing === "playing" ? "#f87171" : (previewing === "loading" || !canPreview) ? "#6b7280" : "#aaaaaa", cursor: (previewing === "loading" || !canPreview) ? "not-allowed" : "pointer", background: "transparent", border: "none" }}
+                      style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 12px", fontSize: "12px", fontWeight: 500, color: previewing === "playing" ? "#f87171" : (previewing === "loading" || !canPreview) ? "#6b7280" : "#aaaaaa", cursor: (previewing === "loading" || !canPreview) ? "not-allowed" : "pointer", background: "transparent", border: "none", borderRadius: "8px 0 0 8px" }}
                     >
                       {previewing === "loading" && <svg className="animate-spin" style={{ width: "12px", height: "12px" }} fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
                       {previewing === "idle" && `▶ ${t.generate.preview}`}
                       {previewing === "loading" && t.generate.generating}
                       {previewing === "playing" && t.generate.previewStop}
                     </button>
-                    <div style={{ width: "1px", alignSelf: "stretch", background: "rgba(255,255,255,0.12)", margin: "6px 0" }} />
+                    <div style={{ width: "1px", alignSelf: "stretch", background: "rgba(255,255,255,0.12)", margin: "6px 0", flexShrink: 0 }} />
                     <div
-                      style={{ padding: "8px 8px", cursor: "default", display: "flex", alignItems: "center", position: "relative" }}
+                      style={{ position: "relative", padding: "8px 8px", cursor: "help", display: "flex", alignItems: "center" }}
                       onMouseEnter={() => setShowPreviewTooltip(true)}
                       onMouseLeave={() => setShowPreviewTooltip(false)}
                     >
-                      <Info style={{ width: "11px", height: "11px", color: "rgba(255,255,255,0.3)" }} />
+                      <Info style={{ width: "11px", height: "11px", color: "rgba(255,255,255,0.35)" }} />
                       {showPreviewTooltip && (
-                        <div style={{ position: "absolute", bottom: "calc(100% + 6px)", right: 0, background: "#18181b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "6px 10px", fontSize: "11px", color: "rgba(255,255,255,0.7)", whiteSpace: "nowrap", pointerEvents: "none", zIndex: 50, boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
-                          Se descontarán {TTS_PREVIEW_COST} créditos de tu saldo al hacer preview
+                        <div style={{ position: "absolute", bottom: "calc(100% + 8px)", right: 0, zIndex: 9999, background: "#111111", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", width: "220px", fontSize: "12px", color: "rgba(255,255,255,0.7)", whiteSpace: "normal", pointerEvents: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.6)", lineHeight: 1.4 }}>
+                          El preview usa un texto de muestra. Se descontarán {TTS_PREVIEW_COST} créditos de tu saldo.
                         </div>
                       )}
                     </div>
