@@ -967,6 +967,7 @@ function GenerateTab({
   const [minimaxPitch, setMinimaxPitch] = useState(0);
   const [minimaxVolume, setMinimaxVolume] = useState(1.0);
   const [previewing, setPreviewing] = useState<"idle" | "loading" | "playing">("idle");
+  const [showPreviewTooltip, setShowPreviewTooltip] = useState(false);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [isAutoTagging, setIsAutoTagging] = useState(false);
@@ -1504,11 +1505,17 @@ function GenerateTab({
                       {previewing === "playing" && t.generate.previewStop}
                     </button>
                     <div style={{ width: "1px", alignSelf: "stretch", background: "rgba(255,255,255,0.12)", margin: "6px 0" }} />
-                    <div className="relative group/preview-info" style={{ padding: "8px 8px", cursor: "default", display: "flex", alignItems: "center" }}>
+                    <div
+                      style={{ padding: "8px 8px", cursor: "default", display: "flex", alignItems: "center", position: "relative" }}
+                      onMouseEnter={() => setShowPreviewTooltip(true)}
+                      onMouseLeave={() => setShowPreviewTooltip(false)}
+                    >
                       <Info style={{ width: "11px", height: "11px", color: "rgba(255,255,255,0.3)" }} />
-                      <div className="hidden group-hover/preview-info:block" style={{ position: "absolute", bottom: "calc(100% + 6px)", right: 0, background: "rgba(0,0,0,0.9)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "5px 9px", fontSize: "11px", color: "rgba(255,255,255,0.65)", whiteSpace: "nowrap", pointerEvents: "none", zIndex: 50 }}>
-                        Se descontarán {TTS_PREVIEW_COST} créditos de tu saldo
-                      </div>
+                      {showPreviewTooltip && (
+                        <div style={{ position: "absolute", bottom: "calc(100% + 6px)", right: 0, background: "#18181b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "6px 10px", fontSize: "11px", color: "rgba(255,255,255,0.7)", whiteSpace: "nowrap", pointerEvents: "none", zIndex: 50, boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
+                          Se descontarán {TTS_PREVIEW_COST} créditos de tu saldo al hacer preview
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
