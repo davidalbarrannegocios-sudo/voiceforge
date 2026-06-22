@@ -1,13 +1,15 @@
-export function EliteLoader({ size = 32 }: { size?: number }) {
+export function EliteLoader({ size = 40 }: { size?: number }) {
+  const bars = [0.45, 1, 1, 0.45];
+
   return (
-    <div className="flex items-end gap-[3px]" style={{ height: size }}>
-      {[0.4, 0.7, 1, 0.7, 0.4].map((scale, i) => (
+    <div className="flex items-center gap-[12%]" style={{ height: size, width: size * 1.4 }}>
+      {bars.map((scale, i) => (
         <div
           key={i}
-          className="w-[4px] rounded-full bg-white animate-equalizer"
+          className="flex-1 rounded-full bg-white animate-equalizer"
           style={{
             height: `${size * scale}px`,
-            animationDelay: `${i * 0.1}s`,
+            animationDelay: `${i * 0.15}s`,
           }}
         />
       ))}

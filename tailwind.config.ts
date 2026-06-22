@@ -10,12 +10,12 @@ const config: Config = {
     extend: {
       keyframes: {
         equalizer: {
-          "0%, 100%": { transform: "scaleY(0.4)" },
+          "0%, 100%": { transform: "scaleY(0.5)" },
           "50%": { transform: "scaleY(1)" },
         },
       },
       animation: {
-        equalizer: "equalizer 0.8s ease-in-out infinite",
+        equalizer: "equalizer 0.7s ease-in-out infinite",
       },
       colors: {
         background: "var(--background)",
