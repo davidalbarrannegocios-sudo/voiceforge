@@ -24,7 +24,10 @@ export async function POST(
   const charCost = PREVIEW_COST;
   const totalAvailable = user.credits + user.extraCredits;
 
+  console.log('[voice-preview] userId:', user.id, 'chars:', PREVIEW_TEXT.length, 'disponibles:', totalAvailable);
+
   if (totalAvailable < charCost) {
+    console.log('[voice-preview] créditos insuficientes:', totalAvailable, '<', charCost);
     return NextResponse.json(
       { error: "Créditos insuficientes", charCost, charsAvailable: totalAvailable },
       { status: 402 }
@@ -38,6 +41,8 @@ export async function POST(
     where: { id: user.id },
     data: { credits: { decrement: fromPlan }, extraCredits: { decrement: fromExtra } },
   });
+
+  console.log('[voice-preview] créditos descontados:', charCost, '(plan:', fromPlan, '+ extra:', fromExtra, ')');
 
   const cached = await prisma.voicePreview.findUnique({ where: { voiceId } });
   if (cached) {
