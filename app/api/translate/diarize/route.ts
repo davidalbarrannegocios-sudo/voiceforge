@@ -1,14 +1,9 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { execFile } from "child_process";
-import { writeFile, readFile, unlink } from "fs/promises";
-import { existsSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
-import { randomUUID } from "crypto";
+import { prisma } from "@/lib/prisma";
 
+// No maxDuration — returns immediately with jobId; transcription runs as background task
 export const runtime = "nodejs";
-export const maxDuration = 300; // 5 minutes — Deepgram is synchronous, no polling needed
 
 // Kept for backwards compatibility — other files import this type
 export interface AssemblyAIUtterance {
@@ -19,31 +14,118 @@ export interface AssemblyAIUtterance {
   confidence?: number;
 }
 
-async function convertToWav(audioUrl: string): Promise<Buffer> {
-  const id = randomUUID();
-  const tmpInput = join(tmpdir(), `diarize_${id}_input`);
-  const tmpOutput = join(tmpdir(), `diarize_${id}_output.wav`);
+async function processDiarizeInBackground(
+  jobId: string,
+  fileKey: string,
+  language: string,
+  apiKey: string,
+  publicAudioBase: string,
+) {
+  await prisma.job.update({ where: { id: jobId }, data: { status: "processing" } });
 
   try {
-    // Download audio from Hetzner
+    const audioUrl = `${publicAudioBase}/${fileKey}`;
+    console.log(`[diarize] bg downloading audio — url=${audioUrl} lang=${language} jobId=${jobId}`);
+
     const res = await fetch(audioUrl);
     if (!res.ok) throw new Error(`Failed to download audio (${res.status})`);
-    const buffer = Buffer.from(await res.arrayBuffer());
-    await writeFile(tmpInput, buffer);
+    const audioBuffer = Buffer.from(await res.arrayBuffer());
+    console.log(`[diarize] bg audio ready — ${audioBuffer.length} bytes jobId=${jobId}`);
 
-    // Convert to 16kHz mono WAV — best format for speech recognition
-    await new Promise<void>((resolve, reject) => {
-      execFile(
-        "ffmpeg",
-        ["-i", tmpInput, "-ar", "16000", "-ac", "1", "-f", "wav", "-y", tmpOutput],
-        (err) => (err ? reject(err) : resolve()),
-      );
-    });
+    const ext = fileKey.split(".").pop()?.toLowerCase() ?? "ogg";
+    const mimeMap: Record<string, string> = {
+      ogg: "audio/ogg",
+      mp3: "audio/mpeg",
+      mp4: "audio/mp4",
+      m4a: "audio/mp4",
+      wav: "audio/wav",
+      webm: "audio/webm",
+    };
+    const mimeType = mimeMap[ext] ?? "audio/ogg";
 
-    return await readFile(tmpOutput);
-  } finally {
-    if (existsSync(tmpInput)) await unlink(tmpInput).catch(() => {});
-    if (existsSync(tmpOutput)) await unlink(tmpOutput).catch(() => {});
+    const form = new FormData();
+    form.append("file", new Blob([new Uint8Array(audioBuffer)], { type: mimeType }), `audio.${ext}`);
+    form.append("model", "gpt-4o-transcribe-diarize");
+    form.append("response_format", "diarized_json");
+    form.append("chunking_strategy", "auto");
+    form.append("language", language);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10 * 60 * 1000); // 10 min
+
+    let data: {
+      text?: string;
+      segments?: Array<{
+        type: string;
+        text: string;
+        speaker: string;
+        start: number;
+        end: number;
+        id: string;
+      }>;
+    };
+
+    try {
+      const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}` },
+        body: form,
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`OpenAI error (${response.status}): ${err}`);
+      }
+
+      data = await response.json();
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    const segments = data?.segments;
+
+    if (!segments || segments.length === 0) {
+      console.warn(`[diarize] bg OpenAI devolvió segments vacío jobId=${jobId}`);
+      const result = JSON.stringify({
+        utterances: [{ speaker: "A", text: "", start: 0, end: 0 }],
+        speakerCount: 1,
+        speakersDetected: 1,
+      });
+      await prisma.job.update({ where: { id: jobId }, data: { status: "done", audioUrl: result } });
+      return;
+    }
+
+    // Group consecutive segments from the same speaker into utterances
+    const utterances: AssemblyAIUtterance[] = [];
+    let current: AssemblyAIUtterance | null = null;
+
+    for (const seg of segments) {
+      const speaker = seg.speaker ?? "A";
+      if (!current || current.speaker !== speaker) {
+        if (current) utterances.push(current);
+        current = {
+          speaker,
+          text: seg.text.trim(),
+          start: Math.round(seg.start * 1000),
+          end: Math.round(seg.end * 1000),
+        };
+      } else {
+        current.text += " " + seg.text.trim();
+        current.end = Math.round(seg.end * 1000);
+      }
+    }
+    if (current) utterances.push(current);
+
+    const speakerCount = new Set(utterances.map(u => u.speaker)).size;
+    console.log(`[diarize] bg done — ${utterances.length} utterances, ${speakerCount} speakers jobId=${jobId}`);
+
+    const result = JSON.stringify({ utterances, speakerCount, speakersDetected: speakerCount });
+    await prisma.job.update({ where: { id: jobId }, data: { status: "done", audioUrl: result } });
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error(`[diarize] bg error jobId=${jobId}:`, errMsg);
+    await prisma.job.update({ where: { id: jobId }, data: { status: "error", error: errMsg } });
   }
 }
 
@@ -51,10 +133,10 @@ export async function POST(req: Request) {
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const apiKey = process.env.DEEPGRAM_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    console.error("[diarize] DEEPGRAM_API_KEY no configurada");
-    return NextResponse.json({ error: "DEEPGRAM_API_KEY no configurada" }, { status: 500 });
+    console.error("[diarize] OPENAI_API_KEY no configurada");
+    return NextResponse.json({ error: "OPENAI_API_KEY no configurada" }, { status: 500 });
   }
 
   const publicAudioBase = process.env.HETZNER_AUDIO_PUBLIC_URL ?? "https://elitelabs-audio.fsn1.your-objectstorage.com";
@@ -66,115 +148,30 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Body JSON inválido" }, { status: 400 });
   }
 
-  const { fileKey, speakersExpected, audioLanguage } = body;
+  // speakersExpected kept in signature for frontend compatibility — OpenAI detects speakers automatically
+  const { fileKey, speakersExpected: _speakersExpected, audioLanguage } = body;
   if (!fileKey) return NextResponse.json({ error: "fileKey requerido" }, { status: 400 });
 
-  const audioUrl = `${publicAudioBase}/${fileKey}`;
   const language = audioLanguage ?? "es";
 
-  console.log(`[diarize] converting to WAV — url=${audioUrl} lang=${language} speakersExpected=${speakersExpected ?? "auto"}`);
+  const dbUser = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
+  if (!dbUser) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
-  // Convert to WAV first — Deepgram handles ogg/opus from WhatsApp poorly as-is
-  let wavBuffer: Buffer;
-  try {
-    wavBuffer = await convertToWav(audioUrl);
-    console.log(`[diarize] WAV ready — ${wavBuffer.length} bytes`);
-  } catch (e) {
-    console.error("[diarize] WAV conversion failed:", e);
-    return NextResponse.json({ error: `Error al convertir audio: ${e instanceof Error ? e.message : String(e)}` }, { status: 500 });
-  }
-
-  const params = new URLSearchParams({
-    model: "nova-2",
-    diarize: "true",
-    utterances: "true",
-    multichannel: "false",
-    punctuate: "true",
-    language,
+  const job = await prisma.job.create({
+    data: {
+      userId: dbUser.id,
+      status: "pending",
+      text: fileKey,
+      voiceId: "diarize",
+      voiceName: "diarize",
+      creditsUsed: 0,
+    },
   });
 
-  if (speakersExpected && speakersExpected >= 2) {
-    params.append("diarize_version", "3");
-  }
+  console.log(`[diarize] created jobId=${job.id} fileKey=${fileKey} lang=${language}`);
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+  processDiarizeInBackground(job.id, fileKey, language, apiKey, publicAudioBase)
+    .catch(err => console.error("[diarize] unhandled bg error:", err));
 
-  let data: {
-    results?: {
-      channels?: Array<{
-        alternatives?: Array<{
-          words?: Array<{ word: string; speaker: number; start: number; end: number }>;
-        }>;
-      }>;
-    };
-  };
-
-  try {
-    const response = await fetch(
-      `https://api.deepgram.com/v1/listen?${params.toString()}`,
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Token ${apiKey}`,
-          "Content-Type": "audio/wav",
-        },
-        body: new Uint8Array(wavBuffer),
-        signal: controller.signal,
-      }
-    );
-
-    if (!response.ok) {
-      const err = await response.text();
-      console.error(`[diarize] Deepgram error (${response.status}): ${err}`);
-      return NextResponse.json({ error: `Deepgram error (${response.status}): ${err}` }, { status: 502 });
-    }
-
-    data = await response.json();
-  } catch (e) {
-    clearTimeout(timeoutId);
-    if ((e as Error).name === "AbortError") {
-      return NextResponse.json({ error: "Deepgram tardó demasiado. Intenta con un audio más corto." }, { status: 504 });
-    }
-    throw e;
-  }
-  clearTimeout(timeoutId);
-
-  const words = data?.results?.channels?.[0]?.alternatives?.[0]?.words;
-
-  if (!words || words.length === 0) {
-    console.warn("[diarize] Deepgram devolvió words vacío:", JSON.stringify(data?.results?.channels?.[0]?.alternatives?.[0]));
-    return NextResponse.json({
-      utterances: [{ speaker: "A", text: "", start: 0, end: 0 }],
-      speakerCount: 1,
-      speakersDetected: 1,
-    });
-  }
-
-  // Group consecutive words from the same speaker into utterances
-  const utterances: AssemblyAIUtterance[] = [];
-  let current: AssemblyAIUtterance | null = null;
-
-  for (const word of words) {
-    const speakerLetter = String.fromCharCode(65 + (word.speaker ?? 0)); // 0→A, 1→B, 2→C
-    if (!current || current.speaker !== speakerLetter) {
-      if (current) utterances.push(current);
-      current = {
-        speaker: speakerLetter,
-        text: word.word,
-        start: Math.round(word.start * 1000),
-        end: Math.round(word.end * 1000),
-      };
-    } else {
-      current.text += " " + word.word;
-      current.end = Math.round(word.end * 1000);
-    }
-  }
-  if (current) utterances.push(current);
-
-  const speakerCount = new Set(utterances.map(u => u.speaker)).size;
-
-  console.log(`[diarize] done — ${utterances.length} utterances, ${speakerCount} speakers`);
-
-  return NextResponse.json({ utterances, speakerCount, speakersDetected: speakerCount });
+  return NextResponse.json({ jobId: job.id });
 }

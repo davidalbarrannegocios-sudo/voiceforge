@@ -3964,7 +3964,9 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
       const fk = await uploadInChunks(file, "Subiendo audio...");
       setPreviewFileKey(fk);
       setAnalyzeStep(2);
-      setStepLabel("Detectando hablantes con AssemblyAI...");
+      setStepLabel("Analizando hablantes...");
+
+      // Fire-and-forget: POST returns immediately with jobId
       const res = await fetch("/api/translate/diarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -3973,10 +3975,36 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           speakersExpected: speakersExpected === "auto" ? null : parseInt(speakersExpected, 10),
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al detectar hablantes");
-      setUtterances(data.utterances ?? []);
-      setSpeakerCount(data.speakerCount ?? data.speakersDetected ?? 1);
+      const startData = await res.json();
+      if (!res.ok) throw new Error(startData.error || "Error al iniciar diarización");
+      const { jobId } = startData as { jobId: string };
+
+      // Poll every 3 seconds until done, error, or 10-minute timeout
+      const deadline = Date.now() + 10 * 60 * 1000;
+      await new Promise<void>((resolve, reject) => {
+        const poll = async () => {
+          if (Date.now() > deadline) {
+            reject(new Error("La detección de hablantes tardó demasiado. Intenta con un audio más corto."));
+            return;
+          }
+          try {
+            const statusRes = await fetch(`/api/translate/diarize/status/${jobId}`);
+            const statusData = await statusRes.json();
+            if (statusData.status === "done") {
+              setUtterances(statusData.utterances ?? []);
+              setSpeakerCount(statusData.speakerCount ?? statusData.speakersDetected ?? 1);
+              resolve();
+            } else if (statusData.status === "error") {
+              reject(new Error(statusData.error || "Error al detectar hablantes"));
+            } else {
+              setTimeout(poll, 3000);
+            }
+          } catch (e) {
+            reject(e);
+          }
+        };
+        setTimeout(poll, 3000);
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
@@ -4201,16 +4229,13 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             >
               Un hablante
             </button>
-            {/* Multi-speaker — Coming Soon, disabled */}
+            {/* Multi-speaker — Active */}
             <button
-              disabled
+              onClick={() => setSpeakerMode("multi")}
               className="flex-1 py-1.5 px-3 rounded-md text-xs font-medium flex items-center justify-center gap-1.5"
-              style={{ background: "transparent", color: "#444", border: "none", cursor: "not-allowed", opacity: 0.5, pointerEvents: "none" }}
+              style={{ background: speakerMode === "multi" ? "#1e1e1e" : "transparent", color: speakerMode === "multi" ? "#e5e7eb" : "#666", border: "none", cursor: "pointer" }}
             >
               Múltiples hablantes
-              <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.04em", background: "rgba(255,255,255,0.08)", color: "#666", borderRadius: "4px", padding: "1px 5px", whiteSpace: "nowrap" }}>
-                SOON
-              </span>
             </button>
           </div>
 

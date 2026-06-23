@@ -277,11 +277,13 @@ export async function fishAudioGenerate({
 export async function fishAudioGenerateBuffer({
   text,
   referenceId,
+  references,
   model = 'speech-1.6',
   normalize = true,
 }: {
   text: string
   referenceId?: string
+  references?: Array<{ type: "model_id" | "audio"; value: string }>
   model?: string
   normalize?: boolean
 }): Promise<Buffer> {
@@ -298,7 +300,11 @@ export async function fishAudioGenerateBuffer({
         latency: 'balanced',
         chunk_length: 200,
       }
-      if (referenceId) payload.reference_id = referenceId
+      if (references && references.length > 0) {
+        payload.references = references
+      } else if (referenceId) {
+        payload.reference_id = referenceId
+      }
       return withSlot(() => fetchChunk(apiKey, payload, toFishModel(model), i, chunks.length))
     }),
   )
