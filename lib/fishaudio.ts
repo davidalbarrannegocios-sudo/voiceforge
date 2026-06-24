@@ -301,7 +301,7 @@ export async function fishAudioGenerateBuffer({
         chunk_length: 200,
       }
       if (references && references.length > 0) {
-        payload.references = references
+        payload.reference_id = references.map(r => r.value)
       } else if (referenceId) {
         payload.reference_id = referenceId
       }
