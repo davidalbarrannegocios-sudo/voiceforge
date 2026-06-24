@@ -4,11 +4,14 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
-type Lang = "es" | "en";
+type Lang = "es" | "en" | "de" | "fr" | "pt";
 
 const LANGUAGES: { code: Lang; flag: string; label: string }[] = [
   { code: "es", flag: "https://flagcdn.com/w20/es.png", label: "Español" },
   { code: "en", flag: "https://flagcdn.com/w20/us.png", label: "English" },
+  { code: "de", flag: "https://flagcdn.com/w20/de.png", label: "Deutsch" },
+  { code: "fr", flag: "https://flagcdn.com/w20/fr.png", label: "Français" },
+  { code: "pt", flag: "https://flagcdn.com/w20/pt.png", label: "Português" },
 ];
 
 // ─── Content types ────────────────────────────────────────────────────────────
@@ -1070,7 +1073,760 @@ const en: TermsContent = {
   ],
 };
 
-const CONTENT: Record<Lang, TermsContent> = { es, en };
+// ─── DEUTSCH ──────────────────────────────────────────────────────────────────
+
+const de: TermsContent = {
+  pageTitle: "Nutzungsbedingungen",
+  legalLabel: "Rechtliches",
+  lastUpdated: "Letzte Aktualisierung: 24. Juni 2026",
+  company: "Elite Tube LLC · 4111 Hollow Trail Dr, Suite 3624, Tampa, Florida 33624, USA",
+  introBanner: "Bitte lesen Sie diese Bedingungen, bevor Sie Elite Labs nutzen. Durch die Registrierung oder Nutzung des Dienstes bestätigen Sie, dass Sie diese gelesen und akzeptiert haben.",
+  backLink: "← Startseite",
+  contactFooter: "Haben Sie Fragen? Schreiben Sie uns an",
+  sections: [
+    {
+      id: "1",
+      title: "1. Annahme der Bedingungen",
+      blocks: [
+        { type: "p", text: "Durch den Zugriff auf oder die Nutzung der Plattform Elite Labs, betrieben von Elite Tube LLC, einer nach dem Recht des Staates Florida (USA) gegründeten Gesellschaft mit beschränkter Haftung, bestätigen Sie, dass Sie diese Nutzungsbedingungen sowie unsere Datenschutzrichtlinie und Cookie-Richtlinie vollständig gelesen, verstanden und akzeptiert haben." },
+        { type: "p", text: "Wenn Sie im Namen eines Unternehmens handeln, erklären Sie, dass Sie befugt sind, dieses Unternehmen an diese Bedingungen zu binden." },
+        { type: "p", text: "Wir behalten uns das Recht vor, diese Bedingungen jederzeit zu ändern. Wesentliche Änderungen werden mindestens 30 Tage im Voraus per E-Mail mitgeteilt. Die fortgesetzte Nutzung des Dienstes nach der Benachrichtigung gilt als Zustimmung zu den neuen Bedingungen." },
+      ],
+    },
+    {
+      id: "2",
+      title: "2. Beschreibung des Dienstes",
+      blocks: [
+        { type: "p", text: "Elite Labs ist eine KI-SaaS-Plattform mit folgenden Diensten:" },
+        {
+          type: "ul",
+          items: [
+            "Text-to-Speech (TTS): Audiogenerierung aus Text mittels KI-Modellen.",
+            "Stimmklonen: Erstellung benutzerdefinierter Stimmmodelle aus Audiobeispielen des Nutzers.",
+            "Audioübersetzung: Übersetzung und Synthese von Audio in mehreren Sprachen.",
+            "Text-to-Dialogue: Generierung von Gesprächen zwischen mehreren Stimmen.",
+            "Bild- und Videogenerierung: Erstellung visueller Inhalte mittels KI-Modellen.",
+            "Audio-zu-Text: Transkription von Audioinhalten in Text.",
+            "Elite API: Programmatischer Zugriff auf die obigen Dienste via REST API.",
+          ],
+        },
+        { type: "p", text: "Der Dienst funktioniert über ein Kreditsystem, das verarbeiteten Zeichen entspricht. Elite Labs behält sich das Recht vor, Funktionen jederzeit zu ändern, zu erweitern oder einzustellen." },
+      ],
+    },
+    {
+      id: "3",
+      title: "3. Berechtigung und Registrierung",
+      blocks: [
+        { type: "p", text: "Sie müssen mindestens 18 Jahre alt sein. Jugendliche zwischen 13 und 17 Jahren benötigen die nachweisbare Zustimmung eines Elternteils oder Erziehungsberechtigten. Kinder unter 13 Jahren dürfen den Dienst nicht nutzen (COPPA)." },
+        { type: "p", text: "Sie sind für die Vertraulichkeit Ihrer Zugangsdaten und alle Aktivitäten unter Ihrem Konto verantwortlich. Melden Sie unbefugte Nutzung oder Sicherheitsverletzungen sofort an soporte@elitelabs.es." },
+        { type: "p", text: "Organisationen, die den Dienst für mehrere Nutzer beauftragen, müssen einen Administrator benennen, der für die Einhaltung dieser Bedingungen durch alle Kontonutzer verantwortlich ist." },
+      ],
+    },
+    {
+      id: "4",
+      title: "4. Akzeptable Nutzung",
+      blocks: [
+        { type: "p", text: "Der Dienst darf ausschließlich für rechtmäßige Zwecke genutzt werden. Ausdrücklich verboten sind:" },
+        {
+          type: "group",
+          title: "Illegale oder schädliche Inhalte:",
+          items: [
+            "Generierung von Audio, Bildern oder sonstigen Inhalten, die illegal, diffamierend, bedrohlich, belästigend, obszön, pornografisch, gewalttätig oder hasserregend sind.",
+            "Verletzung von Rechten Dritter, einschließlich Urheberrechten, Marken, Patenten oder Geschäftsgeheimnissen.",
+            "Erstellung von Inhalten, die das Recht am eigenen Bild, die Privatsphäre oder die Intimsphäre natürlicher Personen verletzen.",
+          ],
+        },
+        {
+          type: "group",
+          title: "Stimmklonen und Deepfakes:",
+          items: [
+            "Klonen der Stimme einer Person ohne deren ausdrückliche, freiwillige, informierte und dokumentierte Zustimmung.",
+            "Erstellung von Audio- oder Video-Deepfakes zu betrügerischen Zwecken, zur Identitätsdiebstahl, Erpressung, politischen Manipulation oder Täuschung.",
+            "Verwendung generierter Stimmen zur Nachahmung öffentlicher Persönlichkeiten, Politiker, Beamter oder anderer realer Personen ohne Genehmigung.",
+            "Erstellung von Inhalten, die zur Beeinflussung von Wahlprozessen oder demokratischen Verfahren genutzt werden könnten.",
+          ],
+        },
+        {
+          type: "group",
+          title: "Sicherheit und Systeme:",
+          items: [
+            "Unbefugter Zugriff auf Systeme, Datenbanken, KI-Modelle oder Infrastruktur von Elite Labs.",
+            "Reverse Engineering, Dekompilierung, Disassemblierung oder Extraktion des Quellcodes des Dienstes.",
+            "Einführung von Malware, Viren, Trojanern oder sonstigem Schadcode.",
+            "DDoS-Angriffe oder absichtliche Überlastung der Plattform.",
+            "Umgehung von Sicherheits-, Authentifizierungs- oder Zugangskontrollmaßnahmen.",
+            "Verwendung von Bots, Scrapern oder automatisierten Tools für unbefugten Zugriff.",
+          ],
+        },
+        {
+          type: "group",
+          title: "Kommerziell:",
+          items: [
+            "Weiterverkauf, Unterlizenzierung oder Vermarktung des Zugangs zum Dienst ohne ausdrückliche schriftliche Genehmigung von Elite Labs.",
+            "Erstellung konkurrierender Produkte oder Dienste auf Basis des Dienstes.",
+            "Nutzung des Dienstes zum Training von KI-Modellen Dritter ohne Genehmigung.",
+          ],
+        },
+        { type: "p", text: "Verstöße können zur sofortigen Kontosperrung ohne Rückerstattungsanspruch und zu zivil- und/oder strafrechtlichen Schritten führen." },
+      ],
+    },
+    {
+      id: "5",
+      title: "5. Guthaben, Pläne und Zahlungen",
+      blocks: [
+        { type: "p", text: "Der Dienst funktioniert über ein Guthabensystem in Zeichen. Aktuelle Preise in USD unter elitelabs.es/pricing. Zahlungen werden sicher über Stripe, Inc. abgewickelt. Elite Labs speichert keine Kreditkartendaten." },
+        { type: "p", text: "Abonnements verlängern sich automatisch am Ende jedes Abrechnungszeitraums. Sie können jederzeit über Ihr Konto-Dashboard kündigen; die Kündigung tritt am Ende des laufenden Abrechnungszeitraums in Kraft." },
+        { type: "p", text: "Preisänderungen werden mindestens 30 Tage im Voraus mitgeteilt. Die fortgesetzte Nutzung nach dem Datum des Preisänderung gilt als Zustimmung zum neuen Preis." },
+        { type: "p", text: "Der Nutzer ist für die in seiner Jurisdiktion anfallenden Steuern verantwortlich, die nicht von Elite Labs erhoben werden. EU-Nutzer können der Mehrwertsteuer unterliegen." },
+      ],
+    },
+    {
+      id: "6",
+      title: "6. Rückerstattungsrichtlinie",
+      blocks: [
+        { type: "p", text: "Zahlungen für Guthaben, Pakete oder Abonnements sind grundsätzlich nicht erstattungsfähig, außer in den ausdrücklich in dieser Richtlinie vorgesehenen oder gesetzlich vorgeschriebenen Fällen." },
+        { type: "p", text: "Rückerstattungen erfolgen in folgenden Fällen: technischer Fehler von Elite Labs, der Guthaben verbraucht hat ohne den entsprechenden Output zu erzeugen; doppelte Abbuchung durch Zahlungsverarbeitungsfehler; gesetzliche Verbraucherrechte. EU-Nutzer haben ein 14-tägiges Widerrufsrecht für digitale Käufe, sofern die Ausführung des Dienstes nicht mit ihrer ausdrücklichen Zustimmung begonnen hat." },
+        { type: "p", text: "Rückerstattungsanfragen an soporte@elitelabs.es mit Name, E-Mail, Kaufdatum, Betrag und Grund. Bearbeitung innerhalb von maximal 10 Werktagen." },
+        { type: "p", text: "Nicht genutztes Guthaben verfällt bei aktiven Plänen nicht. Nach Kündigung bleibt das Restguthaben 90 Tage lang verfügbar." },
+      ],
+    },
+    {
+      id: "7",
+      title: "7. Geistiges Eigentum",
+      blocks: [
+        { type: "p", text: "Audio, Bilder und sonstige durch den Dienst generierte Inhalte sind Eigentum des Nutzers, vorbehaltlich der Einhaltung dieser Bedingungen. Der Nutzer kann diese Inhalte ohne Einschränkungen nutzen, verbreiten, monetarisieren und modifizieren, einschließlich kommerzieller Projekte." },
+        { type: "p", text: "Elite Labs behält alle geistigen Eigentumsrechte an der Plattform, KI-Modellen, Quellcode, Algorithmen, Marken, Logos und Marketingmaterialien." },
+        { type: "p", text: "Elite Labs gewährt Ihnen eine begrenzte, nicht ausschließliche, nicht übertragbare und widerrufliche Lizenz zur Nutzung des Dienstes gemäß diesen Bedingungen." },
+        { type: "p", text: "Hochgeladene Sprachproben oder sonstige Inhalte werden ausschließlich zur Erbringung des Dienstes verwendet. Wir nutzen Ihre Inhalte nicht zum Training von KI-Modellen ohne Ihre ausdrückliche Zustimmung." },
+      ],
+    },
+    {
+      id: "8",
+      title: "8. Datenschutz",
+      blocks: [
+        { type: "p", text: "Die Verarbeitung Ihrer personenbezogenen Daten richtet sich nach unserer Datenschutzrichtlinie unter elitelabs.es/privacy, die Bestandteil dieser Bedingungen ist." },
+        { type: "p", text: "DSGVO: Für Nutzer im EWR ist Elite Labs Verantwortlicher gemäß der Datenschutz-Grundverordnung. Sie haben das Recht auf: Auskunft, Berichtigung, Löschung, Widerspruch, Einschränkung der Verarbeitung, Datenübertragbarkeit, Widerruf der Einwilligung und Beschwerde bei der Datenschutzbehörde. Kontakt: soporte@elitelabs.es." },
+        { type: "p", text: "CCPA: Nutzer in Kalifornien haben zusätzliche Rechte gemäß dem California Consumer Privacy Act, einschließlich des Rechts zu erfahren, welche Daten wir erheben, diese löschen zu lassen und nicht diskriminiert zu werden. Elite Labs verkauft keine personenbezogenen Daten." },
+        { type: "p", text: "Ihre Daten können in die USA übertragen und dort verarbeitet werden. Wir wenden angemessene Schutzmaßnahmen gemäß der DSGVO an, einschließlich von der EU-Kommission genehmigter Standardvertragsklauseln." },
+      ],
+    },
+    {
+      id: "9",
+      title: "9. Verfügbarkeit",
+      blocks: [
+        { type: "p", text: "Wir bemühen uns um eine 24/7-Verfügbarkeit des Dienstes, garantieren jedoch keine unterbrechungsfreie Verfügbarkeit. Geplante Wartungsarbeiten werden mit angemessener Vorlaufzeit angekündigt." },
+        { type: "p", text: "Keine Haftung für Unterbrechungen durch geplante Wartung, Ausfälle von Drittanbietern (Cloud-Anbieter, externe APIs), höhere Gewalt oder externe Angriffe." },
+        { type: "p", text: "Wir behalten uns das Recht vor, Funktionen zu ändern, auszusetzen oder einzustellen. Bei wesentlichen Änderungen des gebuchten Dienstes erfolgt eine Benachrichtigung mindestens 30 Tage im Voraus und gegebenenfalls eine anteilige Rückerstattung." },
+      ],
+    },
+    {
+      id: "10",
+      title: "10. Haftungsbeschränkung",
+      blocks: [
+        { type: "p", text: 'Der Dienst wird "wie besehen" und "nach Verfügbarkeit" bereitgestellt, ohne jegliche ausdrückliche oder stillschweigende Gewährleistung, einschließlich der Gewährleistung der Marktgängigkeit, Eignung für einen bestimmten Zweck oder Nichtverletzung.' },
+        { type: "p", text: "Elite Tube LLC, ihre Führungskräfte, Mitarbeiter, Partner und Zulieferer haften im gesetzlich maximal zulässigen Umfang nicht für indirekte, zufällige, besondere, Folge- oder Strafschäden, Gewinnverluste, Datenverluste, Reputationsschäden oder entgangene Geschäftsmöglichkeiten." },
+        { type: "p", text: "Die Gesamthaftung übersteigt nicht den in den letzten 3 Monaten an Elite Labs gezahlten Betrag oder 100 USD, falls in diesem Zeitraum keine Zahlungen erfolgt sind. Einige Rechtsordnungen schließen bestimmte Haftungsbeschränkungen aus; in diesen Fällen gelten die Beschränkungen im gesetzlich zulässigen Höchstmaß." },
+      ],
+    },
+    {
+      id: "11",
+      title: "11. Entschädigung",
+      blocks: [
+        { type: "p", text: "Sie verpflichten sich, Elite Tube LLC, ihre verbundenen Unternehmen, Führungskräfte, Mitarbeiter und Vertreter von Ansprüchen, Schäden, Verlusten, Verbindlichkeiten, Kosten und Ausgaben (einschließlich angemessener Anwaltskosten) freizustellen, die entstehen aus:" },
+        {
+          type: "ul",
+          items: [
+            "Ihrer Nutzung des Dienstes unter Verletzung dieser Bedingungen.",
+            "Den von Ihnen generierten oder hochgeladenen Inhalten.",
+            "Ihrer Verletzung von Rechten Dritter.",
+            "Ihrer Verletzung geltenden Rechts.",
+          ],
+        },
+      ],
+    },
+    {
+      id: "12",
+      title: "12. Aussetzung und Kündigung",
+      blocks: [
+        { type: "p", text: "Sie können Ihr Konto jederzeit über das Konto-Dashboard oder per E-Mail an soporte@elitelabs.es kündigen. Die Kündigung tritt am Ende des laufenden Abrechnungszeitraums in Kraft." },
+        { type: "p", text: "Elite Labs kann Konten bei Verstößen gegen diese Bedingungen, bei betrügerischen oder illegalen Aktivitäten, bei Sicherheitsrisiken oder auf gerichtliche Anordnung sofort sperren oder kündigen, mit oder ohne vorherige Benachrichtigung." },
+        { type: "p", text: "Nach der Kündigung stellen Sie die Nutzung des Dienstes ein. Nicht genutztes Guthaben verfällt (außer bei gesetzlichem Rückerstattungsanspruch). Bestimmungen, die ihrem Wesen nach fortgelten sollen (geistiges Eigentum, Haftungsbeschränkung, Entschädigung, anwendbares Recht), bleiben in Kraft." },
+      ],
+    },
+    {
+      id: "13",
+      title: "13. Schiedsverfahren und Streitbeilegung",
+      subsections: [
+        {
+          id: "13.1",
+          title: "13.1 Schiedsvereinbarung",
+          blocks: [{ type: "p", text: "VORBEHALTLICH ANWENDBAREN RECHTS WERDEN ALLE STREITIGKEITEN, ANSPRÜCHE ODER AUSEINANDERSETZUNGEN IM ZUSAMMENHANG MIT DIESEN BEDINGUNGEN ODER DEM DIENST DURCH VERBINDLICHES EINZELSCHIEDSVERFAHREN BEIGELEGT, NICHT VOR GERICHT." }],
+        },
+        {
+          id: "13.2",
+          title: "13.2 Verfahren",
+          blocks: [{ type: "p", text: "Das Schiedsverfahren erfolgt gemäß den Regeln der American Arbitration Association (AAA), auf Englisch oder Spanisch nach Vereinbarung der Parteien, in Tampa, Florida, USA, oder per Fernverhandlung." }],
+        },
+        {
+          id: "13.3",
+          title: "13.3 Verzicht auf Sammelklagen",
+          blocks: [{ type: "p", text: "DIE PARTEIEN VERZICHTEN AUF DAS RECHT, AN SAMMELKLAGEN TEILZUNEHMEN. NUR EINZELNE ANSPRÜCHE SIND ZULÄSSIG." }],
+        },
+        {
+          id: "13.4",
+          title: "13.4 Ausnahmen",
+          blocks: [
+            { type: "p", text: "Ungeachtet des Vorstehenden kann jede Partei ein Gericht anrufen für:" },
+            { type: "ul", items: ["Einstweiligen Rechtsschutz.", "Ansprüche des geistigen Eigentums.", "Ansprüche unter 10.000 USD vor Kleinbetragsgerichten."] },
+          ],
+        },
+        {
+          id: "13.5",
+          title: "13.5 EU-Nutzer",
+          blocks: [{ type: "p", text: "Nutzer mit Wohnsitz in der EU behalten ihre gesetzlichen Rechte auf Zugang zu den ordentlichen Gerichten ihres Wohnsitzlandes. Die Europäische Kommission bietet eine Online-Streitbeilegungsplattform: ec.europa.eu/consumers/odr." }],
+        },
+      ],
+    },
+    {
+      id: "14",
+      title: "14. Anwendbares Recht und Gerichtsstand",
+      blocks: [
+        { type: "p", text: "Diese Bedingungen unterliegen dem Recht des Staates Florida (USA), ohne Rücksicht auf Kollisionsnormen. Für Streitigkeiten, die nicht dem Schiedsverfahren unterliegen, unterwerfen sich die Parteien der ausschließlichen Zuständigkeit der Gerichte im Hillsborough County, Florida, USA." },
+        { type: "p", text: "EU-Nutzer behalten die ihnen durch die zwingenden Rechtsvorschriften ihres Wohnsitzlandes gewährten Rechte, einschließlich der Verbraucherschutzvorschriften." },
+      ],
+    },
+    {
+      id: "15",
+      title: "15. Allgemeine Bestimmungen",
+      blocks: [
+        { type: "p", text: "Diese Bedingungen bilden zusammen mit der Datenschutz- und Cookie-Richtlinie die vollständige Vereinbarung zwischen den Parteien hinsichtlich des Dienstes und ersetzen alle früheren Vereinbarungen." },
+        { type: "p", text: "Sollte eine Bestimmung dieser Bedingungen für ungültig oder nicht durchsetzbar erklärt werden, bleibt der Rest in Kraft. Der Verzicht auf die Ausübung eines Rechts stellt keinen Rechtsverzicht dar. Keine Abtretung ohne vorherige schriftliche Zustimmung von Elite Labs. Elite Labs haftet nicht für Verzögerungen oder Nichterfüllung aufgrund von Umständen außerhalb seiner angemessenen Kontrolle. Bei Widersprüchen zwischen Sprachversionen gilt die englische Fassung." },
+      ],
+    },
+    {
+      id: "16",
+      title: "16. Kontakt",
+      blocks: [
+        { type: "p", text: "Für Anfragen, Beschwerden oder Rechteausübung im Zusammenhang mit diesen Bedingungen:" },
+        {
+          type: "ul",
+          items: [
+            "Elite Tube LLC",
+            "4111 Hollow Trail Dr, Suite 3624, Tampa, Florida 33624, USA",
+            "soporte@elitelabs.es",
+            "elitelabs.es",
+          ],
+        },
+        { type: "p", text: "Antwortzeit: maximal 5 Werktage." },
+        { type: "p", text: "Diese Nutzungsbedingungen treten am 24. Juni 2026 in Kraft und ersetzen alle früheren Versionen." },
+      ],
+    },
+  ],
+};
+
+// ─── FRANÇAIS ─────────────────────────────────────────────────────────────────
+
+const fr: TermsContent = {
+  pageTitle: "Conditions d'utilisation",
+  legalLabel: "Mentions légales",
+  lastUpdated: "Dernière mise à jour : 24 juin 2026",
+  company: "Elite Tube LLC · 4111 Hollow Trail Dr, Suite 3624, Tampa, Floride 33624, États-Unis",
+  introBanner: "Veuillez lire ces conditions avant d'utiliser Elite Labs. En vous inscrivant ou en utilisant le service, vous confirmez les avoir lues et acceptées.",
+  backLink: "← Accueil",
+  contactFooter: "Des questions ? Écrivez-nous à",
+  sections: [
+    {
+      id: "1",
+      title: "1. Acceptation des conditions",
+      blocks: [
+        { type: "p", text: "En accédant ou en utilisant la plateforme Elite Labs, exploitée par Elite Tube LLC, société à responsabilité limitée constituée selon les lois de l'État de Floride (États-Unis), vous confirmez avoir lu, compris et accepté intégralement ces Conditions d'Utilisation, ainsi que notre Politique de Confidentialité et Politique de Cookies, qui font partie intégrante de cet accord." },
+        { type: "p", text: "Si vous agissez au nom d'une entreprise ou d'une organisation, vous déclarez et garantissez avoir l'autorité suffisante pour engager cet organisme par ces conditions." },
+        { type: "p", text: "Nous nous réservons le droit de modifier ces Conditions à tout moment. Tout changement substantiel sera communiqué par e-mail au moins 30 jours à l'avance. L'utilisation continue du Service après notification vaut acceptation des nouvelles conditions." },
+      ],
+    },
+    {
+      id: "2",
+      title: "2. Description du service",
+      blocks: [
+        { type: "p", text: "Elite Labs est une plateforme SaaS d'intelligence artificielle proposant les services suivants :" },
+        {
+          type: "ul",
+          items: [
+            "Text-to-Speech (TTS) : génération audio à partir de texte via des modèles d'IA.",
+            "Clonage vocal : création de modèles vocaux personnalisés à partir d'échantillons audio de l'utilisateur.",
+            "Traduction audio : traduction et synthèse audio en plusieurs langues.",
+            "Text-to-Dialogue : génération de conversations entre plusieurs voix.",
+            "Génération d'images et de vidéos : création de contenu visuel via des modèles d'IA.",
+            "Audio-to-Text : transcription de l'audio en texte.",
+            "Elite API : accès programmatique aux services ci-dessus via REST API.",
+          ],
+        },
+        { type: "p", text: "Le Service fonctionne via un système de crédits équivalant à des caractères traités. Elite Labs se réserve le droit de modifier, d'étendre ou d'interrompre des fonctionnalités à tout moment." },
+      ],
+    },
+    {
+      id: "3",
+      title: "3. Éligibilité et inscription",
+      blocks: [
+        { type: "p", text: "Vous devez avoir au moins 18 ans pour utiliser le Service. Les personnes entre 13 et 17 ans peuvent l'utiliser avec le consentement vérifiable d'un parent ou tuteur légal. L'utilisation est interdite aux moins de 13 ans (COPPA)." },
+        { type: "p", text: "Vous êtes responsable de la confidentialité de vos identifiants et de toutes les activités effectuées sous votre compte. Signalez immédiatement toute utilisation non autorisée à soporte@elitelabs.es." },
+        { type: "p", text: "Les organisations contractant le Service pour plusieurs utilisateurs doivent désigner un administrateur responsable du respect de ces Conditions par tous les utilisateurs du compte." },
+      ],
+    },
+    {
+      id: "4",
+      title: "4. Utilisation acceptable",
+      blocks: [
+        { type: "p", text: "Vous pouvez utiliser le Service exclusivement à des fins licites et conformément à la législation applicable. Sont expressément interdits :" },
+        {
+          type: "group",
+          title: "Contenu illégal ou nuisible :",
+          items: [
+            "Générer des audios, images ou tout contenu illégal, diffamatoire, menaçant, harcelant, obscène, pornographique, violent ou incitant à la haine fondée sur la race, l'ethnie, la religion, le genre, l'orientation sexuelle, le handicap ou d'autres caractéristiques protégées.",
+            "Créer des contenus violant les droits de propriété intellectuelle de tiers, notamment les droits d'auteur, marques, brevets ou secrets commerciaux.",
+            "Générer des contenus portant atteinte au droit à l'image, à la vie privée ou à l'intimité de personnes physiques.",
+          ],
+        },
+        {
+          type: "group",
+          title: "Clonage vocal et deepfakes :",
+          items: [
+            "Cloner la voix d'une personne sans son consentement exprès, libre, éclairé et documenté.",
+            "Créer des deepfakes audio ou vidéo à des fins frauduleuses, d'usurpation d'identité, d'extorsion, de manipulation politique ou de tromperie.",
+            "Utiliser des voix générées pour se faire passer pour des personnalités publiques, des politiciens, des fonctionnaires ou d'autres personnes réelles sans autorisation.",
+            "Créer des contenus pouvant être utilisés pour interférer dans des processus électoraux ou démocratiques.",
+          ],
+        },
+        {
+          type: "group",
+          title: "Sécurité et systèmes :",
+          items: [
+            "Tenter d'accéder sans autorisation aux systèmes, bases de données, modèles d'IA ou infrastructures d'Elite Labs.",
+            "Procéder à de l'ingénierie inverse, décompiler, désassembler ou extraire le code source du Service.",
+            "Introduire des logiciels malveillants, virus, chevaux de Troie ou tout code malveillant.",
+            "Mener des attaques DDoS ou surcharger intentionnellement la plateforme.",
+            "Contourner les mesures de sécurité, d'authentification ou de contrôle d'accès.",
+            "Utiliser des bots, scrapers ou outils automatisés pour accéder au Service de manière non autorisée.",
+          ],
+        },
+        {
+          type: "group",
+          title: "Commerciaux :",
+          items: [
+            "Revendre, sous-licencier, redistribuer ou commercialiser l'accès au Service sans autorisation écrite expresse d'Elite Labs.",
+            "Créer des produits ou services concurrents en utilisant le Service comme base.",
+            "Utiliser le Service pour entraîner des modèles d'IA de tiers sans autorisation.",
+          ],
+        },
+        { type: "p", text: "Les violations peuvent entraîner la suspension immédiate du compte sans droit au remboursement et peuvent donner lieu à des poursuites civiles et/ou pénales." },
+      ],
+    },
+    {
+      id: "5",
+      title: "5. Crédits, plans et paiements",
+      blocks: [
+        { type: "p", text: "Le Service fonctionne via un système de crédits équivalant à des caractères traités. Les prix actuels en USD sont disponibles sur elitelabs.es/pricing. Les paiements sont traités de manière sécurisée par Stripe, Inc. Elite Labs ne stocke pas les données de carte bancaire." },
+        { type: "p", text: "Les abonnements se renouvellent automatiquement à la fin de chaque période de facturation. Vous pouvez annuler à tout moment depuis votre tableau de bord. L'annulation prend effet à la fin de la période de facturation en cours, sans frais supplémentaires." },
+        { type: "p", text: "Tout changement de prix sera notifié au moins 30 jours à l'avance. L'utilisation continue du Service après la date d'entrée en vigueur du changement constitue une acceptation du nouveau prix." },
+        { type: "p", text: "L'utilisateur est responsable des taxes applicables dans sa juridiction non collectées par Elite Labs. Les utilisateurs de l'UE peuvent être soumis à la TVA selon la réglementation applicable." },
+      ],
+    },
+    {
+      id: "6",
+      title: "6. Politique de remboursement",
+      blocks: [
+        { type: "p", text: "Les paiements effectués pour des crédits, packs ou abonnements ne sont généralement pas remboursables, sauf dans les cas expressément prévus par cette politique ou exigés par la loi applicable." },
+        { type: "p", text: "Un remboursement sera effectué dans les cas suivants : erreur technique imputable à Elite Labs ayant consommé des crédits sans générer l'output correspondant ; double débit dû à une erreur de traitement du paiement ; droits légaux du consommateur. Les utilisateurs de l'UE bénéficient d'un droit de rétractation de 14 jours pour les achats numériques, sauf si le service a commencé à s'exécuter avec leur consentement exprès." },
+        { type: "p", text: "Pour demander un remboursement, contactez soporte@elitelabs.es en indiquant votre nom, e-mail, date d'achat, montant et motif. Nous traiterons votre demande dans un délai maximum de 10 jours ouvrables." },
+        { type: "p", text: "Les crédits non utilisés n'ont pas de date d'expiration sur les plans actifs. En cas de résiliation de l'abonnement, les crédits restants restent disponibles pendant 90 jours supplémentaires." },
+      ],
+    },
+    {
+      id: "7",
+      title: "7. Propriété intellectuelle",
+      blocks: [
+        { type: "p", text: "L'audio, les images et autres contenus générés via le Service à l'aide de texte, paramètres et crédits achetés par l'utilisateur appartiennent à l'utilisateur, sous réserve du respect de ces Conditions. L'utilisateur peut utiliser, distribuer, monétiser et modifier ce contenu sans restrictions supplémentaires, y compris pour des projets commerciaux." },
+        { type: "p", text: "Elite Labs conserve tous les droits de propriété intellectuelle sur la plateforme, l'interface et le design du Service, les modèles d'IA développés, le code source, les algorithmes, les marques, logos et dénominations commerciales, ainsi que la documentation et les matériaux marketing." },
+        { type: "p", text: "Elite Labs vous accorde une licence limitée, non exclusive, non transférable et révocable pour accéder au Service et l'utiliser conformément à ces Conditions." },
+        { type: "p", text: "En téléchargeant des échantillons vocaux ou d'autres contenus, vous accordez à Elite Labs une licence limitée pour traiter ce contenu exclusivement dans le but de fournir le Service. Nous n'utiliserons pas votre contenu pour entraîner des modèles d'IA sans votre consentement exprès." },
+      ],
+    },
+    {
+      id: "8",
+      title: "8. Confidentialité et protection des données",
+      blocks: [
+        { type: "p", text: "Le traitement de vos données personnelles est régi par notre Politique de Confidentialité, disponible sur elitelabs.es/privacy, qui fait partie intégrante de ces Conditions." },
+        { type: "p", text: "RGPD : pour les utilisateurs résidant dans l'EEE, Elite Labs agit en tant que responsable du traitement conformément au Règlement Général sur la Protection des Données. Vous disposez du droit d'accès, de rectification, d'effacement, d'opposition, de limitation du traitement, de portabilité des données, de retrait du consentement et de réclamation auprès de l'autorité de protection des données. Contact : soporte@elitelabs.es." },
+        { type: "p", text: "CCPA : les résidents de Californie bénéficient de droits supplémentaires en vertu du California Consumer Privacy Act, notamment le droit de savoir quelles données personnelles nous collectons, le droit de les faire supprimer et le droit de ne pas être discriminé pour l'exercice de ces droits. Elite Labs ne vend pas de données personnelles." },
+        { type: "p", text: "Vos données peuvent être transférées et traitées aux États-Unis. Nous appliquons des garanties appropriées conformément au RGPD, notamment des Clauses Contractuelles Types approuvées par la Commission européenne." },
+      ],
+    },
+    {
+      id: "9",
+      title: "9. Disponibilité",
+      blocks: [
+        { type: "p", text: "Nous nous efforçons de maintenir le Service disponible 24h/24, 7j/7. Cependant, nous ne garantissons pas une disponibilité ininterrompue. Nous pouvons effectuer des maintenances planifiées, que nous communiquerons avec un préavis raisonnable." },
+        { type: "p", text: "Nous ne serons pas responsables des interruptions de service causées par : la maintenance planifiée, les pannes d'infrastructure de tiers (fournisseurs cloud, API externes), les cas de force majeure ou les attaques externes." },
+        { type: "p", text: "Nous nous réservons le droit de modifier, suspendre ou interrompre toute fonctionnalité. Pour les interruptions affectant significativement le Service contracté, nous informerons avec au moins 30 jours de préavis et proposerons un remboursement proportionnel le cas échéant." },
+      ],
+    },
+    {
+      id: "10",
+      title: "10. Limitation de responsabilité",
+      blocks: [
+        { type: "p", text: "Le Service est fourni « tel quel » et « selon disponibilité », sans garantie d'aucune sorte, expresse ou implicite, incluant les garanties de qualité marchande, d'adéquation à un usage particulier ou de non-violation." },
+        { type: "p", text: "Dans la mesure maximale autorisée par la loi applicable, Elite Tube LLC, ses dirigeants, employés, partenaires et fournisseurs ne seront pas responsables des dommages indirects, accessoires, spéciaux, consécutifs ou punitifs, pertes de bénéfices, de données, de réputation ou d'opportunités commerciales." },
+        { type: "p", text: "Notre responsabilité totale ne dépassera pas le montant effectivement payé par l'utilisateur à Elite Labs au cours des 3 mois précédant l'événement ayant donné lieu à la réclamation, ou 100 USD si aucun paiement n'a été effectué durant cette période." },
+      ],
+    },
+    {
+      id: "11",
+      title: "11. Indemnisation",
+      blocks: [
+        { type: "p", text: "Vous acceptez d'indemniser, de défendre et de tenir indemnes Elite Tube LLC, ses affiliés, dirigeants, employés et agents de toute réclamation, dommage, perte, responsabilité, coût ou dépense (y compris les honoraires d'avocat raisonnables) découlant de :" },
+        {
+          type: "ul",
+          items: [
+            "Votre utilisation du Service en violation de ces Conditions.",
+            "Le contenu que vous générez ou téléchargez via le Service.",
+            "Votre violation des droits de tiers.",
+            "Votre violation de la loi applicable.",
+          ],
+        },
+      ],
+    },
+    {
+      id: "12",
+      title: "12. Suspension et résiliation",
+      blocks: [
+        { type: "p", text: "Vous pouvez résilier votre compte à tout moment depuis votre tableau de bord ou en contactant soporte@elitelabs.es. La résiliation prend effet à la fin de la période de facturation en cours." },
+        { type: "p", text: "Elite Labs peut suspendre ou résilier votre compte immédiatement, avec ou sans préavis, en cas de violation de ces Conditions, d'activités frauduleuses ou illégales, de risque pour la sécurité du Service ou sur injonction judiciaire." },
+        { type: "p", text: "Après résiliation : vous cesserez d'utiliser le Service ; les crédits non utilisés seront perdus (sauf droit légal au remboursement) ; les dispositions qui doivent survivre par leur nature (propriété intellectuelle, limitation de responsabilité, indemnisation, droit applicable) resteront en vigueur." },
+      ],
+    },
+    {
+      id: "13",
+      title: "13. Arbitrage et résolution des litiges",
+      subsections: [
+        {
+          id: "13.1",
+          title: "13.1 Accord d'arbitrage",
+          blocks: [{ type: "p", text: "SAUF INTERDICTION PAR LA LOI APPLICABLE, TOUT LITIGE, RÉCLAMATION OU DIFFÉREND LIÉ À CES CONDITIONS OU AU SERVICE SERA RÉSOLU PAR ARBITRAGE INDIVIDUEL CONTRAIGNANT, PLUTÔT QUE DEVANT UN TRIBUNAL." }],
+        },
+        {
+          id: "13.2",
+          title: "13.2 Procédure",
+          blocks: [{ type: "p", text: "L'arbitrage sera conduit conformément aux règles de l'American Arbitration Association (AAA), en anglais ou en espagnol selon accord des parties, à Tampa, Floride, États-Unis, ou à distance." }],
+        },
+        {
+          id: "13.3",
+          title: "13.3 Renonciation aux actions collectives",
+          blocks: [{ type: "p", text: "LES PARTIES RENONCENT AU DROIT DE PARTICIPER À DES ACTIONS COLLECTIVES (CLASS ACTIONS). SEULES LES RÉCLAMATIONS INDIVIDUELLES SONT AUTORISÉES." }],
+        },
+        {
+          id: "13.4",
+          title: "13.4 Exceptions",
+          blocks: [
+            { type: "p", text: "Nonobstant ce qui précède, chaque partie peut saisir un tribunal pour :" },
+            { type: "ul", items: ["Demander des mesures conservatoires urgentes.", "Des réclamations relatives à la propriété intellectuelle.", "Des réclamations inférieures à 10 000 USD devant les juridictions de proximité."] },
+          ],
+        },
+        {
+          id: "13.5",
+          title: "13.5 Utilisateurs dans l'Union européenne",
+          blocks: [{ type: "p", text: "Les utilisateurs résidant dans l'UE conservent leurs droits légaux d'accès aux tribunaux ordinaires de leur pays de résidence conformément à la législation européenne impérative. La Commission européenne propose une plateforme de résolution des litiges en ligne : ec.europa.eu/consumers/odr." }],
+        },
+      ],
+    },
+    {
+      id: "14",
+      title: "14. Droit applicable et juridiction",
+      blocks: [
+        { type: "p", text: "Ces Conditions sont régies par les lois de l'État de Floride (États-Unis), sans égard aux règles de conflit de lois. Pour les litiges non soumis à l'accord d'arbitrage, les parties se soumettent à la juridiction exclusive des tribunaux du comté de Hillsborough, Floride, États-Unis." },
+        { type: "p", text: "Les utilisateurs de l'UE conservent les droits que leur reconnaît la législation impérative de leur pays de résidence, notamment les règles de protection des consommateurs." },
+      ],
+    },
+    {
+      id: "15",
+      title: "15. Dispositions générales",
+      blocks: [
+        { type: "p", text: "Ces Conditions, avec la Politique de Confidentialité et la Politique de Cookies, constituent l'accord complet entre les parties concernant le Service et remplacent tout accord antérieur." },
+        { type: "p", text: "Si une disposition est déclarée invalide ou inapplicable, le reste demeure en vigueur. Le non-exercice d'un droit ne constitue pas une renonciation. Aucune cession sans consentement écrit préalable d'Elite Labs. Elite Labs ne sera pas responsable des retards ou manquements causés par des circonstances hors de son contrôle raisonnable. En cas de contradiction entre versions linguistiques, la version anglaise prévaut." },
+      ],
+    },
+    {
+      id: "16",
+      title: "16. Contact",
+      blocks: [
+        { type: "p", text: "Pour toute question, réclamation ou exercice de droits relatifs à ces Conditions :" },
+        {
+          type: "ul",
+          items: [
+            "Elite Tube LLC",
+            "4111 Hollow Trail Dr, Suite 3624, Tampa, Floride 33624, États-Unis",
+            "soporte@elitelabs.es",
+            "elitelabs.es",
+          ],
+        },
+        { type: "p", text: "Délai de réponse : maximum 5 jours ouvrables." },
+        { type: "p", text: "Ces Conditions d'Utilisation entrent en vigueur le 24 juin 2026 et remplacent toutes les versions précédentes." },
+      ],
+    },
+  ],
+};
+
+// ─── PORTUGUÊS ────────────────────────────────────────────────────────────────
+
+const pt: TermsContent = {
+  pageTitle: "Termos de Uso",
+  legalLabel: "Legal",
+  lastUpdated: "Última atualização: 24 de junho de 2026",
+  company: "Elite Tube LLC · 4111 Hollow Trail Dr, Suite 3624, Tampa, Flórida 33624, EUA",
+  introBanner: "Por favor, leia estes Termos antes de usar o Elite Labs. Ao se registrar ou usar o serviço, você confirma que os leu e aceitou.",
+  backLink: "← Início",
+  contactFooter: "Tem perguntas? Escreva-nos em",
+  sections: [
+    {
+      id: "1",
+      title: "1. Aceitação dos Termos",
+      blocks: [
+        { type: "p", text: "Ao acessar, registrar-se ou utilizar a plataforma Elite Labs (doravante \"o Serviço\"), operada pela Elite Tube LLC, uma sociedade de responsabilidade limitada constituída de acordo com as leis do Estado da Flórida (EUA), você confirma que leu, compreendeu e aceitou integralmente estes Termos de Uso, bem como nossa Política de Privacidade e Política de Cookies, que fazem parte integrante deste acordo." },
+        { type: "p", text: "Se você age em nome de uma empresa ou organização, declara e garante que tem autoridade suficiente para vincular essa entidade a estes Termos." },
+        { type: "p", text: "Reservamo-nos o direito de modificar estes Termos a qualquer momento. Alterações substanciais serão comunicadas por e-mail com pelo menos 30 dias de antecedência. O uso continuado do Serviço após a notificação constitui aceitação dos novos termos." },
+      ],
+    },
+    {
+      id: "2",
+      title: "2. Descrição do Serviço",
+      blocks: [
+        { type: "p", text: "Elite Labs é uma plataforma SaaS (Software as a Service) de inteligência artificial que oferece os seguintes serviços:" },
+        {
+          type: "ul",
+          items: [
+            "Text-to-Speech (TTS): geração de áudio a partir de texto usando modelos de IA.",
+            "Clonagem de voz: criação de modelos de voz personalizados a partir de amostras de áudio fornecidas pelo usuário.",
+            "Tradução de áudio: tradução e síntese de áudio em vários idiomas.",
+            "Text-to-Dialogue: geração de conversas entre múltiplas vozes.",
+            "Geração de imagens e vídeos: criação de conteúdo visual usando modelos de IA.",
+            "Áudio para Texto: transcrição de áudio em texto.",
+            "Elite API: acesso programático aos serviços acima via API REST.",
+          ],
+        },
+        { type: "p", text: "O Serviço funciona através de um sistema de créditos equivalentes a caracteres processados. A Elite Labs reserva-se o direito de modificar, expandir ou descontinuar funcionalidades a qualquer momento." },
+      ],
+    },
+    {
+      id: "3",
+      title: "3. Elegibilidade e Registro",
+      blocks: [
+        { type: "p", text: "Você deve ter pelo menos 18 anos para usar o Serviço. Pessoas entre 13 e 17 anos podem usar o Serviço com o consentimento verificável de um pai ou responsável legal. O uso é proibido para menores de 13 anos (COPPA)." },
+        { type: "p", text: "Você é o único responsável por manter a confidencialidade de suas credenciais de acesso e por todas as atividades que ocorram na sua conta. Notifique-nos imediatamente em soporte@elitelabs.es sobre qualquer uso não autorizado ou violação de segurança." },
+        { type: "p", text: "Organizações que contratam o Serviço em nome de vários usuários devem designar um administrador responsável pelo cumprimento destes Termos por todos os usuários da conta." },
+      ],
+    },
+    {
+      id: "4",
+      title: "4. Uso Aceitável",
+      blocks: [
+        { type: "p", text: "Você pode usar o Serviço exclusivamente para fins lícitos e em conformidade com a legislação aplicável. São expressamente proibidos:" },
+        {
+          type: "group",
+          title: "Conteúdo ilegal ou prejudicial:",
+          items: [
+            "Gerar áudio, imagens ou qualquer conteúdo ilegal, difamatório, ameaçador, assediante, obsceno, pornográfico, violento ou que incite ao ódio com base em raça, etnia, religião, gênero, orientação sexual, deficiência ou outras características protegidas.",
+            "Criar conteúdo que viole direitos de propriedade intelectual de terceiros, incluindo direitos autorais, marcas registradas, patentes ou segredos comerciais.",
+            "Gerar conteúdo que infrinja direitos de imagem, privacidade ou intimidade de pessoas físicas.",
+          ],
+        },
+        {
+          type: "group",
+          title: "Clonagem de voz e deepfakes:",
+          items: [
+            "Clonar a voz de qualquer pessoa sem seu consentimento expresso, livre, informado e documentado.",
+            "Criar deepfakes de áudio ou vídeo para fins fraudulentos, de usurpação de identidade, extorsão, manipulação política ou engano.",
+            "Usar vozes geradas para se fazer passar por figuras públicas, políticos, funcionários ou outras pessoas reais sem autorização.",
+            "Criar conteúdo que possa ser usado para interferir em processos eleitorais ou democráticos.",
+          ],
+        },
+        {
+          type: "group",
+          title: "Segurança e sistemas:",
+          items: [
+            "Tentar acessar sem autorização os sistemas, bancos de dados, modelos de IA ou infraestrutura da Elite Labs.",
+            "Realizar engenharia reversa, decompilar, desmontar ou extrair o código-fonte do Serviço.",
+            "Introduzir malware, vírus, trojans ou qualquer código malicioso.",
+            "Realizar ataques de negação de serviço (DDoS) ou sobrecarregar intencionalmente a plataforma.",
+            "Contornar medidas de segurança, autenticação ou controle de acesso.",
+            "Usar bots, scrapers ou ferramentas automatizadas para acessar o Serviço de forma não autorizada.",
+          ],
+        },
+        {
+          type: "group",
+          title: "Comerciais:",
+          items: [
+            "Revender, sublicenciar, redistribuir ou comercializar o acesso ao Serviço sem autorização expressa por escrito da Elite Labs.",
+            "Criar produtos ou serviços concorrentes usando o Serviço como base.",
+            "Usar o Serviço para treinar modelos de IA de terceiros sem autorização.",
+          ],
+        },
+        { type: "p", text: "O descumprimento dessas proibições pode resultar na suspensão ou cancelamento imediato da sua conta, sem direito a reembolso, e pode dar origem a ações legais civis e/ou criminais." },
+      ],
+    },
+    {
+      id: "5",
+      title: "5. Créditos, Planos e Pagamentos",
+      blocks: [
+        { type: "p", text: "O Serviço funciona através de um sistema de créditos equivalentes a caracteres processados. Os preços atuais em USD estão disponíveis em elitelabs.es/pricing. Os pagamentos são processados de forma segura pela Stripe, Inc. A Elite Labs não armazena dados de cartão de crédito." },
+        { type: "p", text: "As assinaturas se renovam automaticamente no final de cada período de faturamento. Você pode cancelar a qualquer momento pelo painel da conta. O cancelamento entra em vigor no final do período de faturamento em curso, sem encargos adicionais." },
+        { type: "p", text: "Qualquer alteração de preço será notificada com pelo menos 30 dias de antecedência. O uso continuado do Serviço após a data efetiva da alteração constitui aceitação do novo preço." },
+        { type: "p", text: "O usuário é responsável pelos impostos aplicáveis em sua jurisdição não coletados pela Elite Labs. Os usuários na União Europeia podem estar sujeitos ao IVA de acordo com a regulamentação aplicável." },
+      ],
+    },
+    {
+      id: "6",
+      title: "6. Política de Reembolso",
+      blocks: [
+        { type: "p", text: "Os pagamentos realizados por créditos, packs ou assinaturas não são reembolsáveis, exceto nos casos expressamente previstos nesta política ou exigidos pela legislação aplicável." },
+        { type: "p", text: "O reembolso será processado nos seguintes casos: erro técnico imputável à Elite Labs que consumiu créditos sem gerar o output correspondente; cobrança duplicada por erro no processamento do pagamento; direitos legais do consumidor. Os usuários da UE têm direito de arrependimento de 14 dias para compras digitais, salvo se o serviço tiver começado a ser executado com seu consentimento expresso." },
+        { type: "p", text: "Para solicitar um reembolso, entre em contato com soporte@elitelabs.es informando seu nome, e-mail, data da compra, valor e motivo. Processaremos sua solicitação em um prazo máximo de 10 dias úteis." },
+        { type: "p", text: "Os créditos não utilizados não têm prazo de validade em planos ativos. Em caso de cancelamento da assinatura, os créditos restantes permanecem disponíveis por 90 dias adicionais." },
+      ],
+    },
+    {
+      id: "7",
+      title: "7. Propriedade Intelectual",
+      blocks: [
+        { type: "p", text: "O áudio, imagens e demais conteúdos gerados através do Serviço usando texto, configurações e créditos adquiridos pelo usuário são propriedade do usuário, sujeito ao cumprimento destes Termos. O usuário pode usar, distribuir, monetizar e modificar esse conteúdo sem restrições adicionais, incluindo projetos comerciais." },
+        { type: "p", text: "A Elite Labs retém todos os direitos de propriedade intelectual sobre a plataforma, interface e design do Serviço, modelos de IA desenvolvidos, código-fonte, algoritmos, marcas, logotipos e nomes comerciais, documentação e materiais de marketing." },
+        { type: "p", text: "A Elite Labs concede a você uma licença limitada, não exclusiva, intransferível e revogável para acessar e usar o Serviço de acordo com estes Termos." },
+        { type: "p", text: "Ao enviar amostras de voz ou outros conteúdos, você concede à Elite Labs uma licença limitada para processar esse conteúdo exclusivamente com o objetivo de prestar o Serviço. Não usaremos seu conteúdo para treinar modelos de IA sem seu consentimento expresso." },
+      ],
+    },
+    {
+      id: "8",
+      title: "8. Privacidade e Proteção de Dados",
+      blocks: [
+        { type: "p", text: "O tratamento dos seus dados pessoais é regido pela nossa Política de Privacidade, disponível em elitelabs.es/privacy, que faz parte integrante destes Termos." },
+        { type: "p", text: "GDPR: para usuários residentes no EEE, a Elite Labs atua como responsável pelo tratamento de dados nos termos do Regulamento Geral de Proteção de Dados. Você tem o direito de acessar, retificar, excluir, opor-se ao tratamento ou solicitar a sua limitação, portabilidade, retirar o consentimento a qualquer momento e apresentar reclamação à autoridade de proteção de dados. Contato: soporte@elitelabs.es." },
+        { type: "p", text: "CCPA: os residentes na Califórnia têm direitos adicionais ao abrigo da California Consumer Privacy Act, incluindo o direito de saber quais dados pessoais coletamos, o direito de excluí-los e o direito de não ser discriminado por exercer esses direitos. A Elite Labs não vende dados pessoais a terceiros." },
+        { type: "p", text: "Seus dados podem ser transferidos e processados nos Estados Unidos. Implementamos salvaguardas adequadas nos termos do GDPR, incluindo Cláusulas Contratuais Padrão aprovadas pela Comissão Europeia." },
+      ],
+    },
+    {
+      id: "9",
+      title: "9. Disponibilidade",
+      blocks: [
+        { type: "p", text: "Esforçamo-nos para manter o Serviço disponível 24 horas por dia, 7 dias por semana. No entanto, não garantimos disponibilidade ininterrupta. Podemos realizar manutenções programadas, que serão comunicadas com antecedência razoável." },
+        { type: "p", text: "Não seremos responsáveis por interrupções do Serviço causadas por: manutenção programada, falhas de infraestrutura de terceiros (provedores de nuvem, APIs externas), causas de força maior ou ataques externos." },
+        { type: "p", text: "Reservamo-nos o direito de modificar, suspender ou descontinuar qualquer funcionalidade. Para descontinuações que afetem significativamente o Serviço contratado, notificaremos com pelo menos 30 dias de antecedência e ofereceremos reembolso proporcional quando aplicável." },
+      ],
+    },
+    {
+      id: "10",
+      title: "10. Limitação de Responsabilidade",
+      blocks: [
+        { type: "p", text: "O Serviço é fornecido \"como está\" e \"conforme disponível\", sem garantias de qualquer tipo, expressas ou implícitas, incluindo garantias de comercialização, adequação a um propósito específico ou não violação." },
+        { type: "p", text: "Na medida máxima permitida pela legislação aplicável, a Elite Tube LLC, seus diretores, funcionários, parceiros e fornecedores não serão responsáveis por danos indiretos, incidentais, especiais, consequentes ou punitivos, perda de lucros, dados, reputação ou oportunidades de negócios." },
+        { type: "p", text: "Nossa responsabilidade total não excederá o valor efetivamente pago pelo usuário à Elite Labs nos 3 meses anteriores ao evento que originou a reclamação, ou 100 USD se não houver pagamentos nesse período." },
+      ],
+    },
+    {
+      id: "11",
+      title: "11. Indenização",
+      blocks: [
+        { type: "p", text: "Você concorda em indenizar, defender e isentar a Elite Tube LLC, suas afiliadas, diretores, funcionários e agentes de qualquer reclamação, dano, perda, responsabilidade, custo ou despesa (incluindo honorários advocatícios razoáveis) decorrente de:" },
+        {
+          type: "ul",
+          items: [
+            "Seu uso do Serviço em violação destes Termos.",
+            "O conteúdo que você gera ou envia através do Serviço.",
+            "Sua violação de direitos de terceiros.",
+            "Sua violação da legislação aplicável.",
+          ],
+        },
+      ],
+    },
+    {
+      id: "12",
+      title: "12. Suspensão e Rescisão",
+      blocks: [
+        { type: "p", text: "Você pode cancelar sua conta a qualquer momento pelo painel da conta ou entrando em contato com soporte@elitelabs.es. O cancelamento entra em vigor no final do período de faturamento em curso." },
+        { type: "p", text: "A Elite Labs pode suspender ou cancelar sua conta imediatamente, com ou sem aviso prévio, se você violar estes Termos, realizar atividades fraudulentas ou ilegais, sua conta representar um risco de segurança ou mediante ordem judicial." },
+        { type: "p", text: "Após a rescisão: você cessará o uso do Serviço; os créditos não utilizados serão perdidos (salvo direito legal ao reembolso); as disposições que por sua natureza devam sobreviver (propriedade intelectual, limitação de responsabilidade, indenização, legislação aplicável) continuarão em vigor." },
+      ],
+    },
+    {
+      id: "13",
+      title: "13. Arbitragem e Resolução de Disputas",
+      subsections: [
+        {
+          id: "13.1",
+          title: "13.1 Acordo de arbitragem",
+          blocks: [{ type: "p", text: "SALVO PROIBIÇÃO PELA LEI APLICÁVEL, QUALQUER DISPUTA, RECLAMAÇÃO OU CONTROVÉRSIA RELACIONADA COM ESTES TERMOS OU O SERVIÇO SERÁ RESOLVIDA POR ARBITRAGEM INDIVIDUAL VINCULANTE, E NÃO PERANTE UM TRIBUNAL." }],
+        },
+        {
+          id: "13.2",
+          title: "13.2 Procedimento",
+          blocks: [{ type: "p", text: "A arbitragem será conduzida de acordo com as regras da American Arbitration Association (AAA), em inglês ou espanhol conforme acordado pelas partes, em Tampa, Flórida, EUA, ou de forma remota." }],
+        },
+        {
+          id: "13.3",
+          title: "13.3 Renúncia a ações coletivas",
+          blocks: [{ type: "p", text: "AS PARTES RENUNCIAM AO DIREITO DE PARTICIPAR EM AÇÕES COLETIVAS (CLASS ACTIONS). SOMENTE RECLAMAÇÕES INDIVIDUAIS SÃO PERMITIDAS." }],
+        },
+        {
+          id: "13.4",
+          title: "13.4 Exceções",
+          blocks: [
+            { type: "p", text: "Não obstante o acima, qualquer das partes pode recorrer a um tribunal para:" },
+            { type: "ul", items: ["Solicitar medidas cautelares urgentes.", "Reclamações de propriedade intelectual.", "Reclamações de valor inferior a 10.000 USD perante tribunais de pequenas causas."] },
+          ],
+        },
+        {
+          id: "13.5",
+          title: "13.5 Usuários na União Europeia",
+          blocks: [{ type: "p", text: "Os usuários residentes na UE conservam seus direitos legais de acesso aos tribunais ordinários do seu país de residência, conforme a legislação europeia imperativa. A Comissão Europeia oferece uma plataforma de resolução de litígios online: ec.europa.eu/consumers/odr." }],
+        },
+      ],
+    },
+    {
+      id: "14",
+      title: "14. Legislação Aplicável e Jurisdição",
+      blocks: [
+        { type: "p", text: "Estes Termos são regidos pelas leis do Estado da Flórida (EUA), sem prejuízo das normas sobre conflitos de leis. Para disputas não sujeitas ao acordo de arbitragem, as partes submetem-se à jurisdição exclusiva dos tribunais do condado de Hillsborough, Flórida, EUA." },
+        { type: "p", text: "Os usuários na União Europeia conservam os direitos reconhecidos pela legislação imperativa do seu país de residência, incluindo as normas de proteção ao consumidor." },
+      ],
+    },
+    {
+      id: "15",
+      title: "15. Disposições Gerais",
+      blocks: [
+        { type: "p", text: "Estes Termos, juntamente com a Política de Privacidade e a Política de Cookies, constituem o acordo completo entre as partes em relação ao Serviço e substituem quaisquer acordos anteriores." },
+        { type: "p", text: "Se alguma disposição for declarada inválida ou inexequível, as restantes permanecerão em vigor. A falta de exercício de qualquer direito não constitui renúncia. Não pode ceder seus direitos sem consentimento prévio por escrito da Elite Labs. A Elite Labs não será responsável por atrasos causados por circunstâncias fora do seu controle razoável. Em caso de discrepância entre versões em diferentes idiomas, prevalecerá a versão em inglês." },
+      ],
+    },
+    {
+      id: "16",
+      title: "16. Contato",
+      blocks: [
+        { type: "p", text: "Para qualquer consulta, reclamação ou exercício de direitos relacionados com estes Termos:" },
+        {
+          type: "ul",
+          items: [
+            "Elite Tube LLC",
+            "4111 Hollow Trail Dr, Suite 3624, Tampa, Flórida 33624, EUA",
+            "soporte@elitelabs.es",
+            "elitelabs.es",
+          ],
+        },
+        { type: "p", text: "Prazo de resposta: máximo de 5 dias úteis." },
+        { type: "p", text: "Estes Termos de Uso entram em vigor em 24 de junho de 2026 e substituem todas as versões anteriores." },
+      ],
+    },
+  ],
+};
+
+const CONTENT: Record<Lang, TermsContent> = { es, en, de, fr, pt };
 
 // ─── Renderer helpers ─────────────────────────────────────────────────────────
 
@@ -1230,7 +1986,7 @@ export default function TermsPage() {
 
   useEffect(() => {
     const stored = localStorage.getItem("elitelabs_lang") as Lang | null;
-    if (stored && (stored === "es" || stored === "en")) {
+    if (stored && (["es", "en", "de", "fr", "pt"] as string[]).includes(stored)) {
       setLang(stored);
     }
     setMounted(true);
@@ -1313,10 +2069,10 @@ export default function TermsPage() {
           <p className="text-xs" style={{ color: "#555570" }}>© 2026 Elite Tube LLC. All rights reserved.</p>
           <div className="flex gap-5">
             <Link href="/privacy" className="text-xs transition-colors hover:text-gray-300" style={{ color: "#555570" }}>
-              {lang === "es" ? "Política de privacidad" : "Privacy Policy"}
+              {{ es: "Política de privacidad", en: "Privacy Policy", de: "Datenschutzrichtlinie", fr: "Politique de confidentialité", pt: "Política de privacidade" }[lang]}
             </Link>
             <Link href="/support" className="text-xs transition-colors hover:text-gray-300" style={{ color: "#555570" }}>
-              {lang === "es" ? "Soporte" : "Support"}
+              {{ es: "Soporte", en: "Support", de: "Support", fr: "Support", pt: "Suporte" }[lang]}
             </Link>
           </div>
         </div>
