@@ -4229,13 +4229,16 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             >
               Un hablante
             </button>
-            {/* Multi-speaker — Active */}
+            {/* Multi-speaker — Coming Soon, disabled */}
             <button
-              onClick={() => setSpeakerMode("multi")}
+              disabled
               className="flex-1 py-1.5 px-3 rounded-md text-xs font-medium flex items-center justify-center gap-1.5"
-              style={{ background: speakerMode === "multi" ? "#1e1e1e" : "transparent", color: speakerMode === "multi" ? "#e5e7eb" : "#666", border: "none", cursor: "pointer" }}
+              style={{ background: "transparent", color: "#444", border: "none", cursor: "not-allowed", opacity: 0.5, pointerEvents: "none" }}
             >
               Múltiples hablantes
+              <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.04em", background: "rgba(255,255,255,0.08)", color: "#666", borderRadius: "4px", padding: "1px 5px", whiteSpace: "nowrap" }}>
+                SOON
+              </span>
             </button>
           </div>
 

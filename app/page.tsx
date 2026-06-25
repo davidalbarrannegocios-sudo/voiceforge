@@ -1154,6 +1154,7 @@ export default function LandingPage() {
                 {[
                   { label: t.footer.privacy, href: "/privacy" },
                   { label: t.footer.terms,   href: "/terms" },
+                  { label: t.footer.dmca,    href: "/dmca" },
                 ].map(({ label, href }) => (
                   <li key={label}>
                     <Link href={href} className="text-sm transition-colors hover:text-white" style={{ color: "#888888" }}>
@@ -1181,6 +1182,7 @@ export default function LandingPage() {
               {[
                 { label: t.footer.privacy,  href: "/privacy" },
                 { label: t.footer.terms,    href: "/terms" },
+                { label: t.footer.dmca,     href: "/dmca" },
                 { label: t.footer.contact,  href: "/support" },
               ].map(({ label, href }, i, arr) => (
                 <span key={label} className="flex items-center gap-4">

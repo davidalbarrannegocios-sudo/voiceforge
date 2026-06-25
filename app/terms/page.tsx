@@ -190,6 +190,22 @@ const es: TermsContent = {
       ],
     },
     {
+      id: "4B",
+      title: "4B. Contenido del Usuario y DMCA",
+      blocks: [
+        { type: "p", text: "El usuario declara y garantiza que:" },
+        {
+          type: "ul",
+          items: [
+            "Es titular o tiene licencia de todos los derechos necesarios sobre el contenido que sube o genera a través del Servicio.",
+            "El contenido no infringe derechos de autor, marcas, patentes, secretos comerciales, derechos de imagen ni ningún otro derecho de terceros.",
+            "Asume plena responsabilidad por cualquier reclamación derivada del contenido que sube o genera.",
+          ],
+        },
+        { type: "p", text: "Elite Labs no es responsable del contenido generado por los usuarios y opera como proveedor de servicios bajo la protección de la Sección 512 de la DMCA (Safe Harbor). Para notificaciones de infracción, consulta nuestra Política DMCA en elitelabs.es/dmca." },
+      ],
+    },
+    {
       id: "5",
       title: "5. Créditos, Planes y Pagos",
       subsections: [
@@ -704,6 +720,22 @@ const en: TermsContent = {
       ],
     },
     {
+      id: "4B",
+      title: "4B. User Content and DMCA",
+      blocks: [
+        { type: "p", text: "The user represents and warrants that:" },
+        {
+          type: "ul",
+          items: [
+            "They own or have licensed all necessary rights over the content they upload or generate through the Service.",
+            "The content does not infringe copyrights, trademarks, patents, trade secrets, image rights, or any other third-party rights.",
+            "They assume full responsibility for any claims arising from the content they upload or generate.",
+          ],
+        },
+        { type: "p", text: "Elite Labs is not responsible for user-generated content and operates as a service provider under the protection of Section 512 of the DMCA (Safe Harbor). For infringement notifications, please see our DMCA Policy at elitelabs.es/dmca." },
+      ],
+    },
+    {
       id: "5",
       title: "5. Credits, Plans and Payments",
       subsections: [
@@ -1171,6 +1203,22 @@ const de: TermsContent = {
       ],
     },
     {
+      id: "4B",
+      title: "4B. Nutzerinhalte und DMCA",
+      blocks: [
+        { type: "p", text: "Der Nutzer erklärt und garantiert, dass:" },
+        {
+          type: "ul",
+          items: [
+            "Er Inhaber aller notwendigen Rechte an den Inhalten ist oder über entsprechende Lizenzen verfügt, die er über den Dienst hochlädt oder generiert.",
+            "Die Inhalte keine Urheberrechte, Marken, Patente, Geschäftsgeheimnisse, Persönlichkeitsrechte oder sonstige Rechte Dritter verletzen.",
+            "Er die volle Verantwortung für alle Ansprüche übernimmt, die aus den von ihm hochgeladenen oder generierten Inhalten entstehen.",
+          ],
+        },
+        { type: "p", text: "Elite Labs ist nicht verantwortlich für nutzergenerierte Inhalte und agiert als Dienstanbieter unter dem Schutz von Abschnitt 512 des DMCA (Safe Harbor). Für Urheberrechtsverletzungsmitteilungen beachten Sie bitte unsere DMCA-Richtlinie unter elitelabs.es/dmca." },
+      ],
+    },
+    {
       id: "5",
       title: "5. Guthaben, Pläne und Zahlungen",
       blocks: [
@@ -1422,6 +1470,22 @@ const fr: TermsContent = {
       ],
     },
     {
+      id: "4B",
+      title: "4B. Contenu Utilisateur et DMCA",
+      blocks: [
+        { type: "p", text: "L'utilisateur déclare et garantit que :" },
+        {
+          type: "ul",
+          items: [
+            "Il est titulaire ou détient une licence sur tous les droits nécessaires relatifs au contenu qu'il télécharge ou génère via le Service.",
+            "Le contenu ne viole aucun droit d'auteur, marque, brevet, secret commercial, droit à l'image ni tout autre droit de tiers.",
+            "Il assume l'entière responsabilité de toute réclamation découlant du contenu qu'il télécharge ou génère.",
+          ],
+        },
+        { type: "p", text: "Elite Labs n'est pas responsable du contenu généré par les utilisateurs et opère en tant que fournisseur de services sous la protection de la Section 512 du DMCA (Safe Harbor). Pour les notifications d'infraction, consultez notre Politique DMCA sur elitelabs.es/dmca." },
+      ],
+    },
+    {
       id: "5",
       title: "5. Crédits, plans et paiements",
       blocks: [
@@ -1670,6 +1734,22 @@ const pt: TermsContent = {
           ],
         },
         { type: "p", text: "O descumprimento dessas proibições pode resultar na suspensão ou cancelamento imediato da sua conta, sem direito a reembolso, e pode dar origem a ações legais civis e/ou criminais." },
+      ],
+    },
+    {
+      id: "4B",
+      title: "4B. Conteúdo do Usuário e DMCA",
+      blocks: [
+        { type: "p", text: "O usuário declara e garante que:" },
+        {
+          type: "ul",
+          items: [
+            "É titular ou possui licença de todos os direitos necessários sobre o conteúdo que carrega ou gera por meio do Serviço.",
+            "O conteúdo não infringe direitos autorais, marcas, patentes, segredos comerciais, direitos de imagem nem quaisquer outros direitos de terceiros.",
+            "Assume plena responsabilidade por qualquer reclamação decorrente do conteúdo que carrega ou gera.",
+          ],
+        },
+        { type: "p", text: "A Elite Labs não é responsável pelo conteúdo gerado pelos usuários e opera como provedora de serviços sob a proteção da Seção 512 do DMCA (Safe Harbor). Para notificações de violação, consulte nossa Política DMCA em elitelabs.es/dmca." },
       ],
     },
     {
