@@ -6,7 +6,7 @@ import { join } from "path";
 import { randomUUID } from "crypto";
 import { promisify } from "util";
 import { downloadRawFromR2, uploadToR2 } from "@/lib/r2";
-import { convertToMp3, fishAudioClone, fishAudioGenerateBuffer } from "@/lib/fishaudio";
+import { convertToMp3, fishAudioClone, fishAudioDeleteModel, fishAudioGenerateBuffer } from "@/lib/fishaudio";
 import type { AssemblyAIUtterance } from "@/app/api/translate/diarize/route";
 
 export const runtime = "nodejs";
@@ -144,12 +144,20 @@ export async function POST(req: Request) {
 
     const ttsText = buildMultiSpeakerText(utterances);
 
-    const audioBuffer = await fishAudioGenerateBuffer({
-      text: ttsText,
-      references,
-      model: "s2-pro",
-      normalize: false,
-    });
+    let audioBuffer: Buffer;
+    try {
+      audioBuffer = await fishAudioGenerateBuffer({
+        text: ttsText,
+        references,
+        model: "s2-pro",
+        normalize: false,
+      });
+    } finally {
+      // Delete all cloned speaker models regardless of TTS success/failure
+      await Promise.all(
+        Object.values(speakerVoiceIds).map(id => fishAudioDeleteModel(id).catch(() => {}))
+      );
+    }
 
     const key = `translations/multi/${userId}/${Date.now()}.mp3`;
     const audioUrl = await uploadToR2(key, audioBuffer, "audio/mpeg");

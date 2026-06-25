@@ -365,3 +365,17 @@ export async function fishAudioClone({
 
   return { model_id: data._id, sampleUrl };
 }
+
+export async function fishAudioDeleteModel(modelId: string): Promise<void> {
+  const apiKey = getApiKey();
+  const res = await fetch(`${FISH_AUDIO_BASE}/model/${modelId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${apiKey}` },
+  });
+  if (!res.ok && res.status !== 404) {
+    const errText = await res.text();
+    console.warn(`[FishAudio] delete model ${modelId} failed (${res.status}): ${errText}`);
+  } else {
+    console.log(`[FishAudio] model deleted: ${modelId}`);
+  }
+}

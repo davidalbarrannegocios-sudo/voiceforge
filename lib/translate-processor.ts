@@ -1,6 +1,6 @@
 import * as deepl from "deepl-node";
 import { prisma } from "@/lib/prisma";
-import { fishAudioGenerate, fishAudioClone, fishAudioGenerateBuffer, convertToMp3 } from "@/lib/fishaudio";
+import { fishAudioGenerate, fishAudioClone, fishAudioGenerateBuffer, fishAudioDeleteModel, convertToMp3 } from "@/lib/fishaudio";
 import { calculateCharCost } from "@/lib/utils";
 import { downloadRawFromR2, deleteFromR2, keyFromPublicUrl, uploadToR2 } from "@/lib/r2";
 import { log } from "@/lib/logger";
@@ -324,9 +324,11 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
       });
     } catch (e) {
       await prisma.user.update({ where: { id: userId }, data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } } });
+      fishAudioDeleteModel(referenceId).catch(() => {});
       const msg = e instanceof Error ? e.message : "Error al generar audio multi-hablante";
       return await fail(msg);
     }
+    fishAudioDeleteModel(referenceId).catch(() => {});
 
     // Step 8: Upload to Hetzner at translations/multi/{userId}/{timestamp}.mp3
     const timestamp = Date.now();
