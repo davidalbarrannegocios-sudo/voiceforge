@@ -1358,7 +1358,9 @@ interface SubUser {
 function subStatus(u: SubUser, now: Date): "active" | "canceled" | "expired" {
   const expires = u.planExpiresAt ? new Date(u.planExpiresAt) : null;
   if (expires && expires < now) return "expired";
-  if (u.cancelAtPeriodEnd || u.stripeStatus === "canceled") return "canceled";
+  // Cancelado si: flag explícito, status de Stripe, o sin stripeSubscriptionId con acceso vigente
+  // (cubre usuarios cancelados antes de que existieran los campos cancelAtPeriodEnd/stripeStatus)
+  if (u.cancelAtPeriodEnd || u.stripeStatus === "canceled" || (!u.stripeSubscriptionId && expires && expires > now)) return "canceled";
   return "active";
 }
 function SubscriptionsSection({ users: _unused }: { users: AdminUser[] }) {

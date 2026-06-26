@@ -328,6 +328,7 @@ export async function POST(req: Request) {
             plan: "free",
             planExpiresAt: null,
             stripeSubscriptionId: null,
+            stripePriceId: null,
             cancelAtPeriodEnd: false,
             stripeStatus: "canceled",
             credits: 0,
