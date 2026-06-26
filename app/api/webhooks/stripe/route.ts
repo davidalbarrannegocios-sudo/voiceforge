@@ -139,6 +139,8 @@ export async function POST(req: Request) {
           credits,
           billingInterval,
           creditsRenewedAt: new Date(),
+          cancelAtPeriodEnd: sub.cancel_at_period_end,
+          stripeStatus: sub.status,
         },
       });
 
@@ -311,17 +313,28 @@ export async function POST(req: Request) {
       }
     }
 
+    const now = new Date();
+    const hasRemainingAccess = user.planExpiresAt && new Date(user.planExpiresAt) > now;
+
     await prisma.user.update({
       where: { id: user.id },
-      data: {
-        plan: "free",
-        planExpiresAt: null,
-        stripeSubscriptionId: null,
-        credits: 0,
-      },
+      data: hasRemainingAccess
+        ? {
+            stripeSubscriptionId: null,
+            cancelAtPeriodEnd: false,
+            stripeStatus: "canceled",
+          }
+        : {
+            plan: "free",
+            planExpiresAt: null,
+            stripeSubscriptionId: null,
+            cancelAtPeriodEnd: false,
+            stripeStatus: "canceled",
+            credits: 0,
+          },
     });
 
-    log("info", "stripe-webhook", "subscription cancelled", { userId: user.id }, user.id);
+    log("info", "stripe-webhook", "subscription cancelled", { userId: user.id, hasRemainingAccess }, user.id);
   }
 
   // ── customer.subscription.updated ────────────────────────
@@ -345,6 +358,8 @@ export async function POST(req: Request) {
       billingInterval: newBillingInterval,
       stripePriceId: priceId,
       planExpiresAt: periodEnd,
+      cancelAtPeriodEnd: sub.cancel_at_period_end,
+      stripeStatus: sub.status,
     };
 
     if (newPlan !== user.plan) {
@@ -354,7 +369,7 @@ export async function POST(req: Request) {
 
     await prisma.user.update({ where: { id: user.id }, data: updateData });
 
-    log("info", "stripe-webhook", "subscription updated", { userId: user.id, plan: newPlan, billing: newBillingInterval }, user.id);
+    log("info", "stripe-webhook", "subscription updated", { userId: user.id, plan: newPlan, billing: newBillingInterval, cancelAtPeriodEnd: sub.cancel_at_period_end, stripeStatus: sub.status }, user.id);
 
     // Referral commission: only when upgrading from free → paid for the first time
     const upgradingFromFree = (user.plan === "free" || user.plan == null) && newPlan !== "free";

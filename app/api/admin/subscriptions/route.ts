@@ -26,6 +26,8 @@ export async function GET() {
         billingInterval: true,
         stripeSubscriptionId: true,
         stripeCustomerId: true,
+        cancelAtPeriodEnd: true,
+        stripeStatus: true,
         createdAt: true,
       },
     });

@@ -1352,7 +1352,14 @@ function UsersSection({
 interface SubUser {
   id: string; email: string; plan: string; planExpiresAt: string | null;
   billingInterval: string; stripeSubscriptionId: string | null;
-  stripeCustomerId: string | null; createdAt: string;
+  stripeCustomerId: string | null; cancelAtPeriodEnd: boolean;
+  stripeStatus: string | null; createdAt: string;
+}
+function subStatus(u: SubUser, now: Date): "active" | "canceled" | "expired" {
+  const expires = u.planExpiresAt ? new Date(u.planExpiresAt) : null;
+  if (expires && expires < now) return "expired";
+  if (u.cancelAtPeriodEnd || u.stripeStatus === "canceled") return "canceled";
+  return "active";
 }
 function SubscriptionsSection({ users: _unused }: { users: AdminUser[] }) {
   const [filter, setFilter] = useState<"active" | "all">("active");
@@ -1370,11 +1377,15 @@ function SubscriptionsSection({ users: _unused }: { users: AdminUser[] }) {
 
   const nowGlobal = new Date();
   const withSub = subUsers;
+  // "active" tab: planExpiresAt in future OR null (lifetime/enterprise no expiry)
   const activeWithSub = withSub.filter(u => !u.planExpiresAt || new Date(u.planExpiresAt) >= nowGlobal);
   const expiredCount = withSub.filter(u => u.planExpiresAt && new Date(u.planExpiresAt) < nowGlobal).length;
-  const mrr = activeWithSub.reduce((sum, u) => sum + (PLAN_PRICE[u.plan] ?? 0), 0);
+  const canceledCount = activeWithSub.filter(u => u.cancelAtPeriodEnd || u.stripeStatus === "canceled").length;
+  const mrr = activeWithSub
+    .filter(u => !u.cancelAtPeriodEnd && u.stripeStatus !== "canceled")
+    .reduce((sum, u) => sum + (PLAN_PRICE[u.plan] ?? 0), 0);
   const nextWeek = new Date(nowGlobal.getTime() + 7 * 24 * 60 * 60 * 1000);
-  const renewingSoon = activeWithSub.filter(u => u.planExpiresAt && new Date(u.planExpiresAt) <= nextWeek).length;
+  const renewingSoon = activeWithSub.filter(u => u.planExpiresAt && new Date(u.planExpiresAt) <= nextWeek && !u.cancelAtPeriodEnd).length;
   const subs = filter === "all" ? withSub : activeWithSub;
 
   return (
@@ -1382,9 +1393,9 @@ function SubscriptionsSection({ users: _unused }: { users: AdminUser[] }) {
       {/* Summary stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
         {([
-          { label: "Total activas", value: withSub.length, color: "#4ade80" },
+          { label: "Con acceso activo", value: activeWithSub.length, color: "#4ade80" },
           { label: "MRR estimado", value: `$${mrr.toLocaleString("es-ES")}`, color: "#60a5fa" },
-          { label: "Renuevan esta semana", value: renewingSoon, color: "#f97316" },
+          { label: "Canceladas (con acceso)", value: canceledCount, color: "#f97316" },
           { label: "Expiradas", value: expiredCount, color: "#f87171" },
         ] as Array<{ label: string; value: string | number; color: string }>).map(s => (
           <div key={s.label} style={{ ...card, padding: "16px 20px" }}>
@@ -1427,12 +1438,11 @@ function SubscriptionsSection({ users: _unused }: { users: AdminUser[] }) {
               <tbody>
                 {subs.map(u => {
                   const now = new Date();
-                  const expires = u.planExpiresAt ? new Date(u.planExpiresAt) : null;
-                  const expired = expires && expires < now;
-                  const statusColor = expired ? "#f87171" : "#4ade80";
-                  const statusBg = expired ? "rgba(248,113,113,0.1)" : "rgba(74,222,128,0.08)";
-                  const statusBorder = expired ? "rgba(248,113,113,0.3)" : "rgba(74,222,128,0.2)";
-                  const statusLabel = expired ? "Expirado" : "Activo";
+                  const status = subStatus(u, now);
+                  const statusColor = status === "expired" ? "#6b7280" : status === "canceled" ? "#f87171" : "#4ade80";
+                  const statusBg = status === "expired" ? "rgba(107,114,128,0.1)" : status === "canceled" ? "rgba(248,113,113,0.1)" : "rgba(74,222,128,0.08)";
+                  const statusBorder = status === "expired" ? "rgba(107,114,128,0.2)" : status === "canceled" ? "rgba(248,113,113,0.3)" : "rgba(74,222,128,0.2)";
+                  const statusLabel = status === "expired" ? "Expirado" : status === "canceled" ? "Cancelado" : "Activo";
                   return (
                     <tr
                       key={u.id}
@@ -1458,8 +1468,8 @@ function SubscriptionsSection({ users: _unused }: { users: AdminUser[] }) {
                         <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 999, color: statusColor, background: statusBg, border: `1px solid ${statusBorder}`, textTransform: "uppercase", letterSpacing: "0.04em" }}>{statusLabel}</span>
                       </td>
                       {/* Próxima renovación */}
-                      <td style={{ padding: "12px 16px", color: expired ? "#f87171" : "rgba(255,255,255,0.45)", whiteSpace: "nowrap", fontSize: 12 }}>
-                        {expires ? expires.toLocaleDateString("es-ES", { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" }) : "—"}
+                      <td style={{ padding: "12px 16px", color: status === "expired" ? "#f87171" : "rgba(255,255,255,0.45)", whiteSpace: "nowrap", fontSize: 12 }}>
+                        {u.planExpiresAt ? new Date(u.planExpiresAt).toLocaleDateString("es-ES", { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" }) : "—"}
                       </td>
                       {/* Stripe ID */}
                       <td style={{ padding: "12px 16px" }}>

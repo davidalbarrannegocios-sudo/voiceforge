@@ -31,6 +31,8 @@ model User {
   referralEarned        Int                    @default(0)
   referralPending       Int                    @default(0)
   stripePriceId         String?
+  cancelAtPeriodEnd     Boolean                @default(false)
+  stripeStatus          String?
   disabledUntil         DateTime?
   affiliateType         String    @default("standard")
   hasDiscount           Boolean   @default(false)
