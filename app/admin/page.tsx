@@ -1349,19 +1349,33 @@ function UsersSection({
 }
 
 /* ─── Section: Subscriptions ──────────────────────────────── */
-function SubscriptionsSection({ users }: { users: AdminUser[] }) {
+interface SubUser {
+  id: string; email: string; plan: string; planExpiresAt: string | null;
+  billingInterval: string; stripeSubscriptionId: string | null;
+  stripeCustomerId: string | null; createdAt: string;
+}
+function SubscriptionsSection({ users: _unused }: { users: AdminUser[] }) {
   const [filter, setFilter] = useState<"active" | "all">("active");
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const subs = users.filter(u => filter === "all" || u.stripeSubscriptionId !== null);
+  const [subUsers, setSubUsers] = useState<SubUser[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/subscriptions")
+      .then(r => r.json())
+      .then(d => { setSubUsers(Array.isArray(d.users) ? d.users : []); })
+      .finally(() => setLoading(false));
+  }, []);
 
   const nowGlobal = new Date();
-  const withSub = users.filter(u => u.stripeSubscriptionId !== null);
+  const withSub = subUsers;
   const activeWithSub = withSub.filter(u => !u.planExpiresAt || new Date(u.planExpiresAt) >= nowGlobal);
   const expiredCount = withSub.filter(u => u.planExpiresAt && new Date(u.planExpiresAt) < nowGlobal).length;
   const mrr = activeWithSub.reduce((sum, u) => sum + (PLAN_PRICE[u.plan] ?? 0), 0);
   const nextWeek = new Date(nowGlobal.getTime() + 7 * 24 * 60 * 60 * 1000);
   const renewingSoon = activeWithSub.filter(u => u.planExpiresAt && new Date(u.planExpiresAt) <= nextWeek).length;
+  const subs = filter === "all" ? withSub : activeWithSub;
 
   return (
     <div>
@@ -1384,14 +1398,18 @@ function SubscriptionsSection({ users }: { users: AdminUser[] }) {
       <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
         {(["active", "all"] as const).map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{ padding: "5px 16px", borderRadius: 999, fontSize: 11, fontWeight: 600, border: `1px solid ${filter === f ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.07)"}`, background: filter === f ? "rgba(255,255,255,0.09)" : "transparent", color: filter === f ? "#fff" : "rgba(255,255,255,0.35)", cursor: "pointer", transition: "all 0.15s" }}>
-            {f === "active" ? "Con suscripción" : "Todos"}
+            {f === "active" ? "Activos" : "Todos"}
           </button>
         ))}
       </div>
 
       {/* Table */}
       <div style={{ ...card, padding: 0, overflow: "hidden" }}>
-        {subs.length === 0 ? (
+        {loading ? (
+          <div style={{ padding: "4rem 2rem", textAlign: "center" }}>
+            <p style={{ fontSize: 14, color: "rgba(255,255,255,0.2)", margin: 0 }}>Cargando...</p>
+          </div>
+        ) : subs.length === 0 ? (
           <div style={{ padding: "4rem 2rem", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
             <CreditCard size={32} style={{ color: "rgba(255,255,255,0.08)" }} />
             <p style={{ fontSize: 14, color: "rgba(255,255,255,0.2)", margin: 0 }}>Sin suscripciones</p>
@@ -1411,10 +1429,10 @@ function SubscriptionsSection({ users }: { users: AdminUser[] }) {
                   const now = new Date();
                   const expires = u.planExpiresAt ? new Date(u.planExpiresAt) : null;
                   const expired = expires && expires < now;
-                  const statusColor = !u.stripeSubscriptionId ? "#6b7280" : expired ? "#f87171" : "#4ade80";
-                  const statusBg = !u.stripeSubscriptionId ? "rgba(107,114,128,0.1)" : expired ? "rgba(248,113,113,0.1)" : "rgba(74,222,128,0.08)";
-                  const statusBorder = !u.stripeSubscriptionId ? "rgba(107,114,128,0.2)" : expired ? "rgba(248,113,113,0.3)" : "rgba(74,222,128,0.2)";
-                  const statusLabel = !u.stripeSubscriptionId ? "Sin sub." : expired ? "Expirado" : "Activo";
+                  const statusColor = expired ? "#f87171" : "#4ade80";
+                  const statusBg = expired ? "rgba(248,113,113,0.1)" : "rgba(74,222,128,0.08)";
+                  const statusBorder = expired ? "rgba(248,113,113,0.3)" : "rgba(74,222,128,0.2)";
+                  const statusLabel = expired ? "Expirado" : "Activo";
                   return (
                     <tr
                       key={u.id}
@@ -1960,7 +1978,7 @@ function AnalyticsSection({ users, stats }: { users: AdminUser[]; stats: Stats |
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   // Summary metrics
-  const withSub = users.filter(u => u.stripeSubscriptionId !== null && (!u.planExpiresAt || new Date(u.planExpiresAt) >= now));
+  const withSub = users.filter(u => u.plan !== "free" && (!u.planExpiresAt || new Date(u.planExpiresAt) >= now));
   const mrr = withSub.reduce((sum, u) => sum + (PLAN_PRICES[u.plan] ?? 0), 0);
   const activeRecent = users.filter(u => new Date(u.createdAt) >= sevenDaysAgo).length;
   const paidUsers = users.filter(u => u.plan !== "free").length;
