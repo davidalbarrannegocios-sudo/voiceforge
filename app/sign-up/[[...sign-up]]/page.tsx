@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useSignUp } from "@clerk/nextjs/legacy";
+import { useSignUp } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Image from "next/image";
