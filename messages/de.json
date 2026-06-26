@@ -464,6 +464,7 @@
     "startTranslation": "Übersetzung starten",
     "starting": "Wird gestartet...",
     "costNote": "Ein Aufschlag von {pct} gilt gegenüber dem Standardpreis, um die Kosten für Transkription und maschinelle Übersetzung zu decken.",
+    "costNoteMulti": "Ein Aufschlag von {pct} gilt gegenüber dem Standardpreis, um die Kosten für Diarisierung, Stimmenklonung und Multi-Speaker-Synthese zu decken.",
     "autoDelete": "Audios werden automatisch nach {n} Tagen gelöscht · Nach der Generierung herunterladen",
     "stepTranscribing": "Audio wird transkribiert...",
     "stepTranslating": "Text wird übersetzt...",

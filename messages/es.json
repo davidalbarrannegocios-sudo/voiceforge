@@ -464,6 +464,7 @@
     "startTranslation": "Iniciar traducción",
     "starting": "Iniciando...",
     "costNote": "Se aplica un incremento del {pct} sobre el coste estándar para cubrir los costes de transcripción y traducción automática.",
+    "costNoteMulti": "Se aplica un incremento del {pct} sobre el coste estándar para cubrir los costes de diarización, clonación de voces y síntesis multi-hablante.",
     "autoDelete": "Los audios se eliminan automáticamente en {n} días · Descárgalos una vez generados",
     "stepTranscribing": "Transcribiendo audio...",
     "stepTranslating": "Traduciendo texto...",

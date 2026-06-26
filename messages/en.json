@@ -464,6 +464,7 @@
     "startTranslation": "Start translation",
     "starting": "Starting...",
     "costNote": "A surcharge of {pct} applies over the standard cost to cover transcription and automatic translation costs.",
+    "costNoteMulti": "A surcharge of {pct} applies over the standard cost to cover diarization, voice cloning, and multi-speaker synthesis costs.",
     "autoDelete": "Audio is automatically deleted in {n} days · Download once generated",
     "stepTranscribing": "Transcribing audio...",
     "stepTranslating": "Translating text...",

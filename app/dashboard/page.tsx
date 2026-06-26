@@ -4470,7 +4470,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           {/* Cost note */}
           <div className="flex items-start gap-3 px-3 py-2.5 rounded-xl text-xs leading-relaxed" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", color: "#555" }}>
             <span className="flex-shrink-0 mt-0.5" style={{ color: "#888" }}>ℹ</span>
-            <span>{t.translate.costNote.replace('{pct}', plan === "enterprise" ? "10%" : "20%")}</span>
+            <span>{(speakerMode === "multi" ? t.translate.costNoteMulti : t.translate.costNote).replace('{pct}', plan === "enterprise" ? "10%" : speakerMode === "multi" ? "60%" : "20%")}</span>
           </div>
 
           {error && (

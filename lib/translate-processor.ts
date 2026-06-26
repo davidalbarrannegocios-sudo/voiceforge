@@ -274,9 +274,9 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
     const fullTranscription = utterances.map(u => `[${u.speaker}] ${u.text}`).join("\n");
     const fullTranslation = translatedUtterances.map(u => `[${u.speaker}] ${u.translatedText}`).join("\n");
 
-    // Step 4: Credits
+    // Step 4: Credits — multi-speaker carries higher cost (diarization + per-speaker cloning)
     const pureTranslatedLength = translatedUtterances.reduce((sum, u) => sum + u.translatedText.length, 0);
-    const translateMultiplier = effectivePlan === "enterprise" ? 1.1 : 1.2;
+    const translateMultiplier = effectivePlan === "enterprise" ? 1.1 : 1.6;
     const charCost = Math.ceil(calculateCharCost(pureTranslatedLength) * translateMultiplier);
 
     const freshUser = await prisma.user.findUnique({ where: { id: userId } });
