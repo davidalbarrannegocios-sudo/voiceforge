@@ -4240,10 +4240,13 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 setAnalyzeStep(0);
                 setError(null);
               }}
-              className="flex-1 py-1.5 px-3 rounded-md text-xs font-medium transition-all"
+              className="flex-1 py-1.5 px-3 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-1.5"
               style={{ background: speakerMode === "multi" ? "#1e1e1e" : "transparent", color: speakerMode === "multi" ? "#e5e7eb" : "#666", border: "none", cursor: "pointer" }}
             >
               Múltiples hablantes
+              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                BETA
+              </span>
             </button>
           </div>
 
