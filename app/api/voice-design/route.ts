@@ -24,11 +24,16 @@ export async function POST(req: Request) {
     );
   }
 
-  const { instruction, reference_text, language, n } = await req.json() as {
+  const { instruction, reference_text, language, n, speed, num_step, guidance_scale, instruct_guidance_scale, seed } = await req.json() as {
     instruction: string;
     reference_text?: string;
     language?: string;
     n?: number;
+    speed?: number;
+    num_step?: number;
+    guidance_scale?: number;
+    instruct_guidance_scale?: number;
+    seed?: number;
   };
 
   if (!instruction || instruction.trim().length === 0) {
@@ -52,6 +57,11 @@ export async function POST(req: Request) {
       ...(reference_text?.trim() ? { reference_text: reference_text.trim() } : {}),
       ...(language ? { language } : {}),
       n: numCandidates,
+      ...(speed !== undefined ? { speed } : {}),
+      ...(num_step !== undefined ? { num_step } : {}),
+      ...(guidance_scale !== undefined ? { guidance_scale } : {}),
+      ...(instruct_guidance_scale !== undefined ? { instruct_guidance_scale } : {}),
+      ...(seed !== undefined ? { seed } : {}),
     }),
   });
 

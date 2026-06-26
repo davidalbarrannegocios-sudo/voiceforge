@@ -1945,6 +1945,11 @@ function CreateVoiceTab({ plan, onCloned }: { plan: string; onCloned: () => void
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
   const [savedIdx, setSavedIdx] = useState<number | null>(null);
   const [voiceName, setVoiceName] = useState("");
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [speed, setSpeed] = useState(1.0);
+  const [numStep, setNumStep] = useState(32);
+  const [guidanceScale, setGuidanceScale] = useState(2.0);
+  const [seed, setSeed] = useState<number | null>(null);
 
   void plan;
 
@@ -1961,6 +1966,11 @@ function CreateVoiceTab({ plan, onCloned }: { plan: string; onCloned: () => void
           reference_text: referenceText.trim() || undefined,
           language,
           n: numCandidates,
+          speed,
+          num_step: numStep,
+          guidance_scale: guidanceScale,
+          instruct_guidance_scale: 0,
+          seed: seed ?? undefined,
         }),
       });
       const data = await res.json();
@@ -2211,6 +2221,83 @@ function CreateVoiceTab({ plan, onCloned }: { plan: string; onCloned: () => void
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Ajustes avanzados */}
+      <div className="flex flex-col gap-3">
+        <button
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="text-sm flex items-center gap-1 transition-colors w-fit"
+          style={{ color: showAdvanced ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.35)" }}
+        >
+          <Settings size={14} />
+          Ajustes avanzados {showAdvanced ? "↑" : "↓"}
+        </button>
+
+        {showAdvanced && (
+          <div className="flex flex-col gap-4 p-4 rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div className="flex flex-col gap-1.5">
+              <div className="flex justify-between">
+                <label className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Velocidad</label>
+                <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{speed}x</span>
+              </div>
+              <input type="range" min="0.1" max="3" step="0.1" value={speed}
+                onChange={(e) => setSpeed(parseFloat(e.target.value))}
+                className="w-full accent-white" />
+              <div className="flex justify-between" style={{ fontSize: "10px", color: "rgba(255,255,255,0.2)" }}>
+                <span>Lento</span><span>Normal</span><span>Rápido</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <div className="flex justify-between">
+                <label className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Calidad (pasos)</label>
+                <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{numStep}</span>
+              </div>
+              <input type="range" min="8" max="128" step="8" value={numStep}
+                onChange={(e) => setNumStep(parseInt(e.target.value))}
+                className="w-full accent-white" />
+              <div className="flex justify-between" style={{ fontSize: "10px", color: "rgba(255,255,255,0.2)" }}>
+                <span>Rápido</span><span>Equilibrado</span><span>Máx calidad</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <div className="flex justify-between">
+                <label className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Fidelidad al prompt</label>
+                <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{guidanceScale}</span>
+              </div>
+              <input type="range" min="0" max="10" step="0.5" value={guidanceScale}
+                onChange={(e) => setGuidanceScale(parseFloat(e.target.value))}
+                className="w-full accent-white" />
+              <div className="flex justify-between" style={{ fontSize: "10px", color: "rgba(255,255,255,0.2)" }}>
+                <span>Libre</span><span>Equilibrado</span><span>Estricto</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+                Semilla <span style={{ color: "rgba(255,255,255,0.2)" }}>(opcional — para reproducir el mismo resultado)</span>
+              </label>
+              <input
+                type="number"
+                value={seed ?? ""}
+                onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : null)}
+                placeholder="Ej: 42"
+                className="w-full rounded-lg px-3 py-2 text-white text-sm focus:outline-none transition-colors placeholder:text-white/20"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+              />
+            </div>
+
+            <button
+              onClick={() => { setSpeed(1); setNumStep(32); setGuidanceScale(2); setSeed(null); }}
+              className="text-xs text-right transition-colors"
+              style={{ color: "rgba(255,255,255,0.3)" }}
+            >
+              Restablecer valores por defecto
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-2 rounded-xl px-4 py-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
