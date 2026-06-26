@@ -4486,11 +4486,10 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           <div className="flex flex-col items-end gap-1.5">
             {/* Multi-speaker 4-step progress bar */}
             {speakerMode === "multi" && (loading || previewLoading) && (
-              <div className="w-full flex items-center gap-0 mb-2 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(167,139,250,0.2)" }}>
+              <div className="flex items-center gap-2 w-full mb-2">
                 {(["Subiendo", "Detectando", "Traduciendo", "Generando"] as const).map((step, i) => {
                   const isAnalyze = previewLoading;
                   const isTranslate = loading;
-                  // During analyze: step 0 or 1 is active; during translate: steps 0-1 done, 2-3 active
                   const done = isAnalyze
                     ? (analyzeStep > i + 1)
                     : isTranslate ? i < 2 : false;
@@ -4500,8 +4499,13 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                       ? (i === 2 && !stepLabel?.includes("Generando")) || (i === 3 && stepLabel?.includes("Generando"))
                       : false;
                   return (
-                    <div key={step} className="flex-1 py-1.5 text-center text-[10px] font-medium truncate px-1" style={{ background: done ? "rgba(167,139,250,0.18)" : active ? "rgba(167,139,250,0.08)" : "transparent", color: done ? "#a78bfa" : active ? "#c4b5fd" : "#3a3a3a", borderRight: i < 3 ? "1px solid rgba(167,139,250,0.12)" : "none" }}>
-                      {done ? "✓ " : active ? "⟳ " : ""}{step}
+                    <div key={step} className="flex-1 flex flex-col items-center gap-1.5">
+                      <div className="w-full h-[2px] rounded-full overflow-hidden bg-white/10">
+                        <div className={`h-full rounded-full transition-all duration-700 ease-in-out ${done ? "w-full bg-white" : active ? "w-1/2 bg-white/60 animate-pulse" : "w-0 bg-white/20"}`} />
+                      </div>
+                      <span className={`text-[11px] font-medium transition-colors duration-300 ${done ? "text-white" : active ? "text-white/70" : "text-white/25"}`}>
+                        {done ? "✓ " : ""}{step}
+                      </span>
                     </div>
                   );
                 })}
