@@ -18,12 +18,6 @@ interface TranslatedUtterance extends AssemblyAIUtterance {
   translatedText: string;
 }
 
-function buildMultiSpeakerText(utterances: TranslatedUtterance[]): string {
-  const speakers = [...new Set(utterances.map(u => u.speaker))].sort();
-  const speakerIndex: Record<string, number> = Object.fromEntries(speakers.map((s, i) => [s, i]));
-  return utterances.map(u => `<|speaker:${speakerIndex[u.speaker]}|>${u.translatedText}`).join("");
-}
-
 export async function POST(req: Request) {
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -39,32 +33,36 @@ export async function POST(req: Request) {
   if (!utterances?.length) return NextResponse.json({ error: "utterances requerido" }, { status: 400 });
   if (!sourceFileKey) return NextResponse.json({ error: "sourceFileKey requerido" }, { status: 400 });
 
-  // Download and convert source audio to MP3 once
   const rawBuffer = await downloadRawFromR2(sourceFileKey);
   const mp3Buffer = await convertToMp3(rawBuffer);
 
   const sessionId = randomUUID();
   const sourceAudioPath = join("/tmp", `synth_${sessionId}_source.mp3`);
 
+  // Track cloned models for cleanup in finally
+  const clonedSpeakers: Array<{ speaker: string; modelId: string }> = [];
+
   try {
     await writeFile(sourceAudioPath, mp3Buffer);
 
-    const speakers = [...new Set(utterances.map(u => u.speaker))].sort();
-    const speakerVoiceIds: Record<string, string> = {};
+    // One model per speaker — extract ONLY that speaker's segments
+    const speakerOrder = [...new Set(utterances.map(u => u.speaker))].sort();
 
-    for (const speaker of speakers) {
-      const speakerUtterances = utterances.filter(u => u.speaker === speaker);
+    for (const speaker of speakerOrder) {
+      const speakerSegments = utterances.filter(u => u.speaker === speaker);
+      console.log("[synthesize-multi] creando modelo para speaker", speaker, "con", speakerSegments.length, "segmentos");
+
       const chunks: Buffer[] = [];
       let totalDuration = 0;
 
-      for (const utt of speakerUtterances) {
+      for (const utt of speakerSegments) {
         if (totalDuration >= 60) break;
         const startSecs = utt.start / 1000;
         const endSecs = utt.end / 1000;
         const duration = endSecs - startSecs;
         if (duration < 0.5) continue;
 
-        const chunkPath = join("/tmp", `synth_${sessionId}_spk${speaker}_chunk${chunks.length}.mp3`);
+        const chunkPath = join("/tmp", `synth_${sessionId}_spk${speaker}_c${chunks.length}.mp3`);
         try {
           await execFileAsync("ffmpeg", [
             "-i", sourceAudioPath,
@@ -83,7 +81,7 @@ export async function POST(req: Request) {
       }
 
       if (chunks.length === 0) {
-        console.warn(`[synthesize-multi] No chunks for speaker ${speaker}, skipping clone`);
+        console.warn(`[synthesize-multi] speaker ${speaker}: sin chunks válidos, omitiendo`);
         continue;
       }
 
@@ -91,27 +89,21 @@ export async function POST(req: Request) {
       if (chunks.length === 1) {
         sampleBuffer = chunks[0];
       } else {
-        const concatListPath = join("/tmp", `synth_${sessionId}_spk${speaker}_list.txt`);
-        const concatOutPath = join("/tmp", `synth_${sessionId}_spk${speaker}_sample.mp3`);
         const chunkPaths: string[] = [];
-
         for (let i = 0; i < chunks.length; i++) {
-          const p = join("/tmp", `synth_${sessionId}_spk${speaker}_c${i}.mp3`);
+          const p = join("/tmp", `synth_${sessionId}_spk${speaker}_m${i}.mp3`);
           await writeFile(p, chunks[i]);
           chunkPaths.push(p);
         }
-
-        const concatContent = chunkPaths.map(p => `file '${p}'`).join("\n");
-        await writeFile(concatListPath, concatContent);
-
+        const concatListPath = join("/tmp", `synth_${sessionId}_spk${speaker}_list.txt`);
+        const concatOutPath = join("/tmp", `synth_${sessionId}_spk${speaker}_merged.mp3`);
+        await writeFile(concatListPath, chunkPaths.map(p => `file '${p}'`).join("\n"));
         await execFileAsync("ffmpeg", [
           "-f", "concat", "-safe", "0",
           "-i", concatListPath,
           "-c", "copy", "-y", concatOutPath,
         ]);
-
         sampleBuffer = await readFile(concatOutPath);
-
         await Promise.all([
           ...chunkPaths.map(p => unlink(p).catch(() => {})),
           unlink(concatListPath).catch(() => {}),
@@ -125,38 +117,43 @@ export async function POST(req: Request) {
           voiceName: `spk-${speaker}-${Date.now().toString(36)}`,
           model: "s2-pro",
         });
-        speakerVoiceIds[speaker] = cloneResult.model_id;
-        console.log(`[synthesize-multi] Cloned speaker ${speaker} → ${cloneResult.model_id} (${Math.round(totalDuration)}s sample)`);
+        clonedSpeakers.push({ speaker, modelId: cloneResult.model_id });
+        console.log(`[synthesize-multi] speaker ${speaker} clonado → ${cloneResult.model_id} (${Math.round(totalDuration)}s)`);
       } catch (e) {
-        console.error(`[synthesize-multi] Clone failed for speaker ${speaker}:`, e);
+        console.error(`[synthesize-multi] clone falló para speaker ${speaker}:`, e);
       }
     }
 
-    if (Object.keys(speakerVoiceIds).length === 0) {
+    console.log("[synthesize-multi] modelos creados:", clonedSpeakers.map(m => `${m.speaker}:${m.modelId}`));
+
+    if (clonedSpeakers.length === 0) {
       return NextResponse.json({ error: "No se pudo clonar ninguna voz" }, { status: 500 });
     }
 
-    // Build references array in speaker-index order (speaker:0 → first reference, etc.)
-    const speakerOrder = [...new Set(utterances.map(u => u.speaker))].sort();
-    const references = speakerOrder
-      .filter(s => speakerVoiceIds[s])
-      .map(s => ({ type: "model_id" as const, value: speakerVoiceIds[s] }));
+    // Index map is derived from clonedSpeakers order — speaker:0 → clonedSpeakers[0], etc.
+    const speakerIndexMap: Record<string, number> = Object.fromEntries(
+      clonedSpeakers.map((m, i) => [m.speaker, i])
+    );
+    const referenceIds = clonedSpeakers.map(m => m.modelId);
+    console.log("[synthesize-multi] reference_id array:", referenceIds);
 
-    const ttsText = buildMultiSpeakerText(utterances);
+    // Only include utterances whose speaker was successfully cloned
+    const ttsText = utterances
+      .filter(u => speakerIndexMap[u.speaker] !== undefined)
+      .map(u => `<|speaker:${speakerIndexMap[u.speaker]}|>${u.translatedText}`)
+      .join("");
 
     let audioBuffer: Buffer;
     try {
       audioBuffer = await fishAudioGenerateBuffer({
         text: ttsText,
-        references,
+        references: referenceIds.map(id => ({ type: "model_id" as const, value: id })),
         model: "s2-pro",
         normalize: false,
       });
     } finally {
-      // Delete all cloned speaker models regardless of TTS success/failure
-      await Promise.all(
-        Object.values(speakerVoiceIds).map(id => fishAudioDeleteModel(id).catch(() => {}))
-      );
+      await Promise.all(clonedSpeakers.map(m => fishAudioDeleteModel(m.modelId).catch(() => {})));
+      clonedSpeakers.length = 0; // prevent double-delete in outer finally
     }
 
     const key = `translations/multi/${userId}/${Date.now()}.mp3`;
@@ -166,5 +163,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ audioUrl, durationSeconds, r2Key: key });
   } finally {
     await unlink(sourceAudioPath).catch(() => {});
+    // Guard: delete any models not yet cleaned up (e.g. error before TTS)
+    if (clonedSpeakers.length > 0) {
+      await Promise.all(clonedSpeakers.map(m => fishAudioDeleteModel(m.modelId).catch(() => {})));
+    }
   }
 }

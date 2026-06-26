@@ -1,9 +1,17 @@
 import * as deepl from "deepl-node";
+import { execFile } from "child_process";
+import { writeFile, readFile, unlink } from "fs/promises";
+import { join } from "path";
+import { tmpdir } from "os";
+import { randomUUID } from "crypto";
+import { promisify } from "util";
 import { prisma } from "@/lib/prisma";
 import { fishAudioGenerate, fishAudioClone, fishAudioGenerateBuffer, fishAudioDeleteModel, convertToMp3 } from "@/lib/fishaudio";
 import { calculateCharCost } from "@/lib/utils";
 import { downloadRawFromR2, deleteFromR2, keyFromPublicUrl, uploadToR2 } from "@/lib/r2";
 import { log } from "@/lib/logger";
+
+const execFileAsync = promisify(execFile);
 
 const RETENTION_DAYS: Record<string, number> = {
   free: 3, starter: 14, pro: 30, elite: 30, enterprise: 90,
@@ -185,10 +193,14 @@ export function mergeSegmentsBySpeaker(segments: DiarizedSegment[]): DiarizedSeg
   return merged;
 }
 
-function buildSpeakerTokenText(utterances: (AssemblyAIUtterance & { translatedText: string })[]): string {
-  const speakers = [...new Set(utterances.map(u => u.speaker))].sort();
-  const idx: Record<string, number> = Object.fromEntries(speakers.map((s, i) => [s, i]));
-  return utterances.map(u => `<|speaker:${idx[u.speaker]}|>${u.translatedText}`).join("");
+function buildSpeakerTokenText(
+  utterances: (AssemblyAIUtterance & { translatedText: string })[],
+  speakerIndexMap: Record<string, number>,
+): string {
+  return utterances
+    .filter(u => speakerIndexMap[u.speaker] !== undefined)
+    .map(u => `<|speaker:${speakerIndexMap[u.speaker]}|>${u.translatedText}`)
+    .join("");
 }
 
 interface MultiSpeakerParams {
@@ -256,11 +268,9 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
       return await fail(msg);
     }
 
-    // Step 3: Build Fish TTS text with <|speaker:N|> tokens
-    const ttsText = buildSpeakerTokenText(translatedUtterances);
+    // Step 3: Metadata for credits and history
     const uniqueSpeakers = [...new Set(utterances.map(u => u.speaker))];
     const speakerCount = uniqueSpeakers.length;
-
     const fullTranscription = utterances.map(u => `[${u.speaker}] ${u.text}`).join("\n");
     const fullTranslation = translatedUtterances.map(u => `[${u.speaker}] ${u.translatedText}`).join("\n");
 
@@ -290,7 +300,7 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
     });
     log("info", "credits", "multi-speaker credits deducted", { userId, chars: pureTranslatedLength, creditsUsed: charCost, plan: effectivePlan, speakerCount }, userId);
 
-    // Step 5: Download audio + convert to MP3 for voice cloning
+    // Step 5: Download audio + convert to MP3
     const rawBuffer = await downloadRawFromR2(fileKey);
     if (rawBuffer.length > 50 * 1024 * 1024) {
       await prisma.user.update({ where: { id: userId }, data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } } });
@@ -298,37 +308,116 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
     }
     const mp3Buffer = await convertToMp3(rawBuffer);
 
-    // Step 6: Clone original audio as multi-speaker reference for Fish TTS S2
-    let referenceId: string;
+    // Step 6: Clone ONE model per speaker using only that speaker's audio segments
+    const sessionId = randomUUID();
+    const sourceAudioPath = join(tmpdir(), `trans_${sessionId}_source.mp3`);
+    const clonedSpeakers: Array<{ speaker: string; modelId: string }> = [];
+
     try {
-      const cloneResult = await fishAudioClone({
-        audioBuffer: mp3Buffer,
-        voiceName: `multi-ref-${taskId.slice(-8)}`,
-        model: "s2-pro",
-      });
-      referenceId = cloneResult.model_id;
-    } catch (e) {
-      await prisma.user.update({ where: { id: userId }, data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } } });
-      const msg = e instanceof Error ? e.message : "Error al crear referencia de voz";
-      return await fail(msg);
+      await writeFile(sourceAudioPath, mp3Buffer);
+
+      const speakerOrder = [...new Set(utterances.map(u => u.speaker))].sort();
+
+      for (const speaker of speakerOrder) {
+        const speakerSegments = translatedUtterances.filter(u => u.speaker === speaker);
+        console.log("[synthesize-multi] creando modelo para speaker", speaker, "con", speakerSegments.length, "segmentos");
+
+        const chunks: Buffer[] = [];
+        let totalDuration = 0;
+
+        for (const utt of speakerSegments) {
+          if (totalDuration >= 60) break;
+          const startSecs = utt.start / 1000;
+          const endSecs = utt.end / 1000;
+          const duration = endSecs - startSecs;
+          if (duration < 0.5) continue;
+
+          const chunkPath = join(tmpdir(), `trans_${sessionId}_spk${speaker}_c${chunks.length}.mp3`);
+          try {
+            await execFileAsync("ffmpeg", [
+              "-i", sourceAudioPath,
+              "-ss", String(startSecs),
+              "-to", String(endSecs),
+              "-c:a", "libmp3lame", "-q:a", "4",
+              "-y", chunkPath,
+            ]);
+            const buf = await readFile(chunkPath);
+            if (buf.length > 1000) { chunks.push(buf); totalDuration += duration; }
+            await unlink(chunkPath).catch(() => {});
+          } catch { continue; }
+        }
+
+        if (chunks.length === 0) {
+          console.warn(`[translate-multi] speaker ${speaker}: sin chunks válidos, omitiendo`);
+          continue;
+        }
+
+        let sampleBuffer: Buffer;
+        if (chunks.length === 1) {
+          sampleBuffer = chunks[0];
+        } else {
+          const chunkPaths: string[] = [];
+          for (let i = 0; i < chunks.length; i++) {
+            const p = join(tmpdir(), `trans_${sessionId}_spk${speaker}_m${i}.mp3`);
+            await writeFile(p, chunks[i]);
+            chunkPaths.push(p);
+          }
+          const listPath = join(tmpdir(), `trans_${sessionId}_spk${speaker}_list.txt`);
+          const mergedPath = join(tmpdir(), `trans_${sessionId}_spk${speaker}_merged.mp3`);
+          await writeFile(listPath, chunkPaths.map(p => `file '${p}'`).join("\n"));
+          await execFileAsync("ffmpeg", ["-f", "concat", "-safe", "0", "-i", listPath, "-c", "copy", "-y", mergedPath]);
+          sampleBuffer = await readFile(mergedPath);
+          await Promise.all([...chunkPaths.map(p => unlink(p).catch(() => {})), unlink(listPath).catch(() => {}), unlink(mergedPath).catch(() => {})]);
+        }
+
+        try {
+          const cloneResult = await fishAudioClone({
+            audioBuffer: sampleBuffer,
+            voiceName: `spk-${speaker}-${taskId.slice(-6)}`,
+            model: "s2-pro",
+          });
+          clonedSpeakers.push({ speaker, modelId: cloneResult.model_id });
+          console.log(`[translate-multi] speaker ${speaker} clonado → ${cloneResult.model_id} (${Math.round(totalDuration)}s)`);
+        } catch (e) {
+          console.error(`[translate-multi] clone falló para speaker ${speaker}:`, e);
+        }
+      }
+    } finally {
+      await unlink(sourceAudioPath).catch(() => {});
     }
 
-    // Step 7: Fish Audio TTS S2 with <|speaker:N|> tokens
+    console.log("[synthesize-multi] modelos creados:", clonedSpeakers.map(m => `${m.speaker}:${m.modelId}`));
+
+    if (clonedSpeakers.length === 0) {
+      await prisma.user.update({ where: { id: userId }, data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } } });
+      return await fail("No se pudo clonar ninguna voz de los hablantes");
+    }
+
+    // Index map derived from clonedSpeakers order: speaker:0 → clonedSpeakers[0].modelId, etc.
+    const speakerIndexMap: Record<string, number> = Object.fromEntries(
+      clonedSpeakers.map((m, i) => [m.speaker, i])
+    );
+    const referenceIds = clonedSpeakers.map(m => m.modelId);
+    console.log("[synthesize-multi] reference_id array:", referenceIds);
+
+    const ttsText = buildSpeakerTokenText(translatedUtterances, speakerIndexMap);
+
+    // Step 7: Fish Audio TTS S2 with per-speaker reference_id array
     let audioBuffer: Buffer;
     try {
       audioBuffer = await fishAudioGenerateBuffer({
         text: ttsText,
-        referenceId,
+        references: referenceIds.map(id => ({ type: "model_id" as const, value: id })),
         model: "s2-pro",
         normalize: false,
       });
     } catch (e) {
       await prisma.user.update({ where: { id: userId }, data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } } });
-      fishAudioDeleteModel(referenceId).catch(() => {});
+      await Promise.all(clonedSpeakers.map(m => fishAudioDeleteModel(m.modelId).catch(() => {})));
       const msg = e instanceof Error ? e.message : "Error al generar audio multi-hablante";
       return await fail(msg);
     }
-    fishAudioDeleteModel(referenceId).catch(() => {});
+    await Promise.all(clonedSpeakers.map(m => fishAudioDeleteModel(m.modelId).catch(() => {})));
 
     // Step 8: Upload to Hetzner at translations/multi/{userId}/{timestamp}.mp3
     const timestamp = Date.now();
