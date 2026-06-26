@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare, Loader, FileText, TrendingUp, ExternalLink, Filter, Shield, Music, Sparkles, ChevronLeft, Volume2 } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare, Loader, FileText, TrendingUp, ExternalLink, Filter, Shield, Music, Sparkles, ChevronLeft, Volume2, Wand2 } from "lucide-react";
 import { DialogueEditor } from "@/components/DialogueEditor";
 import { EliteLoader } from "@/components/ui/EliteLoader";
 import { ImageVideoEditor, type ImageHistoryItem } from "@/components/ImageVideoEditor";
@@ -46,12 +46,12 @@ interface Voice {
   isPublic?: boolean;
 }
 
-type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral" | "translate" | "transcribe" | "team" | "dialogue" | "imagevideo" | "nichefinder";
+type Tab = "home" | "generate" | "voices" | "history" | "billing" | "referral" | "translate" | "transcribe" | "team" | "dialogue" | "imagevideo" | "nichefinder" | "create-voice";
 
 /* ─── Sidebar ─────────────────────────────────────────────── */
 type NavSection = {
   label?: string;
-  items: { key: Tab; label: string; Icon: React.ElementType; href?: string }[];
+  items: { key: Tab; label: string; Icon: React.ElementType; href?: string; isNew?: boolean }[];
 };
 
 function Sidebar({
@@ -104,12 +104,13 @@ function Sidebar({
     {
       label: t.nav.products,
       items: [
-        { key: "generate",    label: t.nav.generate,        Icon: Type },
-        { key: "dialogue",    label: t.nav.textToDialogue,  Icon: MessageSquare },
-        { key: "transcribe",  label: t.nav.transcribe,      Icon: FileAudio },
-        { key: "translate",   label: t.nav.translate,       Icon: Globe },
-        { key: "history",     label: t.nav.history,         Icon: Clock },
-        { key: "nichefinder", label: "Niche Finder", Icon: TrendingUp, href: "/descubrir" },
+        { key: "generate",      label: t.nav.generate,        Icon: Type },
+        { key: "dialogue",      label: t.nav.textToDialogue,  Icon: MessageSquare },
+        { key: "transcribe",    label: t.nav.transcribe,      Icon: FileAudio },
+        { key: "translate",     label: t.nav.translate,       Icon: Globe },
+        { key: "create-voice",  label: "Crear Voz",           Icon: Wand2, isNew: true },
+        { key: "history",       label: t.nav.history,         Icon: Clock },
+        { key: "nichefinder",   label: "Niche Finder",        Icon: TrendingUp, href: "/descubrir" },
       ],
     },
     {
@@ -260,7 +261,7 @@ function Sidebar({
               </p>
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              {section.items.map(({ key, label, Icon, href }) => {
+              {section.items.map(({ key, label, Icon, href, isNew }) => {
                 const isActive = activeTab === key;
                 const textTransition = collapsed && desktop
                   ? "opacity 0.12s ease, max-width 0s ease 0.12s"
@@ -294,6 +295,9 @@ function Sidebar({
                       opacity: collapsed && desktop ? 0 : 1,
                       transition: textTransition,
                     }}>{label}</span>
+                    {isNew && !isActive && !(collapsed && desktop) && (
+                      <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#f97316", flexShrink: 0 }} />
+                    )}
                     <span style={{
                       width: "5px", height: "5px", borderRadius: "50%",
                       background: "#ffffff", flexShrink: 0,
@@ -1922,6 +1926,310 @@ function GenerateTab({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ─── Create Voice Tab ───────────────────────────────────── */
+function CreateVoiceTab({ plan, onCloned }: { plan: string; onCloned: () => void }) {
+  const [method, setMethod] = useState<null | "clone" | "design">(null);
+  const [instruction, setInstruction] = useState("");
+  const [referenceText, setReferenceText] = useState("");
+  const [language, setLanguage] = useState("es");
+  const [numCandidates, setNumCandidates] = useState(2);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [candidates, setCandidates] = useState<DesignCandidate[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [playingIdx, setPlayingIdx] = useState<number | null>(null);
+  const audioRefs = useRef<(HTMLAudioElement | null)[]>([]);
+  const [savingIdx, setSavingIdx] = useState<number | null>(null);
+  const [savedIdx, setSavedIdx] = useState<number | null>(null);
+  const [voiceName, setVoiceName] = useState("");
+
+  void plan;
+
+  async function handleDesignVoice() {
+    setError(null);
+    setIsGenerating(true);
+    setCandidates([]);
+    try {
+      const res = await fetch("/api/voice-design", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          instruction: instruction.trim(),
+          reference_text: referenceText.trim() || undefined,
+          language,
+          n: numCandidates,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al generar voces");
+      setCandidates(data.candidates ?? []);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Error desconocido");
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
+  function playCandidate(idx: number, b64: string) {
+    audioRefs.current.forEach((a, i) => {
+      if (a && i !== idx) { a.pause(); a.currentTime = 0; }
+    });
+    if (playingIdx === idx && audioRefs.current[idx]) {
+      audioRefs.current[idx]!.pause();
+      audioRefs.current[idx]!.currentTime = 0;
+      setPlayingIdx(null);
+      return;
+    }
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const blob = new Blob([bytes], { type: "audio/wav" });
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audioRefs.current[idx] = audio;
+    audio.onended = () => { setPlayingIdx(null); URL.revokeObjectURL(url); };
+    audio.play();
+    setPlayingIdx(idx);
+  }
+
+  async function handleSave(candidate: DesignCandidate) {
+    if (!voiceName.trim()) return;
+    setSavingIdx(candidate.index);
+    setError(null);
+    try {
+      const res = await fetch("/api/voice-design/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ audio_base64: candidate.audio_base64, voice_name: voiceName.trim(), language }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al guardar");
+      setSavedIdx(candidate.index);
+      setTimeout(() => onCloned(), 1200);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Error al guardar la voz");
+    } finally {
+      setSavingIdx(null);
+    }
+  }
+
+  /* ── Method picker ── */
+  if (method === null) {
+    return (
+      <div className="flex flex-col items-center gap-8 py-16 px-4">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-white mb-2">Elige un método</h2>
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>¿Cómo quieres crear tu nueva voz?</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
+          {/* Card — Clonación */}
+          <button
+            onClick={() => setMethod("clone")}
+            className="text-left p-8 rounded-2xl border transition-all hover:bg-white/10 hover:border-white/20 group"
+            style={{ border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)" }}
+          >
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style={{ background: "rgba(255,255,255,0.1)" }}>
+              <Mic size={22} style={{ color: "rgba(255,255,255,0.7)" }} />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">Clonación de voz instantánea</h3>
+            <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.4)" }}>Sube o graba 10s de audio y clónala al instante.</p>
+            <div className="flex flex-wrap gap-2">
+              <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" }}>~1 min</span>
+              <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" }}>Ideal para grabaciones existentes</span>
+            </div>
+          </button>
+
+          {/* Card — Diseño */}
+          <button
+            onClick={() => setMethod("design")}
+            className="text-left p-8 rounded-2xl border transition-all hover:bg-white/10 hover:border-white/20 group"
+            style={{ border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)" }}
+          >
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style={{ background: "rgba(255,255,255,0.1)" }}>
+              <Wand2 size={22} style={{ color: "rgba(255,255,255,0.7)" }} />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">Diseño de Voz</h3>
+            <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.4)" }}>Describe la voz en texto simple y la IA la crea en segundos.</p>
+            <div className="flex flex-wrap gap-2">
+              <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" }}>~15s</span>
+              <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" }}>Ideal para personajes originales</span>
+            </div>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Clone: open CloneModal overlay ── */
+  if (method === "clone") {
+    return (
+      <CloneModal
+        onClose={() => setMethod(null)}
+        onCloned={onCloned}
+      />
+    );
+  }
+
+  /* ── Design form ── */
+  if (candidates.length > 0) {
+    return (
+      <div className="flex flex-col gap-5 max-w-xl mx-auto py-8 px-4">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium text-white">{candidates.length} variante{candidates.length !== 1 ? "s" : ""} generada{candidates.length !== 1 ? "s" : ""}</p>
+          <button onClick={() => setCandidates([])} className="text-xs flex items-center gap-1 transition-colors" style={{ color: "rgba(255,255,255,0.4)" }}>
+            <ChevronLeft size={13} /> Volver
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>Nombre para guardar la voz</label>
+          <input
+            value={voiceName}
+            onChange={(e) => setVoiceName(e.target.value)}
+            placeholder="Ej: Locutor profesional"
+            maxLength={60}
+            className="w-full rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors"
+            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+          />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {candidates.map((c) => (
+            <div key={c.id} className="rounded-xl p-4 flex items-center gap-3" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <button
+                onClick={() => playCandidate(c.index, c.audio_base64)}
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
+                style={{ background: playingIdx === c.index ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.1)" }}
+              >
+                {playingIdx === c.index ? <Square size={14} className="text-white" /> : <Play size={14} className="text-white ml-0.5" />}
+              </button>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white">Variante {c.index + 1}</p>
+                <p className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>
+                  {c.duration_ms ? `${(c.duration_ms / 1000).toFixed(1)}s` : ""}
+                  {c.sample_rate ? ` · ${c.sample_rate / 1000}kHz` : ""}
+                </p>
+              </div>
+              <button
+                onClick={() => handleSave(c)}
+                disabled={savingIdx !== null || savedIdx !== null || !voiceName.trim()}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all disabled:opacity-40"
+                style={{
+                  background: savedIdx === c.index ? "rgba(74,222,128,0.15)" : "rgba(255,255,255,0.1)",
+                  color: savedIdx === c.index ? "#4ade80" : "#ffffff",
+                  border: savedIdx === c.index ? "1px solid rgba(74,222,128,0.3)" : "1px solid rgba(255,255,255,0.1)",
+                }}
+              >
+                {savingIdx === c.index ? <SpinnerIcon className="w-3 h-3 animate-spin" />
+                  : savedIdx === c.index ? <><Check size={12} /> Guardada</>
+                  : <><Volume2 size={12} /> Usar esta voz</>}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={() => { setCandidates([]); setSavedIdx(null); }}
+          className="text-sm transition-colors"
+          style={{ color: "rgba(255,255,255,0.35)" }}
+        >
+          Regenerar con los mismos parámetros →
+        </button>
+
+        {error && <p className="text-xs text-red-400">{error}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-6 max-w-xl mx-auto py-8 px-4">
+      <button onClick={() => setMethod(null)} className="text-sm flex items-center gap-1 w-fit transition-colors" style={{ color: "rgba(255,255,255,0.4)" }}>
+        <ChevronLeft size={14} /> Volver
+      </button>
+
+      <div>
+        <h3 className="text-xl font-semibold text-white mb-1">Diseña tu voz</h3>
+        <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Describe cómo quieres que suene tu voz y la IA la creará en segundos.</p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>Descripción de la voz *</label>
+        <textarea
+          value={instruction}
+          onChange={(e) => setInstruction(e.target.value)}
+          placeholder="Ej: Voz masculina madura, tono grave, acento neutro latinoamericano, estilo periodístico profesional y serio"
+          maxLength={2000}
+          rows={5}
+          className="w-full rounded-xl px-4 py-3 text-sm text-white resize-none focus:outline-none transition-colors placeholder:text-white/20"
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+        />
+        <span className="text-xs text-right" style={{ color: "rgba(255,255,255,0.2)" }}>{instruction.length}/2000</span>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>Texto de prueba <span style={{ color: "rgba(255,255,255,0.3)" }}>(opcional)</span></label>
+        <input
+          value={referenceText}
+          onChange={(e) => setReferenceText(e.target.value)}
+          placeholder="Ej: Bienvenido a Elite Labs, la plataforma de síntesis de voz con IA."
+          maxLength={300}
+          className="w-full rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors placeholder:text-white/20"
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col gap-2">
+          <label className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>Idioma</label>
+          <select value={language} onChange={(e) => setLanguage(e.target.value)}
+            className="rounded-xl px-4 py-3 text-sm text-white focus:outline-none"
+            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <option value="es">🇪🇸 Español</option>
+            <option value="en">🇺🇸 Inglés</option>
+            <option value="pt">🇧🇷 Portugués</option>
+            <option value="fr">🇫🇷 Francés</option>
+            <option value="de">🇩🇪 Alemán</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>Variantes a generar</label>
+          <div className="flex gap-2">
+            {[1, 2, 3, 4].map((n) => (
+              <button key={n} onClick={() => setNumCandidates(n)}
+                className="flex-1 rounded-xl text-sm font-medium transition-all"
+                style={{
+                  height: "46px",
+                  background: numCandidates === n ? "#ffffff" : "rgba(255,255,255,0.05)",
+                  color: numCandidates === n ? "#000000" : "rgba(255,255,255,0.5)",
+                  border: numCandidates === n ? "none" : "1px solid rgba(255,255,255,0.1)",
+                }}>
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 rounded-xl px-4 py-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <span className="text-sm">💳</span>
+        <span className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>Se descontarán 500 créditos por generación</span>
+      </div>
+
+      {error && <p className="text-xs text-red-400">{error}</p>}
+
+      <button
+        onClick={handleDesignVoice}
+        disabled={!instruction.trim() || isGenerating}
+        className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-30 flex items-center justify-center gap-2"
+        style={{ background: "#ffffff", color: "#000000" }}
+      >
+        {isGenerating ? (
+          <><SpinnerIcon className="w-4 h-4 animate-spin" /> Generando voces…</>
+        ) : "Generar voces →"}
+      </button>
     </div>
   );
 }
@@ -7489,8 +7797,9 @@ export default function DashboardPage() {
             voices:     { title: tt.tabs.voices,      Icon: Mic2 },
             referral:   { title: tt.tabs.referral,    Icon: Gift },
             team:       { title: tt.nav.team,          Icon: Users },
-            imagevideo:   { title: tt.nav.imageVideo,    Icon: ImageIcon },
-            nichefinder:  { title: "Niche Finder",       Icon: TrendingUp },
+            imagevideo:     { title: tt.nav.imageVideo,    Icon: ImageIcon },
+            nichefinder:    { title: "Niche Finder",       Icon: TrendingUp },
+            "create-voice": { title: "Crear Voz",          Icon: Wand2 },
           };
           const { title, Icon } = TAB_META[activeTab] ?? { title: "", Icon: Home };
           return (
@@ -7685,6 +7994,12 @@ export default function DashboardPage() {
               />
             )}
             {activeTab === "nichefinder" && <NicheFinderTab />}
+            {activeTab === "create-voice" && (
+              <CreateVoiceTab
+                plan={effectivePlan}
+                onCloned={() => { fetchVoices(); setActiveTab("voices"); }}
+              />
+            )}
           </div>
         )}{/* end page content */}
       </main>
