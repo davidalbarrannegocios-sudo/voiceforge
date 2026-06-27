@@ -13,6 +13,32 @@ import { log } from "@/lib/logger";
 
 const execFileAsync = promisify(execFile);
 
+async function translateWithRetry(
+  translator: deepl.Translator,
+  text: string,
+  targetLang: deepl.TargetLanguageCode,
+  maxRetries = 3
+): Promise<string> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const result = await translator.translateText(text, null, targetLang) as deepl.TextResult;
+      return result.text.trim();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const isRateLimit = msg.toLowerCase().includes("too many requests") || msg.includes("429");
+      if (isRateLimit && attempt < maxRetries - 1) {
+        const waitMs = Math.pow(2, attempt) * 1000;
+        console.warn(`[translate-processor] DeepL rate limit, reintentando en ${waitMs}ms...`);
+        await new Promise(r => setTimeout(r, waitMs));
+        continue;
+      }
+      if (attempt === maxRetries - 1) throw err;
+      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+    }
+  }
+  throw new Error("DeepL falló después de todos los reintentos");
+}
+
 const RETENTION_DAYS: Record<string, number> = {
   free: 3, starter: 14, pro: 30, elite: 30, enterprise: 90,
 };
@@ -258,15 +284,25 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
       translatedUtterances = (params.utterances as (AssemblyAIUtterance & { translatedText: string })[]);
     } else {
       const translator = new deepl.Translator(deeplKey);
+      // Filter empty segments before sending to DeepL
+      const validUtterances = utterances.filter(u => u.text?.trim().length > 0);
+      if (!validUtterances.length) return await fail("No hay texto válido para traducir");
       try {
-        translatedUtterances = await Promise.all(
-          utterances.map(async u => {
-            const result = await translator.translateText(
-              u.text, null, lang.deeplCode as deepl.TargetLanguageCode
-            ) as deepl.TextResult;
-            return { ...u, translatedText: result.text.trim() };
-          })
-        );
+        const BATCH_SIZE = 10;
+        translatedUtterances = [];
+        for (let i = 0; i < validUtterances.length; i += BATCH_SIZE) {
+          const batch = validUtterances.slice(i, i + BATCH_SIZE);
+          const results = await Promise.all(
+            batch.map(async u => ({
+              ...u,
+              translatedText: await translateWithRetry(translator, u.text, lang.deeplCode as deepl.TargetLanguageCode),
+            }))
+          );
+          translatedUtterances.push(...results);
+          if (i + BATCH_SIZE < validUtterances.length) {
+            await new Promise(r => setTimeout(r, 500));
+          }
+        }
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Error en traducción con DeepL";
         return await fail(msg);
