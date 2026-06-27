@@ -213,7 +213,7 @@ interface MultiSpeakerParams {
   effectivePlan: string;
   lang: { name: string; deeplCode: string };
   user: { id: string; credits: number; extraCredits: number; plan: string; transcriptionUsed: number };
-  utterances?: AssemblyAIUtterance[];   // from AssemblyAI diarize endpoint (preferred)
+  utterances?: (AssemblyAIUtterance & { translatedText?: string })[];   // from AssemblyAI diarize endpoint; may include pre-translated text
   segments?: DiarizedSegment[];          // legacy fallback
 }
 
@@ -250,22 +250,27 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
 
     if (!utterances.length) return await fail("No se detectaron segmentos de audio");
 
-    // Step 2: Translate all utterances in parallel with DeepL
-    const translator = new deepl.Translator(deeplKey);
+    // Step 2: Translate all utterances — skip DeepL if frontend already translated them
     let translatedUtterances: (AssemblyAIUtterance & { translatedText: string })[];
 
-    try {
-      translatedUtterances = await Promise.all(
-        utterances.map(async u => {
-          const result = await translator.translateText(
-            u.text, null, lang.deeplCode as deepl.TargetLanguageCode
-          ) as deepl.TextResult;
-          return { ...u, translatedText: result.text.trim() };
-        })
-      );
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Error en traducción con DeepL";
-      return await fail(msg);
+    const preTranslated = params.utterances?.every(u => u.translatedText !== undefined && u.translatedText !== "");
+    if (preTranslated) {
+      translatedUtterances = (params.utterances as (AssemblyAIUtterance & { translatedText: string })[]);
+    } else {
+      const translator = new deepl.Translator(deeplKey);
+      try {
+        translatedUtterances = await Promise.all(
+          utterances.map(async u => {
+            const result = await translator.translateText(
+              u.text, null, lang.deeplCode as deepl.TargetLanguageCode
+            ) as deepl.TextResult;
+            return { ...u, translatedText: result.text.trim() };
+          })
+        );
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Error en traducción con DeepL";
+        return await fail(msg);
+      }
     }
 
     // Step 3: Metadata for credits and history

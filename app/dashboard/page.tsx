@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare, Loader, FileText, TrendingUp, ExternalLink, Filter, Shield, Music, Sparkles, ChevronLeft, Volume2, Wand2 } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare, Loader, FileText, TrendingUp, ExternalLink, Filter, Shield, Music, Sparkles, ChevronLeft, Volume2, Wand2, Edit3 } from "lucide-react";
 import { DialogueEditor } from "@/components/DialogueEditor";
 import { EliteLoader } from "@/components/ui/EliteLoader";
 import { ImageVideoEditor, type ImageHistoryItem } from "@/components/ImageVideoEditor";
@@ -4468,6 +4468,7 @@ interface AssemblyAIUtterance {
   start: number;     // milliseconds
   end: number;
   confidence?: number;
+  translatedText?: string; // populated after translate-segments step
 }
 
 const SPEAKER_COLORS: { bg: string; border: string; label: string }[] = [
@@ -4601,7 +4602,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
   const [previewLoading, setPreviewLoading] = useState(false);
   const [speakerCount, setSpeakerCount] = useState<number | null>(null);
   const [previewFileKey, setPreviewFileKey] = useState<string | null>(null);
-  const [analyzeStep, setAnalyzeStep] = useState(0); // 1=uploading 2=detecting
+  const [analyzeStep, setAnalyzeStep] = useState(0); // 1=uploading 2=detecting 3=translating
 
   const clonedVoices = voices.filter((v) => !v.isSystem);
   const FREE_LIMIT = 2;
@@ -4728,6 +4729,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 
       // Poll every 3 seconds until done, error, or 10-minute timeout
       const deadline = Date.now() + 10 * 60 * 1000;
+      let rawUtterances: AssemblyAIUtterance[] = [];
       await new Promise<void>((resolve, reject) => {
         const poll = async () => {
           if (Date.now() > deadline) {
@@ -4738,7 +4740,8 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             const statusRes = await fetch(`/api/translate/diarize/status/${jobId}`);
             const statusData = await statusRes.json();
             if (statusData.status === "done") {
-              setUtterances(statusData.utterances ?? []);
+              rawUtterances = statusData.utterances ?? [];
+              setUtterances(rawUtterances);
               setSpeakerCount(statusData.speakerCount ?? statusData.speakersDetected ?? 1);
               resolve();
             } else if (statusData.status === "error") {
@@ -4752,6 +4755,25 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
         };
         setTimeout(poll, 3000);
       });
+
+      // Step 3: Translate segments so user can review and edit before generating audio
+      if (rawUtterances.length > 0 && targetLang) {
+        setAnalyzeStep(3);
+        setStepLabel("Traduciendo segmentos...");
+        try {
+          const transRes = await fetch("/api/translate/translate-segments", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ utterances: rawUtterances, targetLang }),
+          });
+          if (transRes.ok) {
+            const transData = await transRes.json();
+            setUtterances(transData.utterances ?? rawUtterances);
+          }
+        } catch {
+          // If translation preview fails, still show original utterances
+        }
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
@@ -5195,7 +5217,13 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 </p>
                 <span className="text-[10px] ml-1" style={{ color: "#555" }}>{utterances.length} segmentos</span>
               </div>
-              <div className="space-y-1 max-h-52 overflow-y-auto pr-0.5">
+              {utterances[0]?.translatedText !== undefined && (
+                <p className="text-xs flex items-center gap-1" style={{ color: "rgba(255,255,255,0.30)" }}>
+                  <Edit3 className="w-3 h-3" />
+                  Puedes editar la traducción antes de generar el audio
+                </p>
+              )}
+              <div className="space-y-1.5 max-h-64 overflow-y-auto pr-0.5">
                 {(() => {
                   const speakerOrder = [...new Set(utterances.map(u => u.speaker))].sort();
                   return utterances.map((u, i) => {
@@ -5204,6 +5232,32 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                     const startSec = Math.floor(u.start / 1000);
                     const mm = Math.floor(startSec / 60);
                     const ss = String(startSec % 60).padStart(2, "0");
+                    const endSec = Math.floor(u.end / 1000);
+                    if (u.translatedText !== undefined) {
+                      return (
+                        <div key={i} className="flex gap-3 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)" }}>
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-1" style={{ background: color.bg, color: color.label }}>
+                            {u.speaker}
+                          </div>
+                          <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                            <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.25)" }}>
+                              {mm}:{ss} — {Math.floor(endSec / 60)}:{String(endSec % 60).padStart(2, "0")}
+                            </span>
+                            <textarea
+                              value={u.translatedText}
+                              onChange={(e) => {
+                                const updated = [...utterances];
+                                updated[i] = { ...updated[i], translatedText: e.target.value };
+                                setUtterances(updated);
+                              }}
+                              rows={Math.max(2, Math.ceil(u.translatedText.length / 60))}
+                              className="w-full bg-transparent text-white text-sm resize-none focus:outline-none rounded-lg px-2 py-1 transition-colors border border-transparent focus:border-white/10 focus:bg-white/5"
+                              style={{ color: "#e5e7eb" }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    }
                     return (
                       <div key={i} className="rounded-lg px-2.5 py-1.5 flex gap-2 items-start" style={{ background: color.bg, border: `1px solid ${color.border}` }}>
                         <span className="text-[10px] font-bold flex-shrink-0 mt-0.5 w-4 text-center" style={{ color: color.label }}>{u.speaker}</span>
@@ -5237,13 +5291,14 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 {(["Subiendo", "Detectando", "Traduciendo", "Generando"] as const).map((step, i) => {
                   const isAnalyze = previewLoading;
                   const isTranslate = loading;
+                  // analyzeStep: 1=uploading(i=0), 2=detecting(i=1), 3=translating(i=2)
                   const done = isAnalyze
                     ? (analyzeStep > i + 1)
-                    : isTranslate ? i < 2 : false;
+                    : isTranslate ? i < 3 : false;
                   const active = isAnalyze
                     ? (analyzeStep === i + 1)
                     : isTranslate
-                      ? (i === 2 && !stepLabel?.includes("Generando")) || (i === 3 && stepLabel?.includes("Generando"))
+                      ? (i === 3)
                       : false;
                   return (
                     <div key={step} className="flex-1 flex flex-col items-center gap-1.5">
