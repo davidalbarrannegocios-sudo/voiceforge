@@ -350,14 +350,16 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
     const mp3Buffer = await convertToMp3(rawBuffer);
 
     // Step 6: Clone ONE model per speaker using only that speaker's audio segments
+    const MAX_REFERENCE_SECONDS = 240;
+    const FALLBACK_VOICE_ID = "933563129e564b19a115bedd57b7406a";
     const sessionId = randomUUID();
     const sourceAudioPath = join(tmpdir(), `trans_${sessionId}_source.mp3`);
     const clonedSpeakers: Array<{ speaker: string; modelId: string }> = [];
+    const speakerModels: Record<string, string> = {};
+    const speakerOrder = [...new Set(utterances.map(u => u.speaker))].sort();
 
     try {
       await writeFile(sourceAudioPath, mp3Buffer);
-
-      const speakerOrder = [...new Set(utterances.map(u => u.speaker))].sort();
 
       for (const speaker of speakerOrder) {
         const speakerSegments = translatedUtterances.filter(u => u.speaker === speaker);
@@ -367,7 +369,7 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
         let totalDuration = 0;
 
         for (const utt of speakerSegments) {
-          if (totalDuration >= 60) break;
+          if (totalDuration >= MAX_REFERENCE_SECONDS) break;
           const startSecs = utt.start / 1000;
           const endSecs = utt.end / 1000;
           const duration = endSecs - startSecs;
@@ -389,7 +391,8 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
         }
 
         if (chunks.length === 0) {
-          console.warn(`[translate-multi] speaker ${speaker}: sin chunks válidos, omitiendo`);
+          console.warn(`[translate-multi] speaker ${speaker}: sin chunks válidos, usando voz fallback`);
+          speakerModels[speaker] = FALLBACK_VOICE_ID;
           continue;
         }
 
@@ -418,27 +421,30 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
             model: "s2-pro",
           });
           clonedSpeakers.push({ speaker, modelId: cloneResult.model_id });
+          speakerModels[speaker] = cloneResult.model_id;
           console.log(`[translate-multi] speaker ${speaker} clonado → ${cloneResult.model_id} (${Math.round(totalDuration)}s)`);
         } catch (e) {
-          console.error(`[translate-multi] clone falló para speaker ${speaker}:`, e);
+          console.warn(`[translate-multi] usando voz fallback para speaker ${speaker}:`, e);
+          speakerModels[speaker] = FALLBACK_VOICE_ID;
         }
       }
     } finally {
       await unlink(sourceAudioPath).catch(() => {});
     }
 
-    console.log("[synthesize-multi] modelos creados:", clonedSpeakers.map(m => `${m.speaker}:${m.modelId}`));
+    console.log("[synthesize-multi] modelos asignados:", Object.entries(speakerModels).map(([s, m]) => `${s}:${m}`));
 
-    if (clonedSpeakers.length === 0) {
+    if (Object.keys(speakerModels).length === 0) {
       await prisma.user.update({ where: { id: userId }, data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } } });
-      return await fail("No se pudo clonar ninguna voz de los hablantes");
+      return await fail("No se pudo asignar voz a ningún hablante");
     }
 
-    // Index map derived from clonedSpeakers order: speaker:0 → clonedSpeakers[0].modelId, etc.
+    // Index map using speakerOrder — all speakers have a model (cloned or fallback)
+    const assignedSpeakers = speakerOrder.filter(s => speakerModels[s]);
     const speakerIndexMap: Record<string, number> = Object.fromEntries(
-      clonedSpeakers.map((m, i) => [m.speaker, i])
+      assignedSpeakers.map((s, i) => [s, i])
     );
-    const referenceIds = clonedSpeakers.map(m => m.modelId);
+    const referenceIds = assignedSpeakers.map(s => speakerModels[s]);
     console.log("[synthesize-multi] reference_id array:", referenceIds);
 
     const ttsText = buildSpeakerTokenText(translatedUtterances, speakerIndexMap);

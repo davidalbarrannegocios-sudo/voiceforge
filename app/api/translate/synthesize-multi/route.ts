@@ -18,6 +18,9 @@ interface TranslatedUtterance extends AssemblyAIUtterance {
   translatedText: string;
 }
 
+const MAX_REFERENCE_SECONDS = 240;
+const FALLBACK_VOICE_ID = "933563129e564b19a115bedd57b7406a";
+
 export async function POST(req: Request) {
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -41,6 +44,8 @@ export async function POST(req: Request) {
 
   // Track cloned models for cleanup in finally
   const clonedSpeakers: Array<{ speaker: string; modelId: string }> = [];
+  // Maps every speaker to a modelId (cloned or fallback)
+  const speakerModels: Record<string, string> = {};
 
   try {
     await writeFile(sourceAudioPath, mp3Buffer);
@@ -56,7 +61,7 @@ export async function POST(req: Request) {
       let totalDuration = 0;
 
       for (const utt of speakerSegments) {
-        if (totalDuration >= 60) break;
+        if (totalDuration >= MAX_REFERENCE_SECONDS) break;
         const startSecs = utt.start / 1000;
         const endSecs = utt.end / 1000;
         const duration = endSecs - startSecs;
@@ -81,7 +86,8 @@ export async function POST(req: Request) {
       }
 
       if (chunks.length === 0) {
-        console.warn(`[synthesize-multi] speaker ${speaker}: sin chunks válidos, omitiendo`);
+        console.warn(`[synthesize-multi] speaker ${speaker}: sin chunks válidos, usando voz fallback`);
+        speakerModels[speaker] = FALLBACK_VOICE_ID;
         continue;
       }
 
@@ -118,26 +124,28 @@ export async function POST(req: Request) {
           model: "s2-pro",
         });
         clonedSpeakers.push({ speaker, modelId: cloneResult.model_id });
+        speakerModels[speaker] = cloneResult.model_id;
         console.log(`[synthesize-multi] speaker ${speaker} clonado → ${cloneResult.model_id} (${Math.round(totalDuration)}s)`);
       } catch (e) {
-        console.error(`[synthesize-multi] clone falló para speaker ${speaker}:`, e);
+        console.warn(`[synthesize-multi] usando voz fallback para speaker ${speaker}:`, e);
+        speakerModels[speaker] = FALLBACK_VOICE_ID;
       }
     }
 
-    console.log("[synthesize-multi] modelos creados:", clonedSpeakers.map(m => `${m.speaker}:${m.modelId}`));
+    console.log("[synthesize-multi] modelos asignados:", Object.entries(speakerModels).map(([s, m]) => `${s}:${m}`));
 
-    if (clonedSpeakers.length === 0) {
-      return NextResponse.json({ error: "No se pudo clonar ninguna voz" }, { status: 500 });
+    if (Object.keys(speakerModels).length === 0) {
+      return NextResponse.json({ error: "No se pudo asignar voz a ningún hablante" }, { status: 500 });
     }
 
-    // Index map is derived from clonedSpeakers order — speaker:0 → clonedSpeakers[0], etc.
+    // Build index map from speakerOrder — every speaker has a model now (cloned or fallback)
+    const assignedSpeakers = speakerOrder.filter(s => speakerModels[s]);
     const speakerIndexMap: Record<string, number> = Object.fromEntries(
-      clonedSpeakers.map((m, i) => [m.speaker, i])
+      assignedSpeakers.map((s, i) => [s, i])
     );
-    const referenceIds = clonedSpeakers.map(m => m.modelId);
+    const referenceIds = assignedSpeakers.map(s => speakerModels[s]);
     console.log("[synthesize-multi] reference_id array:", referenceIds);
 
-    // Only include utterances whose speaker was successfully cloned
     const ttsText = utterances
       .filter(u => speakerIndexMap[u.speaker] !== undefined)
       .map(u => `<|speaker:${speakerIndexMap[u.speaker]}|>${u.translatedText}`)
