@@ -5,7 +5,7 @@ import { writeFile, readFile, unlink } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
 import { promisify } from "util";
-import { downloadRawFromR2, uploadToR2 } from "@/lib/r2";
+import { downloadRawFromR2, uploadToR2, r2KeyExists } from "@/lib/r2";
 import { convertToMp3, fishAudioClone, fishAudioDeleteModel, fishAudioGenerateBuffer } from "@/lib/fishaudio";
 import type { AssemblyAIUtterance } from "@/app/api/translate/diarize/route";
 
@@ -35,6 +35,17 @@ export async function POST(req: Request) {
   const { utterances, sourceFileKey, userId, targetLang } = body;
   if (!utterances?.length) return NextResponse.json({ error: "utterances requerido" }, { status: 400 });
   if (!sourceFileKey) return NextResponse.json({ error: "sourceFileKey requerido" }, { status: 400 });
+
+  // Bug 2: verify the source file exists before attempting download
+  console.log("[synthesize-multi] buscando audio en:", sourceFileKey);
+  const exists = await r2KeyExists(sourceFileKey);
+  if (!exists) {
+    console.error("[synthesize-multi] NoSuchKey:", sourceFileKey);
+    return NextResponse.json(
+      { error: "El audio original ya no está disponible. Por favor sube el archivo de nuevo." },
+      { status: 404 }
+    );
+  }
 
   const rawBuffer = await downloadRawFromR2(sourceFileKey);
   const mp3Buffer = await convertToMp3(rawBuffer);
@@ -144,6 +155,7 @@ export async function POST(req: Request) {
       assignedSpeakers.map((s, i) => [s, i])
     );
     const referenceIds = assignedSpeakers.map(s => speakerModels[s]);
+    // All references are model_id (cloned or fallback) — never raw audio, so no 30s TTS reference limit applies
     console.log("[synthesize-multi] reference_id array:", referenceIds);
 
     const ttsText = utterances
