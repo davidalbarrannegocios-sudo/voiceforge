@@ -25,14 +25,14 @@ export async function POST(req: Request) {
   const clerkUser = await currentUser();
   if (!clerkUser) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  let body: { utterances: TranslatedUtterance[]; sourceFileKey: string; userId: string };
+  let body: { utterances: TranslatedUtterance[]; sourceFileKey: string; userId: string; targetLang?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Body JSON inválido" }, { status: 400 });
   }
 
-  const { utterances, sourceFileKey, userId } = body;
+  const { utterances, sourceFileKey, userId, targetLang } = body;
   if (!utterances?.length) return NextResponse.json({ error: "utterances requerido" }, { status: 400 });
   if (!sourceFileKey) return NextResponse.json({ error: "sourceFileKey requerido" }, { status: 400 });
 
@@ -158,6 +158,7 @@ export async function POST(req: Request) {
         references: referenceIds.map(id => ({ type: "model_id" as const, value: id })),
         model: "s2-pro",
         normalize: false,
+        ...(targetLang && { language: targetLang.toLowerCase().slice(0, 2) }),
       });
     } finally {
       await Promise.all(clonedSpeakers.map(m => fishAudioDeleteModel(m.modelId).catch(() => {})));

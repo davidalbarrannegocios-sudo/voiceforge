@@ -244,7 +244,7 @@ interface MultiSpeakerParams {
 }
 
 export async function processMultiSpeakerTranslationInBackground(params: MultiSpeakerParams) {
-  const { taskId, userId, fileKey, deeplKey, effectivePlan, lang } = params;
+  const { taskId, userId, fileKey, targetLang, deeplKey, effectivePlan, lang } = params;
 
   await prisma.translationTask.update({ where: { id: taskId }, data: { status: "processing" } });
 
@@ -457,6 +457,7 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
         references: referenceIds.map(id => ({ type: "model_id" as const, value: id })),
         model: "s2-pro",
         normalize: false,
+        language: targetLang.toLowerCase().slice(0, 2),
       });
     } catch (e) {
       await prisma.user.update({ where: { id: userId }, data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } } });
