@@ -4595,8 +4595,9 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
   const [activeTranslationId, setActiveTranslationId] = useState<string | null>(null);
   const [isHistoryPlaying, setIsHistoryPlaying] = useState(false);
 
-  // Multi-speaker mode
+  // Multi-speaker mode — forced to "single" while multi is disabled
   const [speakerMode, setSpeakerMode] = useState<"single" | "multi">("single");
+  useEffect(() => { if (speakerMode === "multi") setSpeakerMode("single"); }, []);
   const [speakersExpected, setSpeakersExpected] = useState<string>("auto");
   const [utterances, setUtterances] = useState<AssemblyAIUtterance[] | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -4998,23 +4999,15 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             >
               Un hablante
             </button>
-            {/* Multi-speaker — enabled */}
+            {/* Multi-speaker — disabled (coming soon) */}
             <button
-              onClick={() => {
-                setSpeakerMode("multi");
-                setSpeakersExpected("auto");
-                setUtterances(null);
-                setSpeakerCount(null);
-                setPreviewFileKey(null);
-                setAnalyzeStep(0);
-                setError(null);
-              }}
-              className="flex-1 py-1.5 px-3 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-1.5"
-              style={{ background: speakerMode === "multi" ? "#1e1e1e" : "transparent", color: speakerMode === "multi" ? "#e5e7eb" : "#666", border: "none", cursor: "pointer" }}
+              disabled
+              className="flex-1 py-1.5 px-3 rounded-md text-xs font-medium flex items-center justify-center gap-1.5 opacity-50 cursor-not-allowed"
+              style={{ background: "transparent", color: "#666", border: "none" }}
             >
               Múltiples hablantes
-              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                BETA
+              <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded bg-white/10 text-white/40 border border-white/10">
+                Muy pronto
               </span>
             </button>
           </div>

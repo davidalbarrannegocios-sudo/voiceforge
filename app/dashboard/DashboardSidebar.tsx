@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import {
-  Home, Mic2, Type, FileAudio, Globe, Clock,
+import { Wand2, Home, Mic2, Type, FileAudio, Globe, Clock,
   CreditCard, Gift, Zap, Settings, Users, MessageSquare, ChevronsUpDown,
   Image as ImageIcon, Compass, Radar, X,
 } from "lucide-react";
@@ -85,6 +84,7 @@ export function DashboardSidebar() {
         { key: "imagevideo" as Tab, label: t.nav.imageVideo, Icon: ImageIcon },
         { key: "transcribe" as Tab, label: t.nav.transcribe, Icon: FileAudio },
         { key: "translate" as Tab, label: "Traducción", Icon: Globe },
+        { key: "create-voice" as Tab, label: "Crear Voz", Icon: Wand2, isNew: true },
         { key: "history" as Tab, label: t.nav.history, Icon: Clock },
       ],
     },

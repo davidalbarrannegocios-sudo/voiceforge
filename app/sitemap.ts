@@ -12,8 +12,9 @@ const PAGES = [
   { path: '/about',    changeFrequency: 'monthly' as const, priority: 0.6 },
   { path: '/docs',     changeFrequency: 'weekly'  as const, priority: 0.7 },
   { path: '/support',  changeFrequency: 'monthly' as const, priority: 0.5 },
-  { path: '/sign-up',  changeFrequency: 'monthly' as const, priority: 0.8 },
-  { path: '/sign-in',  changeFrequency: 'yearly'  as const, priority: 0.3 },
+  { path: '/sign-up',       changeFrequency: 'monthly' as const, priority: 0.8 },
+  { path: '/sign-in',       changeFrequency: 'yearly'  as const, priority: 0.3 },
+  { path: '/design-voice',  changeFrequency: 'monthly' as const, priority: 0.8 },
 ]
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
