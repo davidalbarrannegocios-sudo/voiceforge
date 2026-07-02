@@ -284,13 +284,25 @@ export async function fishAudioGenerateBuffer({
 }: {
   text: string
   referenceId?: string
-  references?: Array<{ type: "model_id" | "audio"; value: string }>
+  // CRITICAL: references must ONLY contain model_id (never raw audio)
+  // Passing raw audio to TTS triggers "Reference audio too long" errors
+  // Use fishAudioClone() first to create models, then pass model IDs here
+  references?: Array<{ type: "model_id"; value: string }>
   model?: string
   normalize?: boolean
   language?: string
 }): Promise<Buffer> {
   const apiKey = getApiKey()
   const chunks = splitTextIntoChunks(text)
+
+  // Validate that all references are model_id (safety check)
+  if (references) {
+    const hasAudioRef = references.some(r => r.type !== "model_id")
+    if (hasAudioRef) {
+      throw new Error("fishAudioGenerateBuffer only accepts model_id references, not raw audio. Use fishAudioClone() first.")
+    }
+  }
+
   const audioBuffers = await Promise.all(
     chunks.map((chunk, i) => {
       const chunkHasTags = /\[[^\]]+\]|\([^)]+\)|<\|[^|]+\|>/.test(chunk)
@@ -304,6 +316,7 @@ export async function fishAudioGenerateBuffer({
       }
       if (language) payload.language = language;
       if (references && references.length > 0) {
+        // Only model IDs are passed to Fish Audio TTS (never raw audio)
         payload.reference_id = references.map(r => r.value)
       } else if (referenceId) {
         payload.reference_id = referenceId

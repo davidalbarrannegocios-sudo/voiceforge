@@ -18,7 +18,8 @@ interface TranslatedUtterance extends AssemblyAIUtterance {
   translatedText: string;
 }
 
-const MAX_REFERENCE_SECONDS = 240;
+// Fish Audio model creation limit: max 60 seconds of reference audio per speaker
+const MAX_REFERENCE_SECONDS = 60;
 const FALLBACK_VOICE_ID = "933563129e564b19a115bedd57b7406a";
 
 export async function POST(req: Request) {
@@ -155,7 +156,10 @@ export async function POST(req: Request) {
       assignedSpeakers.map((s, i) => [s, i])
     );
     const referenceIds = assignedSpeakers.map(s => speakerModels[s]);
-    // All references are model_id (cloned or fallback) — never raw audio, so no 30s TTS reference limit applies
+    // CRITICAL: TTS must receive ONLY model_id (never raw audio)
+    // - Model creation supports up to 60s of reference audio
+    // - TTS with model_id has no reference length limit (only model_id strings)
+    // - Passing raw audio to TTS would trigger "Reference audio too long" errors
     console.log("[synthesize-multi] reference_id array:", referenceIds);
 
     const ttsText = utterances
