@@ -1,17 +1,9 @@
 import * as deepl from "deepl-node";
-import { execFile } from "child_process";
-import { writeFile, readFile, unlink } from "fs/promises";
-import { join } from "path";
-import { tmpdir } from "os";
-import { randomUUID } from "crypto";
-import { promisify } from "util";
 import { prisma } from "@/lib/prisma";
-import { fishAudioGenerate, fishAudioClone, fishAudioGenerateBuffer, fishAudioDeleteModel, convertToMp3 } from "@/lib/fishaudio";
+import { fishAudioGenerate, fishAudioGenerateBuffer } from "@/lib/fishaudio";
 import { calculateCharCost } from "@/lib/utils";
 import { downloadRawFromR2, deleteFromR2, keyFromPublicUrl, uploadToR2 } from "@/lib/r2";
 import { log } from "@/lib/logger";
-
-const execFileAsync = promisify(execFile);
 
 async function translateWithRetry(
   translator: deepl.Translator,
@@ -241,6 +233,7 @@ interface MultiSpeakerParams {
   user: { id: string; credits: number; extraCredits: number; plan: string; transcriptionUsed: number };
   utterances?: (AssemblyAIUtterance & { translatedText?: string })[];   // from AssemblyAI diarize endpoint; may include pre-translated text
   segments?: DiarizedSegment[];          // legacy fallback
+  voiceAssignments?: Record<string, string>;  // speaker ID -> Fish Audio voice ID
 }
 
 export async function processMultiSpeakerTranslationInBackground(params: MultiSpeakerParams) {
@@ -341,115 +334,30 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
     });
     log("info", "credits", "multi-speaker credits deducted", { userId, chars: pureTranslatedLength, creditsUsed: charCost, plan: effectivePlan, speakerCount }, userId);
 
-    // Step 5: Download audio + convert to MP3
-    const rawBuffer = await downloadRawFromR2(fileKey);
-    if (rawBuffer.length > 50 * 1024 * 1024) {
+    // Step 5: Build speaker model assignments from voiceAssignments
+    if (!params.voiceAssignments || Object.keys(params.voiceAssignments).length === 0) {
       await prisma.user.update({ where: { id: userId }, data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } } });
-      return await fail("El audio es demasiado largo. Por favor divide el audio en fragmentos de máximo 8 minutos.");
+      return await fail("No se proporcionaron asignaciones de voz para los hablantes");
     }
-    const mp3Buffer = await convertToMp3(rawBuffer);
 
-    // Step 6: Clone ONE model per speaker using only that speaker's audio segments
-    const MAX_REFERENCE_SECONDS = 240;
-    const FALLBACK_VOICE_ID = "933563129e564b19a115bedd57b7406a";
-    const sessionId = randomUUID();
-    const sourceAudioPath = join(tmpdir(), `trans_${sessionId}_source.mp3`);
-    const clonedSpeakers: Array<{ speaker: string; modelId: string }> = [];
-    const speakerModels: Record<string, string> = {};
     const speakerOrder = [...new Set(utterances.map(u => u.speaker))].sort();
+    const assignedSpeakers = speakerOrder.filter(s => params.voiceAssignments![s]);
 
-    try {
-      await writeFile(sourceAudioPath, mp3Buffer);
-
-      for (const speaker of speakerOrder) {
-        const speakerSegments = translatedUtterances.filter(u => u.speaker === speaker);
-        console.log("[synthesize-multi] creando modelo para speaker", speaker, "con", speakerSegments.length, "segmentos");
-
-        const chunks: Buffer[] = [];
-        let totalDuration = 0;
-
-        for (const utt of speakerSegments) {
-          if (totalDuration >= MAX_REFERENCE_SECONDS) break;
-          const startSecs = utt.start / 1000;
-          const endSecs = utt.end / 1000;
-          const duration = endSecs - startSecs;
-          if (duration < 0.5) continue;
-
-          const chunkPath = join(tmpdir(), `trans_${sessionId}_spk${speaker}_c${chunks.length}.mp3`);
-          try {
-            await execFileAsync("ffmpeg", [
-              "-i", sourceAudioPath,
-              "-ss", String(startSecs),
-              "-to", String(endSecs),
-              "-c:a", "libmp3lame", "-q:a", "4",
-              "-y", chunkPath,
-            ]);
-            const buf = await readFile(chunkPath);
-            if (buf.length > 1000) { chunks.push(buf); totalDuration += duration; }
-            await unlink(chunkPath).catch(() => {});
-          } catch { continue; }
-        }
-
-        if (chunks.length === 0) {
-          console.warn(`[translate-multi] speaker ${speaker}: sin chunks válidos, usando voz fallback`);
-          speakerModels[speaker] = FALLBACK_VOICE_ID;
-          continue;
-        }
-
-        let sampleBuffer: Buffer;
-        if (chunks.length === 1) {
-          sampleBuffer = chunks[0];
-        } else {
-          const chunkPaths: string[] = [];
-          for (let i = 0; i < chunks.length; i++) {
-            const p = join(tmpdir(), `trans_${sessionId}_spk${speaker}_m${i}.mp3`);
-            await writeFile(p, chunks[i]);
-            chunkPaths.push(p);
-          }
-          const listPath = join(tmpdir(), `trans_${sessionId}_spk${speaker}_list.txt`);
-          const mergedPath = join(tmpdir(), `trans_${sessionId}_spk${speaker}_merged.mp3`);
-          await writeFile(listPath, chunkPaths.map(p => `file '${p}'`).join("\n"));
-          await execFileAsync("ffmpeg", ["-f", "concat", "-safe", "0", "-i", listPath, "-c", "copy", "-y", mergedPath]);
-          sampleBuffer = await readFile(mergedPath);
-          await Promise.all([...chunkPaths.map(p => unlink(p).catch(() => {})), unlink(listPath).catch(() => {}), unlink(mergedPath).catch(() => {})]);
-        }
-
-        try {
-          const cloneResult = await fishAudioClone({
-            audioBuffer: sampleBuffer,
-            voiceName: `spk-${speaker}-${taskId.slice(-6)}`,
-            model: "s2-pro",
-          });
-          clonedSpeakers.push({ speaker, modelId: cloneResult.model_id });
-          speakerModels[speaker] = cloneResult.model_id;
-          console.log(`[translate-multi] speaker ${speaker} clonado → ${cloneResult.model_id} (${Math.round(totalDuration)}s)`);
-        } catch (e) {
-          console.warn(`[translate-multi] usando voz fallback para speaker ${speaker}:`, e);
-          speakerModels[speaker] = FALLBACK_VOICE_ID;
-        }
-      }
-    } finally {
-      await unlink(sourceAudioPath).catch(() => {});
-    }
-
-    console.log("[synthesize-multi] modelos asignados:", Object.entries(speakerModels).map(([s, m]) => `${s}:${m}`));
-
-    if (Object.keys(speakerModels).length === 0) {
+    if (assignedSpeakers.length === 0) {
       await prisma.user.update({ where: { id: userId }, data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } } });
-      return await fail("No se pudo asignar voz a ningún hablante");
+      return await fail("No hay voces asignadas para ningún hablante");
     }
 
-    // Index map using speakerOrder — all speakers have a model (cloned or fallback)
-    const assignedSpeakers = speakerOrder.filter(s => speakerModels[s]);
     const speakerIndexMap: Record<string, number> = Object.fromEntries(
       assignedSpeakers.map((s, i) => [s, i])
     );
-    const referenceIds = assignedSpeakers.map(s => speakerModels[s]);
-    console.log("[synthesize-multi] reference_id array:", referenceIds);
+    const referenceIds = assignedSpeakers.map(s => params.voiceAssignments![s]);
+    console.log("[translate-multi] usando voces asignadas manualmente:", params.voiceAssignments);
+    console.log("[translate-multi] reference_id array:", referenceIds);
 
     const ttsText = buildSpeakerTokenText(translatedUtterances, speakerIndexMap);
 
-    // Step 7: Fish Audio TTS S2 with per-speaker reference_id array
+    // Step 6: Fish Audio TTS S2 with per-speaker reference_id array
     let audioBuffer: Buffer;
     try {
       audioBuffer = await fishAudioGenerateBuffer({
@@ -461,13 +369,11 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
       });
     } catch (e) {
       await prisma.user.update({ where: { id: userId }, data: { credits: { increment: fromPlan }, extraCredits: { increment: fromExtra } } });
-      await Promise.all(clonedSpeakers.map(m => fishAudioDeleteModel(m.modelId).catch(() => {})));
       const msg = e instanceof Error ? e.message : "Error al generar audio multi-hablante";
       return await fail(msg);
     }
-    await Promise.all(clonedSpeakers.map(m => fishAudioDeleteModel(m.modelId).catch(() => {})));
 
-    // Step 8: Upload to Hetzner at translations/multi/{userId}/{timestamp}.mp3
+    // Step 7: Upload to Hetzner at translations/multi/{userId}/{timestamp}.mp3
     const timestamp = Date.now();
     const key = `translations/multi/${userId}/${timestamp}.mp3`;
     const audioUrl = await uploadToR2(key, audioBuffer, "audio/mpeg");

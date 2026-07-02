@@ -1,6 +1,13 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { execFile } from "child_process";
+import { writeFile, unlink } from "fs/promises";
+import { join } from "path";
+import { promisify } from "util";
+import { uploadToR2 } from "@/lib/r2";
+
+const execFileAsync = promisify(execFile);
 
 // No maxDuration — returns immediately with jobId; transcription runs as background task
 export const runtime = "nodejs";
@@ -120,7 +127,101 @@ async function processDiarizeInBackground(
     const speakerCount = new Set(utterances.map(u => u.speaker)).size;
     console.log(`[diarize] bg done — ${utterances.length} utterances, ${speakerCount} speakers jobId=${jobId}`);
 
-    const result = JSON.stringify({ utterances, speakerCount, speakersDetected: speakerCount });
+    // Generate audio previews for each speaker (first 10-15 seconds)
+    const speakerPreviews: Record<string, string> = {};
+    const uniqueSpeakers = [...new Set(utterances.map(u => u.speaker))].sort();
+    const tmpAudioPath = join("/tmp", `diarize_${jobId}_source.mp3`);
+
+    try {
+      // Download and save audio temporarily
+      await writeFile(tmpAudioPath, audioBuffer);
+
+      for (const speaker of uniqueSpeakers) {
+        const speakerUtterances = utterances.filter(u => u.speaker === speaker);
+        if (speakerUtterances.length === 0) continue;
+
+        // Extract first 15 seconds of this speaker's audio
+        let totalDuration = 0;
+        const MAX_PREVIEW_DURATION = 15000; // 15 seconds in milliseconds
+        const previewSegments: Array<{ start: number; end: number }> = [];
+
+        for (const utt of speakerUtterances) {
+          if (totalDuration >= MAX_PREVIEW_DURATION) break;
+          const segmentDuration = utt.end - utt.start;
+          if (segmentDuration < 500) continue; // Skip very short segments
+
+          const remainingDuration = MAX_PREVIEW_DURATION - totalDuration;
+          const useEnd = Math.min(utt.end, utt.start + remainingDuration);
+
+          previewSegments.push({ start: utt.start, end: useEnd });
+          totalDuration += (useEnd - utt.start);
+        }
+
+        if (previewSegments.length === 0) continue;
+
+        // Extract and concatenate segments
+        const segmentFiles: string[] = [];
+        for (let i = 0; i < previewSegments.length; i++) {
+          const seg = previewSegments[i];
+          const segPath = join("/tmp", `diarize_${jobId}_${speaker}_seg${i}.mp3`);
+          const startSec = seg.start / 1000;
+          const endSec = seg.end / 1000;
+
+          try {
+            await execFileAsync("ffmpeg", [
+              "-i", tmpAudioPath,
+              "-ss", String(startSec),
+              "-to", String(endSec),
+              "-c:a", "libmp3lame", "-q:a", "4",
+              "-y", segPath,
+            ]);
+            segmentFiles.push(segPath);
+          } catch (e) {
+            console.warn(`[diarize] failed to extract segment for speaker ${speaker}:`, e);
+          }
+        }
+
+        if (segmentFiles.length === 0) continue;
+
+        // Concatenate all segments into one preview file
+        let previewBuffer: Buffer;
+        if (segmentFiles.length === 1) {
+          const fs = await import("fs/promises");
+          previewBuffer = await fs.readFile(segmentFiles[0]);
+        } else {
+          const concatListPath = join("/tmp", `diarize_${jobId}_${speaker}_concat.txt`);
+          const concatOutPath = join("/tmp", `diarize_${jobId}_${speaker}_preview.mp3`);
+          const fs = await import("fs/promises");
+          await fs.writeFile(concatListPath, segmentFiles.map(f => `file '${f}'`).join("\n"));
+
+          await execFileAsync("ffmpeg", [
+            "-f", "concat", "-safe", "0",
+            "-i", concatListPath,
+            "-c", "copy", "-y", concatOutPath,
+          ]);
+
+          previewBuffer = await fs.readFile(concatOutPath);
+          await unlink(concatListPath).catch(() => {});
+          await unlink(concatOutPath).catch(() => {});
+        }
+
+        // Upload preview to Hetzner (valid for 7 days)
+        const previewKey = `translations/previews/${jobId}_speaker_${speaker}.mp3`;
+        const previewUrl = await uploadToR2(previewKey, previewBuffer, "audio/mpeg");
+        speakerPreviews[speaker] = previewUrl;
+
+        // Cleanup segment files
+        await Promise.all(segmentFiles.map(f => unlink(f).catch(() => {})));
+
+        console.log(`[diarize] created preview for speaker ${speaker}: ${previewUrl}`);
+      }
+    } catch (e) {
+      console.warn(`[diarize] failed to generate speaker previews:`, e);
+    } finally {
+      await unlink(tmpAudioPath).catch(() => {});
+    }
+
+    const result = JSON.stringify({ utterances, speakerCount, speakersDetected: speakerCount, speakerPreviews });
     await prisma.job.update({ where: { id: jobId }, data: { status: "done", audioUrl: result } });
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);

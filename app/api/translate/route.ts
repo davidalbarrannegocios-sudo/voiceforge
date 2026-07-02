@@ -23,14 +23,23 @@ export async function POST(req: Request) {
   if (!fishKey) return NextResponse.json({ error: "FISH_AUDIO_API_KEY no configurada" }, { status: 500 });
   if (!deeplKey) return NextResponse.json({ error: "DEEPL_API_KEY no configurada" }, { status: 500 });
 
-  let body: { fileKey: string; targetLang: string; referenceId?: string; referenceFileKey?: string; speakerMode?: "single" | "multi"; utterances?: AssemblyAIUtterance[]; segments?: DiarizedSegment[] };
+  let body: {
+    fileKey: string;
+    targetLang: string;
+    referenceId?: string;
+    referenceFileKey?: string;
+    speakerMode?: "single" | "multi";
+    utterances?: AssemblyAIUtterance[];
+    segments?: DiarizedSegment[];
+    voiceAssignments?: Record<string, string>;
+  };
   try {
     body = await req.json();
   } catch (e) {
     return NextResponse.json({ error: "Body JSON inválido" }, { status: 400 });
   }
 
-  const { fileKey, targetLang, referenceId, referenceFileKey, speakerMode = "single", utterances, segments } = body;
+  const { fileKey, targetLang, referenceId, referenceFileKey, speakerMode = "single", utterances, segments, voiceAssignments } = body;
 
   if (!fileKey) return NextResponse.json({ error: "fileKey requerido" }, { status: 400 });
 
@@ -91,6 +100,7 @@ export async function POST(req: Request) {
       user,
       utterances,   // AssemblyAI format (preferred)
       segments,     // legacy fallback
+      voiceAssignments,
     }).catch(e => console.error("[translate-multi] unhandled bg error:", e));
   } else {
     processTranslationInBackground({

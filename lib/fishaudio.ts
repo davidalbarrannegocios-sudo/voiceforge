@@ -295,6 +295,11 @@ export async function fishAudioGenerateBuffer({
   const apiKey = getApiKey()
   const chunks = splitTextIntoChunks(text)
 
+  console.log(`[fishAudioGenerateBuffer] text length: ${text.length} chars, chunks: ${chunks.length}`)
+  chunks.forEach((chunk, i) => {
+    console.log(`[fishAudioGenerateBuffer] chunk ${i + 1}/${chunks.length}: ${chunk.length} chars`)
+  })
+
   // Validate that all references are model_id (safety check)
   if (references) {
     const hasAudioRef = references.some(r => r.type !== "model_id")
@@ -324,7 +329,9 @@ export async function fishAudioGenerateBuffer({
       return withSlot(() => fetchChunk(apiKey, payload, toFishModel(model), i, chunks.length))
     }),
   )
-  return audioBuffers.length === 1 ? audioBuffers[0] : Buffer.concat(audioBuffers)
+  const finalBuffer = audioBuffers.length === 1 ? audioBuffers[0] : Buffer.concat(audioBuffers)
+  console.log(`[fishAudioGenerateBuffer] generated ${audioBuffers.length} audio chunks, total size: ${finalBuffer.length} bytes`)
+  return finalBuffer
 }
 
 export interface CloneResult {

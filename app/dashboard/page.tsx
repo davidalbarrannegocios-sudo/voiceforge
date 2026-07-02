@@ -4471,6 +4471,13 @@ interface AssemblyAIUtterance {
   translatedText?: string; // populated after translate-segments step
 }
 
+interface SpeakerCard {
+  id: string;          // 'A', 'B', 'C'...
+  segmentCount: number;
+  previewUrl: string;  // URL of audio preview from original speaker
+  selectedVoice: { id: string; name: string; coverImage?: string } | null;
+}
+
 const SPEAKER_COLORS: { bg: string; border: string; label: string }[] = [
   { bg: "rgba(167,139,250,0.10)", border: "rgba(167,139,250,0.25)", label: "#a78bfa" },  // purple
   { bg: "rgba(96,165,250,0.10)",  border: "rgba(96,165,250,0.25)",  label: "#60a5fa" },  // blue
@@ -4605,7 +4612,35 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
   const [previewFileKey, setPreviewFileKey] = useState<string | null>(null);
   const [analyzeStep, setAnalyzeStep] = useState(0); // 1=uploading 2=detecting 3=translating
 
+  // Speaker cards for manual voice selection
+  const [speakerCards, setSpeakerCards] = useState<SpeakerCard[]>([]);
+  const [activeSpeakerForVoice, setActiveSpeakerForVoice] = useState<string | null>(null);
+
   const clonedVoices = voices.filter((v) => !v.isSystem);
+
+  // Open voice browser for a specific speaker
+  function openVoiceBrowserForSpeaker(speakerId: string) {
+    setActiveSpeakerForVoice(speakerId);
+    setShowBrowser(true);
+  }
+
+  // Handle voice selection from voice browser
+  function handleVoiceSelection(voice: SelectedVoice | null) {
+    if (activeSpeakerForVoice && voice) {
+      // Assign voice to the active speaker
+      setSpeakerCards(prev => prev.map(s =>
+        s.id === activeSpeakerForVoice
+          ? { ...s, selectedVoice: { id: voice.referenceId, name: voice.name, coverImage: voice.coverImage } }
+          : s
+      ));
+      setActiveSpeakerForVoice(null);
+      setShowBrowser(false);
+    } else if (!activeSpeakerForVoice) {
+      // Single speaker mode - use the existing behavior
+      onVoiceChange(voice);
+      setShowBrowser(false);
+    }
+  }
   const FREE_LIMIT = 2;
   const isFreeExhausted = plan === "free" && transcriptionUsed >= FREE_LIMIT;
   const freeRemaining = Math.max(0, FREE_LIMIT - transcriptionUsed);
@@ -4624,6 +4659,11 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
     setError(null);
     setResult(null);
     setFileDuration(null);
+    // Reset multi-speaker state
+    setUtterances(null);
+    setSpeakerCards([]);
+    setSpeakerCount(null);
+    setPreviewFileKey(null);
     const url = URL.createObjectURL(f);
     const a = new Audio(url);
     a.onloadedmetadata = () => { if (isFinite(a.duration)) setFileDuration(a.duration); URL.revokeObjectURL(url); };
@@ -4743,7 +4783,20 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             if (statusData.status === "done") {
               rawUtterances = statusData.utterances ?? [];
               setUtterances(rawUtterances);
-              setSpeakerCount(statusData.speakerCount ?? statusData.speakersDetected ?? 1);
+              const detectedSpeakerCount = statusData.speakerCount ?? statusData.speakersDetected ?? 1;
+              setSpeakerCount(detectedSpeakerCount);
+
+              // Create speaker cards from previews
+              const speakerPreviews = statusData.speakerPreviews ?? {};
+              const uniqueSpeakers = [...new Set(rawUtterances.map((u: AssemblyAIUtterance) => u.speaker))].sort();
+              const cards: SpeakerCard[] = uniqueSpeakers.map(speaker => ({
+                id: speaker,
+                segmentCount: rawUtterances.filter((u: AssemblyAIUtterance) => u.speaker === speaker).length,
+                previewUrl: speakerPreviews[speaker] ?? '',
+                selectedVoice: null,
+              }));
+              setSpeakerCards(cards);
+
               resolve();
             } else if (statusData.status === "error") {
               reject(new Error(statusData.error || "Error al detectar hablantes"));
@@ -4829,6 +4882,14 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
       };
       if (speakerMode === "multi") {
         translateBody.utterances = utterances;
+        // Build voiceAssignments from speaker cards
+        const voiceAssignments: Record<string, string> = {};
+        speakerCards.forEach(card => {
+          if (card.selectedVoice) {
+            voiceAssignments[card.id] = card.selectedVoice.id;
+          }
+        });
+        translateBody.voiceAssignments = voiceAssignments;
       } else {
         translateBody.referenceId = voiceSubTab === "model" ? (selectedVoice?.referenceId || undefined) : undefined;
         translateBody.referenceFileKey = referenceFileKey;
@@ -4915,6 +4976,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 setUtterances(null);
                 setSpeakerCount(null);
                 setPreviewFileKey(null);
+                setSpeakerCards([]);
               }
               onGenerated();
               resolve();
@@ -4991,6 +5053,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 setUtterances(null);
                 setSpeakerCount(null);
                 setPreviewFileKey(null);
+                setSpeakerCards([]);
                 setAnalyzeStep(0);
                 setError(null);
               }}
@@ -4999,15 +5062,15 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             >
               Un hablante
             </button>
-            {/* Multi-speaker — disabled (coming soon) */}
+            {/* Multi-speaker — BETA */}
             <button
-              disabled
-              className="flex-1 py-1.5 px-3 rounded-md text-xs font-medium flex items-center justify-center gap-1.5 opacity-50 cursor-not-allowed"
-              style={{ background: "transparent", color: "#666", border: "none" }}
+              onClick={() => setSpeakerMode('multi')}
+              className="flex-1 py-1.5 px-3 rounded-md text-xs font-medium flex items-center justify-center gap-1.5"
+              style={{ background: speakerMode === 'multi' ? 'rgba(255,255,255,0.1)' : 'transparent', color: speakerMode === 'multi' ? '#fff' : '#888', border: 'none' }}
             >
               Múltiples hablantes
-              <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded bg-white/10 text-white/40 border border-white/10">
-                Muy pronto
+              <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                BETA
               </span>
             </button>
           </div>
@@ -5200,8 +5263,78 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           </div>
           )}
 
+          {/* Speaker cards for manual voice selection */}
+          {speakerMode === "multi" && speakerCards.length > 0 && (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-white/50">Selecciona una voz para cada hablante</p>
+              {speakerCards.map((speaker) => {
+                const colorIdx = speakerCards.findIndex(s => s.id === speaker.id);
+                const color = SPEAKER_COLORS[colorIdx % SPEAKER_COLORS.length];
+                return (
+                  <div key={speaker.id} className="p-4 rounded-xl border border-white/10 bg-white/5 flex flex-col gap-3">
+                    {/* Header del hablante */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold`} style={{ background: color.bg, color: color.label }}>
+                          {speaker.id}
+                        </div>
+                        <span className="text-sm text-white/70">Hablante {speaker.id}</span>
+                        <span className="text-xs text-white/30">{speaker.segmentCount} segmentos</span>
+                      </div>
+                    </div>
+
+                    {/* Preview de audio original del hablante */}
+                    {speaker.previewUrl && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-white/40">Preview original:</span>
+                        <audio
+                          src={speaker.previewUrl}
+                          controls
+                          className="h-8 flex-1"
+                          style={{ filter: 'invert(0.6) brightness(0.8)' }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Selector de voz */}
+                    {speaker.selectedVoice ? (
+                      <div className="flex items-center justify-between p-2 rounded-lg bg-white/10 border border-white/10">
+                        <div className="flex items-center gap-2">
+                          {speaker.selectedVoice.coverImage ? (
+                            <img
+                              src={speaker.selectedVoice.coverImage}
+                              alt={speaker.selectedVoice.name}
+                              className="w-6 h-6 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-blue-400" />
+                          )}
+                          <span className="text-sm text-white">{speaker.selectedVoice.name}</span>
+                        </div>
+                        <button
+                          onClick={() => openVoiceBrowserForSpeaker(speaker.id)}
+                          className="text-xs text-white/40 hover:text-white/70 transition-colors"
+                        >
+                          Cambiar →
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => openVoiceBrowserForSpeaker(speaker.id)}
+                        className="w-full py-2.5 rounded-lg border border-dashed border-white/20 text-sm text-white/40 hover:border-white/40 hover:text-white/60 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Search className="w-4 h-4" />
+                        Seleccionar voz
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {/* Multi-speaker preview — AssemblyAI utterances with speaker colors */}
-          {speakerMode === "multi" && utterances && utterances.length > 0 && (
+          {speakerMode === "multi" && utterances && utterances.length > 0 && utterances[0]?.translatedText !== undefined && (
             <div className="rounded-xl p-4 space-y-3" style={{ background: "rgba(167,139,250,0.04)", border: "1px solid rgba(167,139,250,0.15)" }}>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#a78bfa" }} />
@@ -5308,7 +5441,13 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             )}
             <button
               onClick={handleTranslate}
-              disabled={!file || loading || previewLoading || isFreeExhausted}
+              disabled={
+                !file ||
+                loading ||
+                previewLoading ||
+                isFreeExhausted ||
+                (speakerMode === "multi" && speakerCards.length > 0 && speakerCards.some(s => !s.selectedVoice))
+              }
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-black text-sm transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               style={{ background: "#ffffff", boxShadow: (loading || previewLoading || !file) ? "none" : "0 4px 20px rgba(255,255,255,0.12)" }}
             >
@@ -5322,6 +5461,8 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                 </>
               ) : speakerMode === "multi" && !utterances ? (
                 <>Analizar hablantes →</>
+              ) : speakerMode === "multi" && speakerCards.length > 0 && speakerCards.some(s => !s.selectedVoice) ? (
+                <>Falta seleccionar {speakerCards.filter(s => !s.selectedVoice).length} voz/voces</>
               ) : speakerMode === "multi" && utterances ? (
                 <>Traducir y generar audio →</>
               ) : (
@@ -5616,8 +5757,11 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
       {showBrowser && (
         <VoiceBrowser
           clonedVoices={clonedVoices}
-          onSelect={onVoiceChange}
-          onClose={() => setShowBrowser(false)}
+          onSelect={handleVoiceSelection}
+          onClose={() => {
+            setShowBrowser(false);
+            setActiveSpeakerForVoice(null);
+          }}
           plan={plan}
         />
       )}
