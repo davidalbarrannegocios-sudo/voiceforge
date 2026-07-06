@@ -106,18 +106,37 @@ export async function processTranslationInBackground(params: TranslateParams) {
 
     console.log("[translate-bg] ASR done, chars:", transcribedText.length);
 
-    // Step 4: DeepL translation
+    // Step 4: GPT translation
     let translatedText: string;
     try {
-      const translator = new deepl.Translator(deeplKey);
-      const result = await translator.translateText(transcribedText, null, lang.deeplCode as deepl.TargetLanguageCode) as deepl.TextResult;
-      translatedText = result.text.trim();
+      const langNames: Record<string, string> = {
+        'EN': 'English', 'EN-US': 'English', 'EN-GB': 'English',
+        'ES': 'Spanish', 'FR': 'French', 'DE': 'German',
+        'PT': 'Portuguese', 'PT-BR': 'Portuguese', 'PT-PT': 'Portuguese',
+        'IT': 'Italian', 'ZH': 'Chinese', 'JA': 'Japanese',
+        'KO': 'Korean', 'AR': 'Arabic', 'RU': 'Russian'
+      }
+      const targetLangName = langNames[lang.deeplCode.toUpperCase()] || lang.name
+      const gptResp = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: 'You are a professional translator. Translate the following text to ' + targetLangName + '. Return ONLY the translated text, nothing else.' },
+            { role: 'user', content: transcribedText }
+          ],
+          temperature: 0.1,
+        })
+      })
+      const gptData = await gptResp.json()
+      translatedText = gptData.choices[0].message.content.trim()
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Error en traducción con DeepL";
-      return await fail(msg);
+      const msg = e instanceof Error ? e.message : "Error en traducción con GPT"
+      return await fail(msg)
     }
 
-    if (!translatedText) return await fail("DeepL devolvió traducción vacía");
+    if (!translatedText) return await fail("GPT devolvio traduccion vacia")
 
     // Step 5: Credits
     const translateMultiplier = effectivePlan === "enterprise" ? 1.1 : 1.2;
@@ -276,24 +295,42 @@ export async function processMultiSpeakerTranslationInBackground(params: MultiSp
     if (preTranslated) {
       translatedUtterances = (params.utterances as (AssemblyAIUtterance & { translatedText: string })[]);
     } else {
-      const translator = new deepl.Translator(deeplKey);
-      // Filter empty segments before sending to DeepL
+      // Filter empty segments
       const validUtterances = utterances.filter(u => u.text?.trim().length > 0);
       if (!validUtterances.length) return await fail("No hay texto válido para traducir");
+      const langNames2: Record<string, string> = {
+        'EN': 'English', 'EN-US': 'English', 'EN-GB': 'English',
+        'ES': 'Spanish', 'FR': 'French', 'DE': 'German',
+        'PT': 'Portuguese', 'PT-BR': 'Portuguese', 'IT': 'Italian',
+        'ZH': 'Chinese', 'JA': 'Japanese', 'KO': 'Korean', 'AR': 'Arabic', 'RU': 'Russian'
+      };
+      const targetLangName2 = langNames2[lang.deeplCode.toUpperCase()] || lang.name;
+      async function translateWithGPT(text: string): Promise<string> {
+        const r = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: 'gpt-4o-mini', messages: [
+            { role: 'system', content: 'You are a professional translator. Translate to ' + targetLangName2 + '. Return ONLY the translated text.' },
+            { role: 'user', content: text }
+          ], temperature: 0.1 })
+        });
+        const d = await r.json();
+        return d.choices[0].message.content.trim();
+      }
       try {
-        const BATCH_SIZE = 10;
+        const BATCH_SIZE = 5;
         translatedUtterances = [];
         for (let i = 0; i < validUtterances.length; i += BATCH_SIZE) {
           const batch = validUtterances.slice(i, i + BATCH_SIZE);
           const results = await Promise.all(
             batch.map(async u => ({
               ...u,
-              translatedText: await translateWithRetry(translator, u.text, lang.deeplCode as deepl.TargetLanguageCode),
+              translatedText: await translateWithGPT(u.text),
             }))
           );
           translatedUtterances.push(...results);
           if (i + BATCH_SIZE < validUtterances.length) {
-            await new Promise(r => setTimeout(r, 500));
+            await new Promise(r => setTimeout(r, 200));
           }
         }
       } catch (e) {

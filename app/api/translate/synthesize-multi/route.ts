@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     sourceFileKey: string;
     userId: string;
     targetLang?: string;
-    voiceAssignments?: Record<string, string>;
+    voiceAssignments?: Record<string, { id: string; name: string } | string>;
   };
   try {
     body = await req.json();
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
   const speakerIndexMap: Record<string, number> = Object.fromEntries(
     assignedSpeakers.map((s, i) => [s, i])
   );
-  const referenceIds = assignedSpeakers.map(s => voiceAssignments[s]);
+  const referenceIds = assignedSpeakers.map(s => { const v = voiceAssignments[s]; return typeof v === "string" ? v : v.id; });
   console.log("[synthesize-multi] reference_id array:", referenceIds);
 
   try {

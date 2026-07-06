@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare, Loader, FileText, TrendingUp, ExternalLink, Filter, Shield, Music, Sparkles, ChevronLeft, Volume2, Wand2, Edit3 } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare, Loader, FileText, TrendingUp, ExternalLink, Filter, Shield, Music, Sparkles, ChevronLeft, Volume2, Wand2, Edit3, ScanSearch } from "lucide-react";
 import { DialogueEditor } from "@/components/DialogueEditor";
 import { EliteLoader } from "@/components/ui/EliteLoader";
 import { ImageVideoEditor, type ImageHistoryItem } from "@/components/ImageVideoEditor";
@@ -5283,6 +5283,7 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
           {/* Voice assignments for multi-speaker */}
           {speakerMode === "multi" && utterances && utterances.length > 0 && (() => {
             const uniqueSpeakers = [...new Set(utterances.map(u => u.speaker))].sort();
+            const avatarColors = ["#a78bfa", "#60a5fa", "#4ade80", "#fb923c"];
             return (
               <div className="flex flex-col gap-3">
                 <p className="text-xs text-white/40 flex items-center gap-1">
@@ -5290,60 +5291,75 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
                   Selecciona una voz para cada hablante
                 </p>
                 {uniqueSpeakers.map((speaker, idx) => {
-                  const speakerOrder = [...new Set(utterances.map(u => u.speaker))].sort();
-                  const colorIdx = speakerOrder.indexOf(speaker);
-                  const color = SPEAKER_COLORS[colorIdx % SPEAKER_COLORS.length];
+                  const color = avatarColors[idx % avatarColors.length];
+                  const segmentCount = utterances.filter(u => u.speaker === speaker).length;
+                  const hasPreview = speakerPreviews[speaker];
+                  const assignedVoice = voiceAssignments[speaker];
                   return (
-                    <div key={speaker} className="flex flex-col gap-2 p-3 rounded-xl border border-white/10 bg-white/5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-                            style={{ background: color.bg, color: color.label, border: `1px solid ${color.border}` }}
-                          >
-                            {speaker}
-                          </div>
-                          <div>
-                            <p className="text-sm text-white/70">Hablante {speaker}</p>
-                            <p className="text-xs text-white/30">
-                              {utterances.filter(u => u.speaker === speaker).length} segmentos
-                            </p>
-                          </div>
-                        </div>
-                        {voiceAssignments[speaker] ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-white/60">{voiceAssignments[speaker].name}</span>
-                            <button
-                              onClick={() => {
-                                setSelectingVoiceForSpeaker(speaker);
-                                setShowBrowser(true);
-                              }}
-                              className="text-xs text-white/30 hover:text-white/60 transition-colors"
-                            >
-                              Cambiar
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setSelectingVoiceForSpeaker(speaker);
-                              setShowBrowser(true);
-                            }}
-                            className="text-xs px-3 py-1.5 rounded-lg border border-white/20 text-white/50 hover:border-white/40 hover:text-white/70 transition-all"
-                          >
-                            + Seleccionar voz
-                          </button>
-                        )}
+                    <div
+                      key={speaker}
+                      className="rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] flex items-center gap-4 px-4 py-3.5 transition-colors"
+                    >
+                      {/* Avatar */}
+                      <div
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                        style={{
+                          background: `${color}20`,
+                          border: `1px solid ${color}40`,
+                          color: color,
+                        }}
+                      >
+                        {speaker}
                       </div>
-                      {speakerPreviews[speaker] && (
-                        <audio
-                          src={speakerPreviews[speaker]}
-                          controls
-                          className="w-full h-8"
-                          style={{ filter: "invert(0.8) hue-rotate(180deg)" }}
-                          preload="metadata"
-                        />
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white/90 font-medium text-[13.5px]">Hablante {speaker}</p>
+                        <p className="text-white/35 text-[11.5px]">{segmentCount} segmentos</p>
+                      </div>
+
+                      {/* Audio preview or placeholder */}
+                      {hasPreview ? (
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            className="w-7 h-7 rounded-full bg-white/[0.06] hover:bg-white/[0.10] flex items-center justify-center transition-colors"
+                            onClick={(e) => {
+                              const audio = e.currentTarget.nextElementSibling?.querySelector("audio") as HTMLAudioElement | null;
+                              if (audio) {
+                                if (audio.paused) audio.play();
+                                else audio.pause();
+                              }
+                            }}
+                          >
+                            <Play className="w-3 h-3 text-white/60 ml-0.5" />
+                          </button>
+                          <div className="hidden">
+                            <audio src={speakerPreviews[speaker]} preload="metadata" />
+                          </div>
+                          <span className="text-[11px] text-white/30 font-mono tabular-nums">0:03</span>
+                        </div>
+                      ) : (
+                        <span className="text-white/20 italic text-[11.5px] flex-shrink-0">Sin muestra de audio</span>
                       )}
+
+                      {/* Voice assignment button */}
+                      <button
+                        onClick={() => {
+                          setSelectingVoiceForSpeaker(speaker);
+                          setShowBrowser(true);
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all flex-shrink-0 ${
+                          assignedVoice
+                            ? "bg-blue-500/10 border border-blue-500/30 text-blue-300"
+                            : "bg-white/[0.04] border border-white/10 text-white/60 hover:border-white/20 hover:text-white/80"
+                        }`}
+                      >
+                        <Mic2 className="w-3 h-3" />
+                        <span className="max-w-[120px] truncate">
+                          {assignedVoice ? assignedVoice.name : "Seleccionar voz"}
+                        </span>
+                        <ChevronRight className="w-3 h-3" />
+                      </button>
                     </div>
                   );
                 })}
@@ -5365,32 +5381,74 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 
           {/* Submit */}
           <div className="flex flex-col items-end gap-1.5">
-            {/* Multi-speaker 4-step progress bar */}
+            {/* Multi-speaker 4-step progress stepper */}
             {speakerMode === "multi" && (loading || previewLoading) && (
-              <div className="flex items-center gap-2 w-full mb-2">
-                {(["Subiendo", "Detectando", "Traduciendo", "Generando"] as const).map((step, i) => {
-                  const isAnalyze = previewLoading;
-                  const isTranslate = loading;
-                  // analyzeStep: 1=uploading(i=0), 2=detecting(i=1), 3=translating(i=2)
-                  const done = isAnalyze
-                    ? (analyzeStep > i + 1)
-                    : isTranslate ? i < 3 : false;
-                  const active = isAnalyze
-                    ? (analyzeStep === i + 1)
-                    : isTranslate
-                      ? (i === 3)
-                      : false;
-                  return (
-                    <div key={step} className="flex-1 flex flex-col items-center gap-1.5">
-                      <div className="w-full h-[2px] rounded-full overflow-hidden bg-white/10">
-                        <div className={`h-full rounded-full transition-all duration-700 ease-in-out ${done ? "w-full bg-white" : active ? "w-1/2 bg-white/60 animate-pulse" : "w-0 bg-white/20"}`} />
+              <div className="w-full rounded-3xl border border-white/[0.06] bg-white/[0.015] p-6 mb-3">
+                <div className="flex items-center justify-between mb-4">
+                  {(["Subiendo", "Detectando", "Traduciendo", "Generando"] as const).map((step, i) => {
+                    const isAnalyze = previewLoading;
+                    const isTranslate = loading;
+                    // analyzeStep: 1=uploading(i=0), 2=detecting(i=1), 3=translating(i=2)
+                    const done = isAnalyze
+                      ? (analyzeStep > i + 1)
+                      : isTranslate ? i < 3 : false;
+                    const active = isAnalyze
+                      ? (analyzeStep === i + 1)
+                      : isTranslate
+                        ? (i === 3)
+                        : false;
+                    const pending = !done && !active;
+                    const icons = [Upload, ScanSearch, Languages, Sparkles];
+                    const Icon = icons[i];
+                    return (
+                      <div key={step} className="flex items-center flex-1">
+                        <div className="flex flex-col items-center gap-2 flex-shrink-0">
+                          <div className="relative">
+                            <div
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+                                done
+                                  ? "bg-blue-500"
+                                  : active
+                                  ? "bg-blue-500/10 border border-blue-500"
+                                  : "bg-white/[0.02] border border-white/10"
+                              }`}
+                            >
+                              {done ? (
+                                <Check className="w-4 h-4 text-white" />
+                              ) : (
+                                <Icon className={`w-4 h-4 ${active ? "text-blue-400" : "text-white/20"}`} />
+                              )}
+                            </div>
+                            {active && (
+                              <span className="absolute inset-0 rounded-full border border-blue-500/40 animate-ping" />
+                            )}
+                          </div>
+                          <span
+                            className={`text-[11px] transition-colors duration-300 ${
+                              done ? "text-white/70" : active ? "text-blue-400 font-medium" : "text-white/25"
+                            }`}
+                          >
+                            {step}
+                          </span>
+                        </div>
+                        {i < 3 && (
+                          <div className="flex-1 h-px bg-white/[0.06] mx-2 relative top-[-16px]">
+                            <div
+                              className="h-full bg-blue-500 transition-all duration-700"
+                              style={{ width: done ? "100%" : "0%" }}
+                            />
+                          </div>
+                        )}
                       </div>
-                      <span className={`text-[11px] font-medium transition-colors duration-300 ${done ? "text-white" : active ? "text-white/70" : "text-white/25"}`}>
-                        {done ? "✓ " : ""}{step}
-                      </span>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+                {stepLabel && (
+                  <div className="flex items-center justify-center gap-2 text-[12px] text-white/40">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                    {stepLabel}
+                  </div>
+                )}
               </div>
             )}
             <button

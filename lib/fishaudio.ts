@@ -322,7 +322,8 @@ export async function fishAudioGenerateBuffer({
       if (language) payload.language = language;
       if (references && references.length > 0) {
         // Only model IDs are passed to Fish Audio TTS (never raw audio)
-        payload.reference_id = references.map(r => r.value)
+        payload.reference_id = references.map(r => typeof r.value === 'string' ? r.value : (r.value as {id: string}).id || r.value)
+        console.log('[fishaudio] reference_id enviado:', JSON.stringify(payload.reference_id))
       } else if (referenceId) {
         payload.reference_id = referenceId
       }
