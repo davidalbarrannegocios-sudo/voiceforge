@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare, Loader, FileText, TrendingUp, ExternalLink, Filter, Shield, Music, Sparkles, ChevronLeft, Volume2, Wand2, Edit3, ScanSearch, ChevronDown } from "lucide-react";
+import { Home, Mic, Mic2, Users, Clock, Check, Play, Pause, CreditCard, Gift, Copy, Globe, FileAudio, Type, User, HelpCircle, Languages, Trash2, MoreVertical, AudioWaveform, Zap, Search, MoreHorizontal, RefreshCw, Share2, Download, Upload, X, Square, DollarSign, ChevronRight, ChevronsUpDown, Info, Settings, MessageSquare, Loader, FileText, TrendingUp, ExternalLink, Filter, Shield, Music, Sparkles, ChevronLeft, Volume2, Wand2, Edit3, ScanSearch } from "lucide-react";
 import { DialogueEditor } from "@/components/DialogueEditor";
 import { EliteLoader } from "@/components/ui/EliteLoader";
 import { ImageVideoEditor, type ImageHistoryItem } from "@/components/ImageVideoEditor";
@@ -4609,7 +4609,6 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
   const [voiceAssignments, setVoiceAssignments] = useState<Record<string, {id: string, name: string}>>({});
   const [selectingVoiceForSpeaker, setSelectingVoiceForSpeaker] = useState<string | null>(null);
   const [speakerPreviews, setSpeakerPreviews] = useState<Record<string, string>>({});
-  const [utterancesExpanded, setUtterancesExpanded] = useState(false);
 
   const clonedVoices = voices.filter((v) => !v.isSystem);
   const FREE_LIMIT = 2;
@@ -5114,6 +5113,14 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
             </div>
           </div>
 
+          {/* Voice section — hidden in multi-speaker mode */}
+          {speakerMode === "multi" && (
+            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl text-xs leading-relaxed" style={{ background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.15)", color: "#9ca3af" }}>
+              <span style={{ color: "#a78bfa", flexShrink: 0 }}>★</span>
+              <span>En modo multi-hablante la voz se extrae directamente del audio original — no es necesario seleccionar un modelo de voz.</span>
+            </div>
+          )}
+
           {/* Speaker count selector — only shown in multi-speaker mode */}
           {speakerMode === "multi" && (
             <div className="flex flex-col gap-1.5">
@@ -5211,85 +5218,64 @@ function TranslateTab({ onGenerated, voices, plan, transcriptionUsed, onBilling,
 
           {/* Multi-speaker preview — AssemblyAI utterances with speaker colors */}
           {speakerMode === "multi" && utterances && utterances.length > 0 && (
-            <div className="rounded-xl overflow-hidden" style={{ background: "rgba(167,139,250,0.04)", border: "1px solid rgba(167,139,250,0.15)" }}>
-              {/* Collapsible header */}
-              <button
-                onClick={() => setUtterancesExpanded(!utterancesExpanded)}
-                className="w-full p-4 flex flex-col gap-2 cursor-pointer hover:bg-white/[0.02] transition-colors text-left"
-              >
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#a78bfa" }} />
-                  <p className="text-sm font-semibold text-white">
-                    Se detectaron {speakerCount ?? [...new Set(utterances.map(u => u.speaker))].length} hablante{(speakerCount ?? 0) !== 1 ? "s" : ""}
-                  </p>
-                  <span className="text-[10px] ml-1" style={{ color: "#555" }}>{utterances.length} segmentos</span>
-                  <ChevronDown
-                    className={`w-4 h-4 ml-auto text-white/40 transition-transform duration-200 ${
-                      utterancesExpanded ? "rotate-180" : ""
-                    }`}
-                  />
-                </div>
-                {utterances[0]?.translatedText !== undefined && (
-                  <p className="text-xs flex items-center gap-1" style={{ color: "rgba(255,255,255,0.30)" }}>
-                    <Edit3 className="w-3 h-3" />
-                    Puedes editar la traducción antes de generar el audio
-                  </p>
-                )}
-              </button>
-
-              {/* Expandable content */}
-              <div
-                className="transition-all duration-300 overflow-hidden"
-                style={{
-                  maxHeight: utterancesExpanded ? "1000px" : "0",
-                  opacity: utterancesExpanded ? 1 : 0,
-                }}
-              >
-                <div className="px-4 pb-4 space-y-1.5 max-h-64 overflow-y-auto pr-0.5">
-                  {(() => {
-                    const speakerOrder = [...new Set(utterances.map(u => u.speaker))].sort();
-                    return utterances.map((u, i) => {
-                      const colorIdx = speakerOrder.indexOf(u.speaker);
-                      const color = SPEAKER_COLORS[colorIdx % SPEAKER_COLORS.length];
-                      const startSec = Math.floor(u.start / 1000);
-                      const mm = Math.floor(startSec / 60);
-                      const ss = String(startSec % 60).padStart(2, "0");
-                      const endSec = Math.floor(u.end / 1000);
-                      if (u.translatedText !== undefined) {
-                        return (
-                          <div key={i} className="flex gap-3 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)" }}>
-                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-1" style={{ background: color.bg, color: color.label }}>
-                              {u.speaker}
-                            </div>
-                            <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-                              <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.25)" }}>
-                                {mm}:{ss} — {Math.floor(endSec / 60)}:{String(endSec % 60).padStart(2, "0")}
-                              </span>
-                              <textarea
-                                value={u.translatedText}
-                                onChange={(e) => {
-                                  const updated = [...utterances];
-                                  updated[i] = { ...updated[i], translatedText: e.target.value };
-                                  setUtterances(updated);
-                                }}
-                                rows={Math.max(2, Math.ceil(u.translatedText.length / 60))}
-                                className="w-full bg-transparent text-white text-sm resize-none focus:outline-none rounded-lg px-2 py-1 transition-colors border border-transparent focus:border-white/10 focus:bg-white/5"
-                                style={{ color: "#e5e7eb" }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      }
+            <div className="rounded-xl p-4 space-y-3" style={{ background: "rgba(167,139,250,0.04)", border: "1px solid rgba(167,139,250,0.15)" }}>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#a78bfa" }} />
+                <p className="text-sm font-semibold text-white">
+                  Se detectaron {speakerCount ?? [...new Set(utterances.map(u => u.speaker))].length} hablante{(speakerCount ?? 0) !== 1 ? "s" : ""}
+                </p>
+                <span className="text-[10px] ml-1" style={{ color: "#555" }}>{utterances.length} segmentos</span>
+              </div>
+              {utterances[0]?.translatedText !== undefined && (
+                <p className="text-xs flex items-center gap-1" style={{ color: "rgba(255,255,255,0.30)" }}>
+                  <Edit3 className="w-3 h-3" />
+                  Puedes editar la traducción antes de generar el audio
+                </p>
+              )}
+              <div className="space-y-1.5 max-h-64 overflow-y-auto pr-0.5">
+                {(() => {
+                  const speakerOrder = [...new Set(utterances.map(u => u.speaker))].sort();
+                  return utterances.map((u, i) => {
+                    const colorIdx = speakerOrder.indexOf(u.speaker);
+                    const color = SPEAKER_COLORS[colorIdx % SPEAKER_COLORS.length];
+                    const startSec = Math.floor(u.start / 1000);
+                    const mm = Math.floor(startSec / 60);
+                    const ss = String(startSec % 60).padStart(2, "0");
+                    const endSec = Math.floor(u.end / 1000);
+                    if (u.translatedText !== undefined) {
                       return (
-                        <div key={i} className="rounded-lg px-2.5 py-1.5 flex gap-2 items-start" style={{ background: color.bg, border: `1px solid ${color.border}` }}>
-                          <span className="text-[10px] font-bold flex-shrink-0 mt-0.5 w-4 text-center" style={{ color: color.label }}>{u.speaker}</span>
-                          <span className="text-xs leading-relaxed flex-1" style={{ color: "#d1d5db" }}>{u.text.length > 150 ? u.text.slice(0, 150) + "…" : u.text}</span>
-                          {u.start > 0 && <span className="text-[10px] flex-shrink-0 mt-0.5 font-mono" style={{ color: "#555" }}>{mm}:{ss}</span>}
+                        <div key={i} className="flex gap-3 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)" }}>
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-1" style={{ background: color.bg, color: color.label }}>
+                            {u.speaker}
+                          </div>
+                          <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                            <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.25)" }}>
+                              {mm}:{ss} — {Math.floor(endSec / 60)}:{String(endSec % 60).padStart(2, "0")}
+                            </span>
+                            <textarea
+                              value={u.translatedText}
+                              onChange={(e) => {
+                                const updated = [...utterances];
+                                updated[i] = { ...updated[i], translatedText: e.target.value };
+                                setUtterances(updated);
+                              }}
+                              rows={Math.max(2, Math.ceil(u.translatedText.length / 60))}
+                              className="w-full bg-transparent text-white text-sm resize-none focus:outline-none rounded-lg px-2 py-1 transition-colors border border-transparent focus:border-white/10 focus:bg-white/5"
+                              style={{ color: "#e5e7eb" }}
+                            />
+                          </div>
                         </div>
                       );
-                    });
-                  })()}
-                </div>
+                    }
+                    return (
+                      <div key={i} className="rounded-lg px-2.5 py-1.5 flex gap-2 items-start" style={{ background: color.bg, border: `1px solid ${color.border}` }}>
+                        <span className="text-[10px] font-bold flex-shrink-0 mt-0.5 w-4 text-center" style={{ color: color.label }}>{u.speaker}</span>
+                        <span className="text-xs leading-relaxed flex-1" style={{ color: "#d1d5db" }}>{u.text.length > 150 ? u.text.slice(0, 150) + "…" : u.text}</span>
+                        {u.start > 0 && <span className="text-[10px] flex-shrink-0 mt-0.5 font-mono" style={{ color: "#555" }}>{mm}:{ss}</span>}
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
           )}
