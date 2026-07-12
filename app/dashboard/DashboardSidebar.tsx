@@ -181,21 +181,15 @@ export function DashboardSidebar() {
                 <span>{section.label}</span>
                 <ChevronDown
                   size={12}
-                  className={`transition-transform duration-200 ${collapsedSections[`mobile-${si}`] ? '-rotate-180' : ''}`}
+                  className={`transition-transform duration-300 ease-in-out ${collapsedSections[`mobile-${si}`] ? '-rotate-180' : ''}`}
                   style={{ color: "#444444" }}
                 />
               </button>
             )}
             <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "2px",
-                overflow: "hidden",
-                transition: "max-height 0.2s ease-in-out",
-                maxHeight: section.label && collapsedSections[`mobile-${si}`] ? "0" : "1000px",
-              }}
+              className={`grid transition-all duration-300 ease-in-out ${section.label && collapsedSections[`mobile-${si}`] ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`}
             >
+              <div className="overflow-hidden" style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
               {section.items.map(({ key, label, Icon }, itemIdx) => {
                 const isActive = activeTab === key;
                 return (
@@ -251,6 +245,7 @@ export function DashboardSidebar() {
                   </div>
                 );
               })}
+              </div>
             </div>
           </div>
         ))}
@@ -446,21 +441,15 @@ export function DashboardSidebar() {
                 <span>{section.label}</span>
                 <ChevronDown
                   size={12}
-                  className={`transition-transform duration-200 ${collapsedSections[`desktop-${si}`] ? '-rotate-180' : ''}`}
+                  className={`transition-transform duration-300 ease-in-out ${collapsedSections[`desktop-${si}`] ? '-rotate-180' : ''}`}
                   style={{ color: "#444444" }}
                 />
               </button>
             )}
             <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "2px",
-                overflow: "hidden",
-                transition: "max-height 0.2s ease-in-out",
-                maxHeight: section.label && !collapsed && collapsedSections[`desktop-${si}`] ? "0" : "1000px",
-              }}
+              className={`grid transition-all duration-300 ease-in-out ${section.label && !collapsed && collapsedSections[`desktop-${si}`] ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`}
             >
+              <div className="overflow-hidden" style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
               {section.items.map(({ key, label, Icon }, itemIdx) => {
                 const isActive = activeTab === key;
                 return (
@@ -580,6 +569,7 @@ export function DashboardSidebar() {
                   </>
                 );
               })}
+              </div>
             </div>
           </div>
         ))}
