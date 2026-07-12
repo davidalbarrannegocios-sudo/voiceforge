@@ -63,12 +63,16 @@ export async function POST(req: Request) {
     });
   } catch (fishErr) {
     const errMsg = fishErr instanceof Error ? fishErr.message : String(fishErr);
+    const userMessage = errMsg.includes("VOICE_OVERLOAD")
+      ? "El servicio de síntesis de voz está experimentando alta demanda en este momento. Por favor, inténtalo de nuevo en unos minutos."
+      : errMsg;
+
     await log("error", "tts-job", `error jobId=${jobId} userId=${job.userId}`, { jobId, userId: job.userId, error: errMsg, chars: job.text.length, voiceName: job.voiceName }, job.userId);
 
     await prisma.$transaction([
       prisma.generationJob.update({
         where: { id: jobId },
-        data: { status: "error", errorMsg: errMsg },
+        data: { status: "error", errorMsg: userMessage },
       }),
       prisma.user.update({
         where: { id: job.userId },
@@ -80,7 +84,7 @@ export async function POST(req: Request) {
     ]);
     log("info", "credits", "credits refunded — generation error", { userId: job.userId, creditsRefunded: job.creditsUsed, jobId: job.id }, job.userId);
 
-    return NextResponse.json({ ok: false, error: errMsg }, { status: 500 });
+    return NextResponse.json({ ok: false, error: userMessage }, { status: 500 });
   }
 
   const effectivePlan = await getEffectivePlan(user.id, user.plan);

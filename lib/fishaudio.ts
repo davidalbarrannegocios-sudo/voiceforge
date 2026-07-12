@@ -89,9 +89,12 @@ async function fetchChunk(
   total: number,
   externalSignal?: AbortSignal,
 ): Promise<Buffer> {
-  const MAX_ATTEMPTS = 3;
+  const RETRY_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutos
+  const startTime = Date.now();
+  let attempt = 0;
 
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+  while (true) {
+    attempt++;
     if (externalSignal?.aborted) throw new DOMException("Aborted", "AbortError");
 
     const controller = new AbortController();
@@ -116,9 +119,13 @@ async function fetchChunk(
       clearTimeout(timeoutId);
     }
 
-    if (res.status === 429 && attempt < MAX_ATTEMPTS) {
-      const waitMs = 2000 * Math.pow(2, attempt - 1); // 2s, 4s
-      console.warn(`[FishAudio] rate limited on chunk ${chunkIndex + 1}/${total}, retrying in ${waitMs / 1000}s (attempt ${attempt}/${MAX_ATTEMPTS})`);
+    if (res.status === 429) {
+      const elapsed = Date.now() - startTime;
+      if (elapsed >= RETRY_TIMEOUT_MS) {
+        throw new Error("VOICE_OVERLOAD");
+      }
+      const waitMs = Math.min(2000 * Math.pow(2, attempt - 1), 20000); // cap 20s
+      console.warn(`[FishAudio] rate limited on chunk ${chunkIndex + 1}/${total}, retrying in ${waitMs / 1000}s (attempt ${attempt}, elapsed ${Math.round(elapsed / 1000)}s)`);
       await new Promise((r) => setTimeout(r, waitMs));
       continue;
     }
@@ -132,8 +139,6 @@ async function fetchChunk(
     console.log(`[FishAudio] chunk ${chunkIndex + 1}/${total} — ${buf.length} bytes`);
     return buf;
   }
-
-  throw new Error(`Fish Audio TTS rate limited on chunk ${chunkIndex + 1}/${total} after ${MAX_ATTEMPTS} attempts`);
 }
 
 
