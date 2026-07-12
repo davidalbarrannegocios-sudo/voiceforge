@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Wand2, Home, Mic2, Type, FileAudio, Globe, Clock,
   CreditCard, Gift, Zap, Settings, Users, MessageSquare, ChevronsUpDown,
-  Image as ImageIcon, Compass, Radar, X,
+  Image as ImageIcon, Compass, Radar, X, ChevronDown,
 } from "lucide-react";
 import { useLang } from "./LanguageContext";
 import { useSidebar } from "./SidebarContext";
@@ -31,6 +31,7 @@ export function DashboardSidebar() {
   const [showProductMenu, setShowProductMenu] = useState(false);
 
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
   const isMiCuenta = pathname === "/dashboard/account";
   const isDiscover = pathname === "/voices";
@@ -156,11 +157,45 @@ export function DashboardSidebar() {
         {sections.map((section, si) => (
           <div key={si} style={{ marginBottom: si < sections.length - 1 ? "20px" : 0 }}>
             {section.label && (
-              <p style={{ paddingLeft: "12px", marginBottom: "4px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#444444" }}>
-                {section.label}
-              </p>
+              <button
+                onClick={() => setCollapsedSections(prev => ({ ...prev, [`mobile-${si}`]: !prev[`mobile-${si}`] }))}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  paddingLeft: "12px",
+                  paddingRight: "12px",
+                  marginBottom: "4px",
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  color: "#444444",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  userSelect: "none",
+                }}
+              >
+                <span>{section.label}</span>
+                <ChevronDown
+                  size={12}
+                  className={`transition-transform duration-200 ${collapsedSections[`mobile-${si}`] ? '-rotate-180' : ''}`}
+                  style={{ color: "#444444" }}
+                />
+              </button>
             )}
-            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "2px",
+                overflow: "hidden",
+                transition: "max-height 0.2s ease-in-out",
+                maxHeight: section.label && collapsedSections[`mobile-${si}`] ? "0" : "1000px",
+              }}
+            >
               {section.items.map(({ key, label, Icon }, itemIdx) => {
                 const isActive = activeTab === key;
                 return (
@@ -387,11 +422,45 @@ export function DashboardSidebar() {
         {sections.map((section, si) => (
           <div key={si} style={{ marginBottom: si < sections.length - 1 ? "20px" : 0 }}>
             {section.label && !collapsed && (
-              <p style={{ paddingLeft: "12px", marginBottom: "4px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#444444" }}>
-                {section.label}
-              </p>
+              <button
+                onClick={() => setCollapsedSections(prev => ({ ...prev, [`desktop-${si}`]: !prev[`desktop-${si}`] }))}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  paddingLeft: "12px",
+                  paddingRight: "12px",
+                  marginBottom: "4px",
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  color: "#444444",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  userSelect: "none",
+                }}
+              >
+                <span>{section.label}</span>
+                <ChevronDown
+                  size={12}
+                  className={`transition-transform duration-200 ${collapsedSections[`desktop-${si}`] ? '-rotate-180' : ''}`}
+                  style={{ color: "#444444" }}
+                />
+              </button>
             )}
-            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "2px",
+                overflow: "hidden",
+                transition: "max-height 0.2s ease-in-out",
+                maxHeight: section.label && !collapsed && collapsedSections[`desktop-${si}`] ? "0" : "1000px",
+              }}
+            >
               {section.items.map(({ key, label, Icon }, itemIdx) => {
                 const isActive = activeTab === key;
                 return (
