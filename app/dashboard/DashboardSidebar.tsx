@@ -31,7 +31,25 @@ export function DashboardSidebar() {
   const [showProductMenu, setShowProductMenu] = useState(false);
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => {
+    if (typeof window === 'undefined') return {}
+    try {
+      const saved = localStorage.getItem('sidebar-collapsed')
+      return saved ? JSON.parse(saved) : {}
+    } catch {
+      return {}
+    }
+  });
+
+  const toggleSection = (section: string) => {
+    setCollapsedSections(prev => {
+      const next = { ...prev, [section]: !prev[section] }
+      try {
+        localStorage.setItem('sidebar-collapsed', JSON.stringify(next))
+      } catch {}
+      return next
+    })
+  };
 
   const isMiCuenta = pathname === "/dashboard/account";
   const isDiscover = pathname === "/voices";
@@ -158,7 +176,7 @@ export function DashboardSidebar() {
           <div key={si} style={{ marginBottom: si < sections.length - 1 ? "20px" : 0 }}>
             {section.label && (
               <button
-                onClick={() => setCollapsedSections(prev => ({ ...prev, [`mobile-${si}`]: !prev[`mobile-${si}`] }))}
+                onClick={() => toggleSection(`mobile-${si}`)}
                 style={{
                   width: "100%",
                   display: "flex",
@@ -418,7 +436,7 @@ export function DashboardSidebar() {
           <div key={si} style={{ marginBottom: si < sections.length - 1 ? "20px" : 0 }}>
             {section.label && !collapsed && (
               <button
-                onClick={() => setCollapsedSections(prev => ({ ...prev, [`desktop-${si}`]: !prev[`desktop-${si}`] }))}
+                onClick={() => toggleSection(`desktop-${si}`)}
                 style={{
                   width: "100%",
                   display: "flex",
