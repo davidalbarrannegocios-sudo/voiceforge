@@ -7,7 +7,7 @@ import { uploadToR2 } from "./r2";
 import { withSlot } from "./fishAudioQueue";
 
 const FISH_AUDIO_BASE = "https://api.fish.audio";
-const CHUNK_MAX = 2500;
+const CHUNK_MAX = 5000;
 
 function getApiKey(): string {
   const key = process.env.FISH_AUDIO_API_KEY;
