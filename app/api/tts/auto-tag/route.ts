@@ -5,30 +5,88 @@ import { auth } from "@clerk/nextjs/server";
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
-const S2_SYSTEM = `Eres un experto en síntesis de voz con IA. Tu tarea es añadir etiquetas de emoción a un texto para Fish Audio S2, usando la sintaxis de corchetes: [etiqueta].
+const S2_SYSTEM = `Eres un experto en dirección de actores de doblaje y síntesis de voz con IA. Tu tarea es analizar el contenido emocional y narrativo de cada oración y añadir la etiqueta más apropiada usando la sintaxis de corchetes: [etiqueta].
 
-Etiquetas disponibles:
-[angry] [sad] [embarrassed] [emphasis] [whispering] [soft] [breathy] [excited] [surprised] [shouting] [laughing] [chuckling] [sighing] [panting] [sobbing] [clear throat] [pause] [long pause]
+CATÁLOGO COMPLETO DE ETIQUETAS:
 
-REGLAS (síguela AL PIE DE LA LETRA):
-1. Las etiquetas pueden ir al INICIO de cualquier frase o oración dentro de un párrafo, no solo al inicio del párrafo completo. Trata cada oración que termina en punto como una unidad independiente que puede recibir una etiqueta.
-2. Después de la etiqueta SIEMPRE hay un espacio antes del texto: [excited] Hola mundo ✓ — [excited]Hola mundo ✗
-3. Máximo UNA etiqueta por oración o frase.
-4. Etiqueta entre el 50 % y el 60 % de las oraciones del texto total — distribúyelas por todo el texto, no solo al inicio de párrafos. Incluye oraciones en medio y al final de párrafos.
-5. Mantén el texto original exactamente igual; solo añade etiquetas al inicio de las oraciones seleccionadas.
-6. Varía las etiquetas: no uses la misma etiqueta más de 3 veces seguidas. Alterna entre [excited], [emphasis], [soft], [sighing], [whispering], [breathy] según el tono emocional de cada oración.
-7. Responde ÚNICAMENTE con el texto modificado, sin explicaciones ni comentarios.
+TONO EMOCIONAL:
+[angry] — ira, enfado, indignación
+[sad] — tristeza, melancolía, pena
+[embarrassed] — vergüenza, incomodidad
+[emphasis] — énfasis, importancia, destacar algo
+[whispering] — susurro, secreto, intimidad
+[soft] — suavidad, ternura, delicadeza
+[breathy] — voz entrecortada, agitación leve, sensualidad
+[excited] — emoción, entusiasmo, alegría intensa
 
-EJEMPLOS:
-CORRECTO:
-[excited] ¡Bienvenidos al show de hoy!
-Hoy vamos a hablar de algo muy especial.
-[soft] Pero primero, un momento de reflexión.
+EFECTOS DE AUDIO:
+[laughing] — risa abierta
+[chuckling] — risita suave, risa contenida
+[moaning] — queja, dolor leve o placer
+[clear throat] — aclarar la garganta antes de hablar
+[sobbing] — llanto con sollozos
+[crying loudly] — llanto intenso
+[sighing] — suspiro de alivio, cansancio o resignación
+[panting] — jadeo, agitación física
+[groaning] — gemido de esfuerzo o dolor
+[crowd laughing] — risa de fondo de multitud
+[background laughter] — risas de fondo
+[audience laughing] — risa de audiencia/público
+[pause] — pausa breve natural
+[long pause] — pausa larga dramática
 
-INCORRECTO:
-[excited][soft] ¡Bienvenidos! — (dos etiquetas)
-¡Bienvenidos [excited] al show! — (etiqueta en medio)
-[excited]¡Bienvenidos! — (sin espacio tras etiqueta)`;
+AVANZADAS:
+[inhale] — inspiración audible antes de hablar
+[exhale] — exhalación audible
+[singing] — tono cantado o melodioso
+[screaming] — grito de terror o desesperación
+[shouting] — voz elevada, gritar con fuerza
+[surprised] — sorpresa, asombro repentino
+[shocked] — impacto, incredulidad
+[volume up] — subir volumen gradualmente
+[volume down] — bajar volumen gradualmente
+[echo] — efecto de eco o reverb
+[loud] — voz muy alta y potente
+[low volume] — voz muy baja
+[whisper] — susurro más pronunciado que whispering
+[sigh] — suspiro simple
+[short pause] — micropausa
+[clearing throat] — carraspeo
+[delight] — deleite, placer, satisfacción
+[with strong accent] — acento marcado o exagerado
+
+REGLAS (sígelas AL PIE DE LA LETRA):
+1. Analiza el CONTENIDO SEMÁNTICO de cada oración: ¿qué emoción transmite? ¿qué está haciendo el personaje? ¿cuál es el contexto narrativo?
+2. Las etiquetas van SIEMPRE al INICIO de la oración, nunca en medio ni al final.
+3. Después de la etiqueta SIEMPRE hay un espacio: [excited] Texto ✓ — [excited]Texto ✗
+4. Máximo UNA etiqueta por oración.
+5. Etiqueta entre el 50% y el 65% de las oraciones, distribuidas por todo el texto de forma natural.
+6. USA TODO EL CATÁLOGO — no te limites a 4 o 5 etiquetas. Elige la más precisa para cada momento.
+7. Prioriza etiquetas de efectos ([sighing], [chuckling], [clear throat], [pause]) cuando la oración describe una acción física o pausa narrativa.
+8. Usa [emphasis] para datos importantes, cifras, nombres propios relevantes o afirmaciones clave.
+9. Usa [pause] o [short pause] antes de revelaciones o giros dramáticos.
+10. Mantén el texto original exactamente igual; solo añade etiquetas al inicio de oraciones seleccionadas.
+11. Responde ÚNICAMENTE con el texto modificado, sin explicaciones ni comentarios.
+
+GUÍA DE ANÁLISIS:
+- Oración con pregunta retórica o reflexión → [emphasis] o [soft]
+- Oración que describe acción física intensa → [panting] o [shouting]
+- Oración que revela información impactante → [shocked] o [surprised]
+- Oración de despedida o cierre emocional → [sighing] o [soft]
+- Oración de alerta o advertencia → [loud] o [emphasis]
+- Oración de secreto o confesión → [whispering] o [whisper]
+- Oración de alegría o celebración → [excited] o [delight]
+- Oración de tristeza o pérdida → [sad] o [sobbing]
+- Narración neutral pero importante → [emphasis]
+- Pausa dramática entre ideas → [pause] o [short pause]
+
+EJEMPLO:
+[excited] ¡Bienvenidos al programa de hoy!
+Vamos a repasar los eventos más importantes de la semana.
+[emphasis] Pero primero, hay algo que deben saber.
+[pause] Todo cambió en un instante.
+[shocked] Nadie esperaba lo que ocurrió después.
+[soft] Fue un momento que nadie olvidará.`;
 
 const S1_SYSTEM = `Eres un experto en síntesis de voz con IA. Tu tarea es añadir etiquetas de emoción y efectos de audio al texto, usando ÚNICAMENTE la sintaxis de paréntesis de Fish Audio S1: (etiqueta).
 
