@@ -803,63 +803,6 @@ function HomeTab({
         )}
       </div>
 
-      {/* Tutoriales */}
-      <div>
-        <h2 className="text-sm font-semibold text-white/50 uppercase tracking-widest mb-3">
-          Tutoriales
-        </h2>
-        <div className="grid grid-cols-1 gap-3">
-          {[
-            {
-              title: "Tour completo de Elite Labs",
-              description: "Aprende a usar todas las funciones de la plataforma paso a paso",
-              url: "https://youtu.be/_IlvCGcT8xc",
-              duration: "Tour completo",
-            },
-          ].map((tut) => (
-            <a
-              key={tut.url}
-              href={tut.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex items-center gap-4 bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.15] hover:bg-white/[0.06] rounded-2xl px-4 py-3.5 transition-all duration-200"
-            >
-              {/* Thumbnail YouTube */}
-              <div className="relative shrink-0 w-24 h-14 rounded-lg overflow-hidden bg-white/5">
-                <img
-                  src={`https://img.youtube.com/vi/_IlvCGcT8xc/mqdefault.jpg`}
-                  alt={tut.title}
-                  className="w-full h-full object-cover"
-                />
-                {/* Play overlay */}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors">
-                  <div className="w-7 h-7 rounded-full bg-white/90 flex items-center justify-center">
-                    <svg className="w-3 h-3 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z"/>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-white/90 text-sm font-medium leading-tight truncate">
-                  {tut.title}
-                </p>
-                <p className="text-white/35 text-xs mt-1 leading-snug line-clamp-2">
-                  {tut.description}
-                </p>
-              </div>
-
-              {/* Badge */}
-              <div className="shrink-0 text-[11px] text-white/30 bg-white/[0.04] border border-white/[0.07] rounded-full px-2.5 py-1">
-                {tut.duration}
-              </div>
-            </a>
-          ))}
-        </div>
-      </div>
-
     </div>
   )
 }
