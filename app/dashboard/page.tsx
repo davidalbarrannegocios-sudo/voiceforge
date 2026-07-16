@@ -803,6 +803,28 @@ function HomeTab({
         )}
       </div>
 
+
+      {/* Tutoriales */}
+      <div>
+        <h2 className="text-sm font-semibold text-white/50 uppercase tracking-widest mb-3">Tutoriales</h2>
+        <div className="grid grid-cols-1 gap-3">
+          <a href="https://youtu.be/_IlvCGcT8xc" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-4 bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.15] hover:bg-white/[0.06] rounded-2xl px-4 py-3.5 transition-all duration-200">
+            <div className="relative shrink-0 w-24 h-14 rounded-lg overflow-hidden bg-white/5">
+              <img src="https://img.youtube.com/vi/_IlvCGcT8xc/mqdefault.jpg" alt="Tour completo Elite Labs" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors">
+                <div className="w-7 h-7 rounded-full bg-white/90 flex items-center justify-center">
+                  <svg className="w-3 h-3 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white/90 text-sm font-medium leading-tight">Tour completo de Elite Labs</p>
+              <p className="text-white/35 text-xs mt-1 leading-snug">Aprende a usar todas las funciones de la plataforma paso a paso</p>
+            </div>
+            <div className="shrink-0 text-[11px] text-white/30 bg-white/[0.04] border border-white/[0.07] rounded-full px-2.5 py-1">Tour completo</div>
+          </a>
+        </div>
+      </div>
     </div>
   )
 }
