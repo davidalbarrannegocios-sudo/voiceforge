@@ -540,19 +540,11 @@ function HomeTab({
     }).catch(() => setLoading(false))
   }, [])
 
-  const LARGE_CARDS = [
-    { id: 'generate',   title: t.home.cardGenerate,    description: t.home.cardGenerateDesc },
-    { id: 'imagevideo', title: t.home.cardImageVideo,   description: t.home.cardImageVideoDesc },
-    { id: 'voices',     title: t.home.cardCloneVoice,   description: t.home.cardCloneVoiceDesc },
-  ]
-
-  const SMALL_CARDS: { id: Tab; title: string; Icon: React.ElementType }[] = [
-    { id: 'translate',  title: t.nav.translate,         Icon: Globe },
-    { id: 'dialogue',   title: t.nav.textToDialogue,    Icon: MessageSquare },
-    { id: 'history',    title: t.nav.history,           Icon: Clock },
-    { id: 'transcribe', title: t.nav.transcribe,        Icon: FileAudio },
-    { id: 'billing',    title: t.nav.billing,           Icon: CreditCard },
-    { id: 'billing',    title: t.nav.account,           Icon: User },
+  const MAIN_TOOLS: { id: Tab; title: string; description: string; Icon: React.ElementType }[] = [
+    { id: 'generate',    title: t.home.cardGenerate,      description: t.home.cardGenerateDesc,    Icon: Type },
+    { id: 'translate',   title: t.nav.translate,          description: 'Traduce audio a cualquier idioma', Icon: Globe },
+    { id: 'voices',      title: t.home.cardCloneVoice,    description: t.home.cardCloneVoiceDesc,  Icon: Mic2 },
+    { id: 'nichefinder', title: t.nav.nicheFinder ?? 'Niche Finder', description: 'Descubre nichos rentables en YouTube', Icon: Search },
   ]
 
   return (
@@ -572,108 +564,33 @@ function HomeTab({
         </p>
       </div>
 
-      {/* Fila superior — 3 cards grandes */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {LARGE_CARDS.map((card) => (
+      {/* Herramientas principales */}
+      <div className="grid grid-cols-2 gap-3">
+        {MAIN_TOOLS.map((tool) => (
           <button
-            key={card.id}
-            onClick={() => setActiveTab(card.id as Tab)}
-            className="group relative bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:bg-white/[0.05] hover:border-white/[0.12] text-left"
+            key={tool.id}
+            onClick={() => setActiveTab(tool.id as Tab)}
+            className="group relative flex flex-col justify-between bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:bg-white/[0.04] hover:border-white/[0.11] text-left h-36 px-5 py-5"
           >
-            {/* Zona visual minimalista */}
-            <div className="h-28 relative overflow-hidden flex items-center justify-center px-6 py-4">
-
-              {/* Texto a Voz — editor + barra de audio */}
-              {card.id === 'generate' && (
-                <div className="w-full flex flex-col gap-3">
-                  <div className="flex flex-col gap-1.5">
-                    <div className="h-[5px] bg-white/20 rounded-full w-full" />
-                    <div className="h-[5px] bg-white/[0.12] rounded-full w-4/5" />
-                    <div className="h-[5px] bg-white/20 rounded-full w-full" />
-                    <div className="h-[5px] bg-white/[0.12] rounded-full w-3/5" />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <div className="h-[3px] bg-white/10 rounded-full w-full relative">
-                      <div className="absolute inset-y-0 left-0 w-2/5 rounded-full bg-gradient-to-r from-violet-400/50 to-blue-400/50" />
-                      <div className="absolute top-1/2 -translate-y-1/2 w-[11px] h-[11px] rounded-full bg-white border border-white/20 shadow" style={{ left: 'calc(40% - 5.5px)' }} />
-                    </div>
-                    <div className="flex items-end gap-[2px] justify-center">
-                      {[4,7,5,9,6,11,8,5,10,7,4,8,6,9,5,7,4,6,9,5].map((h, j) => (
-                        <div key={j} className={`w-[2px] rounded-full origin-bottom card-eq-v-${(j % 8) + 1}`}
-                             style={{ height: `${h}px`, background: 'linear-gradient(to top, rgba(139,92,246,0.3), rgba(99,102,241,0.65))' }} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Imagen y Video — prompt + grid de thumbnails */}
-              {card.id === 'imagevideo' && (
-                <div className="w-full flex flex-col gap-2">
-                  <div className="border border-white/10 rounded-lg px-3 py-1.5 flex items-center gap-2" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                    <div className="w-1.5 h-1.5 rounded-full bg-white/30 flex-shrink-0" />
-                    <div className="h-[5px] bg-white/15 rounded-full flex-1" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5" style={{ height: '68px' }}>
-                    {[
-                      { base: 'from-violet-500/25 to-blue-600/20',   over: 'from-violet-400/40 to-indigo-500/30', cls: 'card-grad-p-1' },
-                      { base: 'from-sky-500/25 to-cyan-500/20',      over: 'from-blue-400/40 to-sky-500/30',      cls: 'card-grad-p-2' },
-                      { base: 'from-amber-500/25 to-rose-500/20',    over: 'from-orange-400/40 to-pink-500/30',   cls: 'card-grad-p-3' },
-                      { base: 'from-emerald-500/25 to-teal-500/20',  over: 'from-green-400/40 to-emerald-600/30', cls: 'card-grad-p-4' },
-                    ].map((g, j) => (
-                      <div key={j} className="rounded-lg relative overflow-hidden">
-                        <div className={`absolute inset-0 bg-gradient-to-br ${g.base}`} />
-                        <div className={`absolute inset-0 bg-gradient-to-br ${g.over} ${g.cls}`} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Clonar Voz — avatar circular + forma de onda */}
-              {card.id === 'voices' && (
-                <div className="w-full flex flex-col items-center justify-center gap-3">
-                  <div className="relative flex items-center justify-center">
-                    <div className="absolute w-[68px] h-[68px] rounded-full border border-white/[0.07]" />
-                    <div className="absolute w-[52px] h-[52px] rounded-full border border-white/[0.10]" />
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center border border-white/15"
-                         style={{ background: 'linear-gradient(135deg, rgba(244,63,94,0.25), rgba(236,72,153,0.15))' }}>
-                      <Mic size={16} className="text-white/60" />
-                    </div>
-                  </div>
-                  <div className="flex items-end gap-[3px]" style={{ height: '22px' }}>
-                    {[5,9,13,10,7,12,8,6,11,9,6,13,8,5,10].map((h, j) => (
-                      <div key={j} className={`w-[2px] rounded-full bg-white/35 origin-bottom card-eq-v-${(j % 8) + 1}`}
-                           style={{ height: `${h}px` }} />
-                    ))}
-                  </div>
-                </div>
-              )}
+            {/* Icono */}
+            <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.07] flex items-center justify-center group-hover:border-white/[0.12] transition-colors">
+              <tool.Icon size={16} className="text-white/45 group-hover:text-white/70 transition-colors" />
             </div>
 
-            {/* Info */}
-            <div className="px-5 pb-5 pt-3 border-t border-white/[0.04]">
-              <p className="text-white/85 text-[13.5px] font-medium leading-tight">{card.title}</p>
-              <p className="text-white/30 text-[12px] mt-1 leading-snug">{card.description}</p>
+            {/* Texto */}
+            <div>
+              <p className="text-white/80 text-[14px] font-semibold leading-tight tracking-tight">
+                {tool.title}
+              </p>
+              <p className="text-white/28 text-[11.5px] mt-1 leading-snug">
+                {tool.description}
+              </p>
             </div>
-          </button>
-        ))}
-      </div>
 
-      {/* Fila inferior — 6 cards pequeñas */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-        {SMALL_CARDS.map((card, j) => (
-          <button
-            key={`${card.id}-${j}`}
-            onClick={() => setActiveTab(card.id)}
-            className="group flex items-center gap-3 bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3.5 cursor-pointer transition-all duration-200 hover:bg-white/[0.05] hover:border-white/[0.10] text-left w-full"
-          >
-            <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0 group-hover:border-white/[0.10] transition-colors">
-              <card.Icon size={15} className="text-white/40 group-hover:text-white/60 transition-colors" />
+            {/* Flecha hover */}
+            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <ChevronRight size={14} className="text-white/25" />
             </div>
-            <span className="text-white/65 text-[13px] font-medium group-hover:text-white/85 transition-colors leading-tight">
-              {card.title}
-            </span>
           </button>
         ))}
       </div>
