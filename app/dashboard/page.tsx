@@ -578,10 +578,10 @@ function HomeTab({
           <button
             key={card.id}
             onClick={() => setActiveTab(card.id as Tab)}
-            className="group bg-white/5 border border-white/10 rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:bg-white/[0.08] hover:border-white/20 hover:scale-[1.02] text-left"
+            className="group relative bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:bg-white/[0.05] hover:border-white/[0.12] text-left"
           >
-            {/* Zona visual */}
-            <div className="h-36 relative overflow-hidden flex items-center justify-center p-5 bg-white/[0.02]">
+            {/* Zona visual minimalista */}
+            <div className="h-28 relative overflow-hidden flex items-center justify-center px-6 py-4">
 
               {/* Texto a Voz — editor + barra de audio */}
               {card.id === 'generate' && (
@@ -651,27 +651,27 @@ function HomeTab({
               )}
             </div>
 
-            {/* Zona info */}
-            <div className="px-4 py-3.5 border-t border-white/5">
-              <p className="text-base font-semibold text-white">{card.title}</p>
-              <p className="text-sm text-white/40 mt-0.5">{card.description}</p>
+            {/* Info */}
+            <div className="px-5 pb-5 pt-3 border-t border-white/[0.04]">
+              <p className="text-white/85 text-[13.5px] font-medium leading-tight">{card.title}</p>
+              <p className="text-white/30 text-[12px] mt-1 leading-snug">{card.description}</p>
             </div>
           </button>
         ))}
       </div>
 
       {/* Fila inferior — 6 cards pequeñas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
         {SMALL_CARDS.map((card, j) => (
           <button
-            key={j}
+            key={`${card.id}-${j}`}
             onClick={() => setActiveTab(card.id)}
-            className="group flex items-center gap-3 px-4 py-4 bg-white/5 border border-white/10 rounded-xl cursor-pointer transition-all duration-200 hover:bg-white/10 hover:border-white/20 text-left"
+            className="group flex items-center gap-3 bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3.5 cursor-pointer transition-all duration-200 hover:bg-white/[0.05] hover:border-white/[0.10] text-left w-full"
           >
-            <div className="w-8 h-8 rounded-lg bg-white/10 group-hover:bg-white/15 flex items-center justify-center flex-shrink-0 transition-colors duration-200">
-              <card.Icon size={16} className="text-white/60" />
+            <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0 group-hover:border-white/[0.10] transition-colors">
+              <card.Icon size={15} className="text-white/40 group-hover:text-white/60 transition-colors" />
             </div>
-            <span className="text-white/80 text-sm font-medium group-hover:text-white transition-colors duration-200 leading-tight">
+            <span className="text-white/65 text-[13px] font-medium group-hover:text-white/85 transition-colors leading-tight">
               {card.title}
             </span>
           </button>
@@ -681,13 +681,11 @@ function HomeTab({
       {/* Últimas generaciones */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-white">{t.home.recentGen}</h2>
-          <button onClick={() => setActiveTab('history')}
-                  className="text-xs transition-colors"
-                  style={{ color: "#555555" }}
-                  onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
-                  onMouseLeave={e => (e.currentTarget.style.color = "#555555")}>
-            {t.home.viewAll}
+          <span className="text-[11px] font-semibold text-white/35 uppercase tracking-widest">
+            Historial reciente
+          </span>
+          <button onClick={() => setActiveTab('history')} className="text-[11px] text-white/25 hover:text-white/50 transition-colors">
+            Ver todo →
           </button>
         </div>
 
