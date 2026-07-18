@@ -486,6 +486,48 @@ export async function POST(req: Request) {
 
     await prisma.user.update({ where: { id: user.id }, data: updateData });
 
+    // Email cuando el usuario cancela manualmente (cancel_at_period_end cambia a true)
+    const prevAttrs = event.data.previous_attributes as Record<string, unknown> | undefined;
+    const justCancelled = sub.cancel_at_period_end === true && prevAttrs?.cancel_at_period_end === false;
+    if (justCancelled && process.env.RESEND_API_KEY) {
+      const userWithEmail = await prisma.user.findUnique({ where: { id: user.id }, select: { email: true, plan: true } });
+      if (userWithEmail?.email) {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const planName = (userWithEmail.plan ?? newPlan).charAt(0).toUpperCase() + (userWithEmail.plan ?? newPlan).slice(1);
+        const expiryDate = periodEnd.toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
+        resend.emails.send({
+          from: "Elite Labs <noreply@elitelabs.es>",
+          to: userWithEmail.email,
+          subject: "Lamentamos verte partir 👋",
+          html: `
+            <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #e5e7eb; background: #0a0a0f; padding: 40px 32px; border-radius: 12px;">
+              <h2 style="color: #fff; margin-top: 0; font-size: 22px;">Lamentamos verte partir 👋</h2>
+              <p style="color: #9ca3af; line-height: 1.7;">
+                Tal como solicitaste, hemos programado la cancelación de tu suscripción al plan <strong style="color: #e5e7eb;">${planName}</strong>.
+                Podrás seguir disfrutando de todos tus beneficios hasta el <strong style="color: #e5e7eb;">${expiryDate}</strong>.
+              </p>
+              <p style="color: #9ca3af; line-height: 1.7;">
+                Sabemos que el tiempo es valioso y que quizás las circunstancias cambian. Si en algún momento quieres volver, estaremos aquí con las puertas abiertas — y con mejoras que seguro te van a gustar.
+              </p>
+              <div style="margin: 32px 0; padding: 20px 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;">
+                <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">¿Volver en el futuro?</p>
+                <p style="margin: 0 0 16px 0; color: #d1d5db; font-size: 14px; line-height: 1.6;">Puedes reactivar tu suscripción en cualquier momento antes del ${expiryDate}. Todos tus datos, voces clonadas e historial estarán esperándote.</p>
+                <a href="https://elitelabs.es/pricing"
+                   style="display: inline-block; padding: 12px 24px; background: #ffffff; color: #000000; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px;">
+                  Reactivar suscripción →
+                </a>
+              </div>
+              <p style="color: #6b7280; font-size: 13px; line-height: 1.6;">
+                Si tienes alguna duda escríbenos a
+                <a href="mailto:soporte@elitelabs.es" style="color: #a78bfa;">soporte@elitelabs.es</a>
+              </p>
+              <p style="margin-top: 32px; font-size: 12px; color: #4b5563;">Elite Labs · elitelabs.es</p>
+            </div>
+          `,
+        }).catch((err) => log("error", "stripe-webhook", "cancellation email error", { err: String(err) }));
+      }
+    }
+
     log("info", "stripe-webhook", "subscription updated", { userId: user.id, plan: newPlan, billing: newBillingInterval, cancelAtPeriodEnd: sub.cancel_at_period_end, stripeStatus: sub.status }, user.id);
 
     // Referral commission: only when upgrading from free → paid for the first time
