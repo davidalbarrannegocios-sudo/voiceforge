@@ -338,6 +338,77 @@ export async function POST(req: Request) {
     log("info", "stripe-webhook", "subscription cancelled", { userId: user.id, hasRemainingAccess }, user.id);
   }
 
+  // ── invoice.payment_failed ────────────────────────────────
+  // NOTA: Asegúrate de que este evento está configurado en Stripe Dashboard → Webhooks → añadir evento "invoice.payment_failed"
+  if (event.type === "invoice.payment_failed") {
+    const invoice = event.data.object as Stripe.Invoice;
+    const billingReason = invoice.billing_reason;
+
+    // Solo nos interesa el fallo en renovación mensual/anual, no el primer pago
+    if (billingReason !== "subscription_cycle" && billingReason !== "subscription_update") {
+      return NextResponse.json({ received: true });
+    }
+
+    const subRef = invoice.parent?.subscription_details?.subscription;
+    const subscriptionId = typeof subRef === "string" ? subRef : subRef?.id;
+    if (!subscriptionId) return NextResponse.json({ received: true });
+
+    const user = await prisma.user.findFirst({
+      where: { stripeSubscriptionId: subscriptionId },
+      select: { id: true, email: true, plan: true, stripeSubscriptionId: true },
+    });
+    if (!user) return NextResponse.json({ received: true });
+
+    // Verificar si Stripe ya agotó todos los reintentos (next_payment_attempt === null)
+    // Si aún hay reintentos pendientes, no quitamos créditos todavía
+    if (invoice.next_payment_attempt !== null) {
+      log("info", "stripe-webhook", "invoice.payment_failed — reintento pendiente", {
+        userId: user.id,
+        nextAttempt: invoice.next_payment_attempt,
+      }, user.id);
+      return NextResponse.json({ received: true });
+    }
+
+    // Sin más reintentos — quitar todos los créditos
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { credits: 0 },
+    });
+
+    // Enviar email de aviso al usuario
+    if (process.env.RESEND_API_KEY && user.email) {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      resend.emails.send({
+        from: "Elite Labs <noreply@elitelabs.es>",
+        to: user.email,
+        subject: "Problema con el pago de tu suscripción",
+        html: `
+          <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; color: #e5e7eb; background: #0a0a0f; padding: 32px; border-radius: 12px;">
+            <h2 style="color: #fff; margin-top: 0;">No hemos podido renovar tu suscripción</h2>
+            <p>Hola,</p>
+            <p>Hemos intentado cobrar la renovación de tu plan <strong>${user.plan}</strong> pero el pago no ha podido procesarse.</p>
+            <p>Tus créditos han sido suspendidos temporalmente. Para recuperar el acceso completo, actualiza tu método de pago:</p>
+            <a href="https://elitelabs.es/dashboard?tab=billing"
+               style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: #ffffff; color: #000000; border-radius: 8px; text-decoration: none; font-weight: 600;">
+              Actualizar método de pago
+            </a>
+            <p style="margin-top: 24px; font-size: 13px; color: #9ca3af;">
+              Si crees que es un error, contacta con nosotros en
+              <a href="mailto:support@elitelabs.es" style="color: #a78bfa;">support@elitelabs.es</a>
+            </p>
+            <p style="margin-top: 24px; font-size: 12px; color: #6b7280;">Elite Labs · elitelabs.es</p>
+          </div>
+        `,
+      }).catch((err) => log("error", "stripe-webhook", "payment_failed email error", { err: String(err) }));
+    }
+
+    log("info", "stripe-webhook", "invoice.payment_failed — créditos suspendidos", {
+      userId: user.id,
+      plan: user.plan,
+      invoiceId: invoice.id,
+    }, user.id);
+  }
+
   // ── customer.subscription.updated ────────────────────────
   if (event.type === "customer.subscription.updated") {
     const sub = event.data.object as Stripe.Subscription;
