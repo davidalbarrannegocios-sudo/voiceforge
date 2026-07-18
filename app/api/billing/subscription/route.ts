@@ -67,6 +67,44 @@ export async function PATCH(req: Request) {
 
   const updatedPeriodEnd = updated.items.data[0]?.current_period_end ?? null;
 
+  // Email de reactivación
+  if (action === "reactivate" && process.env.RESEND_API_KEY && user.email) {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const planName = user.plan.charAt(0).toUpperCase() + user.plan.slice(1);
+    const expiryDate = updatedPeriodEnd
+      ? new Date(updatedPeriodEnd * 1000).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })
+      : "";
+    resend.emails.send({
+      from: "Elite Labs <noreply@elitelabs.es>",
+      to: user.email,
+      subject: "¡Bienvenido de vuelta! 🎉",
+      html: `
+        <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #e5e7eb; background: #0a0a0f; padding: 40px 32px; border-radius: 12px;">
+          <h2 style="color: #fff; margin-top: 0; font-size: 22px;">¡Bienvenido de vuelta! 🎉</h2>
+          <p style="color: #9ca3af; line-height: 1.7;">
+            Nos alegra mucho que hayas decidido quedarte. Tu suscripción al plan <strong style="color: #e5e7eb;">${planName}</strong> sigue activa y tu próxima renovación será el <strong style="color: #e5e7eb;">${expiryDate}</strong>.
+          </p>
+          <p style="color: #9ca3af; line-height: 1.7;">
+            Todos tus datos, voces clonadas e historial siguen intactos. Puedes seguir donde lo dejaste sin perder nada.
+          </p>
+          <div style="margin: 32px 0; padding: 20px 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;">
+            <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Continúa creando</p>
+            <p style="margin: 0 0 16px 0; color: #d1d5db; font-size: 14px; line-height: 1.6;">Accede a tu dashboard y sigue generando contenido de voz con IA de la mejor calidad.</p>
+            <a href="https://elitelabs.es/dashboard"
+               style="display: inline-block; padding: 12px 24px; background: #ffffff; color: #000000; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px;">
+              Ir al dashboard →
+            </a>
+          </div>
+          <p style="color: #6b7280; font-size: 13px; line-height: 1.6;">
+            Si tienes alguna duda escríbenos a
+            <a href="mailto:soporte@elitelabs.es" style="color: #a78bfa;">soporte@elitelabs.es</a>
+          </p>
+          <p style="margin-top: 32px; font-size: 12px; color: #4b5563;">Elite Labs · elitelabs.es</p>
+        </div>
+      `,
+    }).catch(console.error);
+  }
+
   // Email de cancelación
   if (action === "cancel" && process.env.RESEND_API_KEY && user.email) {
     const resend = new Resend(process.env.RESEND_API_KEY);
