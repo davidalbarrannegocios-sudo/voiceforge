@@ -48,7 +48,7 @@ interface Stats {
 }
 interface SupportTicket {
   id: string; type: string; description: string; status: string;
-  adminReply: string | null; createdAt: string;
+  adminReply: string | null; createdAt: string; messages: Array<{role: string; text: string; createdAt: string}>;
   user: { email: string; plan: string };
 }
 const TICKET_TYPE_LABELS: Record<string, string> = {
@@ -1776,15 +1776,30 @@ function SupportSection({
                     </div>
                     <span style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", whiteSpace: "nowrap", flexShrink: 0 }}>{relativeTime(ticket.createdAt)}</span>
                   </div>
-                  {/* Description — 2-line preview */}
-                  <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.6, margin: 0, overflow: "hidden", maxHeight: "3.2em", marginBottom: ticket.adminReply ? 12 : 0 }}>{ticket.description}</p>
-                  {/* Admin reply block */}
-                  {ticket.adminReply && (
-                    <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                      <p style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.25)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>Tu respuesta</p>
-                      <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", margin: 0, lineHeight: 1.5 }}>{ticket.adminReply}</p>
-                    </div>
-                  )}
+                  {/* Historial completo de mensajes */}
+                  {(() => {
+                    const msgs: Array<{role: string; text: string; createdAt: string}> = 
+                      Array.isArray(ticket.messages) ? ticket.messages as Array<{role: string; text: string; createdAt: string}> : [];
+                    const allMessages = [
+                      { role: "user", text: ticket.description, createdAt: ticket.createdAt },
+                      ...msgs,
+                    ];
+                    return (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {allMessages.map((msg, idx) => {
+                          const isAdmin = msg.role === "admin";
+                          return (
+                            <div key={idx} style={{ padding: "8px 12px", borderRadius: 8, background: isAdmin ? "rgba(96,165,250,0.06)" : "rgba(255,255,255,0.03)", border: `1px solid ${isAdmin ? "rgba(96,165,250,0.15)" : "rgba(255,255,255,0.06)"}` }}>
+                              <p style={{ fontSize: 10, fontWeight: 700, color: isAdmin ? "#60a5fa" : "rgba(255,255,255,0.25)", marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                                {isAdmin ? "Soporte" : ticket.user.email}
+                              </p>
+                              <p style={{ fontSize: 12, color: isAdmin ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.4)", margin: 0, lineHeight: 1.5 }}>{msg.text}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </div>
                 {/* Card footer — actions */}
                 {!isClosed && (
