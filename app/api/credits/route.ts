@@ -163,6 +163,7 @@ export async function GET() {
     planExpiresAt: user.planExpiresAt?.toISOString() ?? null,
     transcriptionUsed: user.transcriptionUsed,
     language: user.language,
+    stripeStatus: user.stripeStatus ?? null,
     ...renewal,
   });
 }

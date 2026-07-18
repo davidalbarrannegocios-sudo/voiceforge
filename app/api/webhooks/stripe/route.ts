@@ -369,10 +369,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ received: true });
     }
 
-    // Sin más reintentos — quitar todos los créditos
+    // Sin más reintentos — bajar a free y quitar créditos
     await prisma.user.update({
       where: { id: user.id },
-      data: { credits: 0 },
+      data: {
+        credits: 0,
+        plan: "free",
+        planExpiresAt: null,
+        stripeSubscriptionId: null,
+        stripePriceId: null,
+        cancelAtPeriodEnd: false,
+        stripeStatus: "suspended",
+      },
     });
 
     // Enviar email de aviso al usuario

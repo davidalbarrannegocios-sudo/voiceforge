@@ -3995,6 +3995,7 @@ function BillingTab({
   plan,
   nextRenewalDate,
   daysUntilRenewal,
+  stripeStatus,
   onRefresh,
 }: {
   credits: number | null;
@@ -4002,6 +4003,7 @@ function BillingTab({
   plan: string;
   nextRenewalDate: string | null;
   daysUntilRenewal: number | null;
+  stripeStatus: string | null;
   onRefresh: () => void;
 }) {
   const { t } = useLang();
@@ -4070,9 +4072,21 @@ function BillingTab({
               <div style={{ width: "1px", height: "32px", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)", flexShrink: 0 }} />
               <div>
                 <p style={{ fontSize: "11px", color: "#444444", marginBottom: "3px" }}>
-                  {plan === "free" ? "Próxima recarga" : daysUntilRenewal !== null && daysUntilRenewal < 0 ? "Estado de pago" : "Próxima renovación"}
+                  {stripeStatus === "suspended" ? "Estado de suscripción" : plan === "free" ? "Próxima recarga" : daysUntilRenewal !== null && daysUntilRenewal < 0 ? "Estado de pago" : "Próxima renovación"}
                 </p>
-                {daysUntilRenewal !== null && daysUntilRenewal < 0 && plan !== "free" ? (
+                {stripeStatus === "suspended" ? (
+                  <p style={{ fontSize: "14px", fontWeight: 600, color: "#ef4444", display: "flex", alignItems: "center", gap: "5px" }}>
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M8 5v4M8 11v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                    Suscripción suspendida
+                    <span style={{ fontSize: "11px", color: "#ef4444", fontWeight: 400, cursor: "pointer", textDecoration: "underline" }}
+                          onClick={() => window.location.href = "/pricing"}>
+                      · Actívala de nuevo →
+                    </span>
+                  </p>
+                ) : daysUntilRenewal !== null && daysUntilRenewal < 0 && plan !== "free" ? (
                   <p style={{ fontSize: "14px", fontWeight: 600, color: "#ef4444", display: "flex", alignItems: "center", gap: "5px" }}>
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
                       <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
@@ -7936,6 +7950,7 @@ export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [nextRenewalDate, setNextRenewalDate] = useState<string | null>(null);
   const [daysUntilRenewal, setDaysUntilRenewal] = useState<number | null>(null);
+  const [stripeStatus, setStripeStatus] = useState<string | null>(null);
   const { t: tt, toggle: toggleLang } = useLang();
   const { toggle: toggleSidebar } = useSidebar();
   const BILLING_PLANS = getBillingPlans(tt);
@@ -7950,6 +7965,7 @@ export default function DashboardPage() {
     if (typeof data.transcriptionUsed === "number") setTranscriptionUsed(data.transcriptionUsed);
     if ("nextRenewalDate" in data) setNextRenewalDate(data.nextRenewalDate);
     if (typeof data.daysUntilRenewal === "number") setDaysUntilRenewal(data.daysUntilRenewal);
+      if (data.stripeStatus) setStripeStatus(data.stripeStatus);
   }, []);
 
   const fetchVoices = useCallback(async () => {
@@ -8245,6 +8261,7 @@ export default function DashboardPage() {
                 plan={plan}
                 nextRenewalDate={nextRenewalDate}
                 daysUntilRenewal={daysUntilRenewal}
+                stripeStatus={stripeStatus}
                 onRefresh={fetchCredits}
               />
             )}
