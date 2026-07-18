@@ -582,7 +582,7 @@ function HomeTab({
               <p className="text-white/80 text-[14px] font-semibold leading-tight tracking-tight">
                 {tool.title}
               </p>
-              <p className="text-white/28 text-[11.5px] mt-1 leading-snug">
+              <p className="text-white/35 text-[11.5px] mt-1 leading-snug">
                 {tool.description}
               </p>
             </div>
@@ -722,7 +722,7 @@ function HomeTab({
       </div>{/* fin columna principal */}
 
       {/* Columna tutoriales */}
-      <div className="hidden xl:flex flex-col gap-3 w-72 shrink-0 sticky top-6">
+      <div className="hidden xl:flex flex-col gap-3 w-64 shrink-0 sticky top-0 pt-[72px]">
         <div className="flex items-center justify-between mb-1">
           <span className="text-xs font-semibold text-white/40 uppercase tracking-widest">Tutoriales</span>
         </div>

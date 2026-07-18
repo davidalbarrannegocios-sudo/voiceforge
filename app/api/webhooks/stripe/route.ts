@@ -394,7 +394,7 @@ export async function POST(req: Request) {
             </a>
             <p style="margin-top: 24px; font-size: 13px; color: #9ca3af;">
               Si crees que es un error, contacta con nosotros en
-              <a href="mailto:support@elitelabs.es" style="color: #a78bfa;">support@elitelabs.es</a>
+              <a href="mailto:soporte@elitelabs.es" style="color: #a78bfa;">soporte@elitelabs.es</a>
             </p>
             <p style="margin-top: 24px; font-size: 12px; color: #6b7280;">Elite Labs · elitelabs.es</p>
           </div>
