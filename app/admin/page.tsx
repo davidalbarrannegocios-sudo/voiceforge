@@ -48,7 +48,7 @@ interface Stats {
 }
 interface SupportTicket {
   id: string; type: string; description: string; status: string;
-  adminReply: string | null; createdAt: string; messages: Array<{role: string; text: string; createdAt: string}>;
+  adminReply: string | null; createdAt: string; messages: Array<{role: string; text: string; content: string; createdAt: string}>;
   user: { email: string; plan: string };
 }
 const TICKET_TYPE_LABELS: Record<string, string> = {
@@ -1778,10 +1778,10 @@ function SupportSection({
                   </div>
                   {/* Historial completo de mensajes */}
                   {(() => {
-                    const msgs: Array<{role: string; text: string; createdAt: string}> = 
-                      Array.isArray(ticket.messages) ? ticket.messages as Array<{role: string; text: string; createdAt: string}> : [];
-                    const allMessages = [
-                      { role: "user", text: ticket.description, createdAt: ticket.createdAt },
+                    const msgs: Array<{role: string; content: string; createdAt: string}> = 
+                      Array.isArray(ticket.messages) ? ticket.messages as Array<{role: string; content: string; createdAt: string}> : [];
+                    const allMessages: Array<{role: string; content: string; createdAt: string}> = [
+                      { role: "user", content: ticket.description, createdAt: ticket.createdAt },
                       ...msgs,
                     ];
                     return (
@@ -1793,7 +1793,7 @@ function SupportSection({
                               <p style={{ fontSize: 10, fontWeight: 700, color: isAdmin ? "#60a5fa" : "rgba(255,255,255,0.25)", marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.06em" }}>
                                 {isAdmin ? "Soporte" : ticket.user.email}
                               </p>
-                              <p style={{ fontSize: 12, color: isAdmin ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.4)", margin: 0, lineHeight: 1.5 }}>{msg.text}</p>
+                              <p style={{ fontSize: 12, color: isAdmin ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.4)", margin: 0, lineHeight: 1.5 }}>{msg.content}</p>
                             </div>
                           );
                         })}
