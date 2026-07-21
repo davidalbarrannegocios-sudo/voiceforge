@@ -32,7 +32,7 @@ async function translateWithRetry(
 }
 
 const RETENTION_DAYS: Record<string, number> = {
-  free: 3, starter: 14, pro: 30, elite: 30, enterprise: 90,
+  free: 3, starter: 14, creator: 14, plus: 30, pro: 60, elite: 90, enterprise: 90,
 };
 
 interface TranslateParams {

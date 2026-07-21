@@ -9,9 +9,13 @@ export const runtime = "nodejs";
 
 function getExpiresAt(plan: string): Date {
   const now = new Date();
-  if (plan === "free")       return new Date(now.getTime() + 72 * 60 * 60 * 1000);
-  if (plan === "starter")    return new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-  if (plan === "enterprise") return new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+  if (plan === "free")     return new Date(now.getTime() + 72 * 60 * 60 * 1000);        // 72h
+  if (plan === "creator")  return new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);   // 14d
+  if (plan === "starter")  return new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);   // 14d
+  if (plan === "plus")     return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);   // 30d
+  if (plan === "pro")      return new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);   // 60d
+  if (plan === "elite")    return new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);   // 90d
+  if (plan === "enterprise") return new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000); // 90d
   return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 }
 
