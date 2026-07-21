@@ -2168,7 +2168,7 @@ function AnalyticsSection({ users, stats }: { users: AdminUser[]; stats: Stats |
 const CFG_PLAN_ORDER = ["free", "creator", "plus", "pro", "elite"] as const;
 const CFG_PLAN_LABELS: Record<string, string> = { free: "Free", creator: "Creator", plus: "Plus", pro: "Pro", elite: "Elite" };
 const CFG_PLAN_BADGE: Record<string, string> = { free: "#888", creator: "#60a5fa", plus: "#a78bfa", pro: "#f97316", elite: "#fbbf24" };
-const CFG_PLAN_DEFAULT: Record<string, number> = { free: 10000, creator: 250000, plus: 1000000, pro: 2000000, elite: 15000000 };
+const CFG_PLAN_DEFAULT: Record<string, number> = { free: 5000, creator: 250000, plus: 1000000, pro: 2000000, elite: 15000000 };
 
 function ConfigSection() {
   const [cfgLoading, setCfgLoading] = useState(true);

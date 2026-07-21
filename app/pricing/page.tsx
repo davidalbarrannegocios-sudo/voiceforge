@@ -68,7 +68,7 @@ function PricingContent() {
       description: t.billing.planDescFree,
       price: 0,
       annualTotal: 0,
-      characters: 10_000,
+      characters: 5_000,
       popular: false,
       free: true,
       cta: t.pricing.startFree,

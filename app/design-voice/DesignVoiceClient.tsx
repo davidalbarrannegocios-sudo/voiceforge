@@ -51,7 +51,7 @@ function AuthModal({ onClose }: { onClose: () => void }) {
 
         <h3 className="text-xl font-bold text-white mb-1">Empieza gratis</h3>
         <p className="text-sm mb-6" style={{ color: "#6b7280" }}>
-          10.000 créditos gratis al registrarte. Sin tarjeta de crédito.
+          5.000 créditos gratis al registrarte. Sin tarjeta de crédito.
         </p>
 
         <SignUpButton mode="modal" forceRedirectUrl="/dashboard?tab=create-voice">
@@ -440,7 +440,7 @@ export default function DesignVoiceClient() {
             </button>
 
             <p className="mt-4 text-xs" style={{ color: "#444444" }}>
-              Sin tarjeta de crédito · 10.000 créditos gratis
+              Sin tarjeta de crédito · 5.000 créditos gratis
             </p>
           </div>
         </section>
@@ -557,7 +557,7 @@ export default function DesignVoiceClient() {
               </button>
 
               <p className="text-center text-xs mt-3" style={{ color: "#444444" }}>
-                Lista en ~15 segundos · 10.000 créditos gratis al registrarte
+                Lista en ~15 segundos · 5.000 créditos gratis al registrarte
               </p>
             </div>
           </div>
@@ -670,7 +670,7 @@ export default function DesignVoiceClient() {
                 Empieza gratis
               </h2>
               <p className="mb-2 relative text-lg" style={{ color: "#9ca3af" }}>
-                10.000 créditos al registrarte
+                5.000 créditos al registrarte
               </p>
               <p className="mb-8 relative text-sm" style={{ color: "#555555" }}>
                 Sin tarjeta de crédito · Acceso inmediato

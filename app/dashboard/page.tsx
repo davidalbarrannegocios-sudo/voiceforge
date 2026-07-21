@@ -3948,7 +3948,7 @@ function getBillingPlans(t: Translations) {
   return [
     {
       key: "free", name: "Free", description: t.billing.planDescFree,
-      price: 0, annualTotal: 0, characters: 10_000, popular: false,
+      price: 0, annualTotal: 0, characters: 5_000, popular: false,
       features: [t.billing.feat10k, t.billing.featRandomVoice, t.billing.feat2Transcriptions, t.billing.featNoClone, t.billing.featAudio72h],
     },
     {
@@ -7043,10 +7043,10 @@ function TeamTab({
 
   const PLAN_LABELS: Record<string, string> = { free: "Free", starter: "Starter", pro: "Pro", enterprise: "Enterprise" };
   const PLAN_MEMBER_LIMITS: Record<string, number> = { free: 2, starter: 5, pro: 10, enterprise: 50 };
-  const PLAN_CREDIT_LIMITS: Record<string, number> = { free: 10_000, starter: 100_000, pro: 500_000, enterprise: ENTERPRISE_CREDITS, lifetime: 20_000_000 };
+  const PLAN_CREDIT_LIMITS: Record<string, number> = { free: 5_000, starter: 100_000, pro: 500_000, enterprise: ENTERPRISE_CREDITS, lifetime: 20_000_000 };
 
   const memberLimit = PLAN_MEMBER_LIMITS[plan] ?? 5;
-  const creditLimit = PLAN_CREDIT_LIMITS[plan] ?? 10_000;
+  const creditLimit = PLAN_CREDIT_LIMITS[plan] ?? 5_000;
   const totalCredits = (credits ?? 0) + extraCredits;
   const creditPct = Math.min(100, Math.round((totalCredits / creditLimit) * 100));
   const renewalLabel = nextRenewalDate
@@ -8165,8 +8165,8 @@ export default function DashboardPage() {
                   </svg>
                 </a>
                 <UserMenu
-                  used={credits !== null ? Math.max(0, (plan === "lifetime" ? 20_000_000 : (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 10_000)) + extraCredits - credits) : undefined}
-                  total={credits !== null ? (plan === "lifetime" ? 20_000_000 : (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 10_000)) + extraCredits : undefined}
+                  used={credits !== null ? Math.max(0, (plan === "lifetime" ? 20_000_000 : (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 5_000)) + extraCredits - credits) : undefined}
+                  total={credits !== null ? (plan === "lifetime" ? 20_000_000 : (BILLING_PLANS.find(p => p.key === plan)?.characters ?? 5_000)) + extraCredits : undefined}
                   plan={plan}
                   eliteText={eliteTextStatus}
                 />
