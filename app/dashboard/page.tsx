@@ -518,6 +518,7 @@ function HomeTab({
   const [clonedVoices, setClonedVoices] = useState<ClonedVoiceItem[]>([])
   const [loading, setLoading] = useState(true)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const [tutorialOpen, setTutorialOpen] = useState<string | null>(null)
 
   async function handleDownload(gen: RecentGeneration) {
     if (!gen.audioUrl || downloadingId) return;
@@ -733,12 +734,10 @@ function HomeTab({
             desc: "Aprende todas las funciones paso a paso",
           },
         ].map((tut) => (
-          <a
+          <button
             key={tut.id}
-            href={`https://youtu.be/${tut.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex flex-col gap-2 bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.14] hover:bg-white/[0.06] rounded-2xl overflow-hidden transition-all duration-200"
+            onClick={() => setTutorialOpen(tut.id)}
+            className="group flex flex-col gap-2 bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.14] hover:bg-white/[0.06] rounded-2xl overflow-hidden transition-all duration-200 w-full text-left"
           >
             <div className="relative w-full aspect-video overflow-hidden">
               <img
@@ -758,9 +757,51 @@ function HomeTab({
               <p className="text-white/85 text-[13px] font-medium leading-snug">{tut.title}</p>
               <p className="text-white/35 text-[11px] mt-1 leading-snug">{tut.desc}</p>
             </div>
-          </a>
+          </button>
         ))}
       </div>
+
+      {/* Modal de tutorial */}
+      {tutorialOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8"
+          onClick={() => setTutorialOpen(null)}
+        >
+          {/* Backdrop con blur */}
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" />
+
+          {/* Modal */}
+          <div
+            className="relative w-full max-w-4xl animate-in fade-in zoom-in-95 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-white/80 text-[14px] font-medium">Tour completo de Elite Labs</p>
+                <p className="text-white/35 text-[12px] mt-0.5">Aprende todas las funciones paso a paso</p>
+              </div>
+              <button
+                onClick={() => setTutorialOpen(null)}
+                className="w-8 h-8 rounded-full bg-white/[0.06] border border-white/[0.08] hover:bg-white/[0.12] flex items-center justify-center transition-colors"
+              >
+                <X size={14} className="text-white/50" />
+              </button>
+            </div>
+
+            {/* Video iframe */}
+            <div className="relative w-full rounded-2xl overflow-hidden border border-white/[0.08]"
+                 style={{ paddingBottom: "56.25%" }}>
+              <iframe
+                src={`https://www.youtube.com/embed/${tutorialOpen}?autoplay=1&rel=0&modestbranding=1`}
+                className="absolute inset-0 w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   )
